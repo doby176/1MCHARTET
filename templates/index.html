@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Google Analytics Tag -->
-    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BFDR405H06"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -14,27 +13,27 @@
     </script>
     <meta name="google-adsense-account" content="ca-pub-9416785017460416">
     <title>1-Minute Stock Charts - Historical Data for QQQ, AAPL, MSFT & More</title>
-    <meta name="description" content="Explore historical 1-minute stock charts for QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META from 2015 to 2025 for trading and investment analysis.">
-    <meta name="keywords" content="stock charts, 1-minute charts, QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META, historical stock data, stock market analysis, trading, investment">
+    <meta name="description" content="Explore historical 1-minute stock charts for QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META from 2015 to 2025. Analyze price action for QQQ and Nasdaq gaps with our interactive gap analysis tool.">
+    <meta name="keywords" content="stock charts, 1-minute charts, QQQ, Nasdaq, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META, historical stock data, stock market analysis, trading, investment, gap analysis, price action">
     <meta name="author" content="1MChart">
     <meta name="robots" content="index, follow">
     <!-- Open Graph for social media -->
     <meta property="og:title" content="1-Minute Stock Charts - Historical Data for QQQ, AAPL, MSFT & More">
-    <meta property="og:description" content="View 1-minute stock charts for QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META from 2015 to 2025. Perfect for trading and investment analysis.">
+    <meta property="og:description" content="View 1-minute stock charts and analyze QQQ and Nasdaq gap dates from 2015 to 2025 for trading and investment insights.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://onemchart.onrender.com">
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="1-Minute Stock Charts - Historical Data for QQQ, AAPL, MSFT & More">
-    <meta name="twitter:description" content="View 1-minute stock charts for QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META from 2015 to 2025. Perfect for trading and investment analysis.">
+    <meta name="twitter:description" content="View 1-minute stock charts and analyze QQQ and Nasdaq gap dates from 2015 to 2025 for trading and investment insights.">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=9">
+    <link rel="stylesheet" href="/static/styles.css?v=11">
 </head>
 <body>
     <header>
         <h1>Historical 1-Minute Stock Charts: 10 Years of Data for QQQ, AAPL & More</h1>
-        <p>Analyze historical 1-minute stock charts for top stocks like QQQ, AAPL, MSFT, and more from 2015 to 2025.</p>
+        <p>Analyze historical 1-minute stock charts and QQQ gap data from 2015 to 2025 for trading and investment insights.</p>
     </header>
     <main>
         <div class="card">
@@ -49,6 +48,35 @@
             </form>
             <div id="chart-container">
                 <p>Select a ticker and date to load the chart.</p>
+            </div>
+            <!-- Gap Analysis Section -->
+            <div class="gap-analysis">
+                <h2>QQQ Gap Analysis</h2>
+                <p>Find dates for gaps to analyze the price action on the 1-minute chart for both QQQ and Nasdaq trends. Click a date to view its chart.</p>
+                <form id="gap-form">
+                    <label for="gap-size-select">Select Gap Size Bin:</label>
+                    <select id="gap-size-select" name="gap_size">
+                        <option value="">Select gap size</option>
+                        <option value="0.15-0.35%">0.15-0.35%</option>
+                        <option value="0.35-0.5%">0.35-0.5%</option>
+                        <option value="0.5-1%">0.5-1%</option>
+                        <option value="1-1.5%">1-1.5%</option>
+                        <option value="1.5%+">1.5%+</option>
+                    </select>
+                    <label for="day-select">Select Day of Week:</label>
+                    <select id="day-select" name="day">
+                        <option value="">Select day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                    <button type="submit">Find Gap Dates</button>
+                </form>
+                <div id="gap-dates">
+                    <p>Select a gap size and day to view dates with gaps.</p>
+                </div>
             </div>
             <!-- AdSense Ad Unit -->
             <div class="ads-container">
@@ -69,6 +97,6 @@
     <footer>
         <p>More Tickers Coming Soon</p>
     </footer>
-    <script src="/static/script.js?v=4"></script>
+    <script src="/static/script.js?v=6"></script>
 </body>
 </html>
