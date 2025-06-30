@@ -67,12 +67,19 @@ footer {
     width: 100%;
 }
 
+/* Ad container */
+.ads-container {
+    margin-top: 20px;
+    width: 100%;
+    overflow: hidden; /* Prevent ad overflow */
+}
+
 /* Mobile-specific styles */
 @media (max-width: 600px) {
     .card {
-        max-width: 100%; /* Full width on mobile */
-        margin: 15px; /* Increased margin for more side space */
-        padding: 10px; /* Reduced padding to constrain width */
+        max-width: calc(100% - 10px); /* Slightly smaller than viewport */
+        margin: 10px 5px; /* Reduced margin for tighter fit */
+        padding: 8px; /* Further reduced padding */
         overflow-x: hidden; /* Prevent horizontal overflow */
     }
 
@@ -86,7 +93,7 @@ footer {
         font-size: 13px; /* Keep reduced font size */
         padding: 6px; /* Keep reduced padding */
         min-height: 36px; /* Keep compact height */
-        max-width: 300px; /* Fixed width to shorten fields */
+        max-width: 300px; /* Keep fixed width */
         margin: 0 auto; /* Center elements */
         -webkit-appearance: none; /* Normalize dropdown styling */
         -moz-appearance: none; /* Normalize dropdown styling */
@@ -97,7 +104,7 @@ footer {
         font-size: 13px;
         padding: 6px;
         min-height: 40px; /* Keep tappable size */
-        max-width: 300px; /* Match select and input width */
+        max-width: 300px; /* Keep fixed width */
         margin: 0 auto; /* Center button */
     }
 
@@ -111,5 +118,12 @@ footer {
 
     #chart-container img {
         max-height: 500px; /* Keep reduced chart height */
+        width: 100%; /* Ensure chart fits */
+        max-width: 100%; /* Prevent overflow */
+    }
+
+    .ads-container {
+        max-width: 100%; /* Ensure ad fits within card */
+        overflow: hidden; /* Prevent ad overflow */
     }
 }
