@@ -35,7 +35,7 @@ select, input, button {
     font-size: 16px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    width: 100%; /* Ensure elements fit within container */
+    width: 100%; /* Full width within container */
     box-sizing: border-box; /* Include padding in width */
 }
 
@@ -72,33 +72,40 @@ footer {
     .card {
         max-width: 100%; /* Full width on mobile */
         margin: 10px; /* Smaller margin to avoid edge issues */
-        padding: 15px;
+        padding: 10px; /* Reduced padding to constrain width */
     }
 
     form {
         flex-direction: column; /* Stack elements vertically */
         align-items: stretch; /* Ensure full width */
-        gap: 15px; /* Slightly larger gap for clarity */
+        gap: 12px; /* Consistent spacing */
     }
 
-    select, input, button {
-        font-size: 14px; /* Slightly smaller for mobile */
-        padding: 8px;
+    select, input {
+        font-size: 13px; /* Keep reduced font size */
+        padding: 6px; /* Keep reduced padding */
+        min-height: 36px; /* Keep compact height */
+        max-width: 95%; /* Limit width to prevent overflow */
+        margin: 0 auto; /* Center elements to avoid right overflow */
     }
 
     button {
-        min-height: 44px; /* Ensure tappable size */
+        font-size: 13px;
+        padding: 6px;
+        min-height: 40px; /* Keep tappable size */
+        max-width: 95%; /* Match select and input width */
+        margin: 0 auto; /* Center button */
     }
 
     header {
-        padding: 15px;
+        padding: 10px; /* Keep reduced header padding */
     }
 
     header h1 {
-        font-size: 1.5em; /* Smaller header for mobile */
+        font-size: 1.2em; /* Keep smaller header font */
     }
 
     #chart-container img {
-        max-height: 500px; /* Reduce chart height for mobile */
+        max-height: 500px; /* Keep reduced chart height */
     }
 }
