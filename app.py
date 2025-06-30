@@ -8,7 +8,6 @@ import pandas as pd
 import mplfinance as mpf
 import io
 import base64
-from datetime import datetime
 import logging
 import sqlite3
 import os
@@ -30,11 +29,43 @@ limiter = Limiter(
 TICKERS = ['QQQ', 'AAPL', 'MSFT', 'TSLA', 'ORCL', 'NVDA', 'MSTR', 'UBER', 'PLTR', 'META']
 DB_DIR = "data/db"  # Directory containing database files
 
+# Global variable to store valid tickers
+VALID_TICKERS = []
+
 def get_db_path(ticker):
     """Return the database path for a given ticker."""
     if ticker not in TICKERS:
         return None
     return os.path.join(DB_DIR, f"stock_data_{ticker.lower()}.db")
+
+def initialize_tickers():
+    """Scan database directory and initialize valid tickers."""
+    global VALID_TICKERS
+    VALID_TICKERS = []
+    logging.debug("Initializing ticker list")
+    for ticker in TICKERS:
+        db_path = get_db_path(ticker)
+        if db_path and os.path.exists(db_path):
+            try:
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+                cursor.execute("SELECT DISTINCT ticker FROM candles")
+                db_tickers = [row[0] for row in cursor.fetchall()]
+                if db_tickers:
+                    VALID_TICKERS.append(ticker)
+                conn.close()
+                logging.debug(f"Validated ticker: {ticker}")
+            except Exception as e:
+                logging.warning(f"Could not access database for {ticker}: {str(e)}")
+    if not VALID_TICKERS:
+        logging.warning("No valid ticker databases found, falling back to static list")
+        VALID_TICKERS = TICKERS  # Fallback to static list
+    VALID_TICKERS = sorted(VALID_TICKERS)
+    logging.debug(f"Initialized tickers: {VALID_TICKERS}")
+
+# Run at app startup
+with app.app_context():
+    initialize_tickers()
 
 @app.route('/')
 def index():
@@ -44,30 +75,9 @@ def index():
 
 @app.route('/api/tickers', methods=['GET'])
 def get_tickers():
-    """Return the list of available tickers by checking database files."""
-    logging.debug("Fetching available tickers")
-    try:
-        tickers = []
-        for ticker in TICKERS:
-            db_path = get_db_path(ticker)
-            if db_path and os.path.exists(db_path):
-                try:
-                    conn = sqlite3.connect(db_path)
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT DISTINCT ticker FROM candles")
-                    db_tickers = [row[0] for row in cursor.fetchall()]
-                    if db_tickers:  # Only include ticker if database has data
-                        tickers.append(ticker)
-                    conn.close()
-                except Exception as e:
-                    logging.warning(f"Could not access database for {ticker}: {str(e)}")
-        if not tickers:
-            logging.warning("No valid ticker databases found")
-            return jsonify({'tickers': sorted(TICKERS)}), 200  # Fallback to static list
-        return jsonify({'tickers': sorted(tickers)})
-    except Exception as e:
-        logging.error(f"Error fetching tickers: {str(e)}")
-        return jsonify({'tickers': sorted(TICKERS)}), 200  # Return static list on error
+    """Return the precomputed list of available tickers."""
+    logging.debug("Returning precomputed tickers")
+    return jsonify({'tickers': VALID_TICKERS})
 
 @app.route('/api/valid_dates', methods=['GET'])
 def get_valid_dates():
