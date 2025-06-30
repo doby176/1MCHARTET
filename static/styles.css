@@ -71,8 +71,9 @@ footer {
 @media (max-width: 600px) {
     .card {
         max-width: 100%; /* Full width on mobile */
-        margin: 10px; /* Smaller margin to avoid edge issues */
+        margin: 15px; /* Increased margin for more side space */
         padding: 10px; /* Reduced padding to constrain width */
+        overflow-x: hidden; /* Prevent horizontal overflow */
     }
 
     form {
@@ -85,15 +86,18 @@ footer {
         font-size: 13px; /* Keep reduced font size */
         padding: 6px; /* Keep reduced padding */
         min-height: 36px; /* Keep compact height */
-        max-width: 95%; /* Limit width to prevent overflow */
-        margin: 0 auto; /* Center elements to avoid right overflow */
+        max-width: 300px; /* Fixed width to shorten fields */
+        margin: 0 auto; /* Center elements */
+        -webkit-appearance: none; /* Normalize dropdown styling */
+        -moz-appearance: none; /* Normalize dropdown styling */
+        appearance: none; /* Normalize dropdown styling */
     }
 
     button {
         font-size: 13px;
         padding: 6px;
         min-height: 40px; /* Keep tappable size */
-        max-width: 95%; /* Match select and input width */
+        max-width: 300px; /* Match select and input width */
         margin: 0 auto; /* Center button */
     }
 
