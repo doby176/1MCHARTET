@@ -3,6 +3,7 @@ async function loadTickers() {
         const response = await fetch('/api/tickers');
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
+        console.log('Fetched tickers:', data.tickers); // Debug log
         const tickerSelect = document.getElementById('ticker-select');
         if (!tickerSelect) throw new Error('Ticker select element not found');
         tickerSelect.innerHTML = '<option value="">Select a ticker</option>';
@@ -14,7 +15,7 @@ async function loadTickers() {
         });
     } catch (error) {
         console.error('Error loading tickers:', error);
-        alert('Failed to load tickers. Please try again later.');
+        alert('Failed to load tickers. Please refresh the page or try again later.');
     }
 }
 
@@ -68,6 +69,7 @@ document.getElementById('stock-form').addEventListener('submit', async function(
         return;
     }
 
+    chartContainer.innerHTML = '<p>Loading chart...</p>'; // Show loading message
     try {
         const response = await fetch(`/api/stock/chart?ticker=${ticker}&date=${date}`);
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -87,4 +89,7 @@ document.getElementById('ticker-select').addEventListener('change', function() {
     loadValidDates(this.value);
 });
 
-window.onload = loadTickers;
+window.addEventListener('load', function() {
+    console.log('Page loaded, fetching tickers...'); // Debug log
+    loadTickers();
+});
