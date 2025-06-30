@@ -19,8 +19,12 @@ app = Flask(__name__)
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://"
+    default_limits=["5 per hour"],
+    storage_uri="memory://",
+    headers_enabled=True,
+    on_breach=lambda request_limit: jsonify({
+        'error': 'Rate limit exceeded: 5 requests per hour allowed. Please wait and try again.'
+    }, 429)
 )
 
 TICKERS = ['QQQ', 'AAPL', 'MSFT', 'TSLA', 'ORCL', 'NVDA', 'MSTR', 'UBER', 'PLTR', 'META']
@@ -67,16 +71,19 @@ with app.app_context():
     initialize_tickers()
 
 @app.route('/')
+@limiter.limit("5 per hour")
 def index():
     logging.debug("Rendering index.html")
     return render_template('index.html')
 
 @app.route('/api/tickers', methods=['GET'])
+@limiter.limit("5 per hour")
 def get_tickers():
     logging.debug("Returning precomputed tickers")
     return jsonify({'tickers': VALID_TICKERS})
 
 @app.route('/api/valid_dates', methods=['GET'])
+@limiter.limit("5 per hour")
 def get_valid_dates():
     ticker = request.args.get('ticker')
     logging.debug(f"Fetching valid dates for ticker: {ticker}")
@@ -103,6 +110,7 @@ def get_valid_dates():
         return jsonify({'error': f'Failed to fetch dates for {ticker}'}), 500
 
 @app.route('/api/stock/chart', methods=['GET'])
+@limiter.limit("5 per hour")
 def get_chart():
     try:
         ticker = request.args.get('ticker')
@@ -133,7 +141,7 @@ def get_chart():
             logging.error(f"Error querying database for {ticker}: {str(e)}")
             return jsonify({'error': 'Database query failed'}), 500
         if df.empty:
-            return jsonify({'error': 'No data available for the selected date'}), 404
+            return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
         required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
         if not all(col in df.columns for col in required_columns):
             return jsonify({'error': 'Invalid data format'}), 400
@@ -162,23 +170,33 @@ def get_chart():
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/gaps', methods=['GET'])
+@limiter.limit("5 per hour")
 def get_gaps():
     try:
         gap_size = request.args.get('gap_size')
         day = request.args.get('day')
         logging.debug(f"Fetching gaps for gap_size={gap_size}, day={day}")
-        logging.debug(f"Resolved GAP_DATA_PATH: {os.path.abspath(GAP_DATA_PATH)}")
-        if not gap_size or not day:
-            logging.error("Missing gap_size or day parameter")
-            return jsonify({'error': 'Missing gap size or day'}), 400
-        if not os.path.exists(GAP_DATA_PATH):
-            logging.error(f"Gap data file not found at: {os.path.abspath(GAP_DATA_PATH)}")
-            return jsonify({'error': f'Gap data file not found at {GAP_DATA_PATH}'}), 404
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        logging.debug(f"Checking data directory: {data_dir}")
+        if os.path.exists(data_dir):
+            logging.debug(f"Directory contents: {os.listdir(data_dir)}")
+        else:
+            logging.error(f"Data directory not found: {data_dir}")
+            return jsonify({'error': 'Gap data directory not found. Please contact support.'}), 404
+        csv_file = None
+        for f in os.listdir(data_dir):
+            if f.lower() == 'qqq_central_data_updated.csv':
+                csv_file = os.path.join(data_dir, f)
+                logging.debug(f"Found CSV file: {csv_file}")
+                break
+        if not csv_file or not os.path.exists(csv_file):
+            logging.error(f"Gap data file not found in directory: {data_dir}")
+            return jsonify({'error': 'Gap data file not found. Please contact support.'}), 404
         try:
-            df = pd.read_csv(GAP_DATA_PATH)
+            df = pd.read_csv(csv_file)
             logging.debug(f"Loaded gap data with shape: {df.shape}")
         except Exception as e:
-            logging.error(f"Error reading gap data file {os.path.abspath(GAP_DATA_PATH)}: {str(e)}")
+            logging.error(f"Error reading gap data file {csv_file}: {str(e)}")
             return jsonify({'error': f'Failed to load gap data: {str(e)}'}), 500
         if 'date' not in df.columns or 'gap_size_bin' not in df.columns or 'day_of_week' not in df.columns:
             logging.error("Invalid gap data format: missing required columns")

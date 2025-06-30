@@ -28,7 +28,7 @@
     <meta name="twitter:description" content="View 1-minute stock charts and analyze QQQ and Nasdaq gap dates from 2015 to 2025 for trading and investment insights.">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=12">
+    <link rel="stylesheet" href="/static/styles.css?v=13">
 </head>
 <body>
     <header>
@@ -98,6 +98,20 @@
         <h2>Expanding Soon: More Tickers and Insights</h2>
         <p>Stay tuned for enhanced historical stock data and trading tools for QQQ and Nasdaq 1-minute chart analysis from 2015 to 2025.</p>
     </footer>
-    <script src="/static/script.js?v=7"></script>
+    <script>
+        // Disable right-click without alert
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        // Disable text selection
+        document.addEventListener('selectstart', function(e) {
+            e.preventDefault();
+        });
+        // Disable drag-and-drop
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+        });
+    </script>
+    <script src="/static/script.js?v=9"></script>
 </body>
 </html>
