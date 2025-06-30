@@ -1,0 +1,14 @@
+2025-06-30 15:53:12,668 INFO: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-06-30 15:53:12,668 INFO: [33mPress CTRL+C to quit[0m
+2025-06-30 15:53:12,679 INFO:  * Restarting with watchdog (windowsapi)
+2025-06-30 15:53:13,700 WARNING:  * Debugger is active!
+2025-06-30 15:53:13,703 INFO:  * Debugger PIN: 529-116-453
+2025-06-30 15:53:14,710 DEBUG: Rendering index.html
+2025-06-30 15:53:14,726 INFO: 127.0.0.1 - - [30/Jun/2025 15:53:14] "GET / HTTP/1.1" 200 -
+2025-06-30 15:53:14,809 INFO: 127.0.0.1 - - [30/Jun/2025 15:53:14] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2025-06-30 15:53:14,997 INFO: 127.0.0.1 - - [30/Jun/2025 15:53:14] "[33mGET /api/tickers HTTP/1.1[0m" 404 -
+2025-06-30 15:53:21,955 DEBUG: Rendering index.html
+2025-06-30 15:53:21,956 INFO: 127.0.0.1 - - [30/Jun/2025 15:53:21] "GET / HTTP/1.1" 200 -
+2025-06-30 15:53:21,992 INFO: 127.0.0.1 - - [30/Jun/2025 15:53:21] "[36mGET /static/styles.css HTTP/1.1[0m" 304 -
+2025-06-30 15:53:22,092 INFO: 127.0.0.1 - - [30/Jun/2025 15:53:22] "[33mGET /api/tickers HTTP/1.1[0m" 404 -
