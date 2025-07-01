@@ -31,9 +31,10 @@ limiter = Limiter(
 )
 
 TICKERS = ['QQQ', 'AAPL', 'MSFT', 'TSLA', 'ORCL', 'NVDA', 'MSTR', 'UBER', 'PLTR', 'META']
-DB_DIR = "data/db"
+DB_DIR = os.path.join(os.path.dirname(__file__), "data", "db")
 GAP_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "qqq_central_data_updated.csv")
 EVENTS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "news_events.csv")
+EARNINGS_DATA_PATH = os.path.join("C:\\Users\\ASUS\\1MCHARTET\\data", "earnings_data.csv")
 
 VALID_TICKERS = []
 
@@ -170,7 +171,7 @@ def get_chart():
             return jsonify({'error': 'Failed to generate chart'}), 500
         return jsonify({'chart': f'data:image/png;base64,{img}'})
     except Exception as e:
-        logging.error(f"Unexpected error: {str(e)}")
+        logging.error(f"Unexpected error in get_chart: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/gaps', methods=['GET'])
@@ -294,6 +295,42 @@ def get_events():
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing events: {str(e)}")
+        return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/earnings', methods=['GET'])
+@limiter.limit("5 per hour")
+def get_earnings():
+    try:
+        ticker = request.args.get('ticker')
+        logging.debug(f"Fetching earnings for ticker={ticker}")
+        if not os.path.exists(EARNINGS_DATA_PATH):
+            logging.error(f"Earnings data file not found: {EARNINGS_DATA_PATH}")
+            return jsonify({'error': 'Earnings data file not found. Please contact support.'}), 404
+        try:
+            df = pd.read_csv(EARNINGS_DATA_PATH)
+            df['earnings_date'] = pd.to_datetime(df['earnings_date'])
+            logging.debug(f"Loaded earnings data with shape: {df.shape}")
+            logging.debug(f"Unique tickers: {df['ticker'].unique().tolist()}")
+        except Exception as e:
+            logging.error(f"Error reading earnings data file {EARNINGS_DATA_PATH}: {str(e)}")
+            return jsonify({'error': f'Failed to load earnings data: {str(e)}'}), 500
+        if 'ticker' not in df.columns or 'earnings_date' not in df.columns:
+            logging.error("Invalid earnings data format: missing required columns")
+            return jsonify({'error': 'Invalid earnings data format'}), 400
+        if ticker:
+            filtered_df = df[df['ticker'] == ticker]
+        else:
+            logging.error("No ticker provided for earnings query")
+            return jsonify({'error': 'Ticker is required'}), 400
+        dates = filtered_df['earnings_date'].dt.strftime('%Y-%m-%d').tolist()
+        logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
+        if not dates:
+            logging.debug(f"No earnings found for ticker={ticker}")
+            return jsonify({'dates': [], 'message': f'No earnings found for {ticker}'})
+        logging.debug(f"Found {len(dates)} earnings dates for ticker={ticker}")
+        return jsonify({'dates': sorted(dates)})
+    except Exception as e:
+        logging.error(f"Error processing earnings: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
 if __name__ == '__main__':

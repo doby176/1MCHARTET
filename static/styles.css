@@ -110,46 +110,46 @@ button:hover {
     display: block;
 }
 
-.gap-analysis, .events-analysis {
+.gap-analysis, .events-analysis, .earnings-analysis {
     margin-top: 20px;
 }
 
-.gap-analysis h2, .events-analysis h2 {
+.gap-analysis h2, .events-analysis h2, .earnings-analysis h2 {
     font-size: 1.5em;
     margin-bottom: 10px;
     text-align: center;
 }
 
-.gap-analysis p, .events-analysis p {
+.gap-analysis p, .events-analysis p, .earnings-analysis p {
     font-size: 1em;
     margin-bottom: 15px;
     text-align: center;
 }
 
-#gap-dates, #event-dates {
+#gap-dates, #event-dates, #earnings-dates {
     margin-top: 15px;
     text-align: center;
 }
 
-#gap-dates ul, #event-dates ul {
+#gap-dates ul, #event-dates ul, #earnings-dates ul {
     list-style: none;
     padding: 0;
     max-height: 200px;
     overflow-y: auto;
 }
 
-#gap-dates li, #event-dates li {
+#gap-dates li, #event-dates li, #earnings-dates li {
     padding: 5px 0;
     font-size: 0.9em;
 }
 
-#gap-dates a, #event-dates a {
+#gap-dates a, #event-dates a, #earnings-dates a {
     color: #3498db;
     text-decoration: none;
     cursor: pointer;
 }
 
-#gap-dates a:hover, #event-dates a:hover {
+#gap-dates a:hover, #event-dates a:hover, #earnings-dates a:hover {
     text-decoration: underline;
 }
 
@@ -228,23 +228,23 @@ button:hover {
         margin: 10px 0;
     }
 
-    .gap-analysis, .events-analysis {
+    .gap-analysis, .events-analysis, .earnings-analysis {
         padding: 10px;
     }
 
-    .gap-analysis h2, .events-analysis h2 {
+    .gap-analysis h2, .events-analysis h2, .earnings-analysis h2 {
         font-size: 1.2em;
     }
 
-    .gap-analysis p, .events-analysis p {
+    .gap-analysis p, .events-analysis p, .earnings-analysis p {
         font-size: 0.9em;
     }
 
-    #gap-dates ul, #event-dates ul {
+    #gap-dates ul, #event-dates ul, #earnings-dates ul {
         max-height: 150px; /* Smaller scrollable area for mobile */
     }
 
-    #gap-dates a, #event-dates a {
+    #gap-dates a, #event-dates a, #earnings-dates a {
         font-size: 0.85em;
     }
 

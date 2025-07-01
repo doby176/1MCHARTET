@@ -2,9 +2,11 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing app...');
     loadTickers();
     loadYears();
+    loadEarningsTickers();
     document.getElementById('stock-form').addEventListener('submit', loadChart);
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
     document.getElementById('events-form').addEventListener('submit', loadEventDates);
+    document.getElementById('earnings-form').addEventListener('submit', loadEarningsDates);
 });
 
 async function loadTickers() {
@@ -29,6 +31,30 @@ async function loadTickers() {
         console.error('Error loading tickers:', error);
         tickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
         alert('Failed to load tickers. Please refresh the page or try again later.');
+    }
+}
+
+async function loadEarningsTickers() {
+    const tickerSelect = document.getElementById('earnings-ticker-select');
+    tickerSelect.disabled = true;
+    tickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
+    try {
+        const response = await fetch('/api/tickers');
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        const data = await response.json();
+        console.log('Fetched tickers for earnings:', data.tickers);
+        tickerSelect.innerHTML = '<option value="">Select a ticker</option>';
+        data.tickers.forEach(ticker => {
+            const option = document.createElement('option');
+            option.value = ticker;
+            option.textContent = ticker;
+            tickerSelect.appendChild(option);
+        });
+        tickerSelect.disabled = false;
+    } catch (error) {
+        console.error('Error loading earnings tickers:', error);
+        tickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
+        alert('Failed to load earnings tickers. Please refresh the page or try again later.');
     }
 }
 
@@ -231,5 +257,60 @@ async function loadEventDates(event) {
     } catch (error) {
         console.error('Error loading event dates:', error);
         eventDatesContainer.innerHTML = '<p>Failed to load event dates. Please try again.</p>';
+    }
+}
+
+async function loadEarningsDates(event) {
+    event.preventDefault();
+    const ticker = document.getElementById('earnings-ticker-select').value;
+    const earningsDatesContainer = document.getElementById('earnings-dates');
+    if (!ticker) {
+        alert('Please select a ticker.');
+        return;
+    }
+    console.log(`Fetching earnings for ticker=${ticker}`);
+    earningsDatesContainer.innerHTML = '<p>Loading earnings dates...</p>';
+    try {
+        const response = await fetch(`/api/earnings?ticker=${encodeURIComponent(ticker)}`);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        const data = await response.json();
+        console.log('Earnings API response:', JSON.stringify(data, null, 2));
+        if (data.error) {
+            console.error('Error from earnings API:', data.error);
+            earningsDatesContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
+        if (!data.dates || data.dates.length === 0) {
+            console.log('No earnings dates found:', data.message || 'No dates returned');
+            earningsDatesContainer.innerHTML = `<p>${data.message || 'No earnings found for the selected ticker'}</p>`;
+            return;
+        }
+        console.log(`Rendering ${data.dates.length} earnings dates:`, data.dates);
+        const ul = document.createElement('ul');
+        data.dates.forEach(date => {
+            const li = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = date;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log(`Clicked earnings date: ${date}`);
+                document.getElementById('ticker-select').value = ticker;
+                document.getElementById('date').value = date;
+                loadChart(new Event('submit'));
+                gtag('event', 'earnings_date_click', {
+                    'event_category': 'Earnings Analysis',
+                    'event_label': `${ticker}_${date}`
+                });
+            });
+            li.appendChild(link);
+            ul.appendChild(li);
+        });
+        earningsDatesContainer.innerHTML = '';
+        earningsDatesContainer.appendChild(ul);
+        console.log('Earnings dates rendered successfully');
+    } catch (error) {
+        console.error('Error loading earnings dates:', error);
+        earningsDatesContainer.innerHTML = '<p>Failed to load earnings dates. Please try again.</p>';
     }
 }
