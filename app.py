@@ -16,7 +16,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 
-# Ensure static files are served with correct MIME type
 app.static_folder = os.path.join(os.path.dirname(__file__), 'static')
 
 limiter = Limiter(
