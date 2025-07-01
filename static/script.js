@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Initializing app...');
     loadTickers();
     loadYears();
     document.getElementById('stock-form').addEventListener('submit', loadChart);
@@ -73,12 +74,14 @@ async function loadChart(event) {
         alert('Please select a ticker and date.');
         return;
     }
+    console.log(`Loading chart for ticker=${ticker}, date=${date}`);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
-        const response = await fetch(`/api/stock/chart?ticker=${ticker}&date=${date}`);
+        const response = await fetch(`/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}`);
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
         if (data.error) {
+            console.error('Chart error:', data.error);
             chartContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
@@ -102,18 +105,26 @@ async function loadGapDates(event) {
     console.log(`Fetching gaps for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
     gapDatesContainer.innerHTML = '<p>Loading gap dates...</p>';
     try {
-        const response = await fetch(`/api/gaps?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`);
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        const encodedGapSize = encodeURIComponent(gapSize);
+        console.log(`Encoded gap_size: ${encodedGapSize}`);
+        const response = await fetch(`/api/gaps?gap_size=${encodedGapSize}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
         const data = await response.json();
+        console.log('Gap API response:', JSON.stringify(data, null, 2));
         if (data.error) {
-            console.error('Error from API:', data.error);
+            console.error('Error from gap API:', data.error);
             gapDatesContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
-        if (data.dates.length === 0) {
-            gapDatesContainer.innerHTML = `<p>${data.message}</p>`;
+        if (!data.dates || data.dates.length === 0) {
+            console.log('No gap dates found:', data.message || 'No dates returned');
+            gapDatesContainer.innerHTML = `<p>${data.message || 'No gaps found for the selected criteria'}</p>`;
             return;
         }
+        console.log(`Rendering ${data.dates.length} gap dates:`, data.dates);
         const ul = document.createElement('ul');
         data.dates.forEach(date => {
             const li = document.createElement('li');
@@ -122,6 +133,7 @@ async function loadGapDates(event) {
             link.textContent = date;
             link.addEventListener('click', (e) => {
                 e.preventDefault();
+                console.log(`Clicked gap date: ${date}`);
                 document.getElementById('ticker-select').value = 'QQQ';
                 document.getElementById('date').value = date;
                 loadChart(new Event('submit'));
@@ -135,6 +147,7 @@ async function loadGapDates(event) {
         });
         gapDatesContainer.innerHTML = '';
         gapDatesContainer.appendChild(ul);
+        console.log('Gap dates rendered successfully');
     } catch (error) {
         console.error('Error loading gap dates:', error);
         gapDatesContainer.innerHTML = '<p>Failed to load gap dates. Please try again.</p>';
@@ -180,15 +193,18 @@ async function loadEventDates(event) {
         const response = await fetch(`/api/events?event_type=${encodeURIComponent(eventType)}&year=${encodeURIComponent(year)}`);
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
+        console.log('Event API response:', JSON.stringify(data, null, 2));
         if (data.error) {
-            console.error('Error from API:', data.error);
+            console.error('Error from event API:', data.error);
             eventDatesContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
-        if (data.dates.length === 0) {
-            eventDatesContainer.innerHTML = `<p>${data.message}</p>`;
+        if (!data.dates || data.dates.length === 0) {
+            console.log('No event dates found:', data.message || 'No dates returned');
+            eventDatesContainer.innerHTML = `<p>${data.message || 'No events found for the selected criteria'}</p>`;
             return;
         }
+        console.log(`Rendering ${data.dates.length} event dates:`, data.dates);
         const ul = document.createElement('ul');
         data.dates.forEach(date => {
             const li = document.createElement('li');
@@ -197,6 +213,7 @@ async function loadEventDates(event) {
             link.textContent = date;
             link.addEventListener('click', (e) => {
                 e.preventDefault();
+                console.log(`Clicked event date: ${date}`);
                 document.getElementById('ticker-select').value = 'QQQ';
                 document.getElementById('date').value = date;
                 loadChart(new Event('submit'));
@@ -210,6 +227,7 @@ async function loadEventDates(event) {
         });
         eventDatesContainer.innerHTML = '';
         eventDatesContainer.appendChild(ul);
+        console.log('Event dates rendered successfully');
     } catch (error) {
         console.error('Error loading event dates:', error);
         eventDatesContainer.innerHTML = '<p>Failed to load event dates. Please try again.</p>';
