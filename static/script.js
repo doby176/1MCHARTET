@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     loadTickers();
+    loadYears();
     document.getElementById('stock-form').addEventListener('submit', loadChart);
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
+    document.getElementById('events-form').addEventListener('submit', loadEventDates);
 });
 
 async function loadTickers() {
@@ -91,15 +93,16 @@ async function loadGapDates(event) {
     event.preventDefault();
     const gapSize = document.getElementById('gap-size-select').value;
     const day = document.getElementById('day-select').value;
+    const gapDirection = document.getElementById('gap-direction-select').value;
     const gapDatesContainer = document.getElementById('gap-dates');
-    if (!gapSize || !day) {
-        alert('Please select a gap size and day of the week.');
+    if (!gapSize || !day || !gapDirection) {
+        alert('Please select a gap size, day of the week, and gap direction.');
         return;
     }
-    console.log(`Fetching gaps for gap_size=${gapSize}, day=${day}`);
+    console.log(`Fetching gaps for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
     gapDatesContainer.innerHTML = '<p>Loading gap dates...</p>';
     try {
-        const response = await fetch(`/api/gaps?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}`);
+        const response = await fetch(`/api/gaps?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`);
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
         if (data.error) {
@@ -121,10 +124,10 @@ async function loadGapDates(event) {
                 e.preventDefault();
                 document.getElementById('ticker-select').value = 'QQQ';
                 document.getElementById('date').value = date;
-                loadChart(new Event('submit')); // Trigger chart load
+                loadChart(new Event('submit'));
                 gtag('event', 'gap_date_click', {
                     'event_category': 'Gap Analysis',
-                    'event_label': `QQQ_${date}`
+                    'event_label': `QQQ_${date}_${gapDirection}`
                 });
             });
             li.appendChild(link);
@@ -135,5 +138,80 @@ async function loadGapDates(event) {
     } catch (error) {
         console.error('Error loading gap dates:', error);
         gapDatesContainer.innerHTML = '<p>Failed to load gap dates. Please try again.</p>';
+    }
+}
+
+async function loadYears() {
+    const yearSelect = document.getElementById('year-select');
+    yearSelect.disabled = true;
+    yearSelect.innerHTML = '<option value="">Loading years...</option>';
+    try {
+        const response = await fetch('/api/years');
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        const data = await response.json();
+        console.log('Fetched years:', data.years);
+        yearSelect.innerHTML = '<option value="">Select year</option>';
+        data.years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        });
+        yearSelect.disabled = false;
+    } catch (error) {
+        console.error('Error loading years:', error);
+        yearSelect.innerHTML = '<option value="">Error loading years</option>';
+        alert('Failed to load years. Please refresh the page or try again later.');
+    }
+}
+
+async function loadEventDates(event) {
+    event.preventDefault();
+    const eventType = document.getElementById('event-type-select').value;
+    const year = document.getElementById('year-select').value;
+    const eventDatesContainer = document.getElementById('event-dates');
+    if (!eventType || !year) {
+        alert('Please select an event type and year.');
+        return;
+    }
+    console.log(`Fetching events for event_type=${eventType}, year=${year}`);
+    eventDatesContainer.innerHTML = '<p>Loading event dates...</p>';
+    try {
+        const response = await fetch(`/api/events?event_type=${encodeURIComponent(eventType)}&year=${encodeURIComponent(year)}`);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        const data = await response.json();
+        if (data.error) {
+            console.error('Error from API:', data.error);
+            eventDatesContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
+        if (data.dates.length === 0) {
+            eventDatesContainer.innerHTML = `<p>${data.message}</p>`;
+            return;
+        }
+        const ul = document.createElement('ul');
+        data.dates.forEach(date => {
+            const li = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = date;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('ticker-select').value = 'QQQ';
+                document.getElementById('date').value = date;
+                loadChart(new Event('submit'));
+                gtag('event', 'event_date_click', {
+                    'event_category': 'Events Analysis',
+                    'event_label': `QQQ_${date}_${eventType}`
+                });
+            });
+            li.appendChild(link);
+            ul.appendChild(li);
+        });
+        eventDatesContainer.innerHTML = '';
+        eventDatesContainer.appendChild(ul);
+    } catch (error) {
+        console.error('Error loading event dates:', error);
+        eventDatesContainer.innerHTML = '<p>Failed to load event dates. Please try again.</p>';
     }
 }

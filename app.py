@@ -16,6 +16,9 @@ logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 
+# Ensure static files are served with correct MIME type
+app.static_folder = os.path.join(os.path.dirname(__file__), 'static')
+
 limiter = Limiter(
     get_remote_address,
     app=app,
@@ -30,6 +33,7 @@ limiter = Limiter(
 TICKERS = ['QQQ', 'AAPL', 'MSFT', 'TSLA', 'ORCL', 'NVDA', 'MSTR', 'UBER', 'PLTR', 'META']
 DB_DIR = "data/db"
 GAP_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "qqq_central_data_updated.csv")
+EVENTS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "news_events.csv")
 
 VALID_TICKERS = []
 
@@ -175,7 +179,8 @@ def get_gaps():
     try:
         gap_size = request.args.get('gap_size')
         day = request.args.get('day')
-        logging.debug(f"Fetching gaps for gap_size={gap_size}, day={day}")
+        gap_direction = request.args.get('gap_direction')
+        logging.debug(f"Fetching gaps for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
         data_dir = os.path.join(os.path.dirname(__file__), "data")
         logging.debug(f"Checking data directory: {data_dir}")
         if os.path.exists(data_dir):
@@ -195,21 +200,100 @@ def get_gaps():
         try:
             df = pd.read_csv(csv_file)
             logging.debug(f"Loaded gap data with shape: {df.shape}")
+            logging.debug(f"Unique gap_size_bin values: {df['gap_size_bin'].unique().tolist()}")
+            logging.debug(f"Unique day_of_week values: {df['day_of_week'].unique().tolist()}")
+            logging.debug(f"Unique gap_direction values: {df['gap_direction'].unique().tolist()}")
         except Exception as e:
             logging.error(f"Error reading gap data file {csv_file}: {str(e)}")
             return jsonify({'error': f'Failed to load gap data: {str(e)}'}), 500
-        if 'date' not in df.columns or 'gap_size_bin' not in df.columns or 'day_of_week' not in df.columns:
+        if 'date' not in df.columns or 'gap_size_bin' not in df.columns or 'day_of_week' not in df.columns or 'gap_direction' not in df.columns:
             logging.error("Invalid gap data format: missing required columns")
             return jsonify({'error': 'Invalid gap data format'}), 400
-        filtered_df = df[(df['gap_size_bin'] == gap_size) & (df['day_of_week'] == day)]
+        filtered_df = df[
+            (df['gap_size_bin'] == gap_size) &
+            (df['day_of_week'] == day) &
+            (df['gap_direction'] == gap_direction)
+        ]
         dates = filtered_df['date'].tolist()
+        logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
         if not dates:
-            logging.debug(f"No gaps found for gap_size={gap_size}, day={day}")
+            logging.debug(f"No gaps found for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
             return jsonify({'dates': [], 'message': 'No gaps found for the selected criteria'})
-        logging.debug(f"Found {len(dates)} gap dates for gap_size={gap_size}, day={day}")
+        logging.debug(f"Found {len(dates)} gap dates for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing gaps: {str(e)}")
+        return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/years', methods=['GET'])
+@limiter.limit("5 per hour")
+def get_years():
+    try:
+        logging.debug("Fetching unique years from news_events.csv")
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        csv_file = os.path.join(data_dir, "news_events.csv")
+        if not os.path.exists(csv_file):
+            logging.error(f"Events data file not found: {csv_file}")
+            return jsonify({'error': 'Events data file not found. Please contact support.'}), 404
+        try:
+            df = pd.read_csv(csv_file)
+            logging.debug(f"Loaded events data with shape: {df.shape}")
+            if 'date' not in df.columns:
+                logging.error("Invalid events data format: missing 'date' column")
+                return jsonify({'error': 'Invalid events data format'}), 400
+            df['date'] = pd.to_datetime(df['date'])
+            years = sorted(df['date'].dt.year.unique().tolist())
+            logging.debug(f"Found years: {years}")
+            return jsonify({'years': years})
+        except Exception as e:
+            logging.error(f"Error reading events data file {csv_file}: {str(e)}")
+            return jsonify({'error': f'Failed to load events data: {str(e)}'}), 500
+    except Exception as e:
+        logging.error(f"Error fetching years: {str(e)}")
+        return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/events', methods=['GET'])
+@limiter.limit("5 per hour")
+def get_events():
+    try:
+        event_type = request.args.get('event_type')
+        year = request.args.get('year')
+        logging.debug(f"Fetching events for event_type={event_type}, year={year}")
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        csv_file = os.path.join(data_dir, "news_events.csv")
+        if not os.path.exists(csv_file):
+            logging.error(f"Events data file not found: {csv_file}")
+            return jsonify({'error': 'Events data file not found. Please contact support.'}), 404
+        try:
+            df = pd.read_csv(csv_file)
+            logging.debug(f"Loaded events data with shape: {df.shape}")
+            logging.debug(f"Unique event_type values: {df['event_type'].unique().tolist()}")
+        except Exception as e:
+            logging.error(f"Error reading events data file {csv_file}: {str(e)}")
+            return jsonify({'error': f'Failed to load events data: {str(e)}'}), 500
+        if 'date' not in df.columns or 'event_type' not in df.columns:
+            logging.error("Invalid events data format: missing required columns")
+            return jsonify({'error': 'Invalid events data format'}), 400
+        df['date'] = pd.to_datetime(df['date'])
+        filtered_df = df
+        if event_type:
+            filtered_df = filtered_df[filtered_df['event_type'] == event_type]
+        if year:
+            try:
+                year = int(year)
+                filtered_df = filtered_df[filtered_df['date'].dt.year == year]
+            except ValueError:
+                logging.error(f"Invalid year format: {year}")
+                return jsonify({'error': 'Invalid year format'}), 400
+        dates = filtered_df['date'].dt.strftime('%Y-%m-%d').tolist()
+        logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
+        if not dates:
+            logging.debug(f"No events found for event_type={event_type}, year={year}")
+            return jsonify({'dates': [], 'message': 'No events found for the selected criteria'})
+        logging.debug(f"Found {len(dates)} event dates for event_type={event_type}, year={year}")
+        return jsonify({'dates': sorted(dates)})
+    except Exception as e:
+        logging.error(f"Error processing events: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
 if __name__ == '__main__':

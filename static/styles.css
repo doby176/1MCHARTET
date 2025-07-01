@@ -74,49 +74,82 @@ button:hover {
     min-height: 100px; /* Ensure space for ad */
 }
 
-.gap-analysis {
-    margin-top: 20px;
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    background-color: #e0e0e0;
+    cursor: pointer;
+    border-radius: 4px 4px 0 0;
+    margin: 0 5px;
+}
+
+.tab-button.active {
+    background-color: #3498db;
+    color: white;
+}
+
+.tab-button:hover {
+    background-color: #cccccc;
+}
+
+.tab-content {
+    display: none;
     padding: 20px;
     background: #f9f9f9;
     border-radius: 8px;
 }
 
-.gap-analysis h2 {
+.tab-content.active {
+    display: block;
+}
+
+.gap-analysis, .events-analysis {
+    margin-top: 20px;
+}
+
+.gap-analysis h2, .events-analysis h2 {
     font-size: 1.5em;
     margin-bottom: 10px;
     text-align: center;
 }
 
-.gap-analysis p {
+.gap-analysis p, .events-analysis p {
     font-size: 1em;
     margin-bottom: 15px;
     text-align: center;
 }
 
-#gap-dates {
+#gap-dates, #event-dates {
     margin-top: 15px;
     text-align: center;
 }
 
-#gap-dates ul {
+#gap-dates ul, #event-dates ul {
     list-style: none;
     padding: 0;
     max-height: 200px;
     overflow-y: auto;
 }
 
-#gap-dates li {
+#gap-dates li, #event-dates li {
     padding: 5px 0;
     font-size: 0.9em;
 }
 
-#gap-dates a {
+#gap-dates a, #event-dates a {
     color: #3498db;
     text-decoration: none;
     cursor: pointer;
 }
 
-#gap-dates a:hover {
+#gap-dates a:hover, #event-dates a:hover {
     text-decoration: underline;
 }
 
@@ -172,6 +205,16 @@ button:hover {
         margin: 0 auto; /* Center button */
     }
 
+    .tabs {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .tab-button {
+        font-size: 14px;
+        padding: 8px;
+    }
+
     header {
         padding: 10px; /* Reduced header padding */
     }
@@ -185,23 +228,23 @@ button:hover {
         margin: 10px 0;
     }
 
-    .gap-analysis {
+    .gap-analysis, .events-analysis {
         padding: 10px;
     }
 
-    .gap-analysis h2 {
+    .gap-analysis h2, .events-analysis h2 {
         font-size: 1.2em;
     }
 
-    .gap-analysis p {
+    .gap-analysis p, .events-analysis p {
         font-size: 0.9em;
     }
 
-    #gap-dates ul {
+    #gap-dates ul, #event-dates ul {
         max-height: 150px; /* Smaller scrollable area for mobile */
     }
 
-    #gap-dates a {
+    #gap-dates a, #event-dates a {
         font-size: 0.85em;
     }
 

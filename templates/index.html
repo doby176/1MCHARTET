@@ -13,27 +13,27 @@
     </script>
     <meta name="google-adsense-account" content="ca-pub-9416785017460416">
     <title>1-Minute Stock Charts - Historical Data for QQQ, AAPL, MSFT & More</title>
-    <meta name="description" content="Explore historical 1-minute stock charts for QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META from 2015 to 2025. Analyze price action for QQQ and Nasdaq gaps with our interactive gap analysis tool.">
-    <meta name="keywords" content="stock charts, 1-minute charts, QQQ, Nasdaq, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META, historical stock data, stock market analysis, trading, investment, gap analysis, price action">
+    <meta name="description" content="Explore historical 1-minute stock charts for QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META from 2015 to 2025. Analyze price action for QQQ and Nasdaq gaps and economic events (CPI, PPI, FOMC, NFP) with our interactive tools.">
+    <meta name="keywords" content="stock charts, 1-minute charts, QQQ, Nasdaq, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META, historical stock data, stock market analysis, trading, investment, gap analysis, CPI, PPI, FOMC, NFP, economic events">
     <meta name="author" content="1MChart">
     <meta name="robots" content="index, follow">
     <!-- Open Graph for social media -->
     <meta property="og:title" content="1-Minute Stock Charts - Historical Data for QQQ, AAPL, MSFT & More">
-    <meta property="og:description" content="View 1-minute stock charts and analyze QQQ and Nasdaq gap dates from 2015 to 2025 for trading and investment insights.">
+    <meta property="og:description" content="View 1-minute stock charts and analyze QQQ and Nasdaq gap and event dates from 2015 to 2025 for trading and investment insights.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://onemchart.onrender.com">
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="1-Minute Stock Charts - Historical Data for QQQ, AAPL, MSFT & More">
-    <meta name="twitter:description" content="View 1-minute stock charts and analyze QQQ and Nasdaq gap dates from 2015 to 2025 for trading and investment insights.">
+    <meta name="twitter:description" content="View 1-minute stock charts and analyze QQQ and Nasdaq gap and event dates from 2015 to 2025 for trading and investment insights.">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=13">
+    <link rel="stylesheet" href="/static/styles.css?v=15">
 </head>
 <body>
     <header>
         <h1>Historical 1-Minute Stock Charts: 10 Years of Data for QQQ, AAPL & More</h1>
-        <p>Analyze historical 1-minute stock charts and QQQ gap data from 2015 to 2025 for trading and investment insights.</p>
+        <p>Analyze historical 1-minute stock charts and QQQ gap and event data from 2015 to 2025 for trading and investment insights.</p>
     </header>
     <main>
         <div class="card">
@@ -49,8 +49,13 @@
             <div id="chart-container">
                 <p>Select a ticker and date to load the chart.</p>
             </div>
-            <!-- Gap Analysis Section -->
-            <div class="gap-analysis">
+            <!-- Tabbed Interface -->
+            <div class="tabs">
+                <button class="tab-button active" onclick="openTab('gap-analysis')">QQQ Gap Analysis</button>
+                <button class="tab-button" onclick="openTab('events-analysis')">Events Analysis</button>
+            </div>
+            <!-- QQQ Gap Analysis Section -->
+            <div id="gap-analysis" class="tab-content active">
                 <h2>QQQ Gap Analysis</h2>
                 <p>Find dates for gaps to analyze the price action on the 1-minute chart for both QQQ and Nasdaq trends. Click a date to view its chart.</p>
                 <form id="gap-form">
@@ -72,10 +77,39 @@
                         <option value="Thursday">Thursday</option>
                         <option value="Friday">Friday</option>
                     </select>
+                    <label for="gap-direction-select">Select Gap Direction:</label>
+                    <select id="gap-direction-select" name="gap_direction">
+                        <option value="">Select gap direction</option>
+                        <option value="up">Gap Up</option>
+                        <option value="down">Gap Down</option>
+                    </select>
                     <button type="submit">Find Gap Dates</button>
                 </form>
                 <div id="gap-dates">
-                    <p>Select a gap size and day to view dates with gaps.</p>
+                    <p>Select a gap size, day, and direction to view dates with gaps.</p>
+                </div>
+            </div>
+            <!-- Events Analysis Section -->
+            <div id="events-analysis" class="tab-content">
+                <h2>Events Analysis</h2>
+                <p>Find dates for economic events (CPI, PPI, FOMC, NFP) to analyze QQQ price action on the 1-minute chart. Click a date to view its chart.</p>
+                <form id="events-form">
+                    <label for="event-type-select">Select Event Type:</label>
+                    <select id="event-type-select" name="event_type">
+                        <option value="">Select event type</option>
+                        <option value="CPI">CPI</option>
+                        <option value="PPI">PPI</option>
+                        <option value="FOMC">FOMC</option>
+                        <option value="NFP">NFP</option>
+                    </select>
+                    <label for="year-select">Select Year:</label>
+                    <select id="year-select" name="year">
+                        <option value="">Select year</option>
+                    </select>
+                    <button type="submit">Find Event Dates</button>
+                </form>
+                <div id="event-dates">
+                    <p>Select an event type and year to view dates with events.</p>
                 </div>
             </div>
             <!-- AdSense Ad Unit -->
@@ -111,7 +145,18 @@
         document.addEventListener('dragstart', function(e) {
             e.preventDefault();
         });
+        // Tab switching function
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
+        }
     </script>
-    <script src="/static/script.js?v=9"></script>
+    <script src="/static/script.js?v=12"></script>
 </body>
 </html>
