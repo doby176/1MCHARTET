@@ -34,7 +34,7 @@ TICKERS = ['QQQ', 'AAPL', 'MSFT', 'TSLA', 'ORCL', 'NVDA', 'MSTR', 'UBER', 'PLTR'
 DB_DIR = os.path.join(os.path.dirname(__file__), "data", "db")
 GAP_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "qqq_central_data_updated.csv")
 EVENTS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "news_events.csv")
-EARNINGS_DATA_PATH = os.path.join("C:\\Users\\ASUS\\1MCHARTET\\data", "earnings_data.csv")
+EARNINGS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "earnings_data.csv")
 
 VALID_TICKERS = []
 
