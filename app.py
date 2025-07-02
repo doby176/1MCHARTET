@@ -25,7 +25,7 @@ limiter = Limiter(
     storage_uri="memory://",
     headers_enabled=True,
     on_breach=lambda request_limit: jsonify({
-        'error': 'Rate limit exceeded: 5 requests per hour allowed. Please wait and try again.'
+        'error': 'Rate limit exceeded: 5 requests per hour allowed. Please try again.'
     }, 429)
 )
 
@@ -223,6 +223,79 @@ def get_gaps():
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing gaps: {str(e)}")
+        return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/gap_insights', methods=['GET'])
+@limiter.limit("5 per hour")
+def get_gap_insights():
+    try:
+        gap_size = request.args.get('gap_size')
+        day = request.args.get('day')
+        gap_direction = request.args.get('gap_direction')
+        logging.debug(f"Fetching gap insights for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
+
+        # Check if data directory and CSV file exist
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        csv_file = GAP_DATA_PATH
+        if not os.path.exists(csv_file):
+            logging.error(f"Gap data file not found: {csv_file}")
+            return jsonify({'error': 'Gap data file not found. Please contact support.'}), 404
+
+        # Load CSV data
+        try:
+            df = pd.read_csv(csv_file)
+            logging.debug(f"Loaded gap data with shape: {df.shape}")
+        except Exception as e:
+            logging.error(f"Error reading gap data file {csv_file}: {str(e)}")
+            return jsonify({'error': f'Failed to load gap data: {str(e)}'}), 500
+
+        # Validate required columns
+        required_columns = ['gap_size_bin', 'day_of_week', 'gap_direction', 'filled', 
+                           'move_before_reversal_fill_direction_pct', 'max_move_gap_direction_first_30min_pct']
+        if not all(col in df.columns for col in required_columns):
+            logging.error("Invalid gap data format: missing required columns")
+            return jsonify({'error': 'Invalid gap data format'}), 400
+
+        # Filter data based on parameters
+        filtered_df = df[
+            (df['gap_size_bin'] == gap_size) &
+            (df['day_of_week'] == day) &
+            (df['gap_direction'] == gap_direction)
+        ]
+        logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
+
+        if filtered_df.empty:
+            logging.debug(f"No data found for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
+            return jsonify({'insights': {}, 'message': 'No data found for the selected criteria'})
+
+        # Calculate statistics
+        gap_fill_rate = filtered_df['filled'].mean() * 100  # Proportion of filled gaps as percentage
+        filled_df = filtered_df[filtered_df['filled'] == True]
+        unfilled_df = filtered_df[filtered_df['filled'] == False]
+
+        insights = {
+            'gap_fill_rate': {
+                'median': round(gap_fill_rate, 2),
+                'average': round(gap_fill_rate, 2),
+                'description': '% of time the price closes the gap'
+            },
+            'median_move_before_fill': {
+                'median': round(filled_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filled_df.empty else 0,
+                'average': round(filled_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filled_df.empty else 0,
+                'description': 'Average % move before the price fills the gap'
+            },
+            'median_max_move_unfilled': {
+                'median': round(unfilled_df['max_move_gap_direction_first_30min_pct'].median(), 2) if not unfilled_df.empty else 0,
+                'average': round(unfilled_df['max_move_gap_direction_first_30min_pct'].mean(), 2) if not unfilled_df.empty else 0,
+                'description': '% move in gap direction in first 30 minutes when the price does not close the gap'
+            },
+            'sample_size': len(filtered_df)
+        }
+        logging.debug(f"Computed insights: {insights}")
+        return jsonify({'insights': insights})
+
+    except Exception as e:
+        logging.error(f"Error processing gap insights: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/years', methods=['GET'])

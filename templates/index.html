@@ -28,13 +28,13 @@
     <meta name="twitter:description" content="Master day trading with 1-minute stock charts for QQQ, AAPL, MSFT, and more. Analyze intraday price action for QQQ gaps, earnings, and news events (CPI, PPI, FOMC, NFP) from 2015 to 2025.">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=20">
+    <link rel="stylesheet" href="/static/styles.css?v=21">
 </head>
 <body>
     <header>
-        <h1>Study past price action behavior to know what to expect in the future</h1>
+        <h1>Study QQQ NASDAQ Past Price Action Behavior To Know What To Expect In The Future</h1>
         <div class="seo-description">
-            <p>Master intraday trading with historical 1-minute stock charts for QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, and META from 2015 to 2025. Unlike daily candles, our unique 1-minute data lets you study price action for QQQ gaps, earnings reactions, and key news events (CPI, PPI, FOMC, NFP) to refine your trading strategies. <strong>Look to the left to know the right.</strong></p>
+            <p>Master intraday trading with historical 1-minute stock charts for QQQ, NVDA, TSLA and more tickers from 2015 to 2025. Unlike daily candles, our unique 1-minute data lets you study price action for QQQ gaps, earnings reactions, and key news events (CPI, PPI, FOMC, NFP) to refine your trading strategies. <strong>Look to the left to know the right.</strong></p>
         </div>
     </header>
     <main>
@@ -54,8 +54,10 @@
             <!-- Tabbed Interface -->
             <div class="tabs">
                 <button class="tab-button active" onclick="openTab('gap-analysis')">QQQ Gap Analysis</button>
+                <button class="tab-button" onclick="openTab('gap-insights')">QQQ Gap Insights</button>
                 <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
                 <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
+                
             </div>
             <!-- QQQ Gap Analysis Section -->
             <div id="gap-analysis" class="tab-content active">
@@ -130,6 +132,41 @@
                     <p>Select a ticker to view earnings dates.</p>
                 </div>
             </div>
+            <!-- Gap Insights Section -->
+            <div id="gap-insights" class="tab-content">
+                <h2>Gap Insights</h2>
+                <p>Analyze statistical insights for QQQ gaps, including gap fill rate, median move before filling, and maximum move when unfilled, to understand price action patterns.</p>
+                <form id="gap-insights-form">
+                    <label for="gap-insights-size-select">Select Gap Size Bin:</label>
+                    <select id="gap-insights-size-select" name="gap_size">
+                        <option value="">Select gap size</option>
+                        <option value="0.15-0.35%">0.15-0.35%</option>
+                        <option value="0.35-0.5%">0.35-0.5%</option>
+                        <option value="0.5-1%">0.5-1%</option>
+                        <option value="1-1.5%">1-1.5%</option>
+                        <option value="1.5%+">1.5%+</option>
+                    </select>
+                    <label for="gap-insights-day-select">Select Day of Week:</label>
+                    <select id="gap-insights-day-select" name="day">
+                        <option value="">Select day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                    <label for="gap-insights-direction-select">Select Gap Direction:</label>
+                    <select id="gap-insights-direction-select" name="gap_direction">
+                        <option value="">Select gap direction</option>
+                        <option value="up">Gap Up</option>
+                        <option value="down">Gap Down</option>
+                    </select>
+                    <button type="submit">Get Insights</button>
+                </form>
+                <div id="gap-insights-results">
+                    <p>Select a gap size, day, and direction to view statistical insights.</p>
+                </div>
+            </div>
             <!-- AdSense Ad Unit -->
             <div class="ads-container">
                 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
@@ -149,7 +186,7 @@
     <footer class="footer">
         <h2>More Tools for Day Traders Coming Soon</h2>
         <p>Stay tuned for expanded 1-minute chart data and advanced trading tools to study QQQ gaps, earnings, and news events from 2015 to 2025.</p>
-        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site.</p>
+        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site, the financial information provided is for informational purposes only and does not constitute financial advice.</p>
     </footer>
     <script>
         // Disable right-click without alert
@@ -176,6 +213,6 @@
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
     </script>
-    <script src="/static/script.js?v=15"></script>
+    <script src="/static/script.js?v=16"></script>
 </body>
 </html>

@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
     document.getElementById('events-form').addEventListener('submit', loadEventDates);
     document.getElementById('earnings-form').addEventListener('submit', loadEarningsDates);
+    document.getElementById('gap-insights-form').addEventListener('submit', loadGapInsights);
 });
 
 async function loadTickers() {
@@ -312,5 +313,65 @@ async function loadEarningsDates(event) {
     } catch (error) {
         console.error('Error loading earnings dates:', error);
         earningsDatesContainer.innerHTML = '<p>Failed to load earnings dates. Please try again.</p>';
+    }
+}
+
+async function loadGapInsights(event) {
+    event.preventDefault();
+    const gapSize = document.getElementById('gap-insights-size-select').value;
+    const day = document.getElementById('gap-insights-day-select').value;
+    const gapDirection = document.getElementById('gap-insights-direction-select').value;
+    const insightsContainer = document.getElementById('gap-insights-results');
+    
+    if (!gapSize || !day || !gapDirection) {
+        alert('Please select a gap size, day of the week, and gap direction.');
+        return;
+    }
+    
+    console.log(`Fetching gap insights for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
+    insightsContainer.innerHTML = '<p>Loading gap insights...</p>';
+    
+    try {
+        const encodedGapSize = encodeURIComponent(gapSize);
+        const response = await fetch(`/api/gap_insights?gap_size=${encodedGapSize}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Gap Insights API response:', JSON.stringify(data, null, 2));
+        
+        if (data.error) {
+            console.error('Error from gap insights API:', data.error);
+            insightsContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
+        
+        if (!data.insights || Object.keys(data.insights).length === 0) {
+            console.log('No insights found:', data.message || 'No data returned');
+            insightsContainer.innerHTML = `<p>${data.message || 'No insights found for the selected criteria'}</p>`;
+            return;
+        }
+        
+        console.log(`Rendering gap insights:`, data.insights);
+        const insightsDiv = document.createElement('div');
+        insightsDiv.innerHTML = `
+            <h3>Gap Statistics </h3>
+            <p><strong>Gap Fill Rate:</strong> Median: ${data.insights.gap_fill_rate.median}% (Average: ${data.insights.gap_fill_rate.average}%) - ${data.insights.gap_fill_rate.description}</p>
+            <p><strong>Median Move In Gap Diraction Before Fill :</strong> Median: ${data.insights.median_move_before_fill.median}% (Average: ${data.insights.median_move_before_fill.average}%) - ${data.insights.median_move_before_fill.description}</p>
+            <p><strong>Median Max Move Unfilled Gaps :</strong> Median: ${data.insights.median_max_move_unfilled.median}% (Average: ${data.insights.median_max_move_unfilled.average}%) - ${data.insights.median_max_move_unfilled.description}</p>
+        `;
+        insightsContainer.innerHTML = '';
+        insightsContainer.appendChild(insightsDiv);
+        
+        gtag('event', 'gap_insights_view', {
+            'event_category': 'Gap Insights',
+            'event_label': `QQQ_${gapSize}_${day}_${gapDirection}`
+        });
+        
+        console.log('Gap insights rendered successfully');
+    } catch (error) {
+        console.error('Error loading gap insights:', error);
+        insightsContainer.innerHTML = '<p>Failed to load gap insights. Please try again.</p>';
     }
 }
