@@ -277,7 +277,7 @@ async function loadEarningsDates(event) {
         const data = await response.json();
         console.log('Earnings API response:', JSON.stringify(data, null, 2));
         if (data.error) {
-            console.error('Error from earnings API:', data.error);
+            console.error('Error from earnings APIaline:', data.error);
             earningsDatesContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
@@ -354,12 +354,13 @@ async function loadGapInsights(event) {
         }
         
         console.log(`Rendering gap insights:`, data.insights);
+        const medianExplanation = "The median is used instead of the average because it is less affected by extreme values, providing a more robust measure of typical price behavior.";
         const insightsDiv = document.createElement('div');
         insightsDiv.innerHTML = `
-            <h3>Gap Statistics </h3>
-            <p><strong>Gap Fill Rate:</strong> Median: ${data.insights.gap_fill_rate.median}% (Average: ${data.insights.gap_fill_rate.average}%) - ${data.insights.gap_fill_rate.description}</p>
-            <p><strong>Median Move In Gap Diraction Before Fill :</strong> Median: ${data.insights.median_move_before_fill.median}% (Average: ${data.insights.median_move_before_fill.average}%) - ${data.insights.median_move_before_fill.description}</p>
-            <p><strong>Median Max Move Unfilled Gaps :</strong> Median: ${data.insights.median_max_move_unfilled.median}% (Average: ${data.insights.median_max_move_unfilled.average}%) - ${data.insights.median_max_move_unfilled.description}</p>
+            <h3>Gap Statistics</h3>
+            <p><strong>Gap Fill Rate:</strong> <span title="${medianExplanation}">Median</span>: ${data.insights.gap_fill_rate.median}% (Average: ${data.insights.gap_fill_rate.average}%) - ${data.insights.gap_fill_rate.description}</p>
+            <p><strong><span title="${medianExplanation}">Median</span> Move In Gap Direction Before Fill:</strong> <span title="${medianExplanation}">Median</span>: ${data.insights.median_move_before_fill.median}% (Average: ${data.insights.median_move_before_fill.average}%) - ${data.insights.median_move_before_fill.description}</p>
+            <p><strong><span title="${medianExplanation}">Median</span> Max Move Unfilled Gaps:</strong> <span title="${medianExplanation}">Median</span>: ${data.insights.median_max_move_unfilled.median}% (Average: ${data.insights.median_max_move_unfilled.average}%) - ${data.insights.median_max_move_unfilled.description}</p>
         `;
         insightsContainer.innerHTML = '';
         insightsContainer.appendChild(insightsDiv);
