@@ -24,8 +24,8 @@ app.config['SESSION_FILE_DIR'] = os.path.join(os.path.dirname(__file__), 'sessio
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key-12345')
-app.config['SESSION_COOKIE_NAME'] = 'onemchart_session'  # Explicitly set session cookie name
-app.config['SESSION_COOKIE_SECURE'] = True  # Use secure cookies in production
+app.config['SESSION_COOKIE_NAME'] = 'onemchart_session'
+app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
@@ -72,7 +72,7 @@ def get_db_path(ticker):
         logging.error(f"Invalid ticker requested: {ticker}")
         return None
     db_path = os.path.join(DB_DIR, f"stock_data_{ticker.lower()}.db")
-    logging.debug(f"Checking database path for {ticker}: {db_path}")
+    logging.debug(f"Checking database path for { ticker}: {db_path}")
     return db_path
 
 def initialize_tickers():
@@ -272,9 +272,11 @@ def get_gap_insights():
         except Exception as e:
             logging.error(f"Error reading gap data file {GAP_DATA_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load gap data: {str(e)}'}), 500
-        required_columns = ['gap_size_bin', 'day_of_week', 'gap_direction', 'filled', 
-                           'move_before_reversal_fill_direction_pct', 'max_move_gap_direction_first_30min_pct',
-                           'time_of_low', 'time_of_high']
+        required_columns = [
+            'gap_size_bin', 'day_of_week', 'gap_direction', 'filled',
+            'move_before_reversal_fill_direction_pct', 'max_move_gap_direction_first_30min_pct',
+            'time_of_low', 'time_of_high', 'reversal_after_fill', 'time_to_fill_minutes'
+        ]
         if not all(col in df.columns for col in required_columns):
             logging.error("Invalid gap data format: missing required columns")
             return jsonify({'error': 'Invalid gap data format'}), 400
@@ -293,10 +295,16 @@ def get_gap_insights():
         filled_df = filtered_df[filtered_df['filled'] == True]
         unfilled_df = filtered_df[filtered_df['filled'] == False]
 
+        # Calculate reversal after fill rate
+        reversal_after_fill_rate = filtered_df['reversal_after_fill'].mean() * 100 if not filtered_df.empty else 0
+
+        # Calculate median and average time to fill in minutes
+        median_time_to_fill = filled_df['time_to_fill_minutes'].median() if not filled_df.empty else 0
+        average_time_to_fill = filled_df['time_to_fill_minutes'].mean() if not filled_df.empty else 0
+
         # Convert time_of_low and time_of_high to datetime.time for median/average calculation
         def time_to_minutes(t):
             try:
-                # Parse time string (e.g., '09:30:00' or '09:30') to minutes since midnight
                 h, m = map(int, t.split(':')[:2])
                 return h * 60 + m
             except:
@@ -335,6 +343,11 @@ def get_gap_insights():
                 'average': round(unfilled_df['max_move_gap_direction_first_30min_pct'].mean(), 2) if not unfilled_df.empty else 0,
                 'description': '% move in gap direction when price does not close the gap'
             },
+            'median_time_to_fill': {
+                'median': round(median_time_to_fill, 2) if not pd.isna(median_time_to_fill) else 0,
+                'average': round(average_time_to_fill, 2) if not pd.isna(average_time_to_fill) else 0,
+                'description': 'Median time in minutes to fill gap'
+            },
             'median_time_of_low': {
                 'median': minutes_to_time(median_low_minutes),
                 'average': minutes_to_time(average_low_minutes),
@@ -344,6 +357,16 @@ def get_gap_insights():
                 'median': minutes_to_time(median_high_minutes),
                 'average': minutes_to_time(average_high_minutes),
                 'description': 'Median time of the day’s high'
+            },
+            'reversal_after_fill_rate': {
+                'median': round(reversal_after_fill_rate, 2),
+                'average': round(reversal_after_fill_rate, 2),
+                'description': '% of time price reverses after gap is filled'
+            },
+            'median_move_before_reversal': {
+                'median': round(filtered_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filtered_df.empty else 0,
+                'average': round(filtered_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filtered_df.empty else 0,
+                'description': 'Median move in gap fill direction before reversal'
             }
         }
         logging.debug(f"Computed insights: {insights}")

@@ -418,11 +418,10 @@ async function loadGapInsights(event) {
                 <div class="insight-metric">
                     <div class="metric-name">Gap Fill Rate</div>
                     <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.gap_fill_rate.median}%</div>
-                    <div class="metric-average">Average: ${data.insights.gap_fill_rate.average}%</div>
                     <div class="metric-description">Percentage of gaps that close</div>
                 </div>
                 <div class="insight-metric">
-                    <div class="metric-name">Median Move Before Fill</div>
+                    <div class="metric-name">Median Move In Gap Diraction Before Fill</div>
                     <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_move_before_fill.median}%</div>
                     <div class="metric-average">Average: ${data.insights.median_move_before_fill.average}%</div>
                     <div class="metric-description">Percentage move before gap closes</div>
@@ -433,19 +432,38 @@ async function loadGapInsights(event) {
                     <div class="metric-average">Average: ${data.insights.median_max_move_unfilled.average}%</div>
                     <div class="metric-description">% move in gap direction when price does not close the gap</div>
                 </div>
+                <div class="insight-metric">
+                    <div class="metric-name">Median Time to Fill Gap</div>
+                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_time_to_fill.median} min</div>
+                    <div class="metric-average">Average: ${data.insights.median_time_to_fill.average} min</div>
+                    <div class="metric-description">Median time in minutes to fill gap</div>
+                </div>
             </div>
             <div class="insights-row two-metrics">
                 <div class="insight-metric">
-                    <div class="metric-name">Median Time of Low</div>
+                    <div class="metric-name">Median Time of Low of Day</div>
                     <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_time_of_low.median}</div>
                     <div class="metric-average">Average: ${data.insights.median_time_of_low.average}</div>
                     <div class="metric-description">Median time of the day’s low</div>
                 </div>
                 <div class="insight-metric">
-                    <div class="metric-name">Median Time of High</div>
+                    <div class="metric-name">Median Time of High of Day</div>
                     <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_time_of_high.median}</div>
                     <div class="metric-average">Average: ${data.insights.median_time_of_high.average}</div>
                     <div class="metric-description">Median time of the day’s high</div>
+                </div>
+            </div>
+            <div class="insights-row two-metrics">
+                <div class="insight-metric">
+                    <div class="metric-name">Reversal After Fill Back To Low/High Of Day</div>
+                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.reversal_after_fill_rate.median}%</div>
+                    <div class="metric-description">% of time price reverses after gap is filled</div>
+                </div>
+                <div class="insight-metric">
+                    <div class="metric-name">Median Move In Gap Fill Diraction Before Reversal</div>
+                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_move_before_reversal.median}%</div>
+                    <div class="metric-average">Average: ${data.insights.median_move_before_reversal.average}%</div>
+                    <div class="metric-description">Median move in gap fill direction before reversal</div>
                 </div>
             </div>
         `;

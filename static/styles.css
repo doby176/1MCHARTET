@@ -8,7 +8,7 @@ body {
 header {
     text-align: center;
     padding: 20px;
-    background-color: #333;
+    background-color: #357960; /* Amazon green */
     color: white;
 }
 
@@ -60,7 +60,7 @@ form select, form input {
 
 form button {
     padding: 8px 16px;
-    background-color: #333;
+    background-color: #333333; /* Dark gray */
     color: white;
     border: none;
     border-radius: 4px;
@@ -69,7 +69,7 @@ form button {
 }
 
 form button:hover {
-    background-color: #555;
+    background-color: #4a4a4a; /* Lighter dark gray */
 }
 
 #chart-container {
@@ -99,7 +99,7 @@ form button:hover {
     padding: 10px 20px;
     font-size: 16px;
     border: none;
-    background-color: #444;
+    background-color: #333333; /* Dark gray */
     color: white;
     cursor: pointer;
     border-radius: 4px 4px 0 0;
@@ -107,12 +107,12 @@ form button:hover {
 }
 
 .tab-button.active {
-    background-color: #333;
+    background-color: #4a4a4a; /* Lighter dark gray */
     color: white;
 }
 
 .tab-button:hover {
-    background-color: #555;
+    background-color: #4a4a4a; /* Lighter dark gray */
 }
 
 .tab-content {
@@ -135,6 +135,7 @@ form button:hover {
     font-size: 1.5em;
     margin-bottom: 10px;
     text-align: center;
+    color: #357960; /* Amazon green */
 }
 
 .gap-analysis p, .events-analysis p, .earnings-analysis p, .gap-insights p {
@@ -151,17 +152,23 @@ form button:hover {
 #gap-dates ul, #event-dates ul, #earnings-dates ul {
     list-style: none;
     padding: 0;
+    display: flex; /* Use flexbox to spread items */
+    flex-wrap: wrap; /* Allow wrapping to next line */
+    justify-content: space-around; /* Spread items evenly across the container */
+    gap: 10px; /* Space between items */
     max-height: 200px;
     overflow-y: auto;
 }
 
 #gap-dates li, #event-dates li, #earnings-dates li {
-    padding: 5px 0;
+    padding: 5px 10px; /* Adjusted padding for better spacing */
     font-size: 0.9em;
+    flex: 1 1 150px; /* Flexible width, minimum 150px per item */
+    text-align: center; /* Center text within each item */
 }
 
 #gap-dates a, #event-dates a, #earnings-dates a {
-    color: #333;
+    color: #357960; /* Amazon green */
     text-decoration: none;
     cursor: pointer;
 }
@@ -173,7 +180,7 @@ form button:hover {
 footer {
     text-align: center;
     padding: 20px;
-    background-color: #333;
+    background-color: #357960; /* Amazon green */
     color: white;
     margin-top: 20px;
 }
@@ -264,7 +271,14 @@ footer p {
     }
 
     #gap-dates ul, #event-dates ul, #earnings-dates ul {
-        max-height: 150px;
+        flex-direction: column; /* Stack vertically on mobile */
+        justify-content: center; /* Center items */
+        gap: 5px; /* Reduced gap for mobile */
+    }
+
+    #gap-dates li, #event-dates li, #earnings-dates li {
+        flex: 1 1 100%; /* Full width on mobile */
+        padding: 5px 0;
     }
 
     #gap-dates a, #event-dates a, #earnings-dates a {
@@ -308,7 +322,7 @@ footer p {
 .insights-container h3 {
     font-size: 1.5em;
     margin-bottom: 20px;
-    color: #333;
+    color: #357960; /* Amazon green */
 }
 
 /* Row for side-by-side metrics */
@@ -325,14 +339,14 @@ footer p {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 250px; /* Adjusted for 3 metrics in first row */
+    width: 180px; /* Adjusted for 4 metrics in first row */
     padding: 15px;
     background-color: #f9f9f9;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Center two metrics in second row */
+/* Center two metrics in second and third rows */
 .insights-row.two-metrics {
     justify-content: center;
 }
@@ -374,7 +388,7 @@ footer p {
 .metric-name {
     font-size: 1.2em;
     font-weight: 700;
-    color: #333;
+    color: #357960; /* Amazon green */
     margin-bottom: 10px;
     text-align: center;
 }
@@ -382,7 +396,7 @@ footer p {
 .metric-median {
     font-size: 2em;
     font-weight: 900;
-    color: #333;
+    color: #357960; /* Amazon green */
     margin-bottom: 10px;
     text-align: center;
 }
@@ -390,7 +404,7 @@ footer p {
 .metric-average {
     font-size: 1em;
     font-weight: 400;
-    color: #555;
+    color: #2a6a4e; /* Darker shade of Amazon green */
     margin-bottom: 10px;
     text-align: center;
 }
@@ -414,11 +428,12 @@ footer p {
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #333;
+    background-color: #357960; /* Amazon green */
     color: white;
-    padding: 5px 10px;
+    padding: 3px 6px;
     border-radius: 4px;
-    font-size: 0.9em;
-    white-space: nowrap;
+    font-size: 0.39em;
+    max-width: 200px;
+    white-space: normal;
     z-index: 10;
 }
