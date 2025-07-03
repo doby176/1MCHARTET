@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
 
-import redis  # Added for Redis support
+import redis  # For Redis support
 from flask import Flask, render_template, request, jsonify, session
 from flask_limiter import Limiter
 from flask_session import Session
@@ -48,18 +48,21 @@ limiter = Limiter(
     get_session_key,
     app=app,
     default_limits=["10 per 12 hours"],
-    storage_uri=os.environ.get('REDIS_URL', 'redis://default:password@redis:10000'),  # Use Redis URL from environment variable
-    storage_options={"socket_connect_timeout": 30, "socket_timeout": 30},  # Optional: timeout settings for reliability
+    storage_uri=os.environ.get('REDIS_URL', 'redis://localhost:6379'),  # Fallback to localhost for local testing
+    storage_options={"socket_connect_timeout": 30, "socket_timeout": 30},  # Timeout settings for reliability
     headers_enabled=True
 )
 
-# Test Redis connection (optional, for debugging)
+# Test Redis connection
 try:
-    redis_client = redis.Redis.from_url(os.environ.get('REDIS_URL', 'redis://default:password@redis:10000'))
+    redis_client = redis.Redis.from_url(os.environ.get('REDIS_URL', 'redis://localhost:6379'))
     redis_client.ping()
     logging.info("Successfully connected to Redis")
 except redis.ConnectionError as e:
     logging.error(f"Failed to connect to Redis: {str(e)}")
+    # Fallback to in-memory storage if Redis fails
+    limiter.storage = limiter.storage_memory()  # Correctly set in-memory storage
+    logging.warning("Falling back to in-memory storage for rate limiting")
 
 # Custom error handler for rate limit exceeded
 @app.errorhandler(429)
@@ -118,14 +121,13 @@ with app.app_context():
 @limiter.limit("10 per 12 hours")
 def index():
     logging.debug("Rendering index.html")
-    dubbing
     return render_template('index.html')
 
-@app.route('/')
+@app.route('/api/tickers', methods=['GET'])
 @limiter.limit("10 per 12 hours")
-def index():
-    logging.debug("Rendering index.html")
-    return render_template('index.html')
+def get_tickers():
+    logging.debug("Returning precomputed tickers")
+    return jsonify({'tickers': VALID_TICKERS})
 
 @app.route('/api/valid_dates', methods=['GET'])
 @limiter.limit("10 per 12 hours")
