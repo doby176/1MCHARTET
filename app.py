@@ -269,7 +269,7 @@ def get_gaps():
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/gap_insights', methods=['GET'])
-@limiter.limit("10 per 12 hours")
+@limiter.limit("3 per 12 hours")
 def get_gap_insights():
     try:
         gap_size = request.args.get('gap_size')
