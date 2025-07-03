@@ -68,6 +68,12 @@ except redis.ConnectionError as e:
 @app.errorhandler(429)
 def ratelimit_handler(e):
     logging.info(f"Rate limit exceeded for session: {session.get('user_id')}")
+    # Check if the request is for /api/gap_insights
+    if request.path == '/api/gap_insights':
+        return jsonify({
+            'error': 'Rate limit exceeded: You have reached the limit of 3 requests per 12 hours. Please wait and try again later.'
+        }), 429
+    # Default message for other endpoints
     return jsonify({
         'error': 'Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait and try again later.'
     }), 429
@@ -297,7 +303,7 @@ def get_gap_insights():
             (df['gap_size_bin'] == gap_size) &
             (df['day_of_week'] == day) &
             (df['gap_direction'] == gap_direction)
-        ]
+        ].copy()  # Create a copy to avoid SettingWithCopyWarning
         logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
         if filtered_df.empty:
             logging.debug(f"No data found for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
@@ -323,9 +329,9 @@ def get_gap_insights():
             except:
                 return pd.NaT
 
-        # Apply time conversion and handle NaT
-        filtered_df['time_of_low_minutes'] = filtered_df['time_of_low'].apply(time_to_minutes)
-        filtered_df['time_of_high_minutes'] = filtered_df['time_of_high'].apply(time_to_minutes)
+        # Apply time conversion using .loc to avoid SettingWithCopyWarning
+        filtered_df.loc[:, 'time_of_low_minutes'] = filtered_df['time_of_low'].apply(time_to_minutes)
+        filtered_df.loc[:, 'time_of_high_minutes'] = filtered_df['time_of_high'].apply(time_to_minutes)
 
         # Calculate median and average times
         def minutes_to_time(minutes):
