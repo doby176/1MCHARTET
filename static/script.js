@@ -119,6 +119,20 @@ async function loadChart(event) {
     const ticker = document.getElementById('ticker-select').value;
     const date = document.getElementById('date').value;
     const chartContainer = document.getElementById('chart-container');
+    const form = document.getElementById('stock-form');
+    const button = form.querySelector('button[type="submit"]');
+    const inputs = form.querySelectorAll('select, input');
+
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('chartRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        chartContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        inputs.forEach(input => input.disabled = true);
+        return;
+    }
+
     if (!ticker || !date) {
         chartContainer.innerHTML = '<p>Please select a ticker and date.</p>';
         return;
@@ -131,7 +145,20 @@ async function loadChart(event) {
         const response = await fetch(url);
         if (response.status === 429) {
             const data = await response.json();
-            chartContainer.innerHTML = `<p>${data.error}</p>`;
+            chartContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            inputs.forEach(input => input.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('chartRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Generate Chart';
+                inputs.forEach(input => input.disabled = false);
+                localStorage.removeItem('chartRateLimitReset');
+                chartContainer.innerHTML = '<p>Please select a ticker and date to generate a chart.</p>';
+            }, 12 * 60 * 60 * 1000);
+            alert(data.error);
             return;
         }
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -154,6 +181,20 @@ async function loadGapDates(event) {
     const day = document.getElementById('day-select').value;
     const gapDirection = document.getElementById('gap-direction-select').value;
     const gapDatesContainer = document.getElementById('gap-dates');
+    const form = document.getElementById('gap-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
+
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('gapDatesRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        gapDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
+        return;
+    }
+
     if (!gapSize || !day || !gapDirection) {
         gapDatesContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction.</p>';
         return;
@@ -166,7 +207,20 @@ async function loadGapDates(event) {
         const response = await fetch(url);
         if (response.status === 429) {
             const data = await response.json();
-            gapDatesContainer.innerHTML = `<p>${data.error}</p>`;
+            gapDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('gapDatesRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Find Gaps';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('gapDatesRateLimitReset');
+                gapDatesContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction to view gap dates.</p>';
+            }, 12 * 60 * 60 * 1000);
+            alert(data.error);
             return;
         }
         if (!response.ok) {
@@ -251,6 +305,20 @@ async function loadEventDates(event) {
     const eventType = document.getElementById('event-type-select').value;
     const year = document.getElementById('year-select').value;
     const eventDatesContainer = document.getElementById('event-dates');
+    const form = document.getElementById('events-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
+
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('eventDatesRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
+        return;
+    }
+
     if (!eventType || !year) {
         eventDatesContainer.innerHTML = '<p>Please select an event type and year.</p>';
         return;
@@ -263,7 +331,20 @@ async function loadEventDates(event) {
         const response = await fetch(url);
         if (response.status === 429) {
             const data = await response.json();
-            eventDatesContainer.innerHTML = `<p>${data.error}</p>`;
+            eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('eventDatesRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Find Events';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('eventDatesRateLimitReset');
+                eventDatesContainer.innerHTML = '<p>Please select an event type and year to view event dates.</p>';
+            }, 12 * 60 * 60 * 1000);
+            alert(data.error);
             return;
         }
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -313,6 +394,20 @@ async function loadEarningsDates(event) {
     event.preventDefault();
     const ticker = document.getElementById('earnings-ticker-select').value;
     const earningsDatesContainer = document.getElementById('earnings-dates');
+    const form = document.getElementById('earnings-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
+
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('earningsDatesRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
+        return;
+    }
+
     if (!ticker) {
         earningsDatesContainer.innerHTML = '<p>Please select a ticker.</p>';
         return;
@@ -325,7 +420,20 @@ async function loadEarningsDates(event) {
         const response = await fetch(url);
         if (response.status === 429) {
             const data = await response.json();
-            earningsDatesContainer.innerHTML = `<p>${data.error}</p>`;
+            earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('earningsDatesRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Find Earnings';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('earningsDatesRateLimitReset');
+                earningsDatesContainer.innerHTML = '<p>Please select a ticker to view earnings dates.</p>';
+            }, 12 * 60 * 60 * 1000);
+            alert(data.error);
             return;
         }
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -377,19 +485,48 @@ async function loadGapInsights(event) {
     const day = document.getElementById('gap-insights-day-select').value;
     const gapDirection = document.getElementById('gap-insights-direction-select').value;
     const insightsContainer = document.getElementById('gap-insights-results');
+    const form = document.getElementById('gap-insights-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
+
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('gapInsightsRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
+        return;
+    }
+
     if (!gapSize || !day || !gapDirection) {
         insightsContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction.</p>';
         return;
     }
+
     console.log(`Fetching gap insights for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
     const url = `/api/gap_insights?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
     console.log('Fetching URL:', url);
     insightsContainer.innerHTML = '<p>Loading gap insights...</p>';
+
     try {
         const response = await fetch(url);
         if (response.status === 429) {
             const data = await response.json();
-            insightsContainer.innerHTML = `<p>${data.error}</p>`;
+            insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('gapInsightsRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Get Insights';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('gapInsightsRateLimitReset');
+                insightsContainer.innerHTML = '<p>Select a gap size, day, and direction to view QQQ gap insights and statistics.</p>';
+            }, 12 * 60 * 60 * 1000);
+            alert(data.error);
             return;
         }
         if (!response.ok) {
@@ -421,7 +558,7 @@ async function loadGapInsights(event) {
                     <div class="metric-description">Percentage of gaps that close</div>
                 </div>
                 <div class="insight-metric">
-                    <div class="metric-name">Median Move In Gap Diraction Before Fill</div>
+                    <div class="metric-name">Median Move In Gap Direction Before Fill</div>
                     <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_move_before_fill.median}%</div>
                     <div class="metric-average">Average: ${data.insights.median_move_before_fill.average}%</div>
                     <div class="metric-description">Percentage move before gap closes</div>
@@ -460,7 +597,7 @@ async function loadGapInsights(event) {
                     <div class="metric-description">% of time price reverses after gap is filled</div>
                 </div>
                 <div class="insight-metric">
-                    <div class="metric-name">Median Move In Gap Fill Diraction Before Reversal</div>
+                    <div class="metric-name">Median Move In Gap Fill Direction Before Reversal</div>
                     <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_move_before_reversal.median}%</div>
                     <div class="metric-average">Average: ${data.insights.median_move_before_reversal.average}%</div>
                     <div class="metric-description">Median move in gap fill direction before reversal</div>

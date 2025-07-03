@@ -483,3 +483,9 @@ footer p {
     white-space: normal;
     z-index: 10;
 }
+
+form button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
