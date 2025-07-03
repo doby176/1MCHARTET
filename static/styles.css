@@ -8,19 +8,24 @@ body {
 header {
     text-align: center;
     padding: 20px;
-    background-color: #2a6a4e;
+    background-color: #1a1b2f;
     color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-header h1 {
-    font-size: 1.9em; /* Slightly larger for Inter's tighter design */
-    font-weight: 700;
-    margin: 0;
+.logo {
+    max-width: 540px; /* 50% of 1080px */
+    width: 100%; /* Ensures it scales within max-width */
+    height: auto;
+    display: block;
+    margin: 0 auto 2px; /* Kept as is */
 }
 
 .seo-description {
     text-align: center;
-    margin: 20px 0;
+    margin: 0 0 2px; /* Kept as is */
     padding: 10px;
     font-size: 1.1em;
     color: #ffffff;
@@ -47,22 +52,22 @@ form {
 
 form label {
     margin-right: 10px;
-    font-weight: 500; /* Medium weight for Inter */
+    font-weight: 500;
 }
 
 form select, form input {
     padding: 8px;
     margin-right: 10px;
-    font-size: 1em; /* Adjusted for Inter */
+    font-size: 1em;
     border: 1px solid #ddd;
     border-radius: 4px;
     width: 100%;
-    box-sizing: border-box;
+    box-sizing: box-sizing;
 }
 
 form button {
     padding: 8px 16px;
-    background-color: #2a6a4e;
+    background-color: #153097;
     color: white;
     border: none;
     border-radius: 4px;
@@ -72,7 +77,7 @@ form button {
 }
 
 form button:hover {
-    background-color: #3d8c66;
+    background-color: #112A7F;
 }
 
 #chart-container {
@@ -103,7 +108,7 @@ form button:hover {
     font-size: 1em;
     font-weight: 500;
     border: none;
-    background-color: #2a6a4e;
+    background-color: #153097;
     color: white;
     cursor: pointer;
     border-radius: 4px 4px 0 0;
@@ -111,12 +116,12 @@ form button:hover {
 }
 
 .tab-button.active {
-    background-color: #3d8c66;
+    background-color: #112A7F;
     color: white;
 }
 
 .tab-button:hover {
-    background-color: #3d8c66;
+    background-color: #112A7F;
 }
 
 .tab-content {
@@ -131,8 +136,17 @@ form button:hover {
     display: block;
 }
 
+.section-logo {
+    max-width: 100px; /* Same size as footer logo */
+    width: 100%; /* Scales proportionally */
+    height: auto;
+    display: block;
+    margin: 10px auto 0; /* Small top margin, no bottom margin */
+}
+
 .gap-analysis, .events-analysis, .earnings-analysis, .gap-insights {
     margin-top: 20px;
+    position: relative;
 }
 
 .gap-analysis h2, .events-analysis h2, .earnings-analysis h2, .gap-insights h2 {
@@ -140,7 +154,7 @@ form button:hover {
     font-weight: 700;
     margin-bottom: 10px;
     text-align: center;
-    color: #2a6a4e;
+    color: #1a1b2f;
 }
 
 .gap-analysis p, .events-analysis p, .earnings-analysis p, .gap-insights p {
@@ -175,7 +189,7 @@ form button:hover {
 }
 
 #gap-dates a, #event-dates a, #earnings-dates a {
-    color: #2a6a4e;
+    color: #1a1b2f;
     text-decoration: none;
     cursor: pointer;
 }
@@ -187,9 +201,17 @@ form button:hover {
 footer {
     text-align: center;
     padding: 20px;
-    background-color: #2a6a4e;
+    background-color: #1a1b2f;
     color: white;
     margin-top: 20px;
+}
+
+.footer-logo {
+    max-width: 100px; /* Same size as section logos */
+    width: 100%; /* Scales proportionally */
+    height: auto;
+    display: block;
+    margin: 10px auto 0; /* Small top margin, no bottom margin */
 }
 
 footer h2 {
@@ -226,7 +248,7 @@ footer p {
     }
 
     form select, form input {
-        font-size: 0.875em; /* Adjusted for mobile */
+        font-size: 0.875em;
         padding: 6px;
         min-height: 36px;
         max-width: 300px;
@@ -258,13 +280,17 @@ footer p {
         padding: 10px;
     }
 
-    header h1 {
-        font-size: 1.3em; /* Adjusted for Inter */
+    .logo {
+        max-width: 100%; /* Full width on mobile, constrained by 540px */
+        width: 100%;
+        height: auto;
+        margin: 0 0 2px;
     }
 
     .seo-description {
         font-size: 0.9em;
         padding: 8px;
+        margin: 0 0 2px;
     }
 
     .gap-analysis, .events-analysis, .earnings-analysis, .gap-insights {
@@ -277,6 +303,11 @@ footer p {
 
     .gap-analysis p, .events-analysis p, .earnings-analysis p, .gap-insights p {
         font-size: 0.9em;
+    }
+
+    .section-logo {
+        max-width: 80px; /* Slightly smaller on mobile */
+        margin: 5px auto 0;
     }
 
     #gap-dates ul, #event-dates ul, #earnings-dates ul {
@@ -296,6 +327,11 @@ footer p {
 
     footer {
         padding: 10px;
+    }
+
+    .footer-logo {
+        max-width: 80px; /* Matches section logos on mobile */
+        margin: 5px auto 0;
     }
 
     footer h2 {
@@ -332,7 +368,7 @@ footer p {
     font-size: 1.5em;
     font-weight: 700;
     margin-bottom: 20px;
-    color: #2a6a4e;
+    color: #1a1b2f;
 }
 
 /* Row for side-by-side metrics */
@@ -398,23 +434,23 @@ footer p {
 .metric-name {
     font-size: 1.2em;
     font-weight: 700;
-    color: #2a6a4e;
+    color: #1a1b2f;
     margin-bottom: 10px;
     text-align: center;
 }
 
 .metric-median {
     font-size: 2em;
-    font-weight: 700; /* Adjusted for Inter */
-    color: #2a6a4e;
+    font-weight: 700;
+    color: #1a1b2f;
     margin-bottom: 10px;
     text-align: center;
 }
 
 .metric-average {
     font-size: 1em;
-    font-weight: 500; /* Medium weight for contrast */
-    color: #1f4f38;
+    font-weight: 500;
+    color: #1a1b2f;
     margin-bottom: 10px;
     text-align: center;
 }
@@ -438,7 +474,7 @@ footer p {
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #2a6a4e;
+    background-color: #1a1b2f;
     color: white;
     padding: 3px 6px;
     border-radius: 4px;
