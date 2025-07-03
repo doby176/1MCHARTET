@@ -18,12 +18,18 @@ logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 
-# Configure Flask-Session
+# Configure Flask session settings explicitly
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = os.path.join(os.path.dirname(__file__), 'sessions')
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key-12345')
+app.config['SESSION_COOKIE_NAME'] = 'onemchart_session'  # Explicitly set session cookie name
+app.config['SESSION_COOKIE_SECURE'] = True  # Use secure cookies in production
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+# Initialize Flask-Session
 Session(app)
 
 # Ensure session directory exists
@@ -36,11 +42,11 @@ def get_session_key():
         logging.debug(f"New session created with ID: {session['user_id']}")
     return session['user_id']
 
-# Configure Flask-Limiter with new rate limit
+# Configure Flask-Limiter
 limiter = Limiter(
     get_session_key,
     app=app,
-    default_limits=["10 per 12 hours"],  # Updated to 10 requests per 12 hours
+    default_limits=["10 per 12 hours"],
     storage_uri="memory://",
     headers_enabled=True
 )
