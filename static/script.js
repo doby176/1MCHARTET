@@ -15,7 +15,14 @@ async function loadTickers() {
     tickerSelect.disabled = true;
     tickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
     try {
+        console.log('Fetching tickers from /api/tickers');
         const response = await fetch('/api/tickers');
+        if (response.status === 429) {
+            const data = await response.json();
+            tickerSelect.innerHTML = `<option value="">${data.error}</option>`;
+            alert(data.error);
+            return;
+        }
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
         console.log('Fetched tickers:', data.tickers);
@@ -40,7 +47,14 @@ async function loadEarningsTickers() {
     tickerSelect.disabled = true;
     tickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
     try {
+        console.log('Fetching earnings tickers from /api/tickers');
         const response = await fetch('/api/tickers');
+        if (response.status === 429) {
+            const data = await response.json();
+            tickerSelect.innerHTML = `<option value="">${data.error}</option>`;
+            alert(data.error);
+            return;
+        }
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
         console.log('Fetched tickers for earnings:', data.tickers);
@@ -71,7 +85,15 @@ async function loadDates() {
     }
     console.log(`Fetching dates for ticker: ${ticker}`);
     try {
-        const response = await fetch(`/api/valid_dates?ticker=${encodeURIComponent(ticker)}`);
+        const url = `/api/valid_dates?ticker=${encodeURIComponent(ticker)}`;
+        console.log('Fetching URL:', url);
+        const response = await fetch(url);
+        if (response.status === 429) {
+            const data = await response.json();
+            alert(data.error);
+            dateInput.disabled = true;
+            return;
+        }
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
@@ -98,13 +120,20 @@ async function loadChart(event) {
     const date = document.getElementById('date').value;
     const chartContainer = document.getElementById('chart-container');
     if (!ticker || !date) {
-        alert('Please select a ticker and date.');
+        chartContainer.innerHTML = '<p>Please select a ticker and date.</p>';
         return;
     }
     console.log(`Loading chart for ticker=${ticker}, date=${date}`);
+    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}`;
+    console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
-        const response = await fetch(`/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}`);
+        const response = await fetch(url);
+        if (response.status === 429) {
+            const data = await response.json();
+            chartContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
         if (data.error) {
@@ -115,7 +144,7 @@ async function loadChart(event) {
         chartContainer.innerHTML = `<img src="${data.chart}" alt="Stock Chart for ${ticker} on ${date}">`;
     } catch (error) {
         console.error('Error loading chart:', error);
-        chartContainer.innerHTML = '<p>Failed to load chart. Please try again.</p>';
+        chartContainer.innerHTML = '<p>Failed to load chart. Please try again later.</p>';
     }
 }
 
@@ -126,15 +155,20 @@ async function loadGapDates(event) {
     const gapDirection = document.getElementById('gap-direction-select').value;
     const gapDatesContainer = document.getElementById('gap-dates');
     if (!gapSize || !day || !gapDirection) {
-        alert('Please select a gap size, day of the week, and gap direction.');
+        gapDatesContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction.</p>';
         return;
     }
     console.log(`Fetching gaps for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
+    const url = `/api/gaps?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
+    console.log('Fetching URL:', url);
     gapDatesContainer.innerHTML = '<p>Loading gap dates...</p>';
     try {
-        const encodedGapSize = encodeURIComponent(gapSize);
-        console.log(`Encoded gap_size: ${encodedGapSize}`);
-        const response = await fetch(`/api/gaps?gap_size=${encodedGapSize}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`);
+        const response = await fetch(url);
+        if (response.status === 429) {
+            const data = await response.json();
+            gapDatesContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
@@ -177,7 +211,7 @@ async function loadGapDates(event) {
         console.log('Gap dates rendered successfully');
     } catch (error) {
         console.error('Error loading gap dates:', error);
-        gapDatesContainer.innerHTML = '<p>Failed to load gap dates. Please try again.</p>';
+        gapDatesContainer.innerHTML = '<p>Failed to load gap dates. Please try again later.</p>';
     }
 }
 
@@ -186,7 +220,14 @@ async function loadYears() {
     yearSelect.disabled = true;
     yearSelect.innerHTML = '<option value="">Loading years...</option>';
     try {
+        console.log('Fetching years from /api/years');
         const response = await fetch('/api/years');
+        if (response.status === 429) {
+            const data = await response.json();
+            yearSelect.innerHTML = `<option value="">${data.error}</option>`;
+            alert(data.error);
+            return;
+        }
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
         console.log('Fetched years:', data.years);
@@ -211,13 +252,20 @@ async function loadEventDates(event) {
     const year = document.getElementById('year-select').value;
     const eventDatesContainer = document.getElementById('event-dates');
     if (!eventType || !year) {
-        alert('Please select an event type and year.');
+        eventDatesContainer.innerHTML = '<p>Please select an event type and year.</p>';
         return;
     }
     console.log(`Fetching events for event_type=${eventType}, year=${year}`);
+    const url = `/api/events?event_type=${encodeURIComponent(eventType)}&year=${encodeURIComponent(year)}`;
+    console.log('Fetching URL:', url);
     eventDatesContainer.innerHTML = '<p>Loading event dates...</p>';
     try {
-        const response = await fetch(`/api/events?event_type=${encodeURIComponent(eventType)}&year=${encodeURIComponent(year)}`);
+        const response = await fetch(url);
+        if (response.status === 429) {
+            const data = await response.json();
+            eventDatesContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
         console.log('Event API response:', JSON.stringify(data, null, 2));
@@ -257,7 +305,7 @@ async function loadEventDates(event) {
         console.log('Event dates rendered successfully');
     } catch (error) {
         console.error('Error loading event dates:', error);
-        eventDatesContainer.innerHTML = '<p>Failed to load event dates. Please try again.</p>';
+        eventDatesContainer.innerHTML = '<p>Failed to load event dates. Please try again later.</p>';
     }
 }
 
@@ -266,18 +314,25 @@ async function loadEarningsDates(event) {
     const ticker = document.getElementById('earnings-ticker-select').value;
     const earningsDatesContainer = document.getElementById('earnings-dates');
     if (!ticker) {
-        alert('Please select a ticker.');
+        earningsDatesContainer.innerHTML = '<p>Please select a ticker.</p>';
         return;
     }
     console.log(`Fetching earnings for ticker=${ticker}`);
+    const url = `/api/earnings?ticker=${encodeURIComponent(ticker)}`;
+    console.log('Fetching URL:', url);
     earningsDatesContainer.innerHTML = '<p>Loading earnings dates...</p>';
     try {
-        const response = await fetch(`/api/earnings?ticker=${encodeURIComponent(ticker)}`);
+        const response = await fetch(url);
+        if (response.status === 429) {
+            const data = await response.json();
+            earningsDatesContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const data = await response.json();
         console.log('Earnings API response:', JSON.stringify(data, null, 2));
         if (data.error) {
-            console.error('Error from earnings APIaline:', data.error);
+            console.error('Error from earnings API:', data.error);
             earningsDatesContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
@@ -312,7 +367,7 @@ async function loadEarningsDates(event) {
         console.log('Earnings dates rendered successfully');
     } catch (error) {
         console.error('Error loading earnings dates:', error);
-        earningsDatesContainer.innerHTML = '<p>Failed to load earnings dates. Please try again.</p>';
+        earningsDatesContainer.innerHTML = '<p>Failed to load earnings dates. Please try again later.</p>';
     }
 }
 
@@ -322,37 +377,37 @@ async function loadGapInsights(event) {
     const day = document.getElementById('gap-insights-day-select').value;
     const gapDirection = document.getElementById('gap-insights-direction-select').value;
     const insightsContainer = document.getElementById('gap-insights-results');
-    
     if (!gapSize || !day || !gapDirection) {
-        alert('Please select a gap size, day of the week, and gap direction.');
+        insightsContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction.</p>';
         return;
     }
-    
     console.log(`Fetching gap insights for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
+    const url = `/api/gap_insights?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
+    console.log('Fetching URL:', url);
     insightsContainer.innerHTML = '<p>Loading gap insights...</p>';
-    
     try {
-        const encodedGapSize = encodeURIComponent(gapSize);
-        const response = await fetch(`/api/gap_insights?gap_size=${encodedGapSize}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`);
+        const response = await fetch(url);
+        if (response.status === 429) {
+            const data = await response.json();
+            insightsContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
         }
         const data = await response.json();
         console.log('Gap Insights API response:', JSON.stringify(data, null, 2));
-        
         if (data.error) {
             console.error('Error from gap insights API:', data.error);
             insightsContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
-        
         if (!data.insights || Object.keys(data.insights).length === 0) {
             console.log('No insights found:', data.message || 'No data returned');
             insightsContainer.innerHTML = `<p>${data.message || 'No insights found for the selected criteria'}</p>`;
             return;
         }
-        
         console.log(`Rendering gap insights:`, data.insights);
         const medianExplanation = "The median is used instead of the average because it is less affected by extreme values, providing a more robust measure of typical price behavior.";
         const insightsDiv = document.createElement('div');
@@ -364,15 +419,13 @@ async function loadGapInsights(event) {
         `;
         insightsContainer.innerHTML = '';
         insightsContainer.appendChild(insightsDiv);
-        
         gtag('event', 'gap_insights_view', {
             'event_category': 'Gap Insights',
             'event_label': `QQQ_${gapSize}_${day}_${gapDirection}`
         });
-        
         console.log('Gap insights rendered successfully');
     } catch (error) {
         console.error('Error loading gap insights:', error);
-        insightsContainer.innerHTML = '<p>Failed to load gap insights. Please try again.</p>';
+        insightsContainer.innerHTML = '<p>Failed to load gap insights. Please try again later.</p>';
     }
 }
