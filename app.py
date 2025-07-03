@@ -121,11 +121,11 @@ def index():
     dubbing
     return render_template('index.html')
 
-@app.route('/api/tickers', methods=['GET'])
+@app.route('/')
 @limiter.limit("10 per 12 hours")
-def get_tickers():
-    logging.debug("Returning precomputed tickers")
-    return jsonify({'tickers': VALID_TICKERS})
+def index():
+    logging.debug("Rendering index.html")
+    return render_template('index.html')
 
 @app.route('/api/valid_dates', methods=['GET'])
 @limiter.limit("10 per 12 hours")
