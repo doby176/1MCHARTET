@@ -1,6 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')
 
+import redis  # Added for Redis support
 from flask import Flask, render_template, request, jsonify, session
 from flask_limiter import Limiter
 from flask_session import Session
@@ -42,14 +43,23 @@ def get_session_key():
         logging.debug(f"New session created with ID: {session['user_id']}")
     return session['user_id']
 
-# Configure Flask-Limiter
+# Configure Flask-Limiter with Redis
 limiter = Limiter(
     get_session_key,
     app=app,
     default_limits=["10 per 12 hours"],
-    storage_uri="memory://",
+    storage_uri=os.environ.get('REDIS_URL', 'redis://default:password@redis:10000'),  # Use Redis URL from environment variable
+    storage_options={"socket_connect_timeout": 30, "socket_timeout": 30},  # Optional: timeout settings for reliability
     headers_enabled=True
 )
+
+# Test Redis connection (optional, for debugging)
+try:
+    redis_client = redis.Redis.from_url(os.environ.get('REDIS_URL', 'redis://default:password@redis:10000'))
+    redis_client.ping()
+    logging.info("Successfully connected to Redis")
+except redis.ConnectionError as e:
+    logging.error(f"Failed to connect to Redis: {str(e)}")
 
 # Custom error handler for rate limit exceeded
 @app.errorhandler(429)
@@ -72,7 +82,7 @@ def get_db_path(ticker):
         logging.error(f"Invalid ticker requested: {ticker}")
         return None
     db_path = os.path.join(DB_DIR, f"stock_data_{ticker.lower()}.db")
-    logging.debug(f"Checking database path for { ticker}: {db_path}")
+    logging.debug(f"Checking database path for {ticker}: {db_path}")
     return db_path
 
 def initialize_tickers():
@@ -108,6 +118,7 @@ with app.app_context():
 @limiter.limit("10 per 12 hours")
 def index():
     logging.debug("Rendering index.html")
+    dubbing
     return render_template('index.html')
 
 @app.route('/api/tickers', methods=['GET'])
