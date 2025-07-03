@@ -411,7 +411,7 @@ async function loadGapInsights(event) {
         console.log(`Rendering gap insights:`, data.insights);
         const medianExplanation = "The median is used instead of the average because it is less affected by extreme values, providing a more robust measure of typical price behavior.";
         const insightsDiv = document.createElement('div');
-        insightsDiv.className = 'insights-container'; // Added class for side-by-side layout
+        insightsDiv.className = 'insights-container';
         insightsDiv.innerHTML = `
             <h3>Gap Statistics</h3>
             <div class="insights-row">
@@ -422,7 +422,7 @@ async function loadGapInsights(event) {
                     <div class="metric-description">Percentage of gaps that close</div>
                 </div>
                 <div class="insight-metric">
-                    <div class="metric-name">Median Move In Gap Diraction Before Fill</div>
+                    <div class="metric-name">Median Move Before Fill</div>
                     <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_move_before_fill.median}%</div>
                     <div class="metric-average">Average: ${data.insights.median_move_before_fill.average}%</div>
                     <div class="metric-description">Percentage move before gap closes</div>
@@ -432,6 +432,20 @@ async function loadGapInsights(event) {
                     <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_max_move_unfilled.median}%</div>
                     <div class="metric-average">Average: ${data.insights.median_max_move_unfilled.average}%</div>
                     <div class="metric-description">% move in gap direction when price does not close the gap</div>
+                </div>
+            </div>
+            <div class="insights-row two-metrics">
+                <div class="insight-metric">
+                    <div class="metric-name">Median Time of Low</div>
+                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_time_of_low.median}</div>
+                    <div class="metric-average">Average: ${data.insights.median_time_of_low.average}</div>
+                    <div class="metric-description">Median time of the day’s low</div>
+                </div>
+                <div class="insight-metric">
+                    <div class="metric-name">Median Time of High</div>
+                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_time_of_high.median}</div>
+                    <div class="metric-average">Average: ${data.insights.median_time_of_high.average}</div>
+                    <div class="metric-description">Median time of the day’s high</div>
                 </div>
             </div>
         `;

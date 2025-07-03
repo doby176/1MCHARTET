@@ -273,7 +273,8 @@ def get_gap_insights():
             logging.error(f"Error reading gap data file {GAP_DATA_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load gap data: {str(e)}'}), 500
         required_columns = ['gap_size_bin', 'day_of_week', 'gap_direction', 'filled', 
-                          'move_before_reversal_fill_direction_pct', 'max_move_gap_direction_first_30min_pct']
+                           'move_before_reversal_fill_direction_pct', 'max_move_gap_direction_first_30min_pct',
+                           'time_of_low', 'time_of_high']
         if not all(col in df.columns for col in required_columns):
             logging.error("Invalid gap data format: missing required columns")
             return jsonify({'error': 'Invalid gap data format'}), 400
@@ -286,26 +287,64 @@ def get_gap_insights():
         if filtered_df.empty:
             logging.debug(f"No data found for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
             return jsonify({'insights': {}, 'message': 'No data found for the selected criteria'})
+        
+        # Calculate gap fill rate
         gap_fill_rate = filtered_df['filled'].mean() * 100
         filled_df = filtered_df[filtered_df['filled'] == True]
         unfilled_df = filtered_df[filtered_df['filled'] == False]
+
+        # Convert time_of_low and time_of_high to datetime.time for median/average calculation
+        def time_to_minutes(t):
+            try:
+                # Parse time string (e.g., '09:30:00' or '09:30') to minutes since midnight
+                h, m = map(int, t.split(':')[:2])
+                return h * 60 + m
+            except:
+                return pd.NaT
+
+        # Apply time conversion and handle NaT
+        filtered_df['time_of_low_minutes'] = filtered_df['time_of_low'].apply(time_to_minutes)
+        filtered_df['time_of_high_minutes'] = filtered_df['time_of_high'].apply(time_to_minutes)
+
+        # Calculate median and average times
+        def minutes_to_time(minutes):
+            if pd.isna(minutes):
+                return "N/A"
+            hours = int(minutes // 60)
+            mins = int(minutes % 60)
+            return f"{hours:02d}:{mins:02d}"
+
+        median_low_minutes = filtered_df['time_of_low_minutes'].median()
+        average_low_minutes = filtered_df['time_of_low_minutes'].mean()
+        median_high_minutes = filtered_df['time_of_high_minutes'].median()
+        average_high_minutes = filtered_df['time_of_high_minutes'].mean()
+
         insights = {
             'gap_fill_rate': {
                 'median': round(gap_fill_rate, 2),
                 'average': round(gap_fill_rate, 2),
-                'description': '% of time the price closes the gap'
+                'description': 'Percentage of gaps that close'
             },
             'median_move_before_fill': {
                 'median': round(filled_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filled_df.empty else 0,
                 'average': round(filled_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filled_df.empty else 0,
-                'description': 'Average % move before the price fills the gap'
+                'description': 'Percentage move before gap closes'
             },
             'median_max_move_unfilled': {
                 'median': round(unfilled_df['max_move_gap_direction_first_30min_pct'].median(), 2) if not unfilled_df.empty else 0,
                 'average': round(unfilled_df['max_move_gap_direction_first_30min_pct'].mean(), 2) if not unfilled_df.empty else 0,
-                'description': '% move in gap direction in first 30 minutes when the price does not close the gap'
+                'description': '% move in gap direction when price does not close the gap'
             },
-            'sample_size': len(filtered_df)
+            'median_time_of_low': {
+                'median': minutes_to_time(median_low_minutes),
+                'average': minutes_to_time(average_low_minutes),
+                'description': 'Median time of the day’s low'
+            },
+            'median_time_of_high': {
+                'median': minutes_to_time(median_high_minutes),
+                'average': minutes_to_time(average_high_minutes),
+                'description': 'Median time of the day’s high'
+            }
         }
         logging.debug(f"Computed insights: {insights}")
         return jsonify({'insights': insights})

@@ -300,27 +300,6 @@ footer p {
     }
 }
 
-/* Add to the end of styles.css */
-.tooltip {
-    position: relative;
-    cursor: help;
-}
-
-.tooltip:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #333;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 0.9em;
-    white-space: nowrap;
-    z-index: 10;
-}
-
 /* Insights Container Styling */
 .insights-container {
     text-align: center;
@@ -337,7 +316,8 @@ footer p {
     display: flex;
     justify-content: center;
     gap: 20px;
-    flex-wrap: wrap; /* Allows wrapping on smaller screens */
+    flex-wrap: wrap;
+    margin-bottom: 20px; /* Space between rows */
 }
 
 /* Individual Metric Styling */
@@ -345,63 +325,16 @@ footer p {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 250px; /* Fixed width for consistency */
+    width: 250px; /* Adjusted for 3 metrics in first row */
     padding: 15px;
     background-color: #f9f9f9;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.metric-name {
-    font-size: 1.2em;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-.metric-median {
-    font-size: 2em; /* Larger font for median */
-    font-weight: 900; /* Bolder font */
-    color: #333;
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-.metric-average {
-    font-size: 1em; /* Smaller, consistent font */
-    font-weight: 400;
-    color: #555;
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-.metric-description {
-    font-size: 1em; /* Same size as average */
-    font-weight: 400;
-    color: #555;
-    text-align: center;
-}
-
-/* Tooltip styling (unchanged) */
-.tooltip {
-    position: relative;
-    cursor: help;
-}
-
-.tooltip:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #333;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 0.9em;
-    white-space: nowrap;
-    z-index: 10;
+/* Center two metrics in second row */
+.insights-row.two-metrics {
+    justify-content: center;
 }
 
 /* Responsive adjustments for mobile */
@@ -436,4 +369,56 @@ footer p {
     .insights-container h3 {
         font-size: 1.2em;
     }
+}
+
+.metric-name {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.metric-median {
+    font-size: 2em;
+    font-weight: 900;
+    color: #333;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.metric-average {
+    font-size: 1em;
+    font-weight: 400;
+    color: #555;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.metric-description {
+    font-size: 1em;
+    font-weight: 400;
+    color: #555;
+    text-align: center;
+}
+
+/* Tooltip styling */
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    white-space: nowrap;
+    z-index: 10;
 }
