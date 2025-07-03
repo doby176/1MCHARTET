@@ -411,11 +411,29 @@ async function loadGapInsights(event) {
         console.log(`Rendering gap insights:`, data.insights);
         const medianExplanation = "The median is used instead of the average because it is less affected by extreme values, providing a more robust measure of typical price behavior.";
         const insightsDiv = document.createElement('div');
+        insightsDiv.className = 'insights-container'; // Added class for side-by-side layout
         insightsDiv.innerHTML = `
             <h3>Gap Statistics</h3>
-            <p><strong>Gap Fill Rate:</strong> <span title="${medianExplanation}">Median</span>: ${data.insights.gap_fill_rate.median}% (Average: ${data.insights.gap_fill_rate.average}%) - ${data.insights.gap_fill_rate.description}</p>
-            <p><strong><span title="${medianExplanation}">Median</span> Move In Gap Direction Before Fill:</strong> <span title="${medianExplanation}">Median</span>: ${data.insights.median_move_before_fill.median}% (Average: ${data.insights.median_move_before_fill.average}%) - ${data.insights.median_move_before_fill.description}</p>
-            <p><strong><span title="${medianExplanation}">Median</span> Max Move Unfilled Gaps:</strong> <span title="${medianExplanation}">Median</span>: ${data.insights.median_max_move_unfilled.median}% (Average: ${data.insights.median_max_move_unfilled.average}%) - ${data.insights.median_max_move_unfilled.description}</p>
+            <div class="insights-row">
+                <div class="insight-metric">
+                    <div class="metric-name">Gap Fill Rate</div>
+                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.gap_fill_rate.median}%</div>
+                    <div class="metric-average">Average: ${data.insights.gap_fill_rate.average}%</div>
+                    <div class="metric-description">Percentage of gaps that close</div>
+                </div>
+                <div class="insight-metric">
+                    <div class="metric-name">Median Move In Gap Diraction Before Fill</div>
+                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_move_before_fill.median}%</div>
+                    <div class="metric-average">Average: ${data.insights.median_move_before_fill.average}%</div>
+                    <div class="metric-description">Percentage move before gap closes</div>
+                </div>
+                <div class="insight-metric">
+                    <div class="metric-name">Median Max Move Unfilled Gaps</div>
+                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_max_move_unfilled.median}%</div>
+                    <div class="metric-average">Average: ${data.insights.median_max_move_unfilled.average}%</div>
+                    <div class="metric-description">% move in gap direction when price does not close the gap</div>
+                </div>
+            </div>
         `;
         insightsContainer.innerHTML = '';
         insightsContainer.appendChild(insightsDiv);

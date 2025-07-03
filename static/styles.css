@@ -320,3 +320,120 @@ footer p {
     white-space: nowrap;
     z-index: 10;
 }
+
+/* Insights Container Styling */
+.insights-container {
+    text-align: center;
+}
+
+.insights-container h3 {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Row for side-by-side metrics */
+.insights-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap; /* Allows wrapping on smaller screens */
+}
+
+/* Individual Metric Styling */
+.insight-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 250px; /* Fixed width for consistency */
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.metric-name {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.metric-median {
+    font-size: 2em; /* Larger font for median */
+    font-weight: 900; /* Bolder font */
+    color: #333;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.metric-average {
+    font-size: 1em; /* Smaller, consistent font */
+    font-weight: 400;
+    color: #555;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.metric-description {
+    font-size: 1em; /* Same size as average */
+    font-weight: 400;
+    color: #555;
+    text-align: center;
+}
+
+/* Tooltip styling (unchanged) */
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 600px) {
+    .insights-row {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .insight-metric {
+        width: 100%;
+        max-width: 300px;
+        padding: 10px;
+    }
+
+    .metric-name {
+        font-size: 1em;
+    }
+
+    .metric-median {
+        font-size: 1.5em;
+    }
+
+    .metric-average {
+        font-size: 0.9em;
+    }
+
+    .metric-description {
+        font-size: 0.9em;
+    }
+
+    .insights-container h3 {
+        font-size: 1.2em;
+    }
+}
