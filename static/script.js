@@ -118,7 +118,7 @@ async function loadChart(event) {
     event.preventDefault();
     const ticker = document.getElementById('ticker-select').value;
     const date = document.getElementById('date').value;
-    const chartContainer = document.getElementById('chart-container');
+    const chartContainer = document.getElementById('plotly-chart');
     const form = document.getElementById('stock-form');
     const button = form.querySelector('button[type="submit"]');
     const inputs = form.querySelectorAll('select, input');
@@ -153,7 +153,7 @@ async function loadChart(event) {
             localStorage.setItem('chartRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
-                button.textContent = 'Generate Chart';
+                button.textContent = 'Load Chart';
                 inputs.forEach(input => input.disabled = false);
                 localStorage.removeItem('chartRateLimitReset');
                 chartContainer.innerHTML = '<p>Please select a ticker and date to generate a chart.</p>';
@@ -168,7 +168,53 @@ async function loadChart(event) {
             chartContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
-        chartContainer.innerHTML = `<img src="${data.chart}" alt="Stock Chart for ${ticker} on ${date}">`;
+
+        // Render Plotly chart
+        const chartData = data.chart_data;
+        const candlestickTrace = {
+            x: chartData.timestamp,
+            open: chartData.open,
+            high: chartData.high,
+            low: chartData.low,
+            close: chartData.close,
+            type: 'candlestick',
+            name: chartData.ticker,
+            increasing: { line: { color: '#00cc00' } },
+            decreasing: { line: { color: '#ff0000' } }
+        };
+        const volumeTrace = {
+            x: chartData.timestamp,
+            y: chartData.volume,
+            type: 'bar',
+            name: 'Volume',
+            yaxis: 'y2',
+            marker: { color: '#888888' }
+        };
+        const layout = {
+            title: `${chartData.ticker} Candlestick Chart - ${chartData.date}`,
+            xaxis: {
+                title: 'Time',
+                type: 'date',
+                rangeslider: { visible: false },
+                tickformat: '%H:%M'
+            },
+            yaxis: {
+                title: 'Price',
+                domain: [0.3, 1]
+            },
+            yaxis2: {
+                title: 'Volume',
+                domain: [0, 0.25],
+                anchor: 'x'
+            },
+            showlegend: true,
+            margin: { t: 50, b: 50, l: 50, r: 50 },
+            plot_bgcolor: '#ffffff',
+            paper_bgcolor: '#ffffff'
+        };
+        Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, {
+            responsive: true
+        });
     } catch (error) {
         console.error('Error loading chart:', error);
         chartContainer.innerHTML = '<p>Failed to load chart. Please try again later.</p>';
@@ -215,7 +261,7 @@ async function loadGapDates(event) {
             localStorage.setItem('gapDatesRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
-                button.textContent = 'Find Gaps';
+                button.textContent = 'Find Gap Dates';
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('gapDatesRateLimitReset');
                 gapDatesContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction to view gap dates.</p>';
@@ -339,7 +385,7 @@ async function loadEventDates(event) {
             localStorage.setItem('eventDatesRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
-                button.textContent = 'Find Events';
+                button.textContent = 'Find Event Dates';
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('eventDatesRateLimitReset');
                 eventDatesContainer.innerHTML = '<p>Please select an event type and year to view event dates.</p>';
@@ -428,7 +474,7 @@ async function loadEarningsDates(event) {
             localStorage.setItem('earningsDatesRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
-                button.textContent = 'Find Earnings';
+                button.textContent = 'Find Earnings Dates';
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('earningsDatesRateLimitReset');
                 earningsDatesContainer.innerHTML = '<p>Please select a ticker to view earnings dates.</p>';
@@ -492,7 +538,7 @@ async function loadGapInsights(event) {
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('gapInsightsRateLimitReset');
     if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
-        insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 3 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
         button.disabled = true;
         button.textContent = 'Rate Limit Exceeded';
         selects.forEach(select => select.disabled = true);

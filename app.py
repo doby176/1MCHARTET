@@ -1,14 +1,8 @@
-import matplotlib
-matplotlib.use('Agg')
-
 import redis  # For Redis support
 from flask import Flask, render_template, request, jsonify, session
 from flask_limiter import Limiter
 from flask_session import Session
 import pandas as pd
-import mplfinance as mpf
-import io
-import base64
 import logging
 import sqlite3
 import os
@@ -48,8 +42,8 @@ limiter = Limiter(
     get_session_key,
     app=app,
     default_limits=["10 per 12 hours"],
-    storage_uri=os.environ.get('REDIS_URL', 'redis://localhost:6379'),  # Fallback to localhost for local testing
-    storage_options={"socket_connect_timeout": 30, "socket_timeout": 30},  # Timeout settings for reliability
+    storage_uri=os.environ.get('REDIS_URL', 'redis://localhost:6379'),
+    storage_options={"socket_connect_timeout": 30, "socket_timeout": 30},
     headers_enabled=True
 )
 
@@ -61,19 +55,17 @@ try:
 except redis.ConnectionError as e:
     logging.error(f"Failed to connect to Redis: {str(e)}")
     # Fallback to in-memory storage if Redis fails
-    limiter.storage = limiter.storage_memory()  # Correctly set in-memory storage
+    limiter.storage = limiter.storage_memory()
     logging.warning("Falling back to in-memory storage for rate limiting")
 
 # Custom error handler for rate limit exceeded
 @app.errorhandler(429)
 def ratelimit_handler(e):
     logging.info(f"Rate limit exceeded for session: {session.get('user_id')}")
-    # Check if the request is for /api/gap_insights
     if request.path == '/api/gap_insights':
         return jsonify({
             'error': 'Rate limit exceeded: You have reached the limit of 3 requests per 12 hours. Please wait and try again later.'
         }), 429
-    # Default message for other endpoints
     return jsonify({
         'error': 'Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait and try again later.'
     }), 429
@@ -198,26 +190,20 @@ def get_chart():
         required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
         if not all(col in df.columns for col in required_columns):
             return jsonify({'error': 'Invalid data format'}), 400
-        df = df[required_columns].set_index('timestamp').sort_index()
-        buf = io.BytesIO()
-        try:
-            mpf.plot(
-                df,
-                type='candle',
-                style='yahoo',
-                title=f'{ticker} Candlestick Chart - {date}',
-                ylabel='Price',
-                volume=True,
-                savefig=dict(fname=buf, dpi=100, bbox_inches='tight'),
-                warn_too_much_data=10000
-            )
-            buf.seek(0)
-            img = base64.b64encode(buf.getvalue()).decode('utf-8')
-            buf.close()
-        except Exception as e:
-            logging.error(f"Error generating chart for {ticker}: {str(e)}")
-            return jsonify({'error': 'Failed to generate chart'}), 500
-        return jsonify({'chart': f'data:image/png;base64,{img}'})
+
+        # Prepare data for Plotly.js
+        df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        chart_data = {
+            'timestamp': df['timestamp'].tolist(),
+            'open': df['open'].tolist(),
+            'high': df['high'].tolist(),
+            'low': df['low'].tolist(),
+            'close': df['close'].tolist(),
+            'volume': df['volume'].tolist(),
+            'ticker': ticker,
+            'date': date
+        }
+        return jsonify({'chart_data': chart_data})
     except Exception as e:
         logging.error(f"Unexpected error in get_chart: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
@@ -303,7 +289,7 @@ def get_gap_insights():
             (df['gap_size_bin'] == gap_size) &
             (df['day_of_week'] == day) &
             (df['gap_direction'] == gap_direction)
-        ].copy()  # Create a copy to avoid SettingWithCopyWarning
+        ].copy()
         logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
         if filtered_df.empty:
             logging.debug(f"No data found for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
@@ -329,7 +315,6 @@ def get_gap_insights():
             except:
                 return pd.NaT
 
-        # Apply time conversion using .loc to avoid SettingWithCopyWarning
         filtered_df.loc[:, 'time_of_low_minutes'] = filtered_df['time_of_low'].apply(time_to_minutes)
         filtered_df.loc[:, 'time_of_high_minutes'] = filtered_df['time_of_high'].apply(time_to_minutes)
 
@@ -498,5 +483,4 @@ def get_earnings():
         return jsonify({'error': 'Server error'}), 500
 
 if __name__ == '__main__':
-    logging.debug(f"Matplotlib backend: {matplotlib.get_backend()}")
     app.run(debug=True)

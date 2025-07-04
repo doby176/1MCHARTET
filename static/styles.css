@@ -62,7 +62,7 @@ form select, form input {
     border: 1px solid #ddd;
     border-radius: 4px;
     width: 100%;
-    box-sizing: box-sizing;
+    box-sizing: border-box;
 }
 
 form button {
@@ -84,10 +84,10 @@ form button:hover {
     margin-top: 20px;
 }
 
-#chart-container img {
+#plotly-chart {
     width: 100%;
+    height: 600px; /* Default height for desktop */
     max-height: 800px;
-    object-fit: contain;
 }
 
 .ads-container {
@@ -346,7 +346,8 @@ footer p {
         font-size: 0.7em;
     }
 
-    #chart-container img {
+    #plotly-chart {
+        height: 400px; /* Smaller height for mobile */
         max-height: 500px;
         width: 100%;
         max-width: 100%;
