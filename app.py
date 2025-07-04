@@ -199,28 +199,28 @@ def get_chart():
             df = pd.concat(df_list, ignore_index=True)
             df = df.sort_values('timestamp')
             logging.debug(f"Loaded data shape for {ticker} on {date}: {df.shape}")
+            if df.empty:
+                return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
+            required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+            if not all(col in df.columns for col in required_columns):
+                return jsonify({'error': 'Invalid data format'}), 400
+
+            # Prepare data for Plotly.js
+            df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            chart_data = {
+                'timestamp': df['timestamp'].tolist(),
+                'open': df['open'].tolist(),
+                'high': df['high'].tolist(),
+                'low': df['low'].tolist(),
+                'close': df['close'].tolist(),
+                'volume': df['volume'].tolist(),
+                'ticker': ticker,
+                'date': date
+            }
+            return jsonify({'chart_data': chart_data})
         except Exception as e:
             logging.error(f"Error querying database for {ticker}: {str(e)}")
             return jsonify({'error': 'Database query failed'}), 500
-        if df.empty:
-            return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
-        required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
-        if not all(col in df.columns for col in required_columns):
-            return jsonify({'error': 'Invalid data format'}), 400
-
-        # Prepare data for Plotly.js
-        df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
-        chart_data = {
-            'timestamp': df['timestamp'].tolist(),
-            'open': df['open'].tolist(),
-            'high': df['high'].tolist(),
-            'low': df['low'].tolist(),
-            'close': df['close'].tolist(),
-            'volume': df['volume'].tolist(),
-            'ticker': ticker,
-            'date': date
-        }
-        return jsonify({'chart_data': chart_data})
     except Exception as e:
         logging.error(f"Unexpected error in get_chart: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
@@ -487,7 +487,8 @@ def get_economic_events():
 def get_earnings():
     try:
         ticker = request.args.get('ticker')
-        logging.debug(f"Fetching earnings for ticker={ticker}")
+        bin_value = request.args.get('bin')  # New parameter for bin filter
+        logging.debug(f"Fetching earnings for ticker={ticker}, bin={bin_value}")
         if not os.path.exists(EARNINGS_DATA_PATH):
             logging.error(f"Earnings data file not found: {EARNINGS_DATA_PATH}")
             return jsonify({'error': 'Earnings data file not found. Please contact support.'}), 404
@@ -503,14 +504,19 @@ def get_earnings():
             return jsonify({'error': 'Invalid earnings data format'}), 400
         if ticker:
             filtered_df = df[df['ticker'] == ticker]
+            if bin_value:  # Apply bin filter if provided
+                if bin_value not in ['Beat', 'Slight Beat', 'Miss', 'Slight Miss', 'Unknown']:
+                    logging.error(f"Invalid bin value: {bin_value}")
+                    return jsonify({'error': 'Invalid bin value'}), 400
+                filtered_df = filtered_df[filtered_df['bin'] == bin_value]
         else:
             logging.error("No ticker provided for earnings query")
             return jsonify({'error': 'Ticker is required'}), 400
         dates = filtered_df['earnings_date'].dt.strftime('%Y-%m-%d').tolist()
         logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
         if not dates:
-            logging.debug(f"No earnings found for ticker={ticker}")
-            return jsonify({'dates': [], 'message': f'No earnings found for {ticker}'})
+            logging.debug(f"No earnings found for ticker={ticker}, bin={bin_value}")
+            return jsonify({'dates': [], 'message': f'No earnings found for {ticker}{" with bin " + bin_value if bin_value else ""}'})
         logging.debug(f"Found {len(dates)} earnings dates")
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
