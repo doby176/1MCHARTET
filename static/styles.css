@@ -62,7 +62,7 @@ form select, form input {
     border: 1px solid #ddd;
     border-radius: 4px;
     width: 100%;
-    box-sizing: border-box; /* Fixed typo: box-sizing: box-sizing */
+    box-sizing: box-sizing;
 }
 
 form button {
@@ -232,36 +232,6 @@ footer p {
     font-style: italic;
 }
 
-/* Filter Toggle and Sections */
-.filter-toggle {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 15px;
-}
-
-.filter-toggle label {
-    font-size: 1em;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.filter-toggle input[type="radio"] {
-    margin-right: 5px;
-}
-
-.filter-section {
-    display: none;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    width: 100%;
-}
-
-.filter-section.active {
-    display: flex;
-}
-
 /* Mobile-specific styles */
 @media (max-width: 600px) {
     .card {
@@ -386,17 +356,6 @@ footer p {
         max-width: 280px;
         margin: 0 auto;
         min-height: 100px;
-    }
-
-    .filter-toggle {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .filter-section.active {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
     }
 }
 
