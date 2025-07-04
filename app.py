@@ -74,6 +74,7 @@ DB_DIR = os.path.join(os.path.dirname(__file__), "data", "db")
 GAP_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "qqq_central_data_updated.csv")
 EVENTS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "news_events.csv")
 EARNINGS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "earnings_data.csv")
+ECONOMIC_DATA_BINNED_PATH = os.path.join(os.path.dirname(__file__), "data", "economic_data_binned.csv")
 
 # Define multiple QQQ database paths
 QQQ_DB_PATHS = [
@@ -224,7 +225,6 @@ def get_chart():
         logging.error(f"Unexpected error in get_chart: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
-# Remaining routes (gaps, gap_insights, years, events, earnings) remain unchanged
 @app.route('/api/gaps', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_gaps():
@@ -437,6 +437,49 @@ def get_events():
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing events: {str(e)}")
+        return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/economic_events', methods=['GET'])
+@limiter.limit("10 per 12 hours")
+def get_economic_events():
+    try:
+        event_type = request.args.get('event_type')
+        bin_range = request.args.get('bin')  # Renamed from 'bin' to 'bin_range' for clarity
+        logging.debug(f"Fetching economic events for event_type={event_type}, bin={bin_range}")
+        
+        if not os.path.exists(ECONOMIC_DATA_BINNED_PATH):
+            logging.error(f"Economic data binned file not found: {ECONOMIC_DATA_BINNED_PATH}")
+            return jsonify({'error': 'Economic data file not found. Please contact support.'}), 404
+        
+        try:
+            df = pd.read_csv(ECONOMIC_DATA_BINNED_PATH)
+            df['date'] = pd.to_datetime(df['date'])
+            logging.debug(f"Loaded economic data with shape: {df.shape}")
+        except Exception as e:
+            logging.error(f"Error reading economic data file {ECONOMIC_DATA_BINNED_PATH}: {str(e)}")
+            return jsonify({'error': f'Failed to load economic data: {str(e)}'}), 500
+        
+        if 'date' not in df.columns or 'event_type' not in df.columns or 'bin' not in df.columns:
+            logging.error("Invalid economic data format: missing required columns")
+            return jsonify({'error': 'Invalid economic data format'}), 400
+        
+        filtered_df = df
+        if event_type:
+            filtered_df = filtered_df[filtered_df['event_type'] == event_type]
+        if bin_range:
+            filtered_df = filtered_df[filtered_df['bin'] == bin_range]
+        
+        dates = filtered_df['date'].dt.strftime('%Y-%m-%d').tolist()
+        logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
+        
+        if not dates:
+            logging.debug(f"No events found for event_type={event_type}, bin={bin_range}")
+            return jsonify({'dates': [], 'message': 'No events found for the selected criteria'})
+        
+        logging.debug(f"Found {len(dates)} economic event dates")
+        return jsonify({'dates': sorted(dates)})
+    except Exception as e:
+        logging.error(f"Error processing economic events: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/earnings', methods=['GET'])

@@ -3,12 +3,69 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTickers();
     loadYears();
     loadEarningsTickers();
+    loadBinOptions();
     document.getElementById('stock-form').addEventListener('submit', loadChart);
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
     document.getElementById('events-form').addEventListener('submit', loadEventDates);
     document.getElementById('earnings-form').addEventListener('submit', loadEarningsDates);
     document.getElementById('gap-insights-form').addEventListener('submit', loadGapInsights);
+
+    // Handle filter type toggle
+    const filterRadios = document.querySelectorAll('input[name="filter-type"]');
+    filterRadios.forEach(radio => {
+        radio.addEventListener('change', toggleFilterSection);
+    });
 });
+
+// Bin options for each event type
+const binOptions = {
+    CPI: ['<0%', '0-1%', '1-2%', '2-3%', '3-5%', '>5%'],
+    PPI: ['<0%', '0-2%', '2-4%', '4-8%', '>8%'],
+    NFP: ['<0K', '0-100K', '100-200K', '200-300K', '>300K'],
+    FOMC: ['0-1%', '1-2%', '2-3%', '3-4%', '>4%']
+};
+
+function toggleFilterSection() {
+    const yearFilter = document.getElementById('year-filter');
+    const binFilter = document.getElementById('bin-filter');
+    const filterType = document.querySelector('input[name="filter-type"]:checked').value;
+
+    yearFilter.classList.remove('active');
+    binFilter.classList.remove('active');
+
+    if (filterType === 'year') {
+        yearFilter.classList.add('active');
+        // Clear bin filter inputs
+        document.getElementById('bin-event-type-select').value = '';
+        document.getElementById('bin-select').value = '';
+    } else {
+        binFilter.classList.add('active');
+        // Clear year filter inputs
+        document.getElementById('event-type-select').value = '';
+        document.getElementById('year-select').value = '';
+    }
+}
+
+function loadBinOptions() {
+    const binEventTypeSelect = document.getElementById('bin-event-type-select');
+    const binSelect = document.getElementById('bin-select');
+
+    binEventTypeSelect.addEventListener('change', () => {
+        const eventType = binEventTypeSelect.value;
+        binSelect.innerHTML = '<option value="">Select range</option>';
+        if (eventType && binOptions[eventType]) {
+            binOptions[eventType].forEach(bin => {
+                const option = document.createElement('option');
+                option.value = bin;
+                option.textContent = bin;
+                binSelect.appendChild(option);
+            });
+            binSelect.disabled = false;
+        } else {
+            binSelect.disabled = true;
+        }
+    });
+}
 
 async function loadTickers() {
     const tickerSelect = document.getElementById('ticker-select');
@@ -215,6 +272,10 @@ async function loadChart(event) {
         Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, {
             responsive: true
         });
+        gtag('event', 'chart_load', {
+            'event_category': 'Chart',
+            'event_label': `${ticker}_${date}`
+        });
     } catch (error) {
         console.error('Error loading chart:', error);
         chartContainer.innerHTML = '<p>Failed to load chart. Please try again later.</p>';
@@ -348,8 +409,7 @@ async function loadYears() {
 
 async function loadEventDates(event) {
     event.preventDefault();
-    const eventType = document.getElementById('event-type-select').value;
-    const year = document.getElementById('year-select').value;
+    const filterType = document.querySelector('input[name="filter-type"]:checked').value;
     const eventDatesContainer = document.getElementById('event-dates');
     const form = document.getElementById('events-form');
     const button = form.querySelector('button[type="submit"]');
@@ -365,12 +425,30 @@ async function loadEventDates(event) {
         return;
     }
 
-    if (!eventType || !year) {
-        eventDatesContainer.innerHTML = '<p>Please select an event type and year.</p>';
-        return;
+    let url;
+    let eventType;
+    let year;
+    let bin;
+
+    if (filterType === 'year') {
+        eventType = document.getElementById('event-type-select').value;
+        year = document.getElementById('year-select').value;
+        if (!eventType || !year) {
+            eventDatesContainer.innerHTML = '<p>Please select an event type and year.</p>';
+            return;
+        }
+        url = `/api/events?event_type=${encodeURIComponent(eventType)}&year=${encodeURIComponent(year)}`;
+    } else {
+        eventType = document.getElementById('bin-event-type-select').value;
+        bin = document.getElementById('bin-select').value;
+        if (!eventType || !bin) {
+            eventDatesContainer.innerHTML = '<p>Please select an event type and economic impact range.</p>';
+            return;
+        }
+        url = `/api/economic_events?event_type=${encodeURIComponent(eventType)}&bin=${encodeURIComponent(bin)}`;
     }
-    console.log(`Fetching events for event_type=${eventType}, year=${year}`);
-    const url = `/api/events?event_type=${encodeURIComponent(eventType)}&year=${encodeURIComponent(year)}`;
+
+    console.log(`Fetching events for filterType=${filterType}, event_type=${eventType}, year=${year}, bin=${bin}`);
     console.log('Fetching URL:', url);
     eventDatesContainer.innerHTML = '<p>Loading event dates...</p>';
     try {
@@ -388,12 +466,15 @@ async function loadEventDates(event) {
                 button.textContent = 'Find Event Dates';
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('eventDatesRateLimitReset');
-                eventDatesContainer.innerHTML = '<p>Please select an event type and year to view event dates.</p>';
+                eventDatesContainer.innerHTML = '<p>Select filters to view dates with events.</p>';
             }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
         }
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
         const data = await response.json();
         console.log('Event API response:', JSON.stringify(data, null, 2));
         if (data.error) {
@@ -420,8 +501,8 @@ async function loadEventDates(event) {
                 document.getElementById('date').value = date;
                 loadChart(new Event('submit'));
                 gtag('event', 'event_date_click', {
-                    'event_category': 'Events Analysis',
-                    'event_label': `QQQ_${date}_${eventType}`
+                    'event_category': 'Event Analysis',
+                    'event_label': `QQQ_${date}_${eventType}${bin ? '_' + bin : ''}`
                 });
             });
             li.appendChild(link);
@@ -442,7 +523,7 @@ async function loadEarningsDates(event) {
     const earningsDatesContainer = document.getElementById('earnings-dates');
     const form = document.getElementById('earnings-form');
     const button = form.querySelector('button[type="submit"]');
-    const selects = form.querySelectorAll('select');
+    const select = form.querySelector('select');
 
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('earningsDatesRateLimitReset');
@@ -450,7 +531,7 @@ async function loadEarningsDates(event) {
         earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
         button.disabled = true;
         button.textContent = 'Rate Limit Exceeded';
-        selects.forEach(select => select.disabled = true);
+        select.disabled = true;
         return;
     }
 
@@ -469,20 +550,23 @@ async function loadEarningsDates(event) {
             earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
             button.disabled = true;
             button.textContent = 'Rate Limit Exceeded';
-            selects.forEach(select => select.disabled = true);
+            select.disabled = true;
             const resetTime = Date.now() + 12 * 60 * 60 * 1000;
             localStorage.setItem('earningsDatesRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
                 button.textContent = 'Find Earnings Dates';
-                selects.forEach(select => select.disabled = false);
+                select.disabled = false;
                 localStorage.removeItem('earningsDatesRateLimitReset');
-                earningsDatesContainer.innerHTML = '<p>Please select a ticker to view earnings dates.</p>';
+                earningsDatesContainer.innerHTML = '<p>Select a ticker to view earnings dates.</p>';
             }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
         }
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
         const data = await response.json();
         console.log('Earnings API response:', JSON.stringify(data, null, 2));
         if (data.error) {
@@ -549,12 +633,10 @@ async function loadGapInsights(event) {
         insightsContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction.</p>';
         return;
     }
-
     console.log(`Fetching gap insights for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
     const url = `/api/gap_insights?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
     console.log('Fetching URL:', url);
     insightsContainer.innerHTML = '<p>Loading gap insights...</p>';
-
     try {
         const response = await fetch(url);
         if (response.status === 429) {
@@ -570,7 +652,7 @@ async function loadGapInsights(event) {
                 button.textContent = 'Get Insights';
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('gapInsightsRateLimitReset');
-                insightsContainer.innerHTML = '<p>Select a gap size, day, and direction to view QQQ gap insights and statistics.</p>';
+                insightsContainer.innerHTML = '<p>Select a gap size, day of the week, and gap direction to view gap insights.</p>';
             }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
@@ -580,83 +662,93 @@ async function loadGapInsights(event) {
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
         }
         const data = await response.json();
-        console.log('Gap Insights API response:', JSON.stringify(data, null, 2));
+        console.log('Gap insights API response:', JSON.stringify(data, null, 2));
         if (data.error) {
             console.error('Error from gap insights API:', data.error);
             insightsContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
         if (!data.insights || Object.keys(data.insights).length === 0) {
-            console.log('No insights found:', data.message || 'No data returned');
-            insightsContainer.innerHTML = `<p>${data.message || 'No insights found for the selected criteria'}</p>`;
+            console.log('No gap insights found:', data.message || 'No insights returned');
+            insightsContainer.innerHTML = `<p>${data.message || 'No gap insights found for the selected criteria'}</p>`;
             return;
         }
-        console.log(`Rendering gap insights:`, data.insights);
-        const medianExplanation = "The median is used instead of the average because it is less affected by extreme values, providing a more robust measure of typical price behavior.";
-        const insightsDiv = document.createElement('div');
-        insightsDiv.className = 'insights-container';
-        insightsDiv.innerHTML = `
-            <h3>Gap Statistics</h3>
-            <div class="insights-row">
-                <div class="insight-metric">
-                    <div class="metric-name">Gap Fill Rate</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.gap_fill_rate.median}%</div>
-                    <div class="metric-description">Percentage of gaps that close</div>
-                </div>
-                <div class="insight-metric">
-                    <div class="metric-name">Median Move In Gap Direction Before Fill</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_move_before_fill.median}%</div>
-                    <div class="metric-average">Average: ${data.insights.median_move_before_fill.average}%</div>
-                    <div class="metric-description">Percentage move before gap closes</div>
-                </div>
-                <div class="insight-metric">
-                    <div class="metric-name">Median Max Move Unfilled Gaps</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_max_move_unfilled.median}%</div>
-                    <div class="metric-average">Average: ${data.insights.median_max_move_unfilled.average}%</div>
-                    <div class="metric-description">% move in gap direction when price does not close the gap</div>
-                </div>
-                <div class="insight-metric">
-                    <div class="metric-name">Median Time to Fill Gap</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_time_to_fill.median} min</div>
-                    <div class="metric-average">Average: ${data.insights.median_time_to_fill.average} min</div>
-                    <div class="metric-description">Median time in minutes to fill gap</div>
-                </div>
-            </div>
-            <div class="insights-row two-metrics">
-                <div class="insight-metric">
-                    <div class="metric-name">Median Time of Low of Day</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_time_of_low.median}</div>
-                    <div class="metric-average">Average: ${data.insights.median_time_of_low.average}</div>
-                    <div class="metric-description">Median time of the day’s low</div>
-                </div>
-                <div class="insight-metric">
-                    <div class="metric-name">Median Time of High of Day</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_time_of_high.median}</div>
-                    <div class="metric-average">Average: ${data.insights.median_time_of_high.average}</div>
-                    <div class="metric-description">Median time of the day’s high</div>
-                </div>
-            </div>
-            <div class="insights-row two-metrics">
-                <div class="insight-metric">
-                    <div class="metric-name">Reversal After Fill Back To Low/High Of Day</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.reversal_after_fill_rate.median}%</div>
-                    <div class="metric-description">% of time price reverses after gap is filled</div>
-                </div>
-                <div class="insight-metric">
-                    <div class="metric-name">Median Move In Gap Fill Direction Before Reversal</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_move_before_reversal.median}%</div>
-                    <div class="metric-average">Average: ${data.insights.median_move_before_reversal.average}%</div>
-                    <div class="metric-description">Median move in gap fill direction before reversal</div>
-                </div>
-            </div>
-        `;
-        insightsContainer.innerHTML = '';
-        insightsContainer.appendChild(insightsDiv);
-        gtag('event', 'gap_insights_view', {
-            'event_category': 'Gap Insights',
-            'event_label': `QQQ_${gapSize}_${day}_${gapDirection}`
+        console.log('Rendering gap insights:', data.insights);
+
+        const insights = data.insights;
+        const container = document.createElement('div');
+        container.className = 'insights-container';
+        container.innerHTML = `<h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>`;
+
+        // First row: 3 metrics
+        const row1 = document.createElement('div');
+        row1.className = 'insights-row';
+        ['gap_fill_rate', 'median_move_before_fill', 'median_max_move_unfilled'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row1.appendChild(metric);
         });
+        container.appendChild(row1);
+
+        // Second row: 2 metrics
+        const row2 = document.createElement('div');
+        row2.className = 'insights-row two-metrics';
+        ['median_time_to_fill', 'reversal_after_fill_rate'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row2.appendChild(metric);
+        });
+        container.appendChild(row2);
+
+        // Third row: 2 metrics
+        const row3 = document.createElement('div');
+        row3.className = 'insights-row two-metrics';
+        ['median_time_of_low', 'median_time_of_high'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median">${insights[key].median}</div>
+                <div class="metric-average">Avg: ${insights[key].average}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row3.appendChild(metric);
+        });
+        container.appendChild(row3);
+
+        // Fourth row: 1 metric
+        const row4 = document.createElement('div');
+        row4.className = 'insights-row';
+        const metric = document.createElement('div');
+        metric.className = 'insight-metric';
+        metric.innerHTML = `
+            <div class="metric-name tooltip" title="${insights.median_move_before_reversal.description}">${'Median Move Before Reversal'.replace(/\b\w/g, c => c.toUpperCase())}</div>
+            <div class="metric-median">${insights.median_move_before_reversal.median}%</div>
+            <div class="metric-average">Avg: ${insights.median_move_before_reversal.average}%</div>
+            <div class="metric-description">${insights.median_move_before_reversal.description}</div>
+        `;
+        row4.appendChild(metric);
+        container.appendChild(row4);
+
+        insightsContainer.innerHTML = '';
+        insightsContainer.appendChild(container);
         console.log('Gap insights rendered successfully');
+        gtag('event', 'gap_insights_load', {
+            'event_category': 'Gap Insights',
+            'event_label': `${gapSize}_${day}_${gapDirection}`
+        });
     } catch (error) {
         console.error('Error loading gap insights:', error);
         insightsContainer.innerHTML = '<p>Failed to load gap insights. Please try again later.</p>';

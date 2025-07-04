@@ -137,23 +137,43 @@
             <div id="events-analysis" class="tab-content">
                 <h2>News Event Analysis</h2>
                 <p>Master QQQ price action on key news days (CPI, PPI, FOMC, NFP) with 1-minute chart analytics to seize intraday trading opportunities.</p>
+                <div class="filter-toggle">
+                    <label><input type="radio" name="filter-type" value="year" checked> Filter by Event Type and Year</label>
+                    <label><input type="radio" name="filter-type" value="bin"> Filter by Event Type and Economic Impact Range</label>
+                </div>
                 <form id="events-form">
-                    <label for="event-type-select">Select Event Type:</label>
-                    <select id="event-type-select" name="event_type">
-                        <option value="">Select event type</option>
-                        <option value="CPI">CPI</option>
-                        <option value="PPI">PPI</option>
-                        <option value="FOMC">FOMC</option>
-                        <option value="NFP">NFP</option>
-                    </select>
-                    <label for="year-select">Select Year:</label>
-                    <select id="year-select" name="year">
-                        <option value="">Select year</option>
-                    </select>
+                    <div id="year-filter" class="filter-section active">
+                        <label for="event-type-select">Select Event Type:</label>
+                        <select id="event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                            <option value="FOMC">FOMC</option>
+                            <option value="NFP">NFP</option>
+                        </select>
+                        <label for="year-select">Select Year:</label>
+                        <select id="year-select" name="year">
+                            <option value="">Select year</option>
+                        </select>
+                    </div>
+                    <div id="bin-filter" class="filter-section">
+                        <label for="bin-event-type-select">Select Event Type:</label>
+                        <select id="bin-event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                            <option value="FOMC">FOMC</option>
+                            <option value="NFP">NFP</option>
+                        </select>
+                        <label for="bin-select">Select Economic Impact Range:</label>
+                        <select id="bin-select" name="bin">
+                            <option value="">Select range</option>
+                        </select>
+                    </div>
                     <button type="submit">Find Event Dates</button>
                 </form>
                 <div id="event-dates">
-                    <p>Select an event type and year to view dates with events.</p>
+                    <p>Select filters to view dates with events.</p>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
