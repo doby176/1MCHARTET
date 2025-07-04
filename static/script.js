@@ -118,7 +118,6 @@ async function loadChart(event) {
     event.preventDefault();
     const ticker = document.getElementById('ticker-select').value;
     const date = document.getElementById('date').value;
-    const indicators = Array.from(document.getElementById('indicators').selectedOptions).map(option => option.value);
     const chartContainer = document.getElementById('plotly-chart');
     const form = document.getElementById('stock-form');
     const button = form.querySelector('button[type="submit"]');
@@ -138,7 +137,7 @@ async function loadChart(event) {
         chartContainer.innerHTML = '<p>Please select a ticker and date.</p>';
         return;
     }
-    console.log(`Loading chart for ticker=${ticker}, date=${date}, indicators=${indicators.join(',')}`);
+    console.log(`Loading chart for ticker=${ticker}, date=${date}`);
     const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}`;
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
@@ -170,7 +169,7 @@ async function loadChart(event) {
             return;
         }
 
-        // Prepare chart data
+        // Render Plotly chart
         const chartData = data.chart_data;
         const candlestickTrace = {
             x: chartData.timestamp,
@@ -191,11 +190,6 @@ async function loadChart(event) {
             yaxis: 'y2',
             marker: { color: '#888888' }
         };
-
-        // Initialize traces and layout
-        const traces = [candlestickTrace, volumeTrace];
-        let domainIndex = 0.3; // Starting domain for candlestick
-        let subplotCount = 1; // Candlestick + volume
         const layout = {
             title: `${chartData.ticker} Candlestick Chart - ${chartData.date}`,
             xaxis: {
@@ -206,129 +200,20 @@ async function loadChart(event) {
             },
             yaxis: {
                 title: 'Price',
-                domain: [domainIndex, 1]
+                domain: [0.3, 1]
             },
             yaxis2: {
                 title: 'Volume',
-                domain: [0, domainIndex - 0.05],
+                domain: [0, 0.25],
                 anchor: 'x'
             },
             showlegend: true,
             margin: { t: 50, b: 50, l: 50, r: 50 },
             plot_bgcolor: '#ffffff',
-            paper_bgcolor: '#ffffff',
-            height: 600 // Default height
+            paper_bgcolor: '#ffffff'
         };
-
-        // Calculate indicators client-side using technicalindicators
-        if (indicators.length > 0) {
-            const closePrices = chartData.close;
-            const highPrices = chartData.high;
-            const lowPrices = chartData.low;
-            const timestamps = chartData.timestamp;
-
-            if (indicators.includes('rsi')) {
-                subplotCount++;
-                domainIndex -= 0.2;
-                const rsiValues = new RSIIndicator({
-                    period: 14,
-                    values: closePrices
-                }).getResult();
-                const rsiTrace = {
-                    x: timestamps,
-                    y: rsiValues,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'RSI (14)',
-                    yaxis: `y${subplotCount + 1}`,
-                    line: { color: '#ff9900' }
-                };
-                traces.push(rsiTrace);
-                layout[`yaxis${subplotCount + 1}`] = {
-                    title: 'RSI',
-                    domain: [domainIndex, domainIndex + 0.15],
-                    anchor: 'x',
-                    range: [0, 100]
-                };
-                layout[`xaxis${subplotCount}`] = { matches: 'x', showticklabels: false };
-            }
-
-            if (indicators.includes('macd')) {
-                subplotCount++;
-                domainIndex -= 0.2;
-                const macdResult = new MACD({
-                    fastPeriod: 12,
-                    slowPeriod: 26,
-                    signalPeriod: 9,
-                    values: closePrices
-                }).getResult();
-                const macdTrace = {
-                    x: timestamps,
-                    y: macdResult.map(d => d.MACD),
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'MACD (12,26,9)',
-                    yaxis: `y${subplotCount + 1}`,
-                    line: { color: '#0000ff' }
-                };
-                const signalTrace = {
-                    x: timestamps,
-                    y: macdResult.map(d => d.signal),
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'Signal',
-                    yaxis: `y${subplotCount + 1}`,
-                    line: { color: '#ff0000' }
-                };
-                const histogramTrace = {
-                    x: timestamps,
-                    y: macdResult.map(d => d.histogram),
-                    type: 'bar',
-                    name: 'Histogram',
-                    yaxis: `y${subplotCount + 1}`,
-                    marker: { color: '#888888' }
-                };
-                traces.push(macdTrace, signalTrace, histogramTrace);
-                layout[`yaxis${subplotCount + 1}`] = {
-                    title: 'MACD',
-                    domain: [domainIndex, domainIndex + 0.15],
-                    anchor: 'x'
-                };
-                layout[`xaxis${subplotCount}`] = { matches: 'x', showticklabels: false };
-            }
-
-            if (indicators.includes('sma')) {
-                subplotCount++;
-                domainIndex -= 0.2;
-                const smaValues = new SMA({
-                    period: 20,
-                    values: closePrices
-                }).getResult();
-                const smaTrace = {
-                    x: timestamps,
-                    y: smaValues,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'SMA (20)',
-                    yaxis: 'y1', // Overlay on candlestick
-                    line: { color: '#00ff00' }
-                };
-                traces.push(smaTrace);
-            }
-
-            // Adjust chart height based on subplots
-            layout.height = 600 + (subplotCount - 1) * 100; // 600px base + 100px per additional subplot
-        }
-
-        // Render Plotly chart
-        Plotly.newPlot('plotly-chart', traces, layout, {
+        Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, {
             responsive: true
-        });
-
-        // Log Google Analytics event
-        gtag('event', 'chart_load', {
-            'event_category': 'Chart',
-            'event_label': `${ticker}_${date}_${indicators.join(',')}`
         });
     } catch (error) {
         console.error('Error loading chart:', error);
@@ -774,6 +659,6 @@ async function loadGapInsights(event) {
         console.log('Gap insights rendered successfully');
     } catch (error) {
         console.error('Error loading gap insights:', error);
-        indicatorsContainer.innerHTML = '<p>Failed to load gap insights. Please try again later.</p>';
+        insightsContainer.innerHTML = '<p>Failed to load gap insights. Please try again later.</p>';
     }
 }

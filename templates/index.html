@@ -29,11 +29,9 @@
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=39">
+    <link rel="stylesheet" href="/static/styles.css?v=38">
     <!-- Add Plotly.js CDN -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <!-- Add technicalindicators CDN -->
-    <script src="https://unpkg.com/technicalindicators@3.1.0/dist/browser.min.js"></script>
 </head>
 <body>
     <header>
@@ -51,12 +49,6 @@
                 </select>
                 <label for="date">Select Date:</label>
                 <input type="date" id="date" name="date">
-                <label for="indicators">Select Indicators:</label>
-                <select id="indicators" name="indicators" multiple>
-                    <option value="rsi" title="Relative Strength Index (14-period) measures momentum">RSI</option>
-                    <option value="macd" title="Moving Average Convergence Divergence (12,26,9) for trend and momentum">MACD</option>
-                    <option value="sma" title="Simple Moving Average (20-period) for trend direction">SMA</option>
-                </select>
                 <button type="submit">Load Chart</button>
             </form>
             <div id="chart-container">
@@ -228,6 +220,6 @@
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
     </script>
-    <script src="/static/script.js?v=21"></script>
+    <script src="/static/script.js?v=20"></script>
 </body>
 </html>
