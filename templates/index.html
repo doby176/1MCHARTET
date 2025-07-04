@@ -186,10 +186,19 @@
                     <select id="earnings-ticker-select" name="ticker">
                         <option value="">Select a ticker</option>
                     </select>
+                    <label for="earnings-bin-select">Select Earnings Outcome:</label>
+                    <select id="earnings-bin-select" name="bin">
+                        <option value="">Select outcome</option>
+                        <option value="Beat">Beat</option>
+                        <option value="Slight Beat">Slight Beat</option>
+                        <option value="Miss">Miss</option>
+                        <option value="Slight Miss">Slight Miss</option>
+                        <option value="Unknown">Unknown</option>
+                    </select>
                     <button type="submit">Find Earnings Dates</button>
                 </form>
                 <div id="earnings-dates">
-                    <p>Select a ticker to view earnings dates.</p>
+                    <p>Select a ticker and earnings outcome to view earnings dates.</p>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>

@@ -413,7 +413,7 @@ async function loadEventDates(event) {
     const eventDatesContainer = document.getElementById('event-dates');
     const form = document.getElementById('events-form');
     const button = form.querySelector('button[type="submit"]');
-    const selects = form.querySelectorAll('select');
+    const selects = document.querySelectorAll('select');
 
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('eventDatesRateLimitReset');
@@ -520,10 +520,11 @@ async function loadEventDates(event) {
 async function loadEarningsDates(event) {
     event.preventDefault();
     const ticker = document.getElementById('earnings-ticker-select').value;
+    const bin = document.getElementById('earnings-bin-select').value;
     const earningsDatesContainer = document.getElementById('earnings-dates');
     const form = document.getElementById('earnings-form');
     const button = form.querySelector('button[type="submit"]');
-    const select = form.querySelector('select');
+    const selects = form.querySelectorAll('select');
 
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('earningsDatesRateLimitReset');
@@ -531,16 +532,16 @@ async function loadEarningsDates(event) {
         earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
         button.disabled = true;
         button.textContent = 'Rate Limit Exceeded';
-        select.disabled = true;
+        selects.forEach(select => select.disabled = true);
         return;
     }
 
-    if (!ticker) {
-        earningsDatesContainer.innerHTML = '<p>Please select a ticker.</p>';
+    if (!ticker || !bin) {
+        earningsDatesContainer.innerHTML = '<p>Please select a ticker and earnings outcome.</p>';
         return;
     }
-    console.log(`Fetching earnings for ticker=${ticker}`);
-    const url = `/api/earnings?ticker=${encodeURIComponent(ticker)}`;
+    console.log(`Fetching earnings for ticker=${ticker}, bin=${bin}`);
+    const url = `/api/earnings_by_bin?ticker=${encodeURIComponent(ticker)}&bin=${encodeURIComponent(bin)}`;
     console.log('Fetching URL:', url);
     earningsDatesContainer.innerHTML = '<p>Loading earnings dates...</p>';
     try {
@@ -550,15 +551,15 @@ async function loadEarningsDates(event) {
             earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
             button.disabled = true;
             button.textContent = 'Rate Limit Exceeded';
-            select.disabled = true;
+            selects.forEach(select => select.disabled = true);
             const resetTime = Date.now() + 12 * 60 * 60 * 1000;
             localStorage.setItem('earningsDatesRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
                 button.textContent = 'Find Earnings Dates';
-                select.disabled = false;
+                selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('earningsDatesRateLimitReset');
-                earningsDatesContainer.innerHTML = '<p>Select a ticker to view earnings dates.</p>';
+                earningsDatesContainer.innerHTML = '<p>Select a ticker and earnings outcome to view earnings dates.</p>';
             }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
@@ -576,7 +577,7 @@ async function loadEarningsDates(event) {
         }
         if (!data.dates || data.dates.length === 0) {
             console.log('No earnings dates found:', data.message || 'No dates returned');
-            earningsDatesContainer.innerHTML = `<p>${data.message || 'No earnings found for the selected ticker'}</p>`;
+            earningsDatesContainer.innerHTML = `<p>${data.message || `No earnings found for ${ticker} with outcome ${bin}`}</p>`;
             return;
         }
         console.log(`Rendering ${data.dates.length} earnings dates:`, data.dates);
@@ -594,7 +595,7 @@ async function loadEarningsDates(event) {
                 loadChart(new Event('submit'));
                 gtag('event', 'earnings_date_click', {
                     'event_category': 'Earnings Analysis',
-                    'event_label': `${ticker}_${date}`
+                    'event_label': `${ticker}_${date}_${bin}`
                 });
             });
             li.appendChild(link);
