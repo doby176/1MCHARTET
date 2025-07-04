@@ -751,10 +751,10 @@ async function loadGapInsights(event) {
         container.className = 'insights-container';
         container.innerHTML = `<h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>`;
 
-        // First row: 3 metrics
+        // First row: 4 metrics
         const row1 = document.createElement('div');
-        row1.className = 'insights-row';
-        ['gap_fill_rate', 'median_move_before_fill', 'median_max_move_unfilled'].forEach(key => {
+        row1.className = 'insights-row four-metrics';
+        ['gap_fill_rate', 'median_move_before_fill', 'median_max_move_unfilled', 'median_time_to_fill'].forEach(key => {
             const metric = document.createElement('div');
             metric.className = 'insight-metric';
             metric.innerHTML = `
@@ -770,7 +770,7 @@ async function loadGapInsights(event) {
         // Second row: 2 metrics
         const row2 = document.createElement('div');
         row2.className = 'insights-row two-metrics';
-        ['median_time_to_fill', 'reversal_after_fill_rate'].forEach(key => {
+        ['reversal_after_fill_rate', 'median_move_before_reversal'].forEach(key => {
             const metric = document.createElement('div');
             metric.className = 'insight-metric';
             metric.innerHTML = `
@@ -798,20 +798,6 @@ async function loadGapInsights(event) {
             row3.appendChild(metric);
         });
         container.appendChild(row3);
-
-        // Fourth row: 1 metric
-        const row4 = document.createElement('div');
-        row4.className = 'insights-row';
-        const metric = document.createElement('div');
-        metric.className = 'insight-metric';
-        metric.innerHTML = `
-            <div class="metric-name tooltip" title="${insights.median_move_before_reversal.description}">${'Median Move Before Reversal'.replace(/\b\w/g, c => c.toUpperCase())}</div>
-            <div class="metric-median">${insights.median_move_before_reversal.median}%</div>
-            <div class="metric-average">Avg: ${insights.median_move_before_reversal.average}%</div>
-            <div class="metric-description">${insights.median_move_before_reversal.description}</div>
-        `;
-        row4.appendChild(metric);
-        container.appendChild(row4);
 
         insightsContainer.innerHTML = '';
         insightsContainer.appendChild(container);
