@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadYears();
     loadEarningsTickers();
     loadBinOptions();
-    loadEarningsBinOptions(); // New function for earnings bin options
+    loadEarningsBinOptions();
     document.getElementById('stock-form').addEventListener('submit', loadChart);
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
     document.getElementById('events-form').addEventListener('submit', loadEventDates);
@@ -621,8 +621,10 @@ async function loadEarningsDates(event) {
     } else {
         ticker = document.getElementById('binned-ticker-select').value;
         bin = document.getElementById('bin-select').value;
+        console.log('Binned mode selected. Ticker:', ticker, 'Bin:', bin); // Debug log
         if (!ticker || !bin) {
             earningsDatesContainer.innerHTML = '<p>Please select a ticker and earnings reaction.</p>';
+            console.log('Validation failed. Ticker:', ticker, 'Bin:', bin); // Debug log
             return;
         }
         url = `/api/earnings_binned?ticker=${encodeURIComponent(ticker)}&bin=${encodeURIComponent(bin)}`;
