@@ -13,180 +13,233 @@
     </script>
     <meta name="google-adsense-account" content="ca-pub-9416785017460416">
     <title>1MChart - 1-Minute Stock Charts & QQQ Gap Insights for Day Trading</title>
-    <meta name="description" content="Dominate intraday trading with 1-minute stock charts and QQQ gap insights. Analyze earnings, economic events, and historical data for informed trading decisions.">
-    <meta name="keywords" content="1-minute stock charts, QQQ gap trading, intraday trading, day trading tools, stock market analysis, earnings analysis, economic events">
-    <meta name="author" content="1MChart">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta name="description" content="Dominate intraday trading with 1-minute stock charts for QQQ, AAPL, TSLA, NVDA, and more (2015-2025). Leverage QQQ gap insights, gap fill rates, and price action analytics to master earnings reactions and news events (CPI, PPI, FOMC, NFP). Our exclusive high-frequency data empowers day traders with precision trading strategies. Look to the left to know the right.">
+    <meta name="keywords" content="1-minute stock charts, QQQ gap insights, QQQ gap fill rate, QQQ gap trading, intraday gap analysis, QQQ price action patterns, day trading, price action analysis, QQQ gap statistics, earnings price action, CPI, PPI, FOMC, NFP, QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META, intraday trading, historical stock data, trading tools, technical analysis, stock market analysis, QQQ gap trading strategies, stock gap analytics">
+    <meta name="author" content="1MChart Team">
+    <meta name="robots" content="index, follow">
+    <!-- Open Graph for social media -->
+    <meta property="og:title" content="1MChart - 1-Minute Stock Charts & QQQ Gap Insights for Day Trading">
+    <meta property="og:description" content="Dominate intraday trading with 1-minute stock charts for QQQ, AAPL, TSLA, NVDA, and more (2015-2025). Leverage QQQ gap insights, gap fill rates, and price action analytics to master earnings reactions and news events (CPI, PPI, FOMC, NFP). Our exclusive high-frequency data empowers day traders with precision trading strategies. Look to the left to know the right.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://onemchart.onrender.com">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="1MChart - 1-Minute Stock Charts & QQQ Gap Insights for Day Trading">
+    <meta name="twitter:description" content="Dominate intraday trading with 1-minute stock charts for QQQ, AAPL, TSLA, NVDA, and more (2015-2025). Leverage QQQ gap insights, gap fill rates, and price action analytics to master earnings reactions and news events (CPI, PPI, FOMC, NFP). Our exclusive high-frequency data empowers day traders with precision trading strategies. Look to the left to know the right.">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css?v=38">
+    <!-- Add Plotly.js CDN -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <header>
-        <h1>1MChart - 1-Minute Stock Charts & QQQ Gap Insights</h1>
-        <p>Analyze intraday price action with 1-minute candlestick charts, QQQ gap statistics, earnings, and economic events.</p>
+        <img src="/static/logo-new.png" alt="1MChart Logo" class="logo">
+        <div class="seo-description">
+            <p>Dominate intraday trading with 1-minute stock charts for QQQ, AAPL, TSLA, NVDA, and more (2015-2025). Leverage QQQ gap insights, gap fill rates, and price action analytics to master earnings reactions and news events (CPI, PPI, FOMC, NFP). Our exclusive high-frequency data empowers day traders with precision trading strategies. <strong>Look to the left to know the right.</strong></p>
+        </div>
     </header>
     <main>
-        <section id="stock-chart-section">
-            <h2>Intraday Chart</h2>
+        <div class="card">
             <form id="stock-form">
                 <label for="ticker-select">Select Ticker:</label>
-                <select id="ticker-select" name="ticker" required>
+                <select id="ticker-select" name="ticker">
                     <option value="">Select a ticker</option>
                 </select>
                 <label for="date">Select Date:</label>
-                <input type="date" id="date" name="date" required disabled>
+                <input type="date" id="date" name="date">
                 <button type="submit">Load Chart</button>
             </form>
-            <div id="plotly-chart">
-                <p>Please select a ticker and date to generate a chart.</p>
+            <div id="chart-container">
+                <div id="plotly-chart"></div>
             </div>
-        </section>
-
-        <section id="gap-analysis-section">
-            <h2>QQQ Gap Analysis</h2>
-            <form id="gap-form">
-                <label for="gap-size-select">Gap Size:</label>
-                <select id="gap-size-select" name="gap_size" required>
-                    <option value="">Select gap size</option>
-                    <option value="0.1-0.5%">0.1-0.5%</option>
-                    <option value="0.5-1.0%">0.5-1.0%</option>
-                    <option value="1.0-1.5%">1.0-1.5%</option>
-                    <option value=">1.5%">>1.5%</option>
-                </select>
-                <label for="day-select">Day of Week:</label>
-                <select id="day-select" name="day" required>
-                    <option value="">Select day</option>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                </select>
-                <label for="gap-direction-select">Gap Direction:</label>
-                <select id="gap-direction-select" name="gap_direction" required>
-                    <option value="">Select direction</option>
-                    <option value="Up">Up</option>
-                    <option value="Down">Down</option>
-                </select>
-                <button type="submit">Find Gap Dates</button>
-            </form>
-            <div id="gap-dates">
-                <p>Please select a gap size, day of the week, and gap direction to view gap dates.</p>
+            <!-- Tabbed Interface -->
+            <div class="tabs">
+                <button class="tab-button active" onclick="openTab('gap-analysis')">QQQ Gap Analysis</button>
+                <button class="tab-button" onclick="openTab('gap-insights')">QQQ Gap Insights</button>
+                <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
+                <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
             </div>
-        </section>
-
-        <section id="news-event-analysis-section">
-            <h2>News Event Analysis</h2>
-            <form id="events-form">
+            <!-- QQQ Gap Analysis Section -->
+            <div id="gap-analysis" class="tab-content active">
+                <h2>QQQ Gap Analysis</h2>
+                <p>Uncover QQQ gap trading opportunities with 1-minute chart analytics. Filter by gap size and direction to reveal intraday price action patterns missed by daily charts.</p>
+                <form id="gap-form">
+                    <label for="gap-size-select">Select Gap Size Bin:</label>
+                    <select id="gap-size-select" name="gap_size">
+                        <option value="">Select gap size</option>
+                        <option value="0.15-0.35%">0.15-0.35%</option>
+                        <option value="0.35-0.5%">0.35-0.5%</option>
+                        <option value="0.5-1%">0.5-1%</option>
+                        <option value="1-1.5%">1-1.5%</option>
+                        <option value="1.5%+">1.5%+</option>
+                    </select>
+                    <label for="day-select">Select Day of Week:</label>
+                    <select id="day-select" name="day">
+                        <option value="">Select day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                    <label for="gap-direction-select">Select Gap Direction:</label>
+                    <select id="gap-direction-select" name="gap_direction">
+                        <option value="">Select gap direction</option>
+                        <option value="up">Gap Up</option>
+                        <option value="down">Gap Down</option>
+                    </select>
+                    <button type="submit">Find Gap Dates</button>
+                </form>
+                <div id="gap-dates">
+                    <p>Select a gap size, day, and direction to view dates with gaps.</p>
+                </div>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
+            </div>
+            <!-- Gap Insights Section -->
+            <div id="gap-insights" class="tab-content">
+                <h2>QQQ Gap Insights</h2>
+                <p>Optimize gap trading with QQQ insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
+                <form id="gap-insights-form">
+                    <label for="gap-insights-size-select">Select Gap Size Bin:</label>
+                    <select id="gap-insights-size-select" name="gap_size">
+                        <option value="">Select gap size</option>
+                        <option value="0.15-0.35%">0.15-0.35%</option>
+                        <option value="0.35-0.5%">0.35-0.5%</option>
+                        <option value="0.5-1%">0.5-1%</option>
+                        <option value="1-1.5%">1-1.5%</option>
+                        <option value="1.5%+">1.5%+</option>
+                    </select>
+                    <label for="gap-insights-day-select">Select Day of Week:</label>
+                    <select id="gap-insights-day-select" name="day">
+                        <option value="">Select day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                    <label for="gap-insights-direction-select">Select Gap Direction:</label>
+                    <select id="gap-insights-direction-select" name="gap_direction">
+                        <option value="">Select gap direction</option>
+                        <option value="up">Gap Up</option>
+                        <option value="down">Gap Down</option>
+                    </select>
+                    <button type="submit">Get Insights</button>
+                </form>
+                <div id="gap-insights-results">
+                    <p>Select a gap size, day, and direction to view QQQ gap insights and statistics.</p>
+                </div>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
+            </div>
+            <!-- News Event Analysis Section -->
+            <div id="events-analysis" class="tab-content">
+                <h2>News Event Analysis</h2>
+                <p>Master QQQ price action on key news days (CPI, PPI, FOMC, NFP) with 1-minute chart analytics to seize intraday trading opportunities.</p>
                 <div class="filter-toggle">
-                    <label><input type="radio" name="filter-type" value="year" checked> Filter by Year</label>
-                    <label><input type="radio" name="filter-type" value="bin"> Filter by Economic Impact</label>
+                    <label><input type="radio" name="filter-type" value="year" checked> Filter by Event Type and Year</label>
+                    <label><input type="radio" name="filter-type" value="bin"> Filter by Event Type and Economic Impact Range</label>
                 </div>
-                <div id="year-filter" class="filter-section active">
-                    <label for="event-type-select">Event Type:</label>
-                    <select id="event-type-select" name="event_type">
-                        <option value="">Select event type</option>
-                        <option value="CPI">CPI</option>
-                        <option value="PPI">PPI</option>
-                        <option value="NFP">NFP</option>
-                        <option value="FOMC">FOMC</option>
-                    </select>
-                    <label for="year-select">Year:</label>
-                    <select id="year-select" name="year">
-                        <option value="">Select year</option>
-                    </select>
+                <form id="events-form">
+                    <div id="year-filter" class="filter-section active">
+                        <label for="event-type-select">Select Event Type:</label>
+                        <select id="event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                            <option value="FOMC">FOMC</option>
+                            <option value="NFP">NFP</option>
+                        </select>
+                        <label for="year-select">Select Year:</label>
+                        <select id="year-select" name="year">
+                            <option value="">Select year</option>
+                        </select>
+                    </div>
+                    <div id="bin-filter" class="filter-section">
+                        <label for="bin-event-type-select">Select Event Type:</label>
+                        <select id="bin-event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                            <option value="FOMC">FOMC</option>
+                            <option value="NFP">NFP</option>
+                        </select>
+                        <label for="bin-select">Select Economic Impact Range:</label>
+                        <select id="bin-select" name="bin">
+                            <option value="">Select range</option>
+                        </select>
+                    </div>
+                    <button type="submit">Find Event Dates</button>
+                </form>
+                <div id="event-dates">
+                    <p>Select filters to view dates with events.</p>
                 </div>
-                <div id="bin-filter" class="filter-section">
-                    <label for="bin-event-type-select">Event Type:</label>
-                    <select id="bin-event-type-select" name="bin_event_type">
-                        <option value="">Select event type</option>
-                        <option value="CPI">CPI</option>
-                        <option value="PPI">PPI</option>
-                        <option value="NFP">NFP</option>
-                        <option value="FOMC">FOMC</option>
-                    </select>
-                    <label for="bin-select">Economic Impact Range:</label>
-                    <select id="bin-select" name="bin" disabled>
-                        <option value="">Select range</option>
-                    </select>
-                </div>
-                <button type="submit">Find Event Dates</button>
-            </form>
-            <div id="event-dates">
-                <p>Select filters to view dates with events.</p>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-        </section>
-
-        <section id="earnings-analysis-section">
-            <h2>Earnings Analysis</h2>
-            <form id="earnings-form">
-                <div class="filter-toggle">
-                    <label><input type="radio" name="earnings-filter-type" value="ticker" checked> Filter by Ticker</label>
-                    <label><input type="radio" name="earnings-filter-type" value="binned"> Filter by Earnings Reaction</label>
-                </div>
-                <div id="ticker-filter" class="filter-section active">
-                    <label for="earnings-ticker-select">Ticker:</label>
+            <!-- Earnings Analysis Section -->
+            <div id="earnings-analysis" class="tab-content">
+                <h2>Earnings Analysis</h2>
+                <p>Analyze stock earnings reactions with 1-minute charts to pinpoint intraday price action patterns and build winning trading strategies.</p>
+                <form id="earnings-form">
+                    <label for="earnings-ticker-select">Select Ticker:</label>
                     <select id="earnings-ticker-select" name="ticker">
                         <option value="">Select a ticker</option>
                     </select>
+                    <button type="submit">Find Earnings Dates</button>
+                </form>
+                <div id="earnings-dates">
+                    <p>Select a ticker to view earnings dates.</p>
                 </div>
-                <div id="binned-filter" class="filter-section">
-                    <label for="binned-ticker-select">Ticker:</label>
-                    <select id="binned-ticker-select" name="ticker">
-                        <option value="">Select a ticker</option>
-                    </select>
-                    <label for="bin-select">Earnings Reaction:</label>
-                    <select id="bin-select" name="bin" disabled>
-                        <option value="">Select earnings reaction</option>
-                        <option value="Beat" title="Price moved up >10% post-earnings">Beat</option>
-                        <option value="Slight Beat" title="Price moved up 0% to 10% post-earnings">Slight Beat</option>
-                        <option value="Slight Miss" title="Price moved down -10% to 0% post-earnings">Slight Miss</option>
-                        <option value="Miss" title="Price moved down <-10% post-earnings">Miss</option>
-                        <option value="Unknown" title="Price movement data unavailable">Unknown</option>
-                    </select>
-                </div>
-                <button type="submit">Find Earnings Dates</button>
-            </form>
-            <div id="earnings-dates">
-                <p>Select filters to view earnings dates.</p>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-        </section>
-
-        <section id="gap-insights-section">
-            <h2>QQQ Gap Insights</h2>
-            <form id="gap-insights-form">
-                <label for="gap-insights-size-select">Gap Size:</label>
-                <select id="gap-insights-size-select" name="gap_size" required>
-                    <option value="">Select gap size</option>
-                    <option value="0.1-0.5%">0.1-0.5%</option>
-                    <option value="0.5-1.0%">0.5-1.0%</option>
-                    <option value="1.0-1.5%">1.0-1.5%</option>
-                    <option value=">1.5%">>1.5%</option>
-                </select>
-                <label for="gap-insights-day-select">Day of Week:</label>
-                <select id="gap-insights-day-select" name="day" required>
-                    <option value="">Select day</option>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                </select>
-                <label for="gap-insights-direction-select">Gap Direction:</label>
-                <select id="gap-insights-direction-select" name="gap_direction" required>
-                    <option value="">Select direction</option>
-                    <option value="Up">Up</option>
-                    <option value="Down">Down</option>
-                </select>
-                <button type="submit">Get Insights</button>
-            </form>
-            <div id="gap-insights-results">
-                <p>Select a gap size, day of the week, and gap direction to view gap insights.</p>
+            <!-- AdSense Ad Unit -->
+            <div class="ads-container">
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
+                <!-- StockChartBanner -->
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-9416785017460416"
+                     data-ad-slot="5487535867"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
             </div>
-        </section>
+        </div>
     </main>
-    <footer>
-        <p>&copy; 2025 1MChart. All rights reserved.</p>
+    <footer class="footer">
+        <h2>More Tools for Day Traders Coming Soon</h2>
+        <p>Stay tuned for expanded 1-minute chart data, QQQ gap insights, and advanced trading tools to analyze QQQ gap trading strategies, earnings, and news events from 2015 to 2025.</p>
+        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site, the financial information provided is for informational purposes only and does not constitute financial advice.</p>
+        <img src="/static/logo-new.png" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // Disable right-click without alert
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        // Disable text selection
+        document.addEventListener('selectstart', function(e) {
+            e.preventDefault();
+        });
+        // Disable drag-and-drop
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+        });
+        // Tab switching function
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
+        }
+    </script>
+    <script src="/static/script.js?v=20"></script>
 </body>
 </html>
