@@ -321,50 +321,50 @@ def get_gap_insights():
             return f"{hours:02d}:{mins:02d}"
 
         median_low_minutes = filtered_df['time_of_low_minutes'].median()
-        median_high_minutes = filtered_df['time_of_high_minutes'].median()
         average_low_minutes = filtered_df['time_of_low_minutes'].mean()
+        median_high_minutes = filtered_df['time_of_high_minutes'].median()
         average_high_minutes = filtered_df['time_of_high_minutes'].mean()
 
         insights = {
             'gap_fill_rate': {
                 'median': round(gap_fill_rate, 2),
                 'average': round(gap_fill_rate, 2),
-                'description': 'Percentage of gaps that filled (closed) during the trading day.'
+                'description': 'Percentage of gaps that close'
             },
             'median_move_before_fill': {
                 'median': round(filled_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filled_df.empty else 0,
                 'average': round(filled_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filled_df.empty else 0,
-                'description': 'Median and average move in the gap direction before filling (for filled gaps).'
+                'description': 'Percentage move before gap closes'
             },
             'median_max_move_unfilled': {
                 'median': round(unfilled_df['max_move_gap_direction_first_30min_pct'].median(), 2) if not unfilled_df.empty else 0,
                 'average': round(unfilled_df['max_move_gap_direction_first_30min_pct'].mean(), 2) if not unfilled_df.empty else 0,
-                'description': 'Median and average maximum move in the gap direction within the first 30 minutes (for unfilled gaps).'
+                'description': '% move in gap direction when price does not close the gap'
             },
             'median_time_to_fill': {
-                'median': round(median_time_to_fill, 2) if not pd.isna(median_time_to_fill) else "N/A",
-                'average': round(average_time_to_fill, 2) if not pd.isna(average_time_to_fill) else "N/A",
-                'description': 'Median and average time taken to fill the gap (for filled gaps, in minutes).'
-            },
-            'reversal_after_fill_rate': {
-                'median': round(reversal_after_fill_rate, 2),
-                'average': round(reversal_after_fill_rate, 2),
-                'description': 'Percentage of gaps that reversed after filling.'
+                'median': round(median_time_to_fill, 2) if not pd.isna(median_time_to_fill) else 0,
+                'average': round(average_time_to_fill, 2) if not pd.isna(average_time_to_fill) else 0,
+                'description': 'Median time in minutes to fill gap'
             },
             'median_time_of_low': {
                 'median': minutes_to_time(median_low_minutes),
                 'average': minutes_to_time(average_low_minutes),
-                'description': 'Median and average time of the lowest price during the trading day.'
+                'description': 'Median time of the day’s low'
             },
             'median_time_of_high': {
                 'median': minutes_to_time(median_high_minutes),
                 'average': minutes_to_time(average_high_minutes),
-                'description': 'Median and average time of the highest price during the trading day.'
+                'description': 'Median time of the day’s high'
+            },
+            'reversal_after_fill_rate': {
+                'median': round(reversal_after_fill_rate, 2),
+                'average': round(reversal_after_fill_rate, 2),
+                'description': '% of time price reverses after gap is filled'
             },
             'median_move_before_reversal': {
-                'median': round(filled_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filled_df.empty else 0,
-                'average': round(filled_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filled_df.empty else 0,
-                'description': 'Median and average move in the gap direction before reversal (for filled gaps).'
+                'median': round(filtered_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filtered_df.empty else 0,
+                'average': round(filtered_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filtered_df.empty else 0,
+                'description': 'Median move in gap fill direction before reversal'
             }
         }
         logging.debug(f"Computed insights: {insights}")
@@ -376,24 +376,24 @@ def get_gap_insights():
 @app.route('/api/years', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_years():
-    logging.debug("Fetching available years")
     try:
+        logging.debug("Fetching unique years from news_events.csv")
         if not os.path.exists(EVENTS_DATA_PATH):
             logging.error(f"Events data file not found: {EVENTS_DATA_PATH}")
             return jsonify({'error': 'Events data file not found. Please contact support.'}), 404
         try:
             df = pd.read_csv(EVENTS_DATA_PATH)
-            df['date'] = pd.to_datetime(df['date'])
             logging.debug(f"Loaded events data with shape: {df.shape}")
+            if 'date' not in df.columns:
+                logging.error("Invalid events data format: missing 'date' column")
+                return jsonify({'error': 'Invalid events data format'}), 400
+            df['date'] = pd.to_datetime(df['date'])
+            years = sorted(df['date'].dt.year.unique().tolist())
+            logging.debug(f"Found years: {years}")
+            return jsonify({'years': years})
         except Exception as e:
             logging.error(f"Error reading events data file {EVENTS_DATA_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load events data: {str(e)}'}), 500
-        if 'date' not in df.columns:
-            logging.error("Invalid events data format: missing date column")
-            return jsonify({'error': 'Invalid events data format'}), 400
-        years = sorted(df['date'].dt.year.unique())
-        logging.debug(f"Found years: {years}")
-        return jsonify({'years': years})
     except Exception as e:
         logging.error(f"Error fetching years: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
@@ -410,7 +410,6 @@ def get_events():
             return jsonify({'error': 'Events data file not found. Please contact support.'}), 404
         try:
             df = pd.read_csv(EVENTS_DATA_PATH)
-            df['date'] = pd.to_datetime(df['date'])
             logging.debug(f"Loaded events data with shape: {df.shape}")
         except Exception as e:
             logging.error(f"Error reading events data file {EVENTS_DATA_PATH}: {str(e)}")
@@ -418,24 +417,22 @@ def get_events():
         if 'date' not in df.columns or 'event_type' not in df.columns:
             logging.error("Invalid events data format: missing required columns")
             return jsonify({'error': 'Invalid events data format'}), 400
-        if not event_type or not year:
-            logging.error("Missing event_type or year parameter")
-            return jsonify({'error': 'Event type and year are required'}), 400
-        try:
-            year = int(year)
-        except ValueError:
-            logging.error(f"Invalid year format: {year}")
-            return jsonify({'error': 'Invalid year format'}), 400
-        valid_event_types = ['CPI', 'PPI', 'FOMC', 'NFP']
-        if event_type not in valid_event_types:
-            logging.error(f"Invalid event type requested: {event_type}")
-            return jsonify({'error': 'Invalid event type'}), 400
-        filtered_df = df[(df['event_type'] == event_type) & (df['date'].dt.year == year)]
+        df['date'] = pd.to_datetime(df['date'])
+        filtered_df = df
+        if event_type:
+            filtered_df = filtered_df[filtered_df['event_type'] == event_type]
+        if year:
+            try:
+                year = int(year)
+                filtered_df = filtered_df[filtered_df['date'].dt.year == year]
+            except ValueError:
+                logging.error(f"Invalid year format: {year}")
+                return jsonify({'error': 'Invalid year format'}), 400
         dates = filtered_df['date'].dt.strftime('%Y-%m-%d').tolist()
         logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
         if not dates:
             logging.debug(f"No events found for event_type={event_type}, year={year}")
-            return jsonify({'dates': [], 'message': f'No {event_type} events found for {year}'})
+            return jsonify({'dates': [], 'message': 'No events found for the selected criteria'})
         logging.debug(f"Found {len(dates)} event dates")
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
@@ -447,11 +444,13 @@ def get_events():
 def get_economic_events():
     try:
         event_type = request.args.get('event_type')
-        bin_value = request.args.get('bin')
-        logging.debug(f"Fetching economic events for event_type={event_type}, bin={bin_value}")
+        bin_range = request.args.get('bin')  # Renamed from 'bin' to 'bin_range' for clarity
+        logging.debug(f"Fetching economic events for event_type={event_type}, bin={bin_range}")
+        
         if not os.path.exists(ECONOMIC_DATA_BINNED_PATH):
-            logging.error(f"Economic data file not found: {ECONOMIC_DATA_BINNED_PATH}")
+            logging.error(f"Economic data binned file not found: {ECONOMIC_DATA_BINNED_PATH}")
             return jsonify({'error': 'Economic data file not found. Please contact support.'}), 404
+        
         try:
             df = pd.read_csv(ECONOMIC_DATA_BINNED_PATH)
             df['date'] = pd.to_datetime(df['date'])
@@ -459,32 +458,25 @@ def get_economic_events():
         except Exception as e:
             logging.error(f"Error reading economic data file {ECONOMIC_DATA_BINNED_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load economic data: {str(e)}'}), 500
+        
         if 'date' not in df.columns or 'event_type' not in df.columns or 'bin' not in df.columns:
             logging.error("Invalid economic data format: missing required columns")
             return jsonify({'error': 'Invalid economic data format'}), 400
-        if not event_type or not bin_value:
-            logging.error("Missing event_type or bin parameter")
-            return jsonify({'error': 'Event type and bin are required'}), 400
-        valid_event_types = ['CPI', 'PPI', 'FOMC', 'NFP']
-        if event_type not in valid_event_types:
-            logging.error(f"Invalid event type requested: {event_type}")
-            return jsonify({'error': 'Invalid event type'}), 400
-        valid_bins = {
-            'CPI': ['<0%', '0-1%', '1-2%', '2-3%', '3-5%', '>5%'],
-            'PPI': ['<0%', '0-2%', '2-4%', '4-8%', '>8%'],
-            'NFP': ['<0K', '0-100K', '100-200K', '200-300K', '>300K'],
-            'FOMC': ['0-1%', '1-2%', '2-3%', '3-4%', '>4%']
-        }
-        if bin_value not in valid_bins.get(event_type, []):
-            logging.error(f"Invalid bin requested: {bin_value} for event_type={event_type}")
-            return jsonify({'error': 'Invalid bin for the selected event type'}), 400
-        filtered_df = df[(df['event_type'] == event_type) & (df['bin'] == bin_value)]
+        
+        filtered_df = df
+        if event_type:
+            filtered_df = filtered_df[filtered_df['event_type'] == event_type]
+        if bin_range:
+            filtered_df = filtered_df[filtered_df['bin'] == bin_range]
+        
         dates = filtered_df['date'].dt.strftime('%Y-%m-%d').tolist()
         logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
+        
         if not dates:
-            logging.debug(f"No events found for event_type={event_type}, bin={bin_value}")
-            return jsonify({'dates': [], 'message': f'No {event_type} events found for bin {bin_value}'})
-        logging.debug(f"Found {len(dates)} event dates")
+            logging.debug(f"No events found for event_type={event_type}, bin={bin_range}")
+            return jsonify({'dates': [], 'message': 'No events found for the selected criteria'})
+        
+        logging.debug(f"Found {len(dates)} economic event dates")
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing economic events: {str(e)}")
@@ -509,13 +501,11 @@ def get_earnings():
         if 'ticker' not in df.columns or 'earnings_date' not in df.columns:
             logging.error("Invalid earnings data format: missing required columns")
             return jsonify({'error': 'Invalid earnings data format'}), 400
-        if not ticker:
-            logging.error("Missing ticker parameter")
+        if ticker:
+            filtered_df = df[df['ticker'] == ticker]
+        else:
+            logging.error("No ticker provided for earnings query")
             return jsonify({'error': 'Ticker is required'}), 400
-        if ticker not in TICKERS:
-            logging.error(f"Invalid ticker requested: {ticker}")
-            return jsonify({'error': 'Invalid ticker'}), 400
-        filtered_df = df[df['ticker'] == ticker]
         dates = filtered_df['earnings_date'].dt.strftime('%Y-%m-%d').tolist()
         logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
         if not dates:

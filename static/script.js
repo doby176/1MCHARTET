@@ -15,12 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     filterRadios.forEach(radio => {
         radio.addEventListener('change', toggleFilterSection);
     });
-
-    // Handle earnings filter type toggle
-    const earningsFilterRadios = document.querySelectorAll('input[name="earnings-filter-type"]');
-    earningsFilterRadios.forEach(radio => {
-        radio.addEventListener('change', toggleEarningsFilterSection);
-    });
 });
 
 // Bin options for each event type
@@ -30,9 +24,6 @@ const binOptions = {
     NFP: ['<0K', '0-100K', '100-200K', '200-300K', '>300K'],
     FOMC: ['0-1%', '1-2%', '2-3%', '3-4%', '>4%']
 };
-
-// Earnings bin options
-const earningsBinOptions = ['Beat', 'Slight Beat', 'Miss', 'Slight Miss', 'Unknown'];
 
 function toggleFilterSection() {
     const yearFilter = document.getElementById('year-filter');
@@ -55,39 +46,9 @@ function toggleFilterSection() {
     }
 }
 
-function toggleEarningsFilterSection() {
-    const tickerFilter = document.getElementById('ticker-filter');
-    const binFilter = document.getElementById('bin-filter');
-    const filterType = document.querySelector('input[name="earnings-filter-type"]:checked').value;
-
-    tickerFilter.classList.remove('active');
-    binFilter.classList.remove('active');
-
-    if (filterType === 'ticker') {
-        tickerFilter.classList.add('active');
-        // Clear bin filter inputs
-        document.getElementById('bin-ticker-select').value = '';
-        document.getElementById('bin-select').value = '';
-    } else {
-        binFilter.classList.add('active');
-        // Clear ticker filter inputs
-        document.getElementById('earnings-ticker-select').value = '';
-    }
-}
-
 function loadBinOptions() {
     const binEventTypeSelect = document.getElementById('bin-event-type-select');
     const binSelect = document.getElementById('bin-select');
-
-    // Populate earnings bin options
-    binSelect.innerHTML = '<option value="">Select bin</option>';
-    earningsBinOptions.forEach(bin => {
-        const option = document.createElement('option');
-        option.value = bin;
-        option.textContent = bin;
-        binSelect.appendChild(option);
-    });
-    binSelect.disabled = false;
 
     binEventTypeSelect.addEventListener('change', () => {
         const eventType = binEventTypeSelect.value;
@@ -140,18 +101,14 @@ async function loadTickers() {
 
 async function loadEarningsTickers() {
     const tickerSelect = document.getElementById('earnings-ticker-select');
-    const binTickerSelect = document.getElementById('bin-ticker-select');
     tickerSelect.disabled = true;
-    binTickerSelect.disabled = true;
     tickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
-    binTickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
     try {
         console.log('Fetching earnings tickers from /api/tickers');
         const response = await fetch('/api/tickers');
         if (response.status === 429) {
             const data = await response.json();
             tickerSelect.innerHTML = `<option value="">${data.error}</option>`;
-            binTickerSelect.innerHTML = `<option value="">${data.error}</option>`;
             alert(data.error);
             return;
         }
@@ -159,23 +116,16 @@ async function loadEarningsTickers() {
         const data = await response.json();
         console.log('Fetched tickers for earnings:', data.tickers);
         tickerSelect.innerHTML = '<option value="">Select a ticker</option>';
-        binTickerSelect.innerHTML = '<option value="">Select a ticker</option>';
         data.tickers.forEach(ticker => {
             const option = document.createElement('option');
             option.value = ticker;
             option.textContent = ticker;
             tickerSelect.appendChild(option);
-            const binOption = document.createElement('option');
-            binOption.value = ticker;
-            binOption.textContent = ticker;
-            binTickerSelect.appendChild(binOption);
         });
         tickerSelect.disabled = false;
-        binTickerSelect.disabled = false;
     } catch (error) {
         console.error('Error loading earnings tickers:', error);
         tickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
-        binTickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
         alert('Failed to load earnings tickers. Please refresh the page or try again later.');
     }
 }
@@ -569,11 +519,11 @@ async function loadEventDates(event) {
 
 async function loadEarningsDates(event) {
     event.preventDefault();
-    const filterType = document.querySelector('input[name="earnings-filter-type"]:checked').value;
+    const ticker = document.getElementById('earnings-ticker-select').value;
     const earningsDatesContainer = document.getElementById('earnings-dates');
     const form = document.getElementById('earnings-form');
     const button = form.querySelector('button[type="submit"]');
-    const selects = form.querySelectorAll('select');
+    const select = form.querySelector('select');
 
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('earningsDatesRateLimitReset');
@@ -581,31 +531,16 @@ async function loadEarningsDates(event) {
         earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
         button.disabled = true;
         button.textContent = 'Rate Limit Exceeded';
-        selects.forEach(select => select.disabled = true);
+        select.disabled = true;
         return;
     }
 
-    let url;
-    let ticker;
-
-    if (filterType === 'ticker') {
-        ticker = document.getElementById('earnings-ticker-select').value;
-        if (!ticker) {
-            earningsDatesContainer.innerHTML = '<p>Please select a ticker.</p>';
-            return;
-        }
-        url = `/api/earnings?ticker=${encodeURIComponent(ticker)}`;
-    } else {
-        ticker = document.getElementById('bin-ticker-select').value;
-        const bin = document.getElementById('bin-select').value;
-        if (!ticker || !bin) {
-            earningsDatesContainer.innerHTML = '<p>Please select a ticker and an EPS surprise bin.</p>';
-            return;
-        }
-        url = `/api/earnings_by_bin?ticker=${encodeURIComponent(ticker)}&bin=${encodeURIComponent(bin)}`;
+    if (!ticker) {
+        earningsDatesContainer.innerHTML = '<p>Please select a ticker.</p>';
+        return;
     }
-
-    console.log(`Fetching earnings for filterType=${filterType}, ticker=${ticker}`);
+    console.log(`Fetching earnings for ticker=${ticker}`);
+    const url = `/api/earnings?ticker=${encodeURIComponent(ticker)}`;
     console.log('Fetching URL:', url);
     earningsDatesContainer.innerHTML = '<p>Loading earnings dates...</p>';
     try {
@@ -615,15 +550,15 @@ async function loadEarningsDates(event) {
             earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
             button.disabled = true;
             button.textContent = 'Rate Limit Exceeded';
-            selects.forEach(select => select.disabled = true);
+            select.disabled = true;
             const resetTime = Date.now() + 12 * 60 * 60 * 1000;
             localStorage.setItem('earningsDatesRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
                 button.textContent = 'Find Earnings Dates';
-                selects.forEach(select => select.disabled = false);
+                select.disabled = false;
                 localStorage.removeItem('earningsDatesRateLimitReset');
-                earningsDatesContainer.innerHTML = '<p>Select filters to view earnings dates.</p>';
+                earningsDatesContainer.innerHTML = '<p>Select a ticker to view earnings dates.</p>';
             }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
@@ -641,7 +576,7 @@ async function loadEarningsDates(event) {
         }
         if (!data.dates || data.dates.length === 0) {
             console.log('No earnings dates found:', data.message || 'No dates returned');
-            earningsDatesContainer.innerHTML = `<p>${data.message || 'No earnings found for the selected criteria'}</p>`;
+            earningsDatesContainer.innerHTML = `<p>${data.message || 'No earnings found for the selected ticker'}</p>`;
             return;
         }
         console.log(`Rendering ${data.dates.length} earnings dates:`, data.dates);
@@ -659,7 +594,7 @@ async function loadEarningsDates(event) {
                 loadChart(new Event('submit'));
                 gtag('event', 'earnings_date_click', {
                     'event_category': 'Earnings Analysis',
-                    'event_label': `${ticker}_${date}${filterType === 'bin' ? '_' + document.getElementById('bin-select').value : ''}`
+                    'event_label': `${ticker}_${date}`
                 });
             });
             li.appendChild(link);
