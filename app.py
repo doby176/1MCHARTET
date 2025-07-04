@@ -99,28 +99,44 @@ def initialize_tickers():
     global VALID_TICKERS
     VALID_TICKERS = []
     logging.debug("Initializing ticker list")
-    for ticker in TICKERS:
-        db_paths = get_db_paths(ticker)
-        if not db_paths:
-            logging.warning(f"No database files found for {ticker}")
-            continue
-        try:
-            for db_path in db_paths:
-                conn = sqlite3.connect(db_path)
-                cursor = conn.cursor()
-                cursor.execute("SELECT DISTINCT ticker FROM candles")
-                db_tickers = [row[0] for row in cursor.fetchall()]
-                if db_tickers and ticker not in VALID_TICKERS:
-                    VALID_TICKERS.append(ticker)
-                conn.close()
-                logging.debug(f"Validated ticker {ticker} in {db_path}")
-        except Exception as e:
-            logging.warning(f"Could not access database for {ticker}: {str(e)}")
-    if not VALID_TICKERS:
-        logging.warning("No valid ticker databases found, falling back to static list")
-        VALID_TICKERS = TICKERS
-    VALID_TICKERS = sorted(VALID_TICKERS)
-    logging.debug(f"Initialized tickers: {VALID_TICKERS}")
+    # Load tickers from earnings_data.csv and earnings_data_binned.csv
+    try:
+        earnings_df = pd.read_csv(EARNINGS_DATA_PATH)
+        earnings_binned_df = pd.read_csv(EARNINGS_DATA_BINNED_PATH)
+        earnings_tickers = set(earnings_df['ticker'].unique())
+        earnings_binned_tickers = set(earnings_binned_df['ticker'].unique())
+        # Intersect with TICKERS to ensure only valid database tickers are included
+        valid_tickers = list(set(TICKERS).intersection(earnings_tickers).intersection(earnings_binned_tickers))
+        logging.debug(f"Tickers from earnings_data.csv: {earnings_tickers}")
+        logging.debug(f"Tickers from earnings_data_binned.csv: {earnings_binned_tickers}")
+        logging.debug(f"Valid tickers after intersection: {valid_tickers}")
+        # Verify database existence for each ticker
+        for ticker in valid_tickers:
+            db_paths = get_db_paths(ticker)
+            if not db_paths:
+                logging.warning(f"No database files found for {ticker}")
+                continue
+            try:
+                for db_path in db_paths:
+                    conn = sqlite3.connect(db_path)
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT DISTINCT ticker FROM candles")
+                    db_tickers = [row[0] for row in cursor.fetchall()]
+                    if db_tickers and ticker not in VALID_TICKERS:
+                        VALID_TICKERS.append(ticker)
+                    conn.close()
+                    logging.debug(f"Validated ticker {ticker} in {db_path}")
+            except Exception as e:
+                logging.warning(f"Could not access database for {ticker}: {str(e)}")
+        if not VALID_TICKERS:
+            logging.warning("No valid ticker databases found, falling back to static list")
+            VALID_TICKERS = TICKERS
+        VALID_TICKERS = sorted(VALID_TICKERS)
+        logging.debug(f"Initialized tickers: {VALID_TICKERS}")
+    except Exception as e:
+        logging.error(f"Error initializing tickers from CSV files: {str(e)}")
+        VALID_TICKERS = sorted(TICKERS)
+        logging.debug(f"Fallback to static tickers: {VALID_TICKERS}")
 
 with app.app_context():
     initialize_tickers()
@@ -534,6 +550,8 @@ def get_earnings_binned():
             df = pd.read_csv(EARNINGS_DATA_BINNED_PATH)
             df['date'] = pd.to_datetime(df['date'])
             logging.debug(f"Loaded earnings binned data with shape: {df.shape}")
+            logging.debug(f"Available tickers in earnings_data_binned.csv: {sorted(df['ticker'].unique())}")
+            logging.debug(f"Available bins in earnings_data_binned.csv: {sorted(df['bin'].unique())}")
         except Exception as e:
             logging.error(f"Error reading earnings binned data file {EARNINGS_DATA_BINNED_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load earnings data: {str(e)}'}), 500
