@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadYears();
     loadEarningsTickers();
     loadBinOptions();
+    populateEarningsOutcomes();
     document.getElementById('stock-form').addEventListener('submit', loadChart);
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
     document.getElementById('events-form').addEventListener('submit', loadEventDates);
@@ -30,6 +31,26 @@ const binOptions = {
     NFP: ['<0K', '0-100K', '100-200K', '200-300K', '>300K'],
     FOMC: ['0-1%', '1-2%', '2-3%', '3-4%', '>4%']
 };
+
+// Earnings outcome options with explanations
+const earningsOutcomes = [
+    { value: 'Beat', text: 'Beat (>10%)' },
+    { value: 'Slight Beat', text: 'Slight Beat (0% to 10%)' },
+    { value: 'Miss', text: 'Miss (<-10%)' },
+    { value: 'Slight Miss', text: 'Slight Miss (-10% to 0%)' },
+    { value: 'Unknown', text: 'Unknown (data unavailable)' }
+];
+
+function populateEarningsOutcomes() {
+    const earningsBinSelect = document.getElementById('earnings-bin-select');
+    earningsBinSelect.innerHTML = '<option value="">Select outcome</option>';
+    earningsOutcomes.forEach(outcome => {
+        const option = document.createElement('option');
+        option.value = outcome.value;
+        option.textContent = outcome.text;
+        earningsBinSelect.appendChild(option);
+    });
+}
 
 function toggleFilterSection() {
     const yearFilter = document.getElementById('year-filter');
