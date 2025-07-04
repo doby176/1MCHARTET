@@ -529,3 +529,10 @@ form button:disabled {
         align-items: stretch;
     }
 }
+
+@media (max-width: 600px) {
+    #earnings-analysis .filter-section.active {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
