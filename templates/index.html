@@ -181,15 +181,31 @@
             <div id="earnings-analysis" class="tab-content">
                 <h2>Earnings Analysis</h2>
                 <p>Analyze stock earnings reactions with 1-minute charts to pinpoint intraday price action patterns and build winning trading strategies.</p>
+                <div class="filter-toggle">
+                    <label><input type="radio" name="earnings-filter-type" value="ticker" checked> Filter by Ticker</label>
+                    <label><input type="radio" name="earnings-filter-type" value="bin"> Filter by Ticker and EPS Surprise Range</label>
+                </div>
                 <form id="earnings-form">
-                    <label for="earnings-ticker-select">Select Ticker:</label>
-                    <select id="earnings-ticker-select" name="ticker">
-                        <option value="">Select a ticker</option>
-                    </select>
+                    <div id="ticker-filter" class="filter-section active">
+                        <label for="earnings-ticker-select">Select Ticker:</label>
+                        <select id="earnings-ticker-select" name="ticker">
+                            <option value="">Select a ticker</option>
+                        </select>
+                    </div>
+                    <div id="bin-filter" class="filter-section">
+                        <label for="bin-ticker-select">Select Ticker:</label>
+                        <select id="bin-ticker-select" name="ticker">
+                            <option value="">Select a ticker</option>
+                        </select>
+                        <label for="bin-earnings-select">Select EPS Surprise Range:</label>
+                        <select id="bin-earnings-select" name="bin">
+                            <option value="">Select range</option>
+                        </select>
+                    </div>
                     <button type="submit">Find Earnings Dates</button>
                 </form>
                 <div id="earnings-dates">
-                    <p>Select a ticker to view earnings dates.</p>
+                    <p>Select a ticker or ticker and EPS surprise range to view earnings dates.</p>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
