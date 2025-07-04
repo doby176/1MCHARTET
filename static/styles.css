@@ -1,514 +1,314 @@
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+/* Reset default margins and padding */
+* {
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
-}
-
-header {
-    text-align: center;
-    padding: 20px;
-    background-color: #1a1b2f;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.logo {
-    max-width: 540px; /* 50% of 1080px */
-    width: 100%; /* Ensures it scales within max-width */
-    height: auto;
-    display: block;
-    margin: 0 auto 2px;
-}
-
-.seo-description {
-    text-align: center;
-    margin: 0 0 2px;
-    padding: 10px;
-    font-size: 1.1em;
-    color: #ffffff;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.card {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-form {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-form label {
-    margin-right: 10px;
-    font-weight: 500;
-}
-
-form select, form input {
-    padding: 8px;
-    margin-right: 10px;
-    font-size: 1em;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    width: 100%;
     box-sizing: border-box;
 }
 
-form select[multiple] {
+/* General body styles */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header styles */
+header {
+    background-color: #1a3c34;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+}
+
+.logo {
+    max-width: 150px;
+    height: auto;
+    margin-bottom: 1rem;
+}
+
+.seo-description {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 1rem;
+}
+
+.seo-description strong {
+    font-weight: 700;
+}
+
+/* Main content styles */
+main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.card {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 1200px;
+}
+
+/* Form styles */
+form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+label {
+    font-weight: 500;
+    margin-right: 0.5rem;
+}
+
+select, input[type="date"], button {
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+select[multiple] {
     height: 100px; /* Fixed height for multi-select dropdown */
-    font-size: 0.9em;
-    padding: 5px;
+    min-width: 150px; /* Minimum width for better usability */
 }
 
-form select[multiple] option {
-    padding: 5px;
+select option {
+    padding: 0.5rem;
 }
 
-form button {
-    padding: 8px 16px;
-    background-color: #153097;
+button {
+    background-color: #1a3c34;
     color: white;
     border: none;
-    border-radius: 4px;
+    padding: 0.5rem 1rem;
     cursor: pointer;
-    font-size: 1em;
-    font-weight: 500;
+    transition: background-color 0.3s;
 }
 
-form button:hover {
-    background-color: #112A7F;
+button:hover {
+    background-color: #2a5c4a;
 }
 
-form button:disabled {
-    background-color: #cccccc;
+button:disabled {
+    background-color: #999;
     cursor: not-allowed;
-    opacity: 0.6;
 }
 
+/* Chart container */
 #chart-container {
-    margin-top: 20px;
     width: 100%;
+    min-height: 600px; /* Minimum height to accommodate base chart */
+    margin-bottom: 2rem;
 }
 
 #plotly-chart {
     width: 100%;
-    height: 600px; /* Default height for candlestick only */
-    max-height: 800px; /* Supports up to 3 subplots */
 }
 
-.ads-container {
-    margin-top: 20px;
-    width: 100%;
-    overflow: hidden;
-    min-height: 100px;
-}
-
+/* Tab navigation */
 .tabs {
     display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .tab-button {
-    padding: 10px 20px;
-    font-size: 1em;
-    font-weight: 500;
+    background-color: #e0e0e0;
     border: none;
-    background-color: #153097;
-    color: white;
+    padding: 0.5rem 1rem;
     cursor: pointer;
-    border-radius: 4px 4px 0 0;
-    margin: 0 5px;
-}
-
-.tab-button.active {
-    background-color: #112A7F;
-    color: white;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: background-color 0.3s;
 }
 
 .tab-button:hover {
-    background-color: #112A7F;
+    background-color: #d0d0d0;
+}
+
+.tab-button.active {
+    background-color: #1a3c34;
+    color: white;
 }
 
 .tab-content {
     display: none;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
 .tab-content.active {
     display: block;
 }
 
-.section-logo {
-    max-width: 100px;
-    width: 100%;
-    height: auto;
-    display: block;
-    margin: 10px auto 0;
-}
-
-.gap-analysis, .events-analysis, .earnings-analysis, .gap-insights {
-    margin-top: 20px;
-    position: relative;
-}
-
-.gap-analysis h2, .events-analysis h2, .earnings-analysis h2, .gap-insights h2 {
-    font-size: 1.5em;
-    font-weight: 700;
-    margin-bottom: 10px;
-    text-align: center;
-    color: #1a1b2f;
-}
-
-.gap-analysis p, .events-analysis p, .earnings-analysis p, .gap-insights p {
-    font-size: 1em;
-    font-weight: 400;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-#gap-dates, #event-dates, #earnings-dates, #gap-insights-results {
-    margin-top: 15px;
-    text-align: center;
+/* Gap, event, and earnings sections */
+#gap-dates, #event-dates, #earnings-dates {
+    margin-top: 1rem;
 }
 
 #gap-dates ul, #event-dates ul, #earnings-dates ul {
     list-style: none;
     padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    gap: 10px;
-    max-height: 200px;
-    overflow-y: auto;
 }
 
 #gap-dates li, #event-dates li, #earnings-dates li {
-    padding: 5px 10px;
-    font-size: 0.9em;
-    font-weight: 400;
-    flex: 1 1 150px;
-    text-align: center;
+    margin: 0.5rem 0;
 }
 
 #gap-dates a, #event-dates a, #earnings-dates a {
-    color: #1a1b2f;
+    color: #1a3c34;
     text-decoration: none;
-    cursor: pointer;
 }
 
 #gap-dates a:hover, #event-dates a:hover, #earnings-dates a:hover {
     text-decoration: underline;
 }
 
-footer {
-    text-align: center;
-    padding: 20px;
-    background-color: #1a1b2f;
-    color: white;
-    margin-top: 20px;
-}
-
-.footer-logo {
-    max-width: 100px;
-    width: 100%;
-    height: auto;
-    display: block;
-    margin: 10px auto 0;
-}
-
-footer h2 {
-    font-size: 1.5em;
-    font-weight: 700;
-    margin: 0;
-}
-
-footer p {
-    font-size: 0.9em;
-    font-weight: 400;
-    margin: 10px 0;
-}
-
-.disclaimer {
-    font-size: 0.8em;
-    color: #cccccc;
-    font-style: italic;
-}
-
-/* Tooltip styling for indicators */
-form select[multiple] option:hover {
-    background-color: #153097;
-    color: white;
-}
-
-/* Mobile-specific styles */
-@media (max-width: 600px) {
-    .card {
-        max-width: calc(100% - 10px);
-        margin: 10px 5px;
-        padding: 8px;
-        overflow-x: hidden;
-    }
-
-    form {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-    }
-
-    form select, form input {
-        font-size: 0.875em;
-        padding: 6px;
-        min-height: 36px;
-        max-width: 300px;
-        margin: 0 auto;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-    }
-
-    form select[multiple] {
-        height: 120px; /* Taller for mobile */
-        font-size: 0.85em;
-    }
-
-    form button {
-        font-size: 0.875em;
-        padding: 6px;
-        min-height: 40px;
-        max-width: 300px;
-        margin: 0 auto;
-    }
-
-    .tabs {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .tab-button {
-        font-size: 0.875em;
-        padding: 8px;
-    }
-
-    header {
-        padding: 10px;
-    }
-
-    .logo {
-        max-width: 100%;
-        width: 100%;
-        height: auto;
-        margin: 0 0 2px;
-    }
-
-    .seo-description {
-        font-size: 0.9em;
-        padding: 8px;
-        margin: 0 0 2px;
-    }
-
-    .gap-analysis, .events-analysis, .earnings-analysis, .gap-insights {
-        padding: 10px;
-    }
-
-    .gap-analysis h2, .events-analysis h2, .earnings-analysis h2, .gap-insights h2 {
-        font-size: 1.2em;
-    }
-
-    .gap-analysis p, .events-analysis p, .earnings-analysis p, .gap-insights p {
-        font-size: 0.9em;
-    }
-
-    .section-logo {
-        max-width: 80px;
-        margin: 5px auto 0;
-    }
-
-    #gap-dates ul, #event-dates ul, #earnings-dates ul {
-        flex-direction: column;
-        justify-content: center;
-        gap: 5px;
-    }
-
-    #gap-dates li, #event-dates li, #earnings-dates li {
-        flex: 1 1 100%;
-        padding: 5px 0;
-    }
-
-    #gap-dates a, #event-dates a, #earnings-dates a {
-        font-size: 0.85em;
-    }
-
-    footer {
-        padding: 10px;
-    }
-
-    .footer-logo {
-        max-width: 80px;
-        margin: 5px auto 0;
-    }
-
-    footer h2 {
-        font-size: 1.2em;
-    }
-
-    footer p {
-        font-size: 0.85em;
-    }
-
-    .disclaimer {
-        font-size: 0.7em;
-    }
-
-    #plotly-chart {
-        height: 400px; /* Smaller height for mobile */
-        max-height: 600px; /* Supports up to 3 subplots */
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .ads-container {
-        max-width: 280px;
-        margin: 0 auto;
-        min-height: 100px;
-    }
-}
-
-/* Insights Container Styling */
+/* Insights container */
 .insights-container {
-    text-align: center;
+    margin-top: 1rem;
 }
 
-.insights-container h3 {
-    font-size: 1.5em;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: #1a1b2f;
-}
-
-/* Row for side-by-side metrics */
 .insights-row {
     display: flex;
-    justify-content: center;
-    gap: 20px;
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
-/* Individual Metric Styling */
 .insight-metric {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 180px;
-    padding: 15px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex: 1;
+    min-width: 200px;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    text-align: center;
 }
 
-/* Center two metrics in second and third rows */
-.insights-row.two-metrics {
-    justify-content: center;
-}
-
-/* Responsive adjustments for mobile */
-@media (max-width: 600px) {
-    .insights-row {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .insight-metric {
-        width: 100%;
-        max-width: 300px;
-        padding: 10px;
-    }
-
-    .metric-name {
-        font-size: 1em;
-    }
-
-    .metric-median {
-        font-size: 1.5em;
-    }
-
-    .metric-average {
-        font-size: 0.9em;
-    }
-
-    .metric-description {
-        font-size: 0.9em;
-    }
-
-    .insights-container h3 {
-        font-size: 1.2em;
-    }
+.two-metrics .insight-metric {
+    flex: 1 1 45%;
 }
 
 .metric-name {
-    font-size: 1.2em;
-    font-weight: 700;
-    color: #1a1b2f;
-    margin-bottom: 10px;
-    text-align: center;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
 }
 
 .metric-median {
-    font-size: 2em;
+    font-size: 1.5rem;
     font-weight: 700;
-    color: #1a1b2f;
-    margin-bottom: 10px;
-    text-align: center;
+    color: #1a3c34;
 }
 
 .metric-average {
-    font-size: 1em;
-    font-weight: 500;
-    color: #1a1b2f;
-    margin-bottom: 10px;
-    text-align: center;
+    font-size: 0.9rem;
+    color: #666;
 }
 
 .metric-description {
-    font-size: 1em;
-    font-weight: 400;
-    color: #555;
-    text-align: center;
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.5rem;
 }
 
-/* Tooltip styling */
 .tooltip {
     position: relative;
-    cursor: help;
+    cursor: pointer;
 }
 
 .tooltip:hover::after {
     content: attr(title);
     position: absolute;
+    background-color: #333;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    z-index: 10;
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #1a1b2f;
+    white-space: nowrap;
+}
+
+/* Section logo */
+.section-logo {
+    max-width: 100px;
+    height: auto;
+    margin-top: 1rem;
+}
+
+/* Ad container */
+.ads-container {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+/* Footer styles */
+.footer {
+    background-color: #1a3c34;
     color: white;
-    padding: 3px 6px;
-    border-radius: 4px;
-    font-size: 0.75em;
-    max-width: 200px;
-    white-space: normal;
-    z-index: 10;
+    text-align: center;
+    padding: 1rem;
+    margin-top: auto;
+}
+
+.footer-logo {
+    max-width: 100px;
+    height: auto;
+    margin-top: 1rem;
+}
+
+.disclaimer {
+    font-size: 0.8rem;
+    margin-top: 1rem;
+    opacity: 0.8;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    main {
+        padding: 1rem;
+    }
+
+    .card {
+        padding: 1rem;
+    }
+
+    form {
+        flex-direction: column;
+    }
+
+    select, input[type="date"], button {
+        width: 100%;
+    }
+
+    select[multiple] {
+        height: 120px; /* Slightly taller for mobile */
+    }
+
+    .tabs {
+        flex-direction: column;
+    }
+
+    .tab-button {
+        width: 100%;
+        text-align: center;
+    }
+
+    .insights-row {
+        flex-direction: column;
+    }
+
+    .two-metrics .insight-metric {
+        flex: 1 1 100%;
+    }
 }

@@ -401,7 +401,7 @@ def get_years():
             logging.error(f"Error reading events data file {EVENTS_DATA_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load events data: {str(e)}'}), 500
     except Exception as e:
-        logging.error(f"Error fetching years: {str(e)}")
+        logging.error(f"Error processing years: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/events', methods=['GET'])
@@ -411,37 +411,32 @@ def get_events():
         event_type = request.args.get('event_type')
         year = request.args.get('year')
         logging.debug(f"Fetching events for event_type={event_type}, year={year}")
+        if not event_type or not year:
+            return jsonify({'error': 'Missing event type or year'}), 400
         if not os.path.exists(EVENTS_DATA_PATH):
             logging.error(f"Events data file not found: {EVENTS_DATA_PATH}")
             return jsonify({'error': 'Events data file not found. Please contact support.'}), 404
         try:
             df = pd.read_csv(EVENTS_DATA_PATH)
             logging.debug(f"Loaded events data with shape: {df.shape}")
-            logging.debug(f"Unique event_type values: {df['event_type'].unique().tolist()}")
+            if 'date' not in df.columns or 'event_type' not in df.columns:
+                logging.error("Invalid events data format: missing required columns")
+                return jsonify({'error': 'Invalid events data format'}), 400
+            df['date'] = pd.to_datetime(df['date'])
+            filtered_df = df[
+                (df['event_type'] == event_type) &
+                (df['date'].dt.year == int(year))
+            ]
+            dates = sorted(filtered_df['date'].dt.strftime('%Y-%m-%d').tolist())
+            logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
+            if not dates:
+                logging.debug(f"No events found for event_type={event_type}, year={year}")
+                return jsonify({'dates': [], 'message': 'No events found for the selected criteria'})
+            logging.debug(f"Found {len(dates)} event dates for event_type={event_type}, year={year}")
+            return jsonify({'dates': dates})
         except Exception as e:
             logging.error(f"Error reading events data file {EVENTS_DATA_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load events data: {str(e)}'}), 500
-        if 'date' not in df.columns or 'event_type' not in df.columns:
-            logging.error("Invalid events data format: missing required columns")
-            return jsonify({'error': 'Invalid events data format'}), 400
-        df['date'] = pd.to_datetime(df['date'])
-        filtered_df = df
-        if event_type:
-            filtered_df = filtered_df[filtered_df['event_type'] == event_type]
-        if year:
-            try:
-                year = int(year)
-                filtered_df = filtered_df[filtered_df['date'].dt.year == year]
-            except ValueError:
-                logging.error(f"Invalid year format: {year}")
-                return jsonify({'error': 'Invalid year format'}), 400
-        dates = filtered_df['date'].dt.strftime('%Y-%m-%d').tolist()
-        logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
-        if not dates:
-            logging.debug(f"No events found for event_type={event_type}, year={year}")
-            return jsonify({'dates': [], 'message': 'No events found for the selected criteria'})
-        logging.debug(f"Found {len(dates)} event dates for event_type={event_type}, year={year}")
-        return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing events: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
@@ -452,32 +447,28 @@ def get_earnings():
     try:
         ticker = request.args.get('ticker')
         logging.debug(f"Fetching earnings for ticker={ticker}")
+        if not ticker or ticker not in TICKERS:
+            return jsonify({'error': 'Missing or invalid ticker'}), 400
         if not os.path.exists(EARNINGS_DATA_PATH):
             logging.error(f"Earnings data file not found: {EARNINGS_DATA_PATH}")
             return jsonify({'error': 'Earnings data file not found. Please contact support.'}), 404
         try:
             df = pd.read_csv(EARNINGS_DATA_PATH)
-            df['earnings_date'] = pd.to_datetime(df['earnings_date'])
             logging.debug(f"Loaded earnings data with shape: {df.shape}")
-            logging.debug(f"Unique tickers: {df['ticker'].unique().tolist()}")
+            if 'date' not in df.columns or 'ticker' not in df.columns:
+                logging.error("Invalid earnings data format: missing required columns")
+                return jsonify({'error': 'Invalid earnings data format'}), 400
+            filtered_df = df[df['ticker'] == ticker]
+            dates = sorted(filtered_df['date'].tolist())
+            logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
+            if not dates:
+                logging.debug(f"No earnings found for ticker={ticker}")
+                return jsonify({'dates': [], 'message': 'No earnings found for the selected ticker'})
+            logging.debug(f"Found {len(dates)} earnings dates for ticker={ticker}")
+            return jsonify({'dates': dates})
         except Exception as e:
             logging.error(f"Error reading earnings data file {EARNINGS_DATA_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load earnings data: {str(e)}'}), 500
-        if 'ticker' not in df.columns or 'earnings_date' not in df.columns:
-            logging.error("Invalid earnings data format: missing required columns")
-            return jsonify({'error': 'Invalid earnings data format'}), 400
-        if ticker:
-            filtered_df = df[df['ticker'] == ticker]
-        else:
-            logging.error("No ticker provided for earnings query")
-            return jsonify({'error': 'Ticker is required'}), 400
-        dates = filtered_df['earnings_date'].dt.strftime('%Y-%m-%d').tolist()
-        logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
-        if not dates:
-            logging.debug(f"No earnings found for ticker={ticker}")
-            return jsonify({'dates': [], 'message': f'No earnings found for {ticker}'})
-        logging.debug(f"Found {len(dates)} earnings dates for ticker={ticker}")
-        return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing earnings: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
