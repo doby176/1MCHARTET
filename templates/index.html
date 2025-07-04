@@ -29,7 +29,7 @@
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=38">
+    <link rel="stylesheet" href="/static/styles.css?v=39">
     <!-- Add Plotly.js CDN -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
@@ -181,24 +181,36 @@
             <div id="earnings-analysis" class="tab-content">
                 <h2>Earnings Analysis</h2>
                 <p>Analyze stock earnings reactions with 1-minute charts to pinpoint intraday price action patterns and build winning trading strategies.</p>
+                <div class="filter-toggle">
+                    <label><input type="radio" name="earnings-filter-type" value="ticker-outcome" checked> Filter by Ticker and Outcome</label>
+                    <label><input type="radio" name="earnings-filter-type" value="ticker-only"> Filter by Ticker Only</label>
+                </div>
                 <form id="earnings-form">
-                    <label for="earnings-ticker-select">Select Ticker:</label>
-                    <select id="earnings-ticker-select" name="ticker">
-                        <option value="">Select a ticker</option>
-                    </select>
-                    <label for="earnings-bin-select">Select Earnings Outcome:</label>
-                    <select id="earnings-bin-select" name="bin">
-                        <option value="">Select outcome</option>
-                        <option value="Beat">Beat</option>
-                        <option value="Slight Beat">Slight Beat</option>
-                        <option value="Miss">Miss</option>
-                        <option value="Slight Miss">Slight Miss</option>
-                        <option value="Unknown">Unknown</option>
-                    </select>
+                    <div id="ticker-outcome-filter" class="filter-section active">
+                        <label for="earnings-ticker-select">Select Ticker:</label>
+                        <select id="earnings-ticker-select" name="ticker">
+                            <option value="">Select a ticker</option>
+                        </select>
+                        <label for="earnings-bin-select">Select Earnings Outcome:</label>
+                        <select id="earnings-bin-select" name="bin">
+                            <option value="">Select outcome</option>
+                            <option value="Beat">Beat</option>
+                            <option value="Slight Beat">Slight Beat</option>
+                            <option value="Miss">Miss</option>
+                            <option value="Slight Miss">Slight Miss</option>
+                            <option value="Unknown">Unknown</option>
+                        </select>
+                    </div>
+                    <div id="ticker-only-filter" class="filter-section">
+                        <label for="earnings-ticker-only-select">Select Ticker:</label>
+                        <select id="earnings-ticker-only-select" name="ticker">
+                            <option value="">Select a ticker</option>
+                        </select>
+                    </div>
                     <button type="submit">Find Earnings Dates</button>
                 </form>
                 <div id="earnings-dates">
-                    <p>Select a ticker and earnings outcome to view earnings dates.</p>
+                    <p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
@@ -249,6 +261,6 @@
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
     </script>
-    <script src="/static/script.js?v=20"></script>
+    <script src="/static/script.js?v=21"></script>
 </body>
 </html>

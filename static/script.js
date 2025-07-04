@@ -10,10 +10,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('earnings-form').addEventListener('submit', loadEarningsDates);
     document.getElementById('gap-insights-form').addEventListener('submit', loadGapInsights);
 
-    // Handle filter type toggle
+    // Handle filter type toggle for events
     const filterRadios = document.querySelectorAll('input[name="filter-type"]');
     filterRadios.forEach(radio => {
         radio.addEventListener('change', toggleFilterSection);
+    });
+
+    // Handle filter type toggle for earnings
+    const earningsFilterRadios = document.querySelectorAll('input[name="earnings-filter-type"]');
+    earningsFilterRadios.forEach(radio => {
+        radio.addEventListener('change', toggleEarningsFilterSection);
     });
 });
 
@@ -43,6 +49,26 @@ function toggleFilterSection() {
         // Clear year filter inputs
         document.getElementById('event-type-select').value = '';
         document.getElementById('year-select').value = '';
+    }
+}
+
+function toggleEarningsFilterSection() {
+    const tickerOutcomeFilter = document.getElementById('ticker-outcome-filter');
+    const tickerOnlyFilter = document.getElementById('ticker-only-filter');
+    const filterType = document.querySelector('input[name="earnings-filter-type"]:checked').value;
+
+    tickerOutcomeFilter.classList.remove('active');
+    tickerOnlyFilter.classList.remove('active');
+
+    if (filterType === 'ticker-outcome') {
+        tickerOutcomeFilter.classList.add('active');
+        // Clear ticker-only filter input
+        document.getElementById('earnings-ticker-only-select').value = '';
+    } else {
+        tickerOnlyFilter.classList.add('active');
+        // Clear ticker-outcome filter inputs
+        document.getElementById('earnings-ticker-select').value = '';
+        document.getElementById('earnings-bin-select').value = '';
     }
 }
 
@@ -101,14 +127,18 @@ async function loadTickers() {
 
 async function loadEarningsTickers() {
     const tickerSelect = document.getElementById('earnings-ticker-select');
+    const tickerOnlySelect = document.getElementById('earnings-ticker-only-select');
     tickerSelect.disabled = true;
+    tickerOnlySelect.disabled = true;
     tickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
+    tickerOnlySelect.innerHTML = '<option value="">Loading tickers...</option>';
     try {
         console.log('Fetching earnings tickers from /api/tickers');
         const response = await fetch('/api/tickers');
         if (response.status === 429) {
             const data = await response.json();
             tickerSelect.innerHTML = `<option value="">${data.error}</option>`;
+            tickerOnlySelect.innerHTML = `<option value="">${data.error}</option>`;
             alert(data.error);
             return;
         }
@@ -116,16 +146,20 @@ async function loadEarningsTickers() {
         const data = await response.json();
         console.log('Fetched tickers for earnings:', data.tickers);
         tickerSelect.innerHTML = '<option value="">Select a ticker</option>';
+        tickerOnlySelect.innerHTML = '<option value="">Select a ticker</option>';
         data.tickers.forEach(ticker => {
             const option = document.createElement('option');
             option.value = ticker;
             option.textContent = ticker;
-            tickerSelect.appendChild(option);
+            tickerSelect.appendChild(option.cloneNode(true));
+            tickerOnlySelect.appendChild(option);
         });
         tickerSelect.disabled = false;
+        tickerOnlySelect.disabled = false;
     } catch (error) {
         console.error('Error loading earnings tickers:', error);
         tickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
+        tickerOnlySelect.innerHTML = '<option value="">Error loading tickers</option>';
         alert('Failed to load earnings tickers. Please refresh the page or try again later.');
     }
 }
@@ -519,8 +553,7 @@ async function loadEventDates(event) {
 
 async function loadEarningsDates(event) {
     event.preventDefault();
-    const ticker = document.getElementById('earnings-ticker-select').value;
-    const bin = document.getElementById('earnings-bin-select').value;
+    const filterType = document.querySelector('input[name="earnings-filter-type"]:checked').value;
     const earningsDatesContainer = document.getElementById('earnings-dates');
     const form = document.getElementById('earnings-form');
     const button = form.querySelector('button[type="submit"]');
@@ -536,12 +569,28 @@ async function loadEarningsDates(event) {
         return;
     }
 
-    if (!ticker || !bin) {
-        earningsDatesContainer.innerHTML = '<p>Please select a ticker and earnings outcome.</p>';
-        return;
+    let url;
+    let ticker;
+    let bin;
+
+    if (filterType === 'ticker-outcome') {
+        ticker = document.getElementById('earnings-ticker-select').value;
+        bin = document.getElementById('earnings-bin-select').value;
+        if (!ticker || !bin) {
+            earningsDatesContainer.innerHTML = '<p>Please select a ticker and earnings outcome.</p>';
+            return;
+        }
+        url = `/api/earnings_by_bin?ticker=${encodeURIComponent(ticker)}&bin=${encodeURIComponent(bin)}`;
+    } else {
+        ticker = document.getElementById('earnings-ticker-only-select').value;
+        if (!ticker) {
+            earningsDatesContainer.innerHTML = '<p>Please select a ticker.</p>';
+            return;
+        }
+        url = `/api/earnings?ticker=${encodeURIComponent(ticker)}`;
     }
-    console.log(`Fetching earnings for ticker=${ticker}, bin=${bin}`);
-    const url = `/api/earnings_by_bin?ticker=${encodeURIComponent(ticker)}&bin=${encodeURIComponent(bin)}`;
+
+    console.log(`Fetching earnings for filterType=${filterType}, ticker=${ticker}, bin=${bin}`);
     console.log('Fetching URL:', url);
     earningsDatesContainer.innerHTML = '<p>Loading earnings dates...</p>';
     try {
@@ -559,7 +608,7 @@ async function loadEarningsDates(event) {
                 button.textContent = 'Find Earnings Dates';
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('earningsDatesRateLimitReset');
-                earningsDatesContainer.innerHTML = '<p>Select a ticker and earnings outcome to view earnings dates.</p>';
+                earningsDatesContainer.innerHTML = '<p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>';
             }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
@@ -577,7 +626,7 @@ async function loadEarningsDates(event) {
         }
         if (!data.dates || data.dates.length === 0) {
             console.log('No earnings dates found:', data.message || 'No dates returned');
-            earningsDatesContainer.innerHTML = `<p>${data.message || `No earnings found for ${ticker} with outcome ${bin}`}</p>`;
+            earningsDatesContainer.innerHTML = `<p>${data.message || `No earnings found for ${ticker}${bin ? ' with outcome ' + bin : ''}`}</p>`;
             return;
         }
         console.log(`Rendering ${data.dates.length} earnings dates:`, data.dates);
@@ -595,7 +644,7 @@ async function loadEarningsDates(event) {
                 loadChart(new Event('submit'));
                 gtag('event', 'earnings_date_click', {
                     'event_category': 'Earnings Analysis',
-                    'event_label': `${ticker}_${date}_${bin}`
+                    'event_label': `${ticker}_${date}${bin ? '_' + bin : ''}`
                 });
             });
             li.appendChild(link);
