@@ -388,7 +388,7 @@ def get_years():
             if 'date' not in df.columns:
                 logging.error("Invalid events data format: missing 'date' column")
                 return jsonify({'error': 'Invalid events data format'}), 400
-            df['date'] = pd.to_datetime(df['date'])
+            df['date'] = pd.to_datetime(df['date'], dayfirst=True)
             years = sorted(df['date'].dt.year.unique().tolist())
             logging.debug(f"Found years: {years}")
             return jsonify({'years': years})
@@ -418,7 +418,7 @@ def get_events():
         if 'date' not in df.columns or 'event_type' not in df.columns:
             logging.error("Invalid events data format: missing required columns")
             return jsonify({'error': 'Invalid events data format'}), 400
-        df['date'] = pd.to_datetime(df['date'])
+        df['date'] = pd.to_datetime(df['date'], dayfirst=True)
         filtered_df = df
         if event_type:
             filtered_df = filtered_df[filtered_df['event_type'] == event_type]
@@ -445,7 +445,7 @@ def get_events():
 def get_economic_events():
     try:
         event_type = request.args.get('event_type')
-        bin_range = request.args.get('bin')  # Renamed from 'bin' to 'bin_range' for clarity
+        bin_range = request.args.get('bin')
         logging.debug(f"Fetching economic events for event_type={event_type}, bin={bin_range}")
         
         if not os.path.exists(ECONOMIC_DATA_BINNED_PATH):
@@ -454,7 +454,7 @@ def get_economic_events():
         
         try:
             df = pd.read_csv(ECONOMIC_DATA_BINNED_PATH)
-            df['date'] = pd.to_datetime(df['date'])
+            df['date'] = pd.to_datetime(df['date'], dayfirst=True)
             logging.debug(f"Loaded economic data with shape: {df.shape}")
         except Exception as e:
             logging.error(f"Error reading economic data file {ECONOMIC_DATA_BINNED_PATH}: {str(e)}")
@@ -494,7 +494,7 @@ def get_earnings():
             return jsonify({'error': 'Earnings data file not found. Please contact support.'}), 404
         try:
             df = pd.read_csv(EARNINGS_DATA_PATH)
-            df['earnings_date'] = pd.to_datetime(df['earnings_date'])
+            df['earnings_date'] = pd.to_datetime(df['earnings_date'], dayfirst=True)
             logging.debug(f"Loaded earnings data with shape: {df.shape}")
         except Exception as e:
             logging.error(f"Error reading earnings data file {EARNINGS_DATA_PATH}: {str(e)}")
@@ -523,7 +523,7 @@ def get_earnings():
 def get_earnings_binned():
     try:
         ticker = request.args.get('ticker')
-        bin_value = request.args.get('bin')  # Renamed to avoid Python keyword conflict
+        bin_value = request.args.get('bin')
         logging.debug(f"Fetching earnings for ticker={ticker}, bin={bin_value}")
         
         if not os.path.exists(EARNINGS_DATA_BINNED_PATH):
@@ -532,8 +532,10 @@ def get_earnings_binned():
         
         try:
             df = pd.read_csv(EARNINGS_DATA_BINNED_PATH)
-            df['date'] = pd.to_datetime(df['date'])
+            df['date'] = pd.to_datetime(df['date'], dayfirst=True)
             logging.debug(f"Loaded earnings binned data with shape: {df.shape}")
+            logging.debug(f"Available tickers in earnings_data_binned.csv: {sorted(df['ticker'].unique())}")
+            logging.debug(f"Available bins in earnings_data_binned.csv: {sorted(df['bin'].unique())}")
         except Exception as e:
             logging.error(f"Error reading earnings binned data file {EARNINGS_DATA_BINNED_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load earnings data: {str(e)}'}), 500
@@ -564,6 +566,18 @@ def get_earnings_binned():
     except Exception as e:
         logging.error(f"Error processing earnings binned: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/earnings_bins', methods=['GET'])
+@limiter.limit("10 per 12 hours")
+def get_earnings_bins():
+    try:
+        df = pd.read_csv(EARNINGS_DATA_BINNED_PATH)
+        bins = sorted(df['bin'].unique().tolist())
+        logging.debug(f"Available bins: {bins}")
+        return jsonify({'bins': bins})
+    except Exception as e:
+        logging.error(f"Error fetching bins: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

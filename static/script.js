@@ -33,13 +33,7 @@ const binOptions = {
 };
 
 // Bin options for earnings (same for all tickers)
-const earningsBinOptions = [
-    '>10% (Beat)',
-    '0% to 10% (Slight Beat)',
-    '-10% to 0% (Slight Miss)',
-    '<-10% (Miss)',
-    'Unknown'
-];
+const earningsBinOptions = ['Beat', 'Slight Beat', 'Slight Miss', 'Miss', 'Unknown'];
 
 function toggleFilterSection() {
     const yearFilter = document.getElementById('year-filter');
@@ -115,10 +109,7 @@ function loadEarningsBinOptions() {
             earningsBinOptions.forEach(bin => {
                 const option = document.createElement('option');
                 option.value = bin;
-                option.textContent = bin === '>10% (Beat)' ? '+10% (Beat)' :
-                                     bin === '0% to 10% (Slight Beat)' ? '0% to +10% (Slight Beat)' :
-                                     bin === '-10% to 0% (Slight Miss)' ? '-10% to 0% (Slight Miss)' :
-                                     bin === '<-10% (Miss)' ? '-10% (Miss)' : bin;
+                option.textContent = bin;
                 binSelect.appendChild(option);
             });
             binSelect.disabled = false;
