@@ -74,6 +74,7 @@ DB_DIR = os.path.join(os.path.dirname(__file__), "data", "db")
 GAP_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "qqq_central_data_updated.csv")
 EVENTS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "news_events.csv")
 EARNINGS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "earnings_data.csv")
+EARNINGS_DATA_BINNED_PATH = os.path.join(os.path.dirname(__file__), "data", "earnings_data_binned.csv")
 ECONOMIC_DATA_BINNED_PATH = os.path.join(os.path.dirname(__file__), "data", "economic_data_binned.csv")
 
 # Define multiple QQQ database paths
@@ -515,6 +516,53 @@ def get_earnings():
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing earnings: {str(e)}")
+        return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/earnings_binned', methods=['GET'])
+@limiter.limit("10 per 12 hours")
+def get_earnings_binned():
+    try:
+        ticker = request.args.get('ticker')
+        bin_value = request.args.get('bin')  # Renamed to avoid Python keyword conflict
+        logging.debug(f"Fetching earnings for ticker={ticker}, bin={bin_value}")
+        
+        if not os.path.exists(EARNINGS_DATA_BINNED_PATH):
+            logging.error(f"Earnings binned data file not found: {EARNINGS_DATA_BINNED_PATH}")
+            return jsonify({'error': 'Earnings data file not found. Please contact support.'}), 404
+        
+        try:
+            df = pd.read_csv(EARNINGS_DATA_BINNED_PATH)
+            df['date'] = pd.to_datetime(df['date'])
+            logging.debug(f"Loaded earnings binned data with shape: {df.shape}")
+        except Exception as e:
+            logging.error(f"Error reading earnings binned data file {EARNINGS_DATA_BINNED_PATH}: {str(e)}")
+            return jsonify({'error': f'Failed to load earnings data: {str(e)}'}), 500
+        
+        if 'ticker' not in df.columns or 'bin' not in df.columns or 'date' not in df.columns:
+            logging.error("Invalid earnings binned data format: missing required columns")
+            return jsonify({'error': 'Invalid earnings data format'}), 400
+        
+        filtered_df = df
+        if ticker:
+            filtered_df = filtered_df[filtered_df['ticker'] == ticker]
+        else:
+            logging.error("No ticker provided for earnings binned query")
+            return jsonify({'error': 'Ticker is required'}), 400
+        
+        if bin_value:
+            filtered_df = filtered_df[filtered_df['bin'] == bin_value]
+        
+        dates = filtered_df['date'].dt.strftime('%Y-%m-%d').tolist()
+        logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
+        
+        if not dates:
+            logging.debug(f"No earnings found for ticker={ticker}, bin={bin_value}")
+            return jsonify({'dates': [], 'message': f'No earnings found for {ticker}' + (f' with bin {bin_value}' if bin_value else '')})
+        
+        logging.debug(f"Found {len(dates)} earnings dates")
+        return jsonify({'dates': sorted(dates)})
+    except Exception as e:
+        logging.error(f"Error processing earnings binned: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
 if __name__ == '__main__':
