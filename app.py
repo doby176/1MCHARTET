@@ -482,42 +482,12 @@ def get_economic_events():
         logging.error(f"Error processing economic events: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
-@app.route('/api/earnings_bins', methods=['GET'])
-@limiter.limit("10 per 12 hours")
-def get_earnings_bins():
-    try:
-        ticker = request.args.get('ticker')
-        logging.debug(f"Fetching earnings bins for ticker={ticker}")
-        if not ticker:
-            logging.error("No ticker provided for earnings bins query")
-            return jsonify({'error': 'Ticker is required'}), 400
-        if not os.path.exists(EARNINGS_DATA_PATH):
-            logging.error(f"Earnings data file not found: {EARNINGS_DATA_PATH}")
-            return jsonify({'error': 'Earnings data file not found. Please contact support.'}), 404
-        try:
-            df = pd.read_csv(EARNINGS_DATA_PATH)
-            logging.debug(f"Loaded earnings data with shape: {df.shape}")
-            if 'ticker' not in df.columns or 'bin' not in df.columns:
-                logging.error("Invalid earnings data format: missing required columns")
-                return jsonify({'error': 'Invalid earnings data format'}), 400
-            filtered_df = df[df['ticker'] == ticker]
-            bins = sorted(filtered_df['bin'].unique().tolist())
-            logging.debug(f"Found bins for {ticker}: {bins}")
-            return jsonify({'bins': bins})
-        except Exception as e:
-            logging.error(f"Error reading earnings data file {EARNINGS_DATA_PATH}: {str(e)}")
-            return jsonify({'error': f'Failed to load earnings bins: {str(e)}'}), 500
-    except Exception as e:
-        logging.error(f"Error fetching earnings bins: {str(e)}")
-        return jsonify({'error': 'Server error'}), 500
-
 @app.route('/api/earnings', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_earnings():
     try:
         ticker = request.args.get('ticker')
-        bin_range = request.args.get('bin')
-        logging.debug(f"Fetching earnings for ticker={ticker}, bin={bin_range}")
+        logging.debug(f"Fetching earnings for ticker={ticker}")
         if not os.path.exists(EARNINGS_DATA_PATH):
             logging.error(f"Earnings data file not found: {EARNINGS_DATA_PATH}")
             return jsonify({'error': 'Earnings data file not found. Please contact support.'}), 404
@@ -531,19 +501,16 @@ def get_earnings():
         if 'ticker' not in df.columns or 'earnings_date' not in df.columns:
             logging.error("Invalid earnings data format: missing required columns")
             return jsonify({'error': 'Invalid earnings data format'}), 400
-        filtered_df = df
         if ticker:
-            filtered_df = filtered_df[filtered_df['ticker'] == ticker]
+            filtered_df = df[df['ticker'] == ticker]
         else:
             logging.error("No ticker provided for earnings query")
             return jsonify({'error': 'Ticker is required'}), 400
-        if bin_range:
-            filtered_df = filtered_df[filtered_df['bin'] == bin_range]
         dates = filtered_df['earnings_date'].dt.strftime('%Y-%m-%d').tolist()
         logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
         if not dates:
-            logging.debug(f"No earnings found for ticker={ticker}, bin={bin_range}")
-            return jsonify({'dates': [], 'message': f'No earnings found for {ticker}' + (f' with bin {bin_range}' if bin_range else '')})
+            logging.debug(f"No earnings found for ticker={ticker}")
+            return jsonify({'dates': [], 'message': f'No earnings found for {ticker}'})
         logging.debug(f"Found {len(dates)} earnings dates")
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
