@@ -128,85 +128,63 @@
                     </select>
                     <button type="submit">Get Insights</button>
                 </form>
-                <div id="insights-results">
-                    <p>Select a gap size, day, and direction to view insights.</p>
+                <div id="gap-insights-results">
+                    <p>Select a gap size, day, and direction to view QQQ gap insights and statistics.</p>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
             <!-- News Event Analysis Section -->
             <div id="events-analysis" class="tab-content">
                 <h2>News Event Analysis</h2>
-                <p>Analyze price action for key economic events (CPI, PPI, FOMC, NFP) with 1-minute charts to identify high-probability trading patterns.</p>
+                <p>Master QQQ price action on key news days (CPI, PPI, FOMC, NFP) with 1-minute chart analytics to seize intraday trading opportunities.</p>
                 <div class="filter-toggle">
-                    <label><input type="radio" name="event-filter-type" value="event-year" checked> Filter by Event Type and Year</label>
-                    <label><input type="radio" name="event-filter-type" value="event-bin"> Filter by Event Type and Economic Impact</label>
+                    <label><input type="radio" name="filter-type" value="year" checked> Filter by Event Type and Year</label>
+                    <label><input type="radio" name="filter-type" value="bin"> Filter by Event Type and Economic Impact Range</label>
                 </div>
-                <form id="event-year-form" class="event-filter-form active">
-                    <label for="event-type-select">Select Event Type:</label>
-                    <select id="event-type-select" name="event_type">
-                        <option value="">Select event type</option>
-                        <option value="CPI">CPI</option>
-                        <option value="PPI">PPI</option>
-                        <option value="FOMC">FOMC</option>
-                        <option value="NFP">NFP</option>
-                    </select>
-                    <label for="year-select">Select Year:</label>
-                    <select id="year-select" name="year">
-                        <option value="">Select year</option>
-                    </select>
-                    <button type="submit">Find Event Dates</button>
-                </form>
-                <form id="event-bin-form" class="event-filter-form">
-                    <label for="event-type-bin-select">Select Event Type:</label>
-                    <select id="event-type-bin-select" name="event_type">
-                        <option value="">Select event type</option>
-                        <option value="CPI">CPI</option>
-                        <option value="PPI">PPI</option>
-                        <option value="FOMC">FOMC</option>
-                        <option value="NFP">NFP</option>
-                    </select>
-                    <label for="bin-select">Select Economic Impact:</label>
-                    <select id="bin-select" name="bin">
-                        <option value="">Select impact</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                    </select>
+                <form id="events-form">
+                    <div id="year-filter" class="filter-section active">
+                        <label for="event-type-select">Select Event Type:</label>
+                        <select id="event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                            <option value="FOMC">FOMC</option>
+                            <option value="NFP">NFP</option>
+                        </select>
+                        <label for="year-select">Select Year:</label>
+                        <select id="year-select" name="year">
+                            <option value="">Select year</option>
+                        </select>
+                    </div>
+                    <div id="bin-filter" class="filter-section">
+                        <label for="bin-event-type-select">Select Event Type:</label>
+                        <select id="bin-event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                            <option value="FOMC">FOMC</option>
+                            <option value="NFP">NFP</option>
+                        </select>
+                        <label for="bin-select">Select Economic Impact Range:</label>
+                        <select id="bin-select" name="bin">
+                            <option value="">Select range</option>
+                        </select>
+                    </div>
                     <button type="submit">Find Event Dates</button>
                 </form>
                 <div id="event-dates">
-                    <p>Select an event type and year or impact to view dates.</p>
+                    <p>Select filters to view dates with events.</p>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
             <!-- Earnings Analysis Section -->
             <div id="earnings-analysis" class="tab-content">
                 <h2>Earnings Analysis</h2>
-                <p>Explore earnings-driven price action for top stocks with 1-minute charts to uncover patterns in post-earnings reactions.</p>
-                <div class="filter-toggle">
-                    <label><input type="radio" name="earnings-filter-type" value="ticker-only" checked> Filter by Ticker</label>
-                    <label><input type="radio" name="earnings-filter-type" value="ticker-bin"> Filter by Ticker and Earnings Outcome</label>
-                </div>
-                <form id="earnings-ticker-form" class="earnings-filter-form active">
+                <p>Analyze stock earnings reactions with 1-minute charts to pinpoint intraday price action patterns and build winning trading strategies.</p>
+                <form id="earnings-form">
                     <label for="earnings-ticker-select">Select Ticker:</label>
                     <select id="earnings-ticker-select" name="ticker">
                         <option value="">Select a ticker</option>
-                    </select>
-                    <button type="submit">Find Earnings Dates</button>
-                </form>
-                <form id="earnings-bin-form" class="earnings-filter-form">
-                    <label for="earnings-bin-ticker-select">Select Ticker:</label>
-                    <select id="earnings-bin-ticker-select" name="ticker">
-                        <option value="">Select a ticker</option>
-                    </select>
-                    <label for="earnings-bin-select">Select Earnings Outcome:</label>
-                    <select id="earnings-bin-select" name="bin">
-                        <option value="">Select outcome</option>
-                        <option value="Beat">Beat</option>
-                        <option value="Slight Beat">Slight Beat</option>
-                        <option value="Miss">Miss</option>
-                        <option value="Slight Miss">Slight Miss</option>
-                        <option value="Unknown">Unknown</option>
                     </select>
                     <button type="submit">Find Earnings Dates</button>
                 </form>
@@ -215,11 +193,53 @@
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
+            <!-- AdSense Ad Unit -->
+            <div class="ads-container">
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
+                <!-- StockChartBanner -->
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-9416785017460416"
+                     data-ad-slot="5487535867"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+            </div>
         </div>
     </main>
-    <footer>
-        <p>&copy; 2025 1MChart. All rights reserved.</p>
+    <footer class="footer">
+        <h2>More Tools for Day Traders Coming Soon</h2>
+        <p>Stay tuned for expanded 1-minute chart data, QQQ gap insights, and advanced trading tools to analyze QQQ gap trading strategies, earnings, and news events from 2015 to 2025.</p>
+        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site, the financial information provided is for informational purposes only and does not constitute financial advice.</p>
+        <img src="/static/logo-new.png" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
-    <script src="/static/script.js?v=38"></script>
+    <script>
+        // Disable right-click without alert
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        // Disable text selection
+        document.addEventListener('selectstart', function(e) {
+            e.preventDefault();
+        });
+        // Disable drag-and-drop
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+        });
+        // Tab switching function
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
+        }
+    </script>
+    <script src="/static/script.js?v=20"></script>
 </body>
 </html>

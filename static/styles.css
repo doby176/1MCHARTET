@@ -62,7 +62,7 @@ form select, form input {
     border: 1px solid #ddd;
     border-radius: 4px;
     width: 100%;
-    box-sizing: box-sizing;
+    box-sizing: border-box;
 }
 
 form button {
@@ -84,10 +84,10 @@ form button:hover {
     margin-top: 20px;
 }
 
-#chart-container img {
+#plotly-chart {
     width: 100%;
+    height: 600px; /* Default height for desktop */
     max-height: 800px;
-    object-fit: contain;
 }
 
 .ads-container {
@@ -346,7 +346,8 @@ footer p {
         font-size: 0.7em;
     }
 
-    #chart-container img {
+    #plotly-chart {
+        height: 400px; /* Smaller height for mobile */
         max-height: 500px;
         width: 100%;
         max-width: 100%;
@@ -482,4 +483,49 @@ footer p {
     max-width: 200px;
     white-space: normal;
     z-index: 10;
+}
+
+form button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.filter-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.filter-toggle label {
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.filter-toggle input[type="radio"] {
+    margin-right: 5px;
+}
+
+.filter-section {
+    display: none;
+}
+
+.filter-section.active {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+@media (max-width: 600px) {
+    .filter-toggle {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .filter-section.active {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
