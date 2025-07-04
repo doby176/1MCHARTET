@@ -398,11 +398,18 @@ footer p {
     justify-content: center;
 }
 
+/* Center four metrics in first row */
+.insights-row.four-metrics {
+    justify-content: center;
+    gap: 15px;
+}
+
 /* Responsive adjustments for mobile */
 @media (max-width: 600px) {
-    .insights-row {
+    .insights-row, .insights-row.two-metrics, .insights-row.four-metrics {
         flex-direction: column;
         align-items: center;
+        gap: 10px;
     }
 
     .insight-metric {
