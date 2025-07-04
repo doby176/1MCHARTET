@@ -1,4 +1,4 @@
-import redis  # For Redis support
+import redis
 from flask import Flask, render_template, request, jsonify, session
 from flask_limiter import Limiter
 from flask_session import Session
@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 
-# Configure Flask session settings explicitly
+# Configure Flask session settings
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = os.path.join(os.path.dirname(__file__), 'sessions')
 app.config['SESSION_PERMANENT'] = False
@@ -54,7 +54,6 @@ try:
     logging.info("Successfully connected to Redis")
 except redis.ConnectionError as e:
     logging.error(f"Failed to connect to Redis: {str(e)}")
-    # Fallback to in-memory storage if Redis fails
     limiter.storage = limiter.storage_memory()
     logging.warning("Falling back to in-memory storage for rate limiting")
 
@@ -76,36 +75,45 @@ GAP_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "qqq_central_dat
 EVENTS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "news_events.csv")
 EARNINGS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "earnings_data.csv")
 
+# Define multiple QQQ database paths
+QQQ_DB_PATHS = [
+    os.path.join(DB_DIR, "stock_data_qqq_part1.db"),
+    os.path.join(DB_DIR, "stock_data_qqq_part2.db"),
+    os.path.join(DB_DIR, "stock_data_qqq_part3.db")
+]
+
 VALID_TICKERS = []
 
-def get_db_path(ticker):
+def get_db_paths(ticker):
     if ticker not in TICKERS:
         logging.error(f"Invalid ticker requested: {ticker}")
-        return None
+        return []
+    if ticker == 'QQQ':
+        return [path for path in QQQ_DB_PATHS if os.path.exists(path)]
     db_path = os.path.join(DB_DIR, f"stock_data_{ticker.lower()}.db")
-    logging.debug(f"Checking database path for {ticker}: {db_path}")
-    return db_path
+    return [db_path] if os.path.exists(db_path) else []
 
 def initialize_tickers():
     global VALID_TICKERS
     VALID_TICKERS = []
     logging.debug("Initializing ticker list")
     for ticker in TICKERS:
-        db_path = get_db_path(ticker)
-        if db_path and os.path.exists(db_path):
-            try:
+        db_paths = get_db_paths(ticker)
+        if not db_paths:
+            logging.warning(f"No database files found for {ticker}")
+            continue
+        try:
+            for db_path in db_paths:
                 conn = sqlite3.connect(db_path)
                 cursor = conn.cursor()
                 cursor.execute("SELECT DISTINCT ticker FROM candles")
                 db_tickers = [row[0] for row in cursor.fetchall()]
-                if db_tickers:
+                if db_tickers and ticker not in VALID_TICKERS:
                     VALID_TICKERS.append(ticker)
                 conn.close()
-                logging.debug(f"Validated ticker: {ticker}")
-            except Exception as e:
-                logging.warning(f"Could not access database for {ticker}: {str(e)}")
-        else:
-            logging.warning(f"Database file not found for {ticker}: {db_path}")
+                logging.debug(f"Validated ticker {ticker} in {db_path}")
+        except Exception as e:
+            logging.warning(f"Could not access database for {ticker}: {str(e)}")
     if not VALID_TICKERS:
         logging.warning("No valid ticker databases found, falling back to static list")
         VALID_TICKERS = TICKERS
@@ -135,16 +143,18 @@ def get_valid_dates():
     if not ticker or ticker not in TICKERS:
         logging.error(f"Invalid ticker requested: {ticker}")
         return jsonify({'error': 'Missing or invalid ticker'}), 400
-    db_path = get_db_path(ticker)
-    if not db_path or not os.path.exists(db_path):
-        logging.error(f"No database available for {ticker}: {db_path}")
+    db_paths = get_db_paths(ticker)
+    if not db_paths:
+        logging.error(f"No database available for {ticker}")
         return jsonify({'error': f'No database available for {ticker}'}), 404
     try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        cursor.execute("SELECT DISTINCT DATE(timestamp) AS date FROM candles WHERE ticker = ?", (ticker,))
-        dates = [row[0] for row in cursor.fetchall()]
-        conn.close()
+        dates = set()
+        for db_path in db_paths:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT DISTINCT DATE(timestamp) AS date FROM candles WHERE ticker = ?", (ticker,))
+            dates.update(row[0] for row in cursor.fetchall())
+            conn.close()
         logging.debug(f"Found {len(dates)} dates for {ticker}")
         if not dates:
             logging.warning(f"No dates available for {ticker}")
@@ -169,19 +179,25 @@ def get_chart():
             target_date = pd.to_datetime(date).date()
         except ValueError:
             return jsonify({'error': 'Invalid date format'}), 400
-        db_path = get_db_path(ticker)
-        if not db_path or not os.path.exists(db_path):
+        db_paths = get_db_paths(ticker)
+        if not db_paths:
             return jsonify({'error': f'No database available for {ticker}'}), 404
         try:
-            conn = sqlite3.connect(db_path)
+            df_list = []
             query = """
                 SELECT timestamp, open, high, low, close, volume
                 FROM candles
                 WHERE ticker = ? AND DATE(timestamp) = ?
+                ORDER BY timestamp
             """
-            df = pd.read_sql_query(query, conn, params=(ticker, str(target_date)), parse_dates=['timestamp'])
-            conn.close()
-            logging.debug(f"Loaded data shape: {df.shape}")
+            for db_path in db_paths:
+                conn = sqlite3.connect(db_path)
+                df = pd.read_sql_query(query, conn, params=(ticker, str(target_date)), parse_dates=['timestamp'])
+                df_list.append(df)
+                conn.close()
+            df = pd.concat(df_list, ignore_index=True)
+            df = df.sort_values('timestamp')
+            logging.debug(f"Loaded data shape for {ticker} on {date}: {df.shape}")
         except Exception as e:
             logging.error(f"Error querying database for {ticker}: {str(e)}")
             return jsonify({'error': 'Database query failed'}), 500
@@ -208,6 +224,7 @@ def get_chart():
         logging.error(f"Unexpected error in get_chart: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
+# Remaining routes (gaps, gap_insights, years, events, earnings) remain unchanged
 @app.route('/api/gaps', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_gaps():
@@ -216,30 +233,14 @@ def get_gaps():
         day = request.args.get('day')
         gap_direction = request.args.get('gap_direction')
         logging.debug(f"Fetching gaps for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
-        data_dir = os.path.join(os.path.dirname(__file__), "data")
-        logging.debug(f"Checking data directory: {data_dir}")
-        if os.path.exists(data_dir):
-            logging.debug(f"Directory contents: {os.listdir(data_dir)}")
-        else:
-            logging.error(f"Data directory not found: {data_dir}")
-            return jsonify({'error': 'Gap data directory not found. Please contact support.'}), 404
-        csv_file = None
-        for f in os.listdir(data_dir):
-            if f.lower() == 'qqq_central_data_updated.csv':
-                csv_file = os.path.join(data_dir, f)
-                logging.debug(f"Found CSV file: {csv_file}")
-                break
-        if not csv_file or not os.path.exists(csv_file):
-            logging.error(f"Gap data file not found in directory: {data_dir}")
+        if not os.path.exists(GAP_DATA_PATH):
+            logging.error(f"Gap data file not found: {GAP_DATA_PATH}")
             return jsonify({'error': 'Gap data file not found. Please contact support.'}), 404
         try:
-            df = pd.read_csv(csv_file)
+            df = pd.read_csv(GAP_DATA_PATH)
             logging.debug(f"Loaded gap data with shape: {df.shape}")
-            logging.debug(f"Unique gap_size_bin values: {df['gap_size_bin'].unique().tolist()}")
-            logging.debug(f"Unique day_of_week values: {df['day_of_week'].unique().tolist()}")
-            logging.debug(f"Unique gap_direction values: {df['gap_direction'].unique().tolist()}")
         except Exception as e:
-            logging.error(f"Error reading gap data file {csv_file}: {str(e)}")
+            logging.error(f"Error reading gap data file {GAP_DATA_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load gap data: {str(e)}'}), 500
         if 'date' not in df.columns or 'gap_size_bin' not in df.columns or 'day_of_week' not in df.columns or 'gap_direction' not in df.columns:
             logging.error("Invalid gap data format: missing required columns")
@@ -254,7 +255,7 @@ def get_gaps():
         if not dates:
             logging.debug(f"No gaps found for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
             return jsonify({'dates': [], 'message': 'No gaps found for the selected criteria'})
-        logging.debug(f"Found {len(dates)} gap dates for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
+        logging.debug(f"Found {len(dates)} gap dates")
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing gaps: {str(e)}")
@@ -295,19 +296,13 @@ def get_gap_insights():
             logging.debug(f"No data found for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
             return jsonify({'insights': {}, 'message': 'No data found for the selected criteria'})
         
-        # Calculate gap fill rate
         gap_fill_rate = filtered_df['filled'].mean() * 100
         filled_df = filtered_df[filtered_df['filled'] == True]
         unfilled_df = filtered_df[filtered_df['filled'] == False]
-
-        # Calculate reversal after fill rate
         reversal_after_fill_rate = filtered_df['reversal_after_fill'].mean() * 100 if not filtered_df.empty else 0
-
-        # Calculate median and average time to fill in minutes
         median_time_to_fill = filled_df['time_to_fill_minutes'].median() if not filled_df.empty else 0
         average_time_to_fill = filled_df['time_to_fill_minutes'].mean() if not filled_df.empty else 0
 
-        # Convert time_of_low and time_of_high to datetime.time for median/average calculation
         def time_to_minutes(t):
             try:
                 h, m = map(int, t.split(':')[:2])
@@ -318,7 +313,6 @@ def get_gap_insights():
         filtered_df.loc[:, 'time_of_low_minutes'] = filtered_df['time_of_low'].apply(time_to_minutes)
         filtered_df.loc[:, 'time_of_high_minutes'] = filtered_df['time_of_high'].apply(time_to_minutes)
 
-        # Calculate median and average times
         def minutes_to_time(minutes):
             if pd.isna(minutes):
                 return "N/A"
@@ -417,7 +411,6 @@ def get_events():
         try:
             df = pd.read_csv(EVENTS_DATA_PATH)
             logging.debug(f"Loaded events data with shape: {df.shape}")
-            logging.debug(f"Unique event_type values: {df['event_type'].unique().tolist()}")
         except Exception as e:
             logging.error(f"Error reading events data file {EVENTS_DATA_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load events data: {str(e)}'}), 500
@@ -440,7 +433,7 @@ def get_events():
         if not dates:
             logging.debug(f"No events found for event_type={event_type}, year={year}")
             return jsonify({'dates': [], 'message': 'No events found for the selected criteria'})
-        logging.debug(f"Found {len(dates)} event dates for event_type={event_type}, year={year}")
+        logging.debug(f"Found {len(dates)} event dates")
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing events: {str(e)}")
@@ -459,7 +452,6 @@ def get_earnings():
             df = pd.read_csv(EARNINGS_DATA_PATH)
             df['earnings_date'] = pd.to_datetime(df['earnings_date'])
             logging.debug(f"Loaded earnings data with shape: {df.shape}")
-            logging.debug(f"Unique tickers: {df['ticker'].unique().tolist()}")
         except Exception as e:
             logging.error(f"Error reading earnings data file {EARNINGS_DATA_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load earnings data: {str(e)}'}), 500
@@ -476,7 +468,7 @@ def get_earnings():
         if not dates:
             logging.debug(f"No earnings found for ticker={ticker}")
             return jsonify({'dates': [], 'message': f'No earnings found for {ticker}'})
-        logging.debug(f"Found {len(dates)} earnings dates for ticker={ticker}")
+        logging.debug(f"Found {len(dates)} earnings dates")
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing earnings: {str(e)}")
