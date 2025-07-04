@@ -20,12 +20,12 @@ header {
     width: 100%; /* Ensures it scales within max-width */
     height: auto;
     display: block;
-    margin: 0 auto 2px; /* Kept as is */
+    margin: 0 auto 2px;
 }
 
 .seo-description {
     text-align: center;
-    margin: 0 0 2px; /* Kept as is */
+    margin: 0 0 2px;
     padding: 10px;
     font-size: 1.1em;
     color: #ffffff;
@@ -65,6 +65,16 @@ form select, form input {
     box-sizing: border-box;
 }
 
+form select[multiple] {
+    height: 100px; /* Fixed height for multi-select dropdown */
+    font-size: 0.9em;
+    padding: 5px;
+}
+
+form select[multiple] option {
+    padding: 5px;
+}
+
 form button {
     padding: 8px 16px;
     background-color: #153097;
@@ -80,14 +90,21 @@ form button:hover {
     background-color: #112A7F;
 }
 
+form button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 #chart-container {
     margin-top: 20px;
+    width: 100%;
 }
 
 #plotly-chart {
     width: 100%;
-    height: 600px; /* Default height for desktop */
-    max-height: 800px;
+    height: 600px; /* Default height for candlestick only */
+    max-height: 800px; /* Supports up to 3 subplots */
 }
 
 .ads-container {
@@ -137,11 +154,11 @@ form button:hover {
 }
 
 .section-logo {
-    max-width: 100px; /* Same size as footer logo */
-    width: 100%; /* Scales proportionally */
+    max-width: 100px;
+    width: 100%;
     height: auto;
     display: block;
-    margin: 10px auto 0; /* Small top margin, no bottom margin */
+    margin: 10px auto 0;
 }
 
 .gap-analysis, .events-analysis, .earnings-analysis, .gap-insights {
@@ -207,11 +224,11 @@ footer {
 }
 
 .footer-logo {
-    max-width: 100px; /* Same size as section logos */
-    width: 100%; /* Scales proportionally */
+    max-width: 100px;
+    width: 100%;
     height: auto;
     display: block;
-    margin: 10px auto 0; /* Small top margin, no bottom margin */
+    margin: 10px auto 0;
 }
 
 footer h2 {
@@ -230,6 +247,12 @@ footer p {
     font-size: 0.8em;
     color: #cccccc;
     font-style: italic;
+}
+
+/* Tooltip styling for indicators */
+form select[multiple] option:hover {
+    background-color: #153097;
+    color: white;
 }
 
 /* Mobile-specific styles */
@@ -258,6 +281,11 @@ footer p {
         appearance: none;
     }
 
+    form select[multiple] {
+        height: 120px; /* Taller for mobile */
+        font-size: 0.85em;
+    }
+
     form button {
         font-size: 0.875em;
         padding: 6px;
@@ -281,7 +309,7 @@ footer p {
     }
 
     .logo {
-        max-width: 100%; /* Full width on mobile, constrained by 540px */
+        max-width: 100%;
         width: 100%;
         height: auto;
         margin: 0 0 2px;
@@ -306,7 +334,7 @@ footer p {
     }
 
     .section-logo {
-        max-width: 80px; /* Slightly smaller on mobile */
+        max-width: 80px;
         margin: 5px auto 0;
     }
 
@@ -330,7 +358,7 @@ footer p {
     }
 
     .footer-logo {
-        max-width: 80px; /* Matches section logos on mobile */
+        max-width: 80px;
         margin: 5px auto 0;
     }
 
@@ -348,7 +376,7 @@ footer p {
 
     #plotly-chart {
         height: 400px; /* Smaller height for mobile */
-        max-height: 500px;
+        max-height: 600px; /* Supports up to 3 subplots */
         width: 100%;
         max-width: 100%;
     }
@@ -483,10 +511,4 @@ footer p {
     max-width: 200px;
     white-space: normal;
     z-index: 10;
-}
-
-form button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-    opacity: 0.6;
 }

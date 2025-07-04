@@ -118,6 +118,7 @@ async function loadChart(event) {
     event.preventDefault();
     const ticker = document.getElementById('ticker-select').value;
     const date = document.getElementById('date').value;
+    const indicators = Array.from(document.getElementById('indicators').selectedOptions).map(opt => opt.value);
     const chartContainer = document.getElementById('plotly-chart');
     const form = document.getElementById('stock-form');
     const button = form.querySelector('button[type="submit"]');
@@ -137,7 +138,7 @@ async function loadChart(event) {
         chartContainer.innerHTML = '<p>Please select a ticker and date.</p>';
         return;
     }
-    console.log(`Loading chart for ticker=${ticker}, date=${date}`);
+    console.log(`Loading chart for ticker=${ticker}, date=${date}, indicators=${indicators.join(',')}`);
     const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}`;
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
@@ -169,9 +170,32 @@ async function loadChart(event) {
             return;
         }
 
-        // Render Plotly chart
+        // Prepare data
         const chartData = data.chart_data;
-        const candlestickTrace = {
+        const ohlcv = chartData.timestamp.map((t, i) => ({
+            timestamp: t,
+            open: chartData.open[i],
+            high: chartData.high[i],
+            low: chartData.low[i],
+            close: chartData.close[i],
+            volume: chartData.volume[i]
+        }));
+
+        // Define subplot grid
+        const rowCount = 1 + (indicators.includes('rsi') ? 1 : 0) + (indicators.includes('macd') ? 1 : 0);
+        const rowHeights = [0.6];
+        if (indicators.includes('rsi')) rowHeights.push(0.2);
+        if (indicators.includes('macd')) rowHeights.push(0.2);
+        const fig = Plotly.make_subplots({
+            rows: rowCount,
+            cols: 1,
+            shared_xaxes: true,
+            vertical_spacing: 0.1,
+            row_heights: rowHeights
+        });
+
+        // Candlestick trace (row 1)
+        fig.add_trace({
             x: chartData.timestamp,
             open: chartData.open,
             high: chartData.high,
@@ -181,40 +205,146 @@ async function loadChart(event) {
             name: chartData.ticker,
             increasing: { line: { color: '#00cc00' } },
             decreasing: { line: { color: '#ff0000' } }
-        };
-        const volumeTrace = {
+        }, 1, 1);
+
+        // Volume trace (row 1, overlaid)
+        fig.add_trace({
             x: chartData.timestamp,
             y: chartData.volume,
             type: 'bar',
             name: 'Volume',
             yaxis: 'y2',
             marker: { color: '#888888' }
-        };
+        }, 1, 1);
+
+        let currentRow = 2;
+
+        // SMA trace (overlaid on candlestick)
+        if (indicators.includes('sma')) {
+            const sma = technicalindicators.SMA.calculate({
+                period: 14,
+                values: ohlcv.map(d => d.close)
+            });
+            fig.add_trace({
+                x: ohlcv.slice(14 - 1).map(d => d.timestamp),
+                y: sma,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'SMA (14)',
+                line: { color: 'blue' }
+            }, 1, 1);
+            gtag('event', 'indicator_used', {
+                'event_category': 'Chart',
+                'event_label': 'SMA'
+            });
+        }
+
+        // EMA trace (overlaid on candlestick)
+        if (indicators.includes('ema')) {
+            const ema = technicalindicators.EMA.calculate({
+                period: 14,
+                values: ohlcv.map(d => d.close)
+            });
+            fig.add_trace({
+                x: ohlcv.slice(14 - 1).map(d => d.timestamp),
+                y: ema,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'EMA (14)',
+                line: { color: 'orange' }
+            }, 1, 1);
+            gtag('event', 'indicator_used', {
+                'event_category': 'Chart',
+                'event_label': 'EMA'
+            });
+        }
+
+        // RSI trace (row 2 if present)
+        if (indicators.includes('rsi')) {
+            const rsi = technicalindicators.RSI.calculate({
+                period: 14,
+                values: ohlcv.map(d => d.close)
+            });
+            fig.add_trace({
+                x: ohlcv.slice(14).map(d => d.timestamp),
+                y: rsi,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'RSI (14)',
+                line: { color: 'purple' }
+            }, currentRow, 1);
+            // Add overbought/oversold lines
+            fig.add_hline({ y: 70, line: { color: 'red', dash: 'dash' }, row: currentRow, col: 1 });
+            fig.add_hline({ y: 30, line: { color: 'green', dash: 'dash' }, row: currentRow, col: 1 });
+            currentRow++;
+            gtag('event', 'indicator_used', {
+                'event_category': 'Chart',
+                'event_label': 'RSI'
+            });
+        }
+
+        // MACD trace (row 3 if present)
+        if (indicators.includes('macd')) {
+            const macd = technicalindicators.MACD.calculate({
+                fastPeriod: 12,
+                slowPeriod: 26,
+                signalPeriod: 9,
+                values: ohlcv.map(d => d.close)
+            });
+            // MACD Line
+            fig.add_trace({
+                x: ohlcv.slice(26).map(d => d.timestamp),
+                y: macd.map(d => d.MACD),
+                type: 'scatter',
+                mode: 'lines',
+                name: 'MACD',
+                line: { color: 'blue' }
+            }, currentRow, 1);
+            // Signal Line
+            fig.add_trace({
+                x: ohlcv.slice(26).map(d => d.timestamp),
+                y: macd.map(d => d.signal),
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Signal',
+                line: { color: 'orange' }
+            }, currentRow, 1);
+            // Histogram
+            fig.add_trace({
+                x: ohlcv.slice(26).map(d => d.timestamp),
+                y: macd.map(d => d.histogram),
+                type: 'bar',
+                name: 'MACD Histogram',
+                marker: { color: 'rgba(0, 0, 0, 0.3)' }
+            }, currentRow, 1);
+            gtag('event', 'indicator_used', {
+                'event_category': 'Chart',
+                'event_label': 'MACD'
+            });
+        }
+
+        // Layout configuration
         const layout = {
-            title: `${chartData.ticker} Candlestick Chart - ${chartData.date}`,
+            title: { text: `${chartData.ticker} Analysis - ${chartData.date}`, x: 0.5 },
             xaxis: {
                 title: 'Time',
                 type: 'date',
-                rangeslider: { visible: false },
-                tickformat: '%H:%M'
+                tickformat: '%H:%M',
+                rangeslider: { visible: false }
             },
-            yaxis: {
-                title: 'Price',
-                domain: [0.3, 1]
-            },
-            yaxis2: {
-                title: 'Volume',
-                domain: [0, 0.25],
-                anchor: 'x'
-            },
+            yaxis: { title: 'Price', domain: [rowCount > 1 ? 0.3 : 0.3, 1] },
+            yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x', overlaying: 'y', showgrid: false },
+            yaxis3: indicators.includes('rsi') ? { title: 'RSI', domain: [0.25, 0.45], showgrid: false } : undefined,
+            yaxis4: indicators.includes('macd') ? { title: 'MACD', domain: [0, 0.2], showgrid: false } : undefined,
             showlegend: true,
             margin: { t: 50, b: 50, l: 50, r: 50 },
             plot_bgcolor: '#ffffff',
-            paper_bgcolor: '#ffffff'
-        };
-        Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, {
+            paper_bgcolor: '#ffffff',
+            height: rowCount === 1 ? 600 : rowCount === 2 ? 700 : 800,
             responsive: true
-        });
+        };
+
+        Plotly.newPlot('plotly-chart', fig.data, layout);
     } catch (error) {
         console.error('Error loading chart:', error);
         chartContainer.innerHTML = '<p>Failed to load chart. Please try again later.</p>';
@@ -358,7 +488,7 @@ async function loadEventDates(event) {
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('eventDatesRateLimitReset');
     if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
-        eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
         button.disabled = true;
         button.textContent = 'Rate Limit Exceeded';
         selects.forEach(select => select.disabled = true);
@@ -596,67 +726,21 @@ async function loadGapInsights(event) {
         const insightsDiv = document.createElement('div');
         insightsDiv.className = 'insights-container';
         insightsDiv.innerHTML = `
-            <h3>Gap Statistics</h3>
-            <div class="insights-row">
-                <div class="insight-metric">
-                    <div class="metric-name">Gap Fill Rate</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.gap_fill_rate.median}%</div>
-                    <div class="metric-description">Percentage of gaps that close</div>
-                </div>
-                <div class="insight-metric">
-                    <div class="metric-name">Median Move In Gap Direction Before Fill</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_move_before_fill.median}%</div>
-                    <div class="metric-average">Average: ${data.insights.median_move_before_fill.average}%</div>
-                    <div class="metric-description">Percentage move before gap closes</div>
-                </div>
-                <div class="insight-metric">
-                    <div class="metric-name">Median Max Move Unfilled Gaps</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_max_move_unfilled.median}%</div>
-                    <div class="metric-average">Average: ${data.insights.median_max_move_unfilled.average}%</div>
-                    <div class="metric-description">% move in gap direction when price does not close the gap</div>
-                </div>
-                <div class="insight-metric">
-                    <div class="metric-name">Median Time to Fill Gap</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_time_to_fill.median} min</div>
-                    <div class="metric-average">Average: ${data.insights.median_time_to_fill.average} min</div>
-                    <div class="metric-description">Median time in minutes to fill gap</div>
-                </div>
-            </div>
-            <div class="insights-row two-metrics">
-                <div class="insight-metric">
-                    <div class="metric-name">Median Time of Low of Day</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_time_of_low.median}</div>
-                    <div class="metric-average">Average: ${data.insights.median_time_of_low.average}</div>
-                    <div class="metric-description">Median time of the day’s low</div>
-                </div>
-                <div class="insight-metric">
-                    <div class="metric-name">Median Time of High of Day</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_time_of_high.median}</div>
-                    <div class="metric-average">Average: ${data.insights.median_time_of_high.average}</div>
-                    <div class="metric-description">Median time of the day’s high</div>
-                </div>
-            </div>
-            <div class="insights-row two-metrics">
-                <div class="insight-metric">
-                    <div class="metric-name">Reversal After Fill Back To Low/High Of Day</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.reversal_after_fill_rate.median}%</div>
-                    <div class="metric-description">% of time price reverses after gap is filled</div>
-                </div>
-                <div class="insight-metric">
-                    <div class="metric-name">Median Move In Gap Fill Direction Before Reversal</div>
-                    <div class="metric-median tooltip" title="${medianExplanation}">${data.insights.median_move_before_reversal.median}%</div>
-                    <div class="metric-average">Average: ${data.insights.median_move_before_reversal.average}%</div>
-                    <div class="metric-description">Median move in gap fill direction before reversal</div>
-                </div>
-            </div>
+            <h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>
+            <p>${medianExplanation}</p>
+            <ul>
+                ${Object.entries(data.insights).map(([key, value]) => `
+                    <li><strong>${value.description}:</strong> ${value.median}% (Median), ${value.average}% (Average)</li>
+                `).join('')}
+            </ul>
         `;
         insightsContainer.innerHTML = '';
         insightsContainer.appendChild(insightsDiv);
+        console.log('Gap insights rendered successfully');
         gtag('event', 'gap_insights_view', {
             'event_category': 'Gap Insights',
-            'event_label': `QQQ_${gapSize}_${day}_${gapDirection}`
+            'event_label': `${gapSize}_${day}_${gapDirection}`
         });
-        console.log('Gap insights rendered successfully');
     } catch (error) {
         console.error('Error loading gap insights:', error);
         insightsContainer.innerHTML = '<p>Failed to load gap insights. Please try again later.</p>';
