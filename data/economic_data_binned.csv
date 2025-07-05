@@ -1,0 +1,539 @@
+date,event_type,data,bin
+2015-01-09,NFP,NFP for January 2015: Jobs added=204000,200-300K
+2015-01-15,PPI,"PPI for January 2015: Index=192.00, YoY=-5.79%",<0%
+2015-01-16,CPI,"CPI for January 2015: Index=234.75, YoY=-0.23%",<0%
+2015-01-27,FOMC,FOMC for January 2015: Federal Funds Rate=0.11%,0-1%
+2015-01-28,FOMC,FOMC for January 2015: Federal Funds Rate=0.11%,0-1%
+2015-02-06,NFP,NFP for February 2015: Jobs added=259000,200-300K
+2015-02-18,PPI,"PPI for February 2015: Index=191.10, YoY=-7.10%",<0%
+2015-02-26,CPI,"CPI for February 2015: Index=235.34, YoY=-0.09%",<0%
+2015-03-06,NFP,NFP for March 2015: Jobs added=96000,0-100K
+2015-03-13,PPI,"PPI for March 2015: Index=191.50, YoY=-7.49%",<0%
+2015-03-17,FOMC,FOMC for March 2015: Federal Funds Rate=0.11%,0-1%
+2015-03-18,FOMC,FOMC for March 2015: Federal Funds Rate=0.11%,0-1%
+2015-03-24,CPI,"CPI for March 2015: Index=235.98, YoY=-0.02%",<0%
+2015-04-03,NFP,NFP for April 2015: Jobs added=273000,200-300K
+2015-04-14,PPI,"PPI for April 2015: Index=190.90, YoY=-8.35%",<0%
+2015-04-17,CPI,"CPI for April 2015: Index=236.22, YoY=-0.10%",<0%
+2015-04-28,FOMC,FOMC for April 2015: Federal Funds Rate=0.12%,0-1%
+2015-04-29,FOMC,FOMC for April 2015: Federal Funds Rate=0.12%,0-1%
+2015-05-08,NFP,NFP for May 2015: Jobs added=342000,>300K
+2015-05-14,PPI,"PPI for May 2015: Index=193.40, YoY=-7.02%",<0%
+2015-05-22,CPI,"CPI for May 2015: Index=237.00, YoY=0.04%",0-1%
+2015-06-05,NFP,NFP for June 2015: Jobs added=171000,100-200K
+2015-06-12,PPI,"PPI for June 2015: Index=194.80, YoY=-6.48%",<0%
+2015-06-16,FOMC,FOMC for June 2015: Federal Funds Rate=0.13%,0-1%
+2015-06-17,FOMC,FOMC for June 2015: Federal Funds Rate=0.13%,0-1%
+2015-06-18,CPI,"CPI for June 2015: Index=237.66, YoY=0.18%",0-1%
+2015-07-02,NFP,NFP for July 2015: Jobs added=282000,200-300K
+2015-07-15,PPI,"PPI for July 2015: Index=193.90, YoY=-6.78%",<0%
+2015-07-17,CPI,"CPI for July 2015: Index=238.03, YoY=0.23%",0-1%
+2015-07-28,FOMC,FOMC for July 2015: Federal Funds Rate=0.13%,0-1%
+2015-07-29,FOMC,FOMC for July 2015: Federal Funds Rate=0.13%,0-1%
+2015-08-07,NFP,NFP for August 2015: Jobs added=134000,100-200K
+2015-08-14,PPI,"PPI for August 2015: Index=191.90, YoY=-7.29%",<0%
+2015-08-19,CPI,"CPI for August 2015: Index=238.03, YoY=0.24%",0-1%
+2015-09-04,NFP,NFP for September 2015: Jobs added=150000,100-200K
+2015-09-11,PPI,"PPI for September 2015: Index=189.10, YoY=-8.38%",<0%
+2015-09-16,CPI,"CPI for September 2015: Index=237.50, YoY=0.01%",0-1%
+2015-09-16,FOMC,FOMC for September 2015: Federal Funds Rate=0.14%,0-1%
+2015-09-17,FOMC,FOMC for September 2015: Federal Funds Rate=0.14%,0-1%
+2015-10-02,NFP,NFP for October 2015: Jobs added=304000,>300K
+2015-10-14,PPI,"PPI for October 2015: Index=187.50, YoY=-7.82%",<0%
+2015-10-15,CPI,"CPI for October 2015: Index=237.73, YoY=0.13%",0-1%
+2015-10-27,FOMC,FOMC for October 2015: Federal Funds Rate=0.12%,0-1%
+2015-10-28,FOMC,FOMC for October 2015: Federal Funds Rate=0.12%,0-1%
+2015-11-06,NFP,NFP for November 2015: Jobs added=229000,200-300K
+2015-11-13,PPI,"PPI for November 2015: Index=185.70, YoY=-7.57%",<0%
+2015-11-17,CPI,"CPI for November 2015: Index=238.02, YoY=0.44%",0-1%
+2015-12-04,NFP,NFP for December 2015: Jobs added=269000,200-300K
+2015-12-11,PPI,"PPI for December 2015: Index=183.50, YoY=-6.85%",<0%
+2015-12-15,FOMC,FOMC for December 2015: Federal Funds Rate=0.24%,0-1%
+2015-12-15,CPI,"CPI for December 2015: Index=237.76, YoY=0.64%",0-1%
+2015-12-16,FOMC,FOMC for December 2015: Federal Funds Rate=0.24%,0-1%
+2016-01-08,NFP,NFP for January 2016: Jobs added=133000,100-200K
+2016-01-15,PPI,"PPI for January 2016: Index=182.60, YoY=-4.90%",<0%
+2016-01-20,CPI,"CPI for January 2016: Index=237.65, YoY=1.24%",1-2%
+2016-01-26,FOMC,FOMC for January 2016: Federal Funds Rate=0.34%,0-1%
+2016-01-27,FOMC,FOMC for January 2016: Federal Funds Rate=0.34%,0-1%
+2016-02-05,NFP,NFP for February 2016: Jobs added=197000,100-200K
+2016-02-17,PPI,"PPI for February 2016: Index=181.30, YoY=-5.13%",<0%
+2016-02-19,CPI,"CPI for February 2016: Index=237.34, YoY=0.85%",0-1%
+2016-03-04,NFP,NFP for March 2016: Jobs added=255000,200-300K
+2016-03-15,FOMC,FOMC for March 2016: Federal Funds Rate=0.36%,0-1%
+2016-03-15,PPI,"PPI for March 2016: Index=182.10, YoY=-4.91%",<0%
+2016-03-16,FOMC,FOMC for March 2016: Federal Funds Rate=0.36%,0-1%
+2016-03-16,CPI,"CPI for March 2016: Index=238.08, YoY=0.89%",0-1%
+2016-04-01,NFP,NFP for April 2016: Jobs added=193000,100-200K
+2016-04-13,PPI,"PPI for April 2016: Index=183.20, YoY=-4.03%",<0%
+2016-04-14,CPI,"CPI for April 2016: Index=238.99, YoY=1.17%",1-2%
+2016-04-26,FOMC,FOMC for April 2016: Federal Funds Rate=0.37%,0-1%
+2016-04-27,FOMC,FOMC for April 2016: Federal Funds Rate=0.37%,0-1%
+2016-05-06,NFP,NFP for May 2016: Jobs added=45000,0-100K
+2016-05-13,PPI,"PPI for May 2016: Index=185.30, YoY=-4.19%",<0%
+2016-05-17,CPI,"CPI for May 2016: Index=239.56, YoY=1.08%",1-2%
+2016-06-03,NFP,NFP for June 2016: Jobs added=246000,200-300K
+2016-06-14,FOMC,FOMC for June 2016: Federal Funds Rate=0.38%,0-1%
+2016-06-15,PPI,"PPI for June 2016: Index=187.60, YoY=-3.70%",<0%
+2016-06-15,FOMC,FOMC for June 2016: Federal Funds Rate=0.38%,0-1%
+2016-06-16,CPI,"CPI for June 2016: Index=240.22, YoY=1.08%",1-2%
+2016-07-08,NFP,NFP for July 2016: Jobs added=374000,>300K
+2016-07-14,PPI,"PPI for July 2016: Index=187.70, YoY=-3.20%",<0%
+2016-07-15,CPI,"CPI for July 2016: Index=240.10, YoY=0.87%",0-1%
+2016-07-26,FOMC,FOMC for July 2016: Federal Funds Rate=0.39%,0-1%
+2016-07-27,FOMC,FOMC for July 2016: Federal Funds Rate=0.39%,0-1%
+2016-08-05,NFP,NFP for August 2016: Jobs added=142000,100-200K
+2016-08-12,PPI,"PPI for August 2016: Index=186.60, YoY=-2.76%",<0%
+2016-08-16,CPI,"CPI for August 2016: Index=240.54, YoY=1.06%",1-2%
+2016-09-02,NFP,NFP for September 2016: Jobs added=305000,>300K
+2016-09-15,PPI,"PPI for September 2016: Index=186.90, YoY=-1.16%",<0%
+2016-09-16,CPI,"CPI for September 2016: Index=241.18, YoY=1.55%",1-2%
+2016-09-20,FOMC,FOMC for September 2016: Federal Funds Rate=0.40%,0-1%
+2016-09-21,FOMC,FOMC for September 2016: Federal Funds Rate=0.40%,0-1%
+2016-10-07,NFP,NFP for October 2016: Jobs added=99000,0-100K
+2016-10-14,PPI,"PPI for October 2016: Index=186.70, YoY=-0.43%",<0%
+2016-10-18,CPI,"CPI for October 2016: Index=241.74, YoY=1.69%",1-2%
+2016-11-01,FOMC,FOMC for November 2016: Federal Funds Rate=0.41%,0-1%
+2016-11-02,FOMC,FOMC for November 2016: Federal Funds Rate=0.41%,0-1%
+2016-11-04,NFP,NFP for November 2016: Jobs added=117000,100-200K
+2016-11-16,PPI,"PPI for November 2016: Index=186.30, YoY=0.32%",0-2%
+2016-11-17,CPI,"CPI for November 2016: Index=242.03, YoY=1.68%",1-2%
+2016-12-02,NFP,NFP for December 2016: Jobs added=225000,200-300K
+2016-12-13,FOMC,FOMC for December 2016: Federal Funds Rate=0.54%,0-1%
+2016-12-14,PPI,"PPI for December 2016: Index=188.20, YoY=2.56%",2-4%
+2016-12-14,FOMC,FOMC for December 2016: Federal Funds Rate=0.54%,0-1%
+2016-12-15,CPI,"CPI for December 2016: Index=242.64, YoY=2.05%",2-3%
+2017-01-06,NFP,NFP for January 2017: Jobs added=220000,200-300K
+2017-01-13,PPI,"PPI for January 2017: Index=190.70, YoY=4.44%",4-8%
+2017-01-18,CPI,"CPI for January 2017: Index=243.62, YoY=2.51%",2-3%
+2017-01-31,FOMC,FOMC for January 2017: Federal Funds Rate=0.65%,0-1%
+2017-02-01,FOMC,FOMC for February 2017: Federal Funds Rate=0.66%,0-1%
+2017-02-03,NFP,NFP for February 2017: Jobs added=220000,200-300K
+2017-02-14,PPI,"PPI for February 2017: Index=191.60, YoY=5.68%",4-8%
+2017-02-15,CPI,"CPI for February 2017: Index=244.01, YoY=2.81%",2-3%
+2017-03-10,NFP,NFP for March 2017: Jobs added=121000,100-200K
+2017-03-14,FOMC,FOMC for March 2017: Federal Funds Rate=0.79%,0-1%
+2017-03-14,PPI,"PPI for March 2017: Index=191.50, YoY=5.16%",4-8%
+2017-03-15,FOMC,FOMC for March 2017: Federal Funds Rate=0.79%,0-1%
+2017-03-15,CPI,"CPI for March 2017: Index=243.89, YoY=2.44%",2-3%
+2017-04-07,NFP,NFP for April 2017: Jobs added=205000,200-300K
+2017-04-13,PPI,"PPI for April 2017: Index=193.00, YoY=5.35%",4-8%
+2017-04-14,CPI,"CPI for April 2017: Index=244.19, YoY=2.18%",2-3%
+2017-05-02,FOMC,FOMC for May 2017: Federal Funds Rate=0.91%,0-1%
+2017-05-03,FOMC,FOMC for May 2017: Federal Funds Rate=0.91%,0-1%
+2017-05-05,NFP,NFP for May 2017: Jobs added=206000,200-300K
+2017-05-11,PPI,"PPI for May 2017: Index=192.80, YoY=4.05%",4-8%
+2017-05-12,CPI,"CPI for May 2017: Index=244.00, YoY=1.86%",1-2%
+2017-06-02,NFP,NFP for June 2017: Jobs added=203000,200-300K
+2017-06-13,FOMC,FOMC for June 2017: Federal Funds Rate=1.04%,1-2%
+2017-06-13,PPI,"PPI for June 2017: Index=193.60, YoY=3.20%",2-4%
+2017-06-14,FOMC,FOMC for June 2017: Federal Funds Rate=1.04%,1-2%
+2017-06-14,CPI,"CPI for June 2017: Index=244.16, YoY=1.64%",1-2%
+2017-07-07,NFP,NFP for July 2017: Jobs added=189000,100-200K
+2017-07-13,PPI,"PPI for July 2017: Index=193.50, YoY=3.09%",2-4%
+2017-07-14,CPI,"CPI for July 2017: Index=244.24, YoY=1.73%",1-2%
+2017-07-25,FOMC,FOMC for July 2017: Federal Funds Rate=1.15%,1-2%
+2017-07-26,FOMC,FOMC for July 2017: Federal Funds Rate=1.15%,1-2%
+2017-08-04,NFP,NFP for August 2017: Jobs added=147000,100-200K
+2017-08-10,PPI,"PPI for August 2017: Index=193.80, YoY=3.86%",2-4%
+2017-08-11,CPI,"CPI for August 2017: Index=245.18, YoY=1.93%",1-2%
+2017-09-01,NFP,NFP for September 2017: Jobs added=88000,0-100K
+2017-09-13,PPI,"PPI for September 2017: Index=194.80, YoY=4.23%",4-8%
+2017-09-14,CPI,"CPI for September 2017: Index=246.44, YoY=2.18%",2-3%
+2017-09-19,FOMC,FOMC for September 2017: Federal Funds Rate=1.15%,1-2%
+2017-09-20,FOMC,FOMC for September 2017: Federal Funds Rate=1.15%,1-2%
+2017-10-06,NFP,NFP for October 2017: Jobs added=143000,100-200K
+2017-10-12,PPI,"PPI for October 2017: Index=194.90, YoY=4.39%",4-8%
+2017-10-13,CPI,"CPI for October 2017: Index=246.63, YoY=2.02%",2-3%
+2017-10-31,FOMC,FOMC for October 2017: Federal Funds Rate=1.15%,1-2%
+2017-11-01,FOMC,FOMC for November 2017: Federal Funds Rate=1.16%,1-2%
+2017-11-03,NFP,NFP for November 2017: Jobs added=223000,200-300K
+2017-11-14,PPI,"PPI for November 2017: Index=195.90, YoY=5.15%",4-8%
+2017-11-15,CPI,"CPI for November 2017: Index=247.28, YoY=2.17%",2-3%
+2017-12-08,NFP,NFP for December 2017: Jobs added=150000,100-200K
+2017-12-12,PPI,"PPI for December 2017: Index=196.30, YoY=4.30%",4-8%
+2017-12-12,FOMC,FOMC for December 2017: Federal Funds Rate=1.30%,1-2%
+2017-12-13,CPI,"CPI for December 2017: Index=247.81, YoY=2.13%",2-3%
+2017-12-13,FOMC,FOMC for December 2017: Federal Funds Rate=1.30%,1-2%
+2018-01-05,NFP,NFP for January 2018: Jobs added=137000,100-200K
+2018-01-11,PPI,"PPI for January 2018: Index=197.90, YoY=3.78%",2-4%
+2018-01-12,CPI,"CPI for January 2018: Index=248.86, YoY=2.15%",2-3%
+2018-01-30,FOMC,FOMC for January 2018: Federal Funds Rate=1.41%,1-2%
+2018-01-31,FOMC,FOMC for January 2018: Federal Funds Rate=1.41%,1-2%
+2018-02-02,NFP,NFP for February 2018: Jobs added=394000,>300K
+2018-02-14,CPI,"CPI for February 2018: Index=249.53, YoY=2.26%",2-3%
+2018-02-15,PPI,"PPI for February 2018: Index=199.30, YoY=4.02%",4-8%
+2018-03-09,NFP,NFP for March 2018: Jobs added=226000,200-300K
+2018-03-13,CPI,"CPI for March 2018: Index=249.58, YoY=2.33%",2-3%
+2018-03-14,PPI,"PPI for March 2018: Index=199.30, YoY=4.07%",4-8%
+2018-03-20,FOMC,FOMC for March 2018: Federal Funds Rate=1.51%,1-2%
+2018-03-21,FOMC,FOMC for March 2018: Federal Funds Rate=1.51%,1-2%
+2018-04-06,NFP,NFP for April 2018: Jobs added=142000,100-200K
+2018-04-10,PPI,"PPI for April 2018: Index=200.30, YoY=3.78%",2-4%
+2018-04-11,CPI,"CPI for April 2018: Index=250.23, YoY=2.47%",2-3%
+2018-05-01,FOMC,FOMC for May 2018: Federal Funds Rate=1.70%,1-2%
+2018-05-02,FOMC,FOMC for May 2018: Federal Funds Rate=1.70%,1-2%
+2018-05-04,NFP,NFP for May 2018: Jobs added=318000,>300K
+2018-05-09,PPI,"PPI for May 2018: Index=203.20, YoY=5.39%",4-8%
+2018-05-10,CPI,"CPI for May 2018: Index=250.79, YoY=2.78%",2-3%
+2018-06-01,NFP,NFP for June 2018: Jobs added=219000,200-300K
+2018-06-12,CPI,"CPI for June 2018: Index=251.02, YoY=2.81%",2-3%
+2018-06-12,FOMC,FOMC for June 2018: Federal Funds Rate=1.82%,1-2%
+2018-06-13,PPI,"PPI for June 2018: Index=204.20, YoY=5.48%",4-8%
+2018-06-13,FOMC,FOMC for June 2018: Federal Funds Rate=1.82%,1-2%
+2018-07-06,NFP,NFP for July 2018: Jobs added=61000,0-100K
+2018-07-11,PPI,"PPI for July 2018: Index=204.30, YoY=5.58%",4-8%
+2018-07-12,CPI,"CPI for July 2018: Index=251.21, YoY=2.85%",2-3%
+2018-07-31,FOMC,FOMC for July 2018: Federal Funds Rate=1.91%,1-2%
+2018-08-01,FOMC,FOMC for August 2018: Federal Funds Rate=1.91%,1-2%
+2018-08-03,NFP,NFP for August 2018: Jobs added=259000,200-300K
+2018-08-09,PPI,"PPI for August 2018: Index=203.40, YoY=4.95%",4-8%
+2018-08-10,CPI,"CPI for August 2018: Index=251.66, YoY=2.64%",2-3%
+2018-09-07,NFP,NFP for September 2018: Jobs added=79000,0-100K
+2018-09-12,PPI,"PPI for September 2018: Index=203.60, YoY=4.52%",4-8%
+2018-09-13,CPI,"CPI for September 2018: Index=252.18, YoY=2.33%",2-3%
+2018-09-25,FOMC,FOMC for September 2018: Federal Funds Rate=1.95%,1-2%
+2018-09-26,FOMC,FOMC for September 2018: Federal Funds Rate=1.95%,1-2%
+2018-10-05,NFP,NFP for October 2018: Jobs added=168000,100-200K
+2018-10-10,PPI,"PPI for October 2018: Index=204.60, YoY=4.98%",4-8%
+2018-10-11,CPI,"CPI for October 2018: Index=252.77, YoY=2.49%",2-3%
+2018-11-02,NFP,NFP for November 2018: Jobs added=91000,0-100K
+2018-11-07,FOMC,FOMC for November 2018: Federal Funds Rate=2.20%,2-3%
+2018-11-08,FOMC,FOMC for November 2018: Federal Funds Rate=2.20%,2-3%
+2018-11-09,PPI,"PPI for November 2018: Index=202.30, YoY=3.27%",2-4%
+2018-11-14,CPI,"CPI for November 2018: Index=252.59, YoY=2.15%",2-3%
+2018-12-07,NFP,NFP for December 2018: Jobs added=192000,100-200K
+2018-12-11,PPI,"PPI for December 2018: Index=201.00, YoY=2.39%",2-4%
+2018-12-12,CPI,"CPI for December 2018: Index=252.77, YoY=2.00%",1-2%
+2018-12-18,FOMC,FOMC for December 2018: Federal Funds Rate=2.27%,2-3%
+2018-12-19,FOMC,FOMC for December 2018: Federal Funds Rate=2.27%,2-3%
+2019-01-04,NFP,NFP for January 2019: Jobs added=250000,200-300K
+2019-01-11,CPI,"CPI for January 2019: Index=252.56, YoY=1.49%",1-2%
+2019-01-15,PPI,"PPI for January 2019: Index=199.10, YoY=0.61%",0-2%
+2019-01-29,FOMC,FOMC for January 2019: Federal Funds Rate=2.40%,2-3%
+2019-01-30,FOMC,FOMC for January 2019: Federal Funds Rate=2.40%,2-3%
+2019-02-01,NFP,NFP for February 2019: Jobs added=6000,0-100K
+2019-02-13,CPI,"CPI for February 2019: Index=253.32, YoY=1.52%",1-2%
+2019-02-14,PPI,"PPI for February 2019: Index=199.20, YoY=-0.05%",<0%
+2019-03-08,NFP,NFP for March 2019: Jobs added=230000,200-300K
+2019-03-12,CPI,"CPI for March 2019: Index=254.28, YoY=1.88%",1-2%
+2019-03-13,PPI,"PPI for March 2019: Index=200.80, YoY=0.75%",0-2%
+2019-03-19,FOMC,FOMC for March 2019: Federal Funds Rate=2.41%,2-3%
+2019-03-20,FOMC,FOMC for March 2019: Federal Funds Rate=2.41%,2-3%
+2019-04-05,NFP,NFP for April 2019: Jobs added=298000,200-300K
+2019-04-10,CPI,"CPI for April 2019: Index=255.23, YoY=2.00%",1-2%
+2019-04-11,PPI,"PPI for April 2019: Index=202.10, YoY=0.90%",0-2%
+2019-04-30,FOMC,FOMC for April 2019: Federal Funds Rate=2.42%,2-3%
+2019-05-01,FOMC,FOMC for May 2019: Federal Funds Rate=2.39%,2-3%
+2019-05-03,NFP,NFP for May 2019: Jobs added=28000,0-100K
+2019-05-09,PPI,"PPI for May 2019: Index=201.70, YoY=-0.74%",<0%
+2019-05-10,CPI,"CPI for May 2019: Index=255.30, YoY=1.80%",1-2%
+2019-06-07,NFP,NFP for June 2019: Jobs added=218000,200-300K
+2019-06-11,PPI,"PPI for June 2019: Index=200.30, YoY=-1.91%",<0%
+2019-06-12,CPI,"CPI for June 2019: Index=255.21, YoY=1.67%",1-2%
+2019-06-18,FOMC,FOMC for June 2019: Federal Funds Rate=2.38%,2-3%
+2019-06-19,FOMC,FOMC for June 2019: Federal Funds Rate=2.38%,2-3%
+2019-07-05,NFP,NFP for July 2019: Jobs added=97000,0-100K
+2019-07-11,CPI,"CPI for July 2019: Index=255.80, YoY=1.83%",1-2%
+2019-07-12,PPI,"PPI for July 2019: Index=200.70, YoY=-1.76%",<0%
+2019-07-30,FOMC,FOMC for July 2019: Federal Funds Rate=2.40%,2-3%
+2019-07-31,FOMC,FOMC for July 2019: Federal Funds Rate=2.40%,2-3%
+2019-08-02,NFP,NFP for August 2019: Jobs added=235000,200-300K
+2019-08-09,PPI,"PPI for August 2019: Index=199.20, YoY=-2.06%",<0%
+2019-08-13,CPI,"CPI for August 2019: Index=256.04, YoY=1.74%",1-2%
+2019-09-06,NFP,NFP for September 2019: Jobs added=194000,100-200K
+2019-09-11,PPI,"PPI for September 2019: Index=198.40, YoY=-2.55%",<0%
+2019-09-12,CPI,"CPI for September 2019: Index=256.43, YoY=1.68%",1-2%
+2019-09-17,FOMC,FOMC for September 2019: Federal Funds Rate=2.04%,2-3%
+2019-09-18,FOMC,FOMC for September 2019: Federal Funds Rate=2.04%,2-3%
+2019-10-04,NFP,NFP for October 2019: Jobs added=95000,0-100K
+2019-10-08,PPI,"PPI for October 2019: Index=198.60, YoY=-2.93%",<0%
+2019-10-10,CPI,"CPI for October 2019: Index=257.15, YoY=1.73%",1-2%
+2019-10-29,FOMC,FOMC for October 2019: Federal Funds Rate=1.83%,1-2%
+2019-10-30,FOMC,FOMC for October 2019: Federal Funds Rate=1.83%,1-2%
+2019-11-01,NFP,NFP for November 2019: Jobs added=208000,200-300K
+2019-11-13,CPI,"CPI for November 2019: Index=257.88, YoY=2.09%",2-3%
+2019-11-14,PPI,"PPI for November 2019: Index=199.00, YoY=-1.63%",<0%
+2019-12-06,NFP,NFP for December 2019: Jobs added=127000,100-200K
+2019-12-10,FOMC,FOMC for December 2019: Federal Funds Rate=1.55%,1-2%
+2019-12-11,FOMC,FOMC for December 2019: Federal Funds Rate=1.55%,1-2%
+2019-12-11,CPI,"CPI for December 2019: Index=258.63, YoY=2.32%",2-3%
+2019-12-12,PPI,"PPI for December 2019: Index=199.00, YoY=-1.00%",<0%
+2020-01-10,NFP,NFP for January 2020: Jobs added=236000,200-300K
+2020-01-14,CPI,"CPI for January 2020: Index=259.13, YoY=2.60%",2-3%
+2020-01-15,PPI,"PPI for January 2020: Index=199.30, YoY=0.10%",0-2%
+2020-01-28,FOMC,FOMC for January 2020: Federal Funds Rate=1.55%,1-2%
+2020-01-29,FOMC,FOMC for January 2020: Federal Funds Rate=1.55%,1-2%
+2020-02-07,NFP,NFP for February 2020: Jobs added=261000,200-300K
+2020-02-13,CPI,"CPI for February 2020: Index=259.25, YoY=2.34%",2-3%
+2020-02-14,PPI,"PPI for February 2020: Index=196.70, YoY=-1.26%",<0%
+2020-03-03,FOMC,FOMC for March 2020: Federal Funds Rate=0.65%,0-1%
+2020-03-06,NFP,NFP for March 2020: Jobs added=-1397000,<0K
+2020-03-11,CPI,"CPI for March 2020: Index=258.08, YoY=1.49%",1-2%
+2020-03-12,PPI,"PPI for March 2020: Index=193.10, YoY=-3.83%",<0%
+2020-03-15,FOMC,FOMC for March 2020: Federal Funds Rate=0.65%,0-1%
+2020-04-03,NFP,NFP for April 2020: Jobs added=-20471000,<0K
+2020-04-09,PPI,"PPI for April 2020: Index=185.50, YoY=-8.21%",<0%
+2020-04-10,CPI,"CPI for April 2020: Index=256.03, YoY=0.31%",0-1%
+2020-04-28,FOMC,FOMC for April 2020: Federal Funds Rate=0.05%,0-1%
+2020-04-29,FOMC,FOMC for April 2020: Federal Funds Rate=0.05%,0-1%
+2020-05-08,NFP,NFP for May 2020: Jobs added=2616000,>300K
+2020-05-12,CPI,"CPI for May 2020: Index=255.80, YoY=0.20%",0-1%
+2020-05-13,PPI,"PPI for May 2020: Index=188.60, YoY=-6.49%",<0%
+2020-06-05,NFP,NFP for June 2020: Jobs added=4631000,>300K
+2020-06-09,FOMC,FOMC for June 2020: Federal Funds Rate=0.08%,0-1%
+2020-06-10,FOMC,FOMC for June 2020: Federal Funds Rate=0.08%,0-1%
+2020-06-10,CPI,"CPI for June 2020: Index=257.04, YoY=0.72%",0-1%
+2020-06-11,PPI,"PPI for June 2020: Index=191.20, YoY=-4.54%",<0%
+2020-07-02,NFP,NFP for July 2020: Jobs added=1584000,>300K
+2020-07-10,PPI,"PPI for July 2020: Index=193.00, YoY=-3.84%",<0%
+2020-07-14,CPI,"CPI for July 2020: Index=258.35, YoY=1.00%",0-1%
+2020-07-28,FOMC,FOMC for July 2020: Federal Funds Rate=0.09%,0-1%
+2020-07-29,FOMC,FOMC for July 2020: Federal Funds Rate=0.09%,0-1%
+2020-08-07,NFP,NFP for August 2020: Jobs added=1564000,>300K
+2020-08-11,PPI,"PPI for August 2020: Index=194.30, YoY=-2.46%",<0%
+2020-08-12,CPI,"CPI for August 2020: Index=259.32, YoY=1.28%",1-2%
+2020-09-04,NFP,NFP for September 2020: Jobs added=951000,>300K
+2020-09-10,PPI,"PPI for September 2020: Index=195.50, YoY=-1.46%",<0%
+2020-09-11,CPI,"CPI for September 2020: Index=260.00, YoY=1.39%",1-2%
+2020-09-15,FOMC,FOMC for September 2020: Federal Funds Rate=0.09%,0-1%
+2020-09-16,FOMC,FOMC for September 2020: Federal Funds Rate=0.09%,0-1%
+2020-10-02,NFP,NFP for October 2020: Jobs added=691000,>300K
+2020-10-13,CPI,"CPI for October 2020: Index=260.32, YoY=1.23%",1-2%
+2020-10-14,PPI,"PPI for October 2020: Index=196.50, YoY=-1.06%",<0%
+2020-11-04,FOMC,FOMC for November 2020: Federal Funds Rate=0.09%,0-1%
+2020-11-05,FOMC,FOMC for November 2020: Federal Funds Rate=0.09%,0-1%
+2020-11-06,NFP,NFP for November 2020: Jobs added=270000,200-300K
+2020-11-12,CPI,"CPI for November 2020: Index=260.91, YoY=1.18%",1-2%
+2020-11-13,PPI,"PPI for November 2020: Index=198.30, YoY=-0.35%",<0%
+2020-12-04,NFP,NFP for December 2020: Jobs added=-183000,<0K
+2020-12-10,CPI,"CPI for December 2020: Index=262.05, YoY=1.32%",1-2%
+2020-12-11,PPI,"PPI for December 2020: Index=200.50, YoY=0.75%",0-2%
+2020-12-15,FOMC,FOMC for December 2020: Federal Funds Rate=0.09%,0-1%
+2020-12-16,FOMC,FOMC for December 2020: Federal Funds Rate=0.09%,0-1%
+2021-01-08,NFP,NFP for January 2021: Jobs added=365000,>300K
+2021-01-13,CPI,"CPI for January 2021: Index=262.64, YoY=1.36%",1-2%
+2021-01-15,PPI,"PPI for January 2021: Index=204.80, YoY=2.76%",2-4%
+2021-01-26,FOMC,FOMC for January 2021: Federal Funds Rate=0.09%,0-1%
+2021-01-27,FOMC,FOMC for January 2021: Federal Funds Rate=0.09%,0-1%
+2021-02-05,NFP,NFP for February 2021: Jobs added=509000,>300K
+2021-02-10,CPI,"CPI for February 2021: Index=263.57, YoY=1.67%",1-2%
+2021-02-17,PPI,"PPI for February 2021: Index=210.60, YoY=7.07%",4-8%
+2021-03-05,NFP,NFP for March 2021: Jobs added=824000,>300K
+2021-03-10,CPI,"CPI for March 2021: Index=264.85, YoY=2.62%",2-3%
+2021-03-12,PPI,"PPI for March 2021: Index=215.00, YoY=11.34%",>8%
+2021-03-16,FOMC,FOMC for March 2021: Federal Funds Rate=0.07%,0-1%
+2021-03-17,FOMC,FOMC for March 2021: Federal Funds Rate=0.07%,0-1%
+2021-04-02,NFP,NFP for April 2021: Jobs added=365000,>300K
+2021-04-09,PPI,"PPI for April 2021: Index=217.90, YoY=17.47%",>8%
+2021-04-13,CPI,"CPI for April 2021: Index=266.62, YoY=4.14%",3-5%
+2021-04-27,FOMC,FOMC for April 2021: Federal Funds Rate=0.07%,0-1%
+2021-04-28,FOMC,FOMC for April 2021: Federal Funds Rate=0.07%,0-1%
+2021-05-07,NFP,NFP for May 2021: Jobs added=421000,>300K
+2021-05-12,CPI,"CPI for May 2021: Index=268.40, YoY=4.93%",3-5%
+2021-05-13,PPI,"PPI for May 2021: Index=224.90, YoY=19.25%",>8%
+2021-06-04,NFP,NFP for June 2021: Jobs added=796000,>300K
+2021-06-10,CPI,"CPI for June 2021: Index=270.71, YoY=5.32%",>5%
+2021-06-15,FOMC,FOMC for June 2021: Federal Funds Rate=0.08%,0-1%
+2021-06-15,PPI,"PPI for June 2021: Index=228.90, YoY=19.72%",>8%
+2021-06-16,FOMC,FOMC for June 2021: Federal Funds Rate=0.08%,0-1%
+2021-07-02,NFP,NFP for July 2021: Jobs added=931000,>300K
+2021-07-13,CPI,"CPI for July 2021: Index=271.96, YoY=5.27%",>5%
+2021-07-14,PPI,"PPI for July 2021: Index=231.85, YoY=20.13%",>8%
+2021-07-27,FOMC,FOMC for July 2021: Federal Funds Rate=0.10%,0-1%
+2021-07-28,FOMC,FOMC for July 2021: Federal Funds Rate=0.10%,0-1%
+2021-08-06,NFP,NFP for August 2021: Jobs added=487000,>300K
+2021-08-11,CPI,"CPI for August 2021: Index=272.75, YoY=5.18%",>5%
+2021-08-12,PPI,"PPI for August 2021: Index=233.41, YoY=20.13%",>8%
+2021-09-03,NFP,NFP for September 2021: Jobs added=466000,>300K
+2021-09-10,PPI,"PPI for September 2021: Index=235.68, YoY=20.55%",>8%
+2021-09-14,CPI,"CPI for September 2021: Index=273.94, YoY=5.36%",>5%
+2021-09-21,FOMC,FOMC for September 2021: Federal Funds Rate=0.08%,0-1%
+2021-09-22,FOMC,FOMC for September 2021: Federal Funds Rate=0.08%,0-1%
+2021-10-08,NFP,NFP for October 2021: Jobs added=857000,>300K
+2021-10-13,CPI,"CPI for October 2021: Index=276.53, YoY=6.23%",>5%
+2021-10-14,PPI,"PPI for October 2021: Index=240.47, YoY=22.37%",>8%
+2021-11-02,FOMC,FOMC for November 2021: Federal Funds Rate=0.08%,0-1%
+2021-11-03,FOMC,FOMC for November 2021: Federal Funds Rate=0.08%,0-1%
+2021-11-05,NFP,NFP for November 2021: Jobs added=637000,>300K
+2021-11-09,PPI,"PPI for November 2021: Index=243.29, YoY=22.69%",>8%
+2021-11-10,CPI,"CPI for November 2021: Index=278.82, YoY=6.87%",>5%
+2021-12-03,NFP,NFP for December 2021: Jobs added=575000,>300K
+2021-12-10,CPI,"CPI for December 2021: Index=280.81, YoY=7.16%",>5%
+2021-12-14,PPI,"PPI for December 2021: Index=241.34, YoY=20.37%",>8%
+2021-12-14,FOMC,FOMC for December 2021: Federal Funds Rate=0.08%,0-1%
+2021-12-15,FOMC,FOMC for December 2021: Federal Funds Rate=0.08%,0-1%
+2022-01-07,NFP,NFP for January 2022: Jobs added=225000,200-300K
+2022-01-12,CPI,"CPI for January 2022: Index=282.54, YoY=7.58%",>5%
+2022-01-13,PPI,"PPI for January 2022: Index=246.45, YoY=20.34%",>8%
+2022-01-25,FOMC,FOMC for January 2022: Federal Funds Rate=0.08%,0-1%
+2022-01-26,FOMC,FOMC for January 2022: Federal Funds Rate=0.08%,0-1%
+2022-02-04,NFP,NFP for February 2022: Jobs added=869000,>300K
+2022-02-10,CPI,"CPI for February 2022: Index=284.52, YoY=7.95%",>5%
+2022-02-15,PPI,"PPI for February 2022: Index=252.66, YoY=19.97%",>8%
+2022-03-04,NFP,NFP for March 2022: Jobs added=471000,>300K
+2022-03-10,CPI,"CPI for March 2022: Index=287.47, YoY=8.54%",>5%
+2022-03-15,FOMC,FOMC for March 2022: Federal Funds Rate=0.20%,0-1%
+2022-03-15,PPI,"PPI for March 2022: Index=260.01, YoY=20.94%",>8%
+2022-03-16,FOMC,FOMC for March 2022: Federal Funds Rate=0.20%,0-1%
+2022-04-01,NFP,NFP for April 2022: Jobs added=305000,>300K
+2022-04-12,CPI,"CPI for April 2022: Index=288.58, YoY=8.24%",>5%
+2022-04-13,PPI,"PPI for April 2022: Index=265.31, YoY=21.76%",>8%
+2022-05-03,FOMC,FOMC for May 2022: Federal Funds Rate=0.77%,0-1%
+2022-05-04,FOMC,FOMC for May 2022: Federal Funds Rate=0.77%,0-1%
+2022-05-06,NFP,NFP for May 2022: Jobs added=241000,200-300K
+2022-05-11,CPI,"CPI for May 2022: Index=291.30, YoY=8.53%",>5%
+2022-05-12,PPI,"PPI for May 2022: Index=273.25, YoY=21.50%",>8%
+2022-06-03,NFP,NFP for June 2022: Jobs added=461000,>300K
+2022-06-10,CPI,"CPI for June 2022: Index=295.07, YoY=9.00%",>5%
+2022-06-14,PPI,"PPI for June 2022: Index=280.25, YoY=22.43%",>8%
+2022-06-14,FOMC,FOMC for June 2022: Federal Funds Rate=1.21%,1-2%
+2022-06-15,FOMC,FOMC for June 2022: Federal Funds Rate=1.21%,1-2%
+2022-07-08,NFP,NFP for July 2022: Jobs added=696000,>300K
+2022-07-13,CPI,"CPI for July 2022: Index=294.94, YoY=8.45%",>5%
+2022-07-14,PPI,"PPI for July 2022: Index=272.27, YoY=17.44%",>8%
+2022-07-26,FOMC,FOMC for July 2022: Federal Funds Rate=1.68%,1-2%
+2022-07-27,FOMC,FOMC for July 2022: Federal Funds Rate=1.68%,1-2%
+2022-08-05,NFP,NFP for August 2022: Jobs added=237000,200-300K
+2022-08-10,CPI,"CPI for August 2022: Index=295.16, YoY=8.22%",>5%
+2022-08-11,PPI,"PPI for August 2022: Index=269.55, YoY=15.48%",>8%
+2022-09-02,NFP,NFP for September 2022: Jobs added=227000,200-300K
+2022-09-13,CPI,"CPI for September 2022: Index=296.42, YoY=8.21%",>5%
+2022-09-14,PPI,"PPI for September 2022: Index=267.90, YoY=13.67%",>8%
+2022-09-20,FOMC,FOMC for September 2022: Federal Funds Rate=2.56%,2-3%
+2022-09-21,FOMC,FOMC for September 2022: Federal Funds Rate=2.56%,2-3%
+2022-10-07,NFP,NFP for October 2022: Jobs added=400000,>300K
+2022-10-12,PPI,"PPI for October 2022: Index=265.06, YoY=10.23%",>8%
+2022-10-13,CPI,"CPI for October 2022: Index=297.98, YoY=7.76%",>5%
+2022-11-01,FOMC,FOMC for November 2022: Federal Funds Rate=3.78%,3-4%
+2022-11-02,FOMC,FOMC for November 2022: Federal Funds Rate=3.78%,3-4%
+2022-11-04,NFP,NFP for November 2022: Jobs added=297000,200-300K
+2022-11-10,CPI,"CPI for November 2022: Index=298.71, YoY=7.13%",>5%
+2022-11-15,PPI,"PPI for November 2022: Index=263.16, YoY=8.17%",>8%
+2022-12-02,NFP,NFP for December 2022: Jobs added=126000,100-200K
+2022-12-09,PPI,"PPI for December 2022: Index=257.90, YoY=6.86%",4-8%
+2022-12-13,CPI,"CPI for December 2022: Index=298.81, YoY=6.41%",>5%
+2022-12-13,FOMC,FOMC for December 2022: Federal Funds Rate=4.10%,>4%
+2022-12-14,FOMC,FOMC for December 2022: Federal Funds Rate=4.10%,>4%
+2023-01-06,NFP,NFP for January 2023: Jobs added=444000,>300K
+2023-01-12,CPI,"CPI for January 2023: Index=300.46, YoY=6.34%",>5%
+2023-01-18,PPI,"PPI for January 2023: Index=260.23, YoY=5.59%",4-8%
+2023-01-31,FOMC,FOMC for January 2023: Federal Funds Rate=4.33%,>4%
+2023-02-01,FOMC,FOMC for February 2023: Federal Funds Rate=4.57%,>4%
+2023-02-03,NFP,NFP for February 2023: Jobs added=306000,>300K
+2023-02-14,CPI,"CPI for February 2023: Index=301.48, YoY=5.96%",>5%
+2023-02-16,PPI,"PPI for February 2023: Index=258.67, YoY=2.38%",2-4%
+2023-03-10,NFP,NFP for March 2023: Jobs added=85000,0-100K
+2023-03-14,CPI,"CPI for March 2023: Index=301.64, YoY=4.93%",3-5%
+2023-03-15,PPI,"PPI for March 2023: Index=257.06, YoY=-1.14%",<0%
+2023-03-21,FOMC,FOMC for March 2023: Federal Funds Rate=4.65%,>4%
+2023-03-22,FOMC,FOMC for March 2023: Federal Funds Rate=4.65%,>4%
+2023-04-07,NFP,NFP for April 2023: Jobs added=216000,200-300K
+2023-04-12,CPI,"CPI for April 2023: Index=302.86, YoY=4.95%",3-5%
+2023-04-13,PPI,"PPI for April 2023: Index=256.91, YoY=-3.17%",<0%
+2023-05-02,FOMC,FOMC for May 2023: Federal Funds Rate=5.06%,>4%
+2023-05-03,FOMC,FOMC for May 2023: Federal Funds Rate=5.06%,>4%
+2023-05-05,NFP,NFP for May 2023: Jobs added=227000,200-300K
+2023-05-10,CPI,"CPI for May 2023: Index=303.32, YoY=4.13%",3-5%
+2023-05-11,PPI,"PPI for May 2023: Index=253.67, YoY=-7.17%",<0%
+2023-06-02,NFP,NFP for June 2023: Jobs added=257000,200-300K
+2023-06-13,FOMC,FOMC for June 2023: Federal Funds Rate=5.08%,>4%
+2023-06-13,CPI,"CPI for June 2023: Index=304.10, YoY=3.06%",3-5%
+2023-06-14,FOMC,FOMC for June 2023: Federal Funds Rate=5.08%,>4%
+2023-06-14,PPI,"PPI for June 2023: Index=253.86, YoY=-9.42%",<0%
+2023-07-07,NFP,NFP for July 2023: Jobs added=148000,100-200K
+2023-07-12,CPI,"CPI for July 2023: Index=304.62, YoY=3.28%",3-5%
+2023-07-13,PPI,"PPI for July 2023: Index=253.84, YoY=-6.77%",<0%
+2023-07-25,FOMC,FOMC for July 2023: Federal Funds Rate=5.12%,>4%
+2023-07-26,FOMC,FOMC for July 2023: Federal Funds Rate=5.12%,>4%
+2023-08-04,NFP,NFP for August 2023: Jobs added=157000,100-200K
+2023-08-10,CPI,"CPI for August 2023: Index=306.14, YoY=3.72%",3-5%
+2023-08-11,PPI,"PPI for August 2023: Index=257.68, YoY=-4.40%",<0%
+2023-09-01,NFP,NFP for September 2023: Jobs added=158000,100-200K
+2023-09-13,CPI,"CPI for September 2023: Index=307.37, YoY=3.70%",3-5%
+2023-09-14,PPI,"PPI for September 2023: Index=258.93, YoY=-3.35%",<0%
+2023-09-19,FOMC,FOMC for September 2023: Federal Funds Rate=5.33%,>4%
+2023-09-20,FOMC,FOMC for September 2023: Federal Funds Rate=5.33%,>4%
+2023-10-06,NFP,NFP for October 2023: Jobs added=186000,100-200K
+2023-10-11,PPI,"PPI for October 2023: Index=255.19, YoY=-3.72%",<0%
+2023-10-12,CPI,"CPI for October 2023: Index=307.65, YoY=3.25%",3-5%
+2023-10-31,FOMC,FOMC for October 2023: Federal Funds Rate=5.33%,>4%
+2023-11-01,FOMC,FOMC for November 2023: Federal Funds Rate=5.33%,>4%
+2023-11-03,NFP,NFP for November 2023: Jobs added=141000,100-200K
+2023-11-14,CPI,"CPI for November 2023: Index=308.09, YoY=3.14%",3-5%
+2023-11-15,PPI,"PPI for November 2023: Index=252.86, YoY=-3.91%",<0%
+2023-12-08,NFP,NFP for December 2023: Jobs added=269000,200-300K
+2023-12-12,FOMC,FOMC for December 2023: Federal Funds Rate=5.33%,>4%
+2023-12-12,CPI,"CPI for December 2023: Index=308.74, YoY=3.32%",3-5%
+2023-12-13,FOMC,FOMC for December 2023: Federal Funds Rate=5.33%,>4%
+2023-12-13,PPI,"PPI for December 2023: Index=249.87, YoY=-3.11%",<0%
+2024-01-05,NFP,NFP for January 2024: Jobs added=119000,100-200K
+2024-01-11,CPI,"CPI for January 2024: Index=309.79, YoY=3.11%",3-5%
+2024-01-12,PPI,"PPI for January 2024: Index=251.31, YoY=-3.43%",<0%
+2024-01-30,FOMC,FOMC for January 2024: Federal Funds Rate=5.33%,>4%
+2024-01-31,FOMC,FOMC for January 2024: Federal Funds Rate=5.33%,>4%
+2024-02-02,NFP,NFP for February 2024: Jobs added=222000,200-300K
+2024-02-13,CPI,"CPI for February 2024: Index=311.02, YoY=3.17%",3-5%
+2024-02-16,PPI,"PPI for February 2024: Index=254.93, YoY=-1.45%",<0%
+2024-03-08,NFP,NFP for March 2024: Jobs added=246000,200-300K
+2024-03-12,CPI,"CPI for March 2024: Index=312.11, YoY=3.47%",3-5%
+2024-03-15,PPI,"PPI for March 2024: Index=255.09, YoY=-0.77%",<0%
+2024-03-19,FOMC,FOMC for March 2024: Federal Funds Rate=5.33%,>4%
+2024-03-20,FOMC,FOMC for March 2024: Federal Funds Rate=5.33%,>4%
+2024-04-05,NFP,NFP for April 2024: Jobs added=118000,100-200K
+2024-04-10,CPI,"CPI for April 2024: Index=313.02, YoY=3.35%",3-5%
+2024-04-11,PPI,"PPI for April 2024: Index=256.98, YoY=0.03%",0-2%
+2024-04-30,FOMC,FOMC for April 2024: Federal Funds Rate=5.33%,>4%
+2024-05-01,FOMC,FOMC for May 2024: Federal Funds Rate=5.33%,>4%
+2024-05-03,NFP,NFP for May 2024: Jobs added=193000,100-200K
+2024-05-14,PPI,"PPI for May 2024: Index=255.31, YoY=0.65%",0-2%
+2024-05-15,CPI,"CPI for May 2024: Index=313.14, YoY=3.24%",3-5%
+2024-06-07,NFP,NFP for June 2024: Jobs added=87000,0-100K
+2024-06-11,FOMC,FOMC for June 2024: Federal Funds Rate=5.33%,>4%
+2024-06-12,CPI,"CPI for June 2024: Index=313.13, YoY=2.97%",2-3%
+2024-06-12,FOMC,FOMC for June 2024: Federal Funds Rate=5.33%,>4%
+2024-06-13,PPI,"PPI for June 2024: Index=255.91, YoY=0.81%",0-2%
+2024-07-05,NFP,NFP for July 2024: Jobs added=88000,0-100K
+2024-07-11,CPI,"CPI for July 2024: Index=313.57, YoY=2.94%",2-3%
+2024-07-12,PPI,"PPI for July 2024: Index=257.32, YoY=1.37%",0-2%
+2024-07-30,FOMC,FOMC for July 2024: Federal Funds Rate=5.33%,>4%
+2024-07-31,FOMC,FOMC for July 2024: Federal Funds Rate=5.33%,>4%
+2024-08-02,NFP,NFP for August 2024: Jobs added=71000,0-100K
+2024-08-13,PPI,"PPI for August 2024: Index=255.46, YoY=-0.86%",<0%
+2024-08-14,CPI,"CPI for August 2024: Index=314.13, YoY=2.61%",2-3%
+2024-09-06,NFP,NFP for September 2024: Jobs added=240000,200-300K
+2024-09-11,CPI,"CPI for September 2024: Index=314.85, YoY=2.43%",2-3%
+2024-09-12,PPI,"PPI for September 2024: Index=252.68, YoY=-2.41%",<0%
+2024-09-17,FOMC,FOMC for September 2024: Federal Funds Rate=5.13%,>4%
+2024-09-18,FOMC,FOMC for September 2024: Federal Funds Rate=5.13%,>4%
+2024-10-04,NFP,NFP for October 2024: Jobs added=44000,0-100K
+2024-10-10,CPI,"CPI for October 2024: Index=315.56, YoY=2.57%",2-3%
+2024-10-11,PPI,"PPI for October 2024: Index=253.08, YoY=-0.83%",<0%
+2024-11-01,NFP,NFP for November 2024: Jobs added=261000,200-300K
+2024-11-06,FOMC,FOMC for November 2024: Federal Funds Rate=4.64%,>4%
+2024-11-07,FOMC,FOMC for November 2024: Federal Funds Rate=4.64%,>4%
+2024-11-13,CPI,"CPI for November 2024: Index=316.45, YoY=2.71%",2-3%
+2024-11-14,PPI,"PPI for November 2024: Index=253.21, YoY=0.14%",0-2%
+2024-12-06,NFP,NFP for December 2024: Jobs added=323000,>300K
+2024-12-11,CPI,"CPI for December 2024: Index=317.60, YoY=2.87%",2-3%
+2024-12-12,PPI,"PPI for December 2024: Index=253.42, YoY=1.42%",0-2%
+2024-12-17,FOMC,FOMC for December 2024: Federal Funds Rate=4.48%,>4%
+2024-12-18,FOMC,FOMC for December 2024: Federal Funds Rate=4.48%,>4%
+2025-01-10,NFP,NFP for January 2025: Jobs added=111000,100-200K
+2025-01-14,CPI,"CPI for January 2025: Index=319.09, YoY=3.00%",2-3%
+2025-01-15,PPI,"PPI for January 2025: Index=257.36, YoY=2.41%",2-4%
+2025-01-28,FOMC,FOMC for January 2025: Federal Funds Rate=4.33%,>4%
+2025-01-29,FOMC,FOMC for January 2025: Federal Funds Rate=4.33%,>4%
+2025-02-07,NFP,NFP for February 2025: Jobs added=102000,100-200K
+2025-02-11,CPI,"CPI for February 2025: Index=319.77, YoY=2.81%",2-3%
+2025-02-12,PPI,"PPI for February 2025: Index=259.53, YoY=1.81%",0-2%
+2025-03-07,NFP,NFP for March 2025: Jobs added=228000,200-300K
+2025-03-11,CPI,"CPI for March 2025: Index=319.62, YoY=2.41%",2-3%
+2025-03-12,PPI,"PPI for March 2025: Index=258.57, YoY=1.36%",0-2%
+2025-03-18,FOMC,FOMC for March 2025: Federal Funds Rate=4.33%,>4%
+2025-03-19,FOMC,FOMC for March 2025: Federal Funds Rate=4.33%,>4%
+2025-04-04,NFP,NFP for April 2025: Jobs added=177000,100-200K
+2025-04-15,CPI,"CPI for April 2025: Index=320.8, MoM=0.2%, YoY=2.3%",2-3%
+2025-04-16,PPI,"PPI for April 2025: MoM=-0.5%, YoY=2.6%",2-4%
+2025-04-29,FOMC,FOMC for April 2025: Federal Funds Rate=4.33%,>4%
+2025-04-30,FOMC,FOMC for April 2025: Federal Funds Rate=4.33%,>4%
