@@ -17,7 +17,7 @@ header {
 }
 
 .logo {
-    max-width: 540px; /* 50% of 1080px */
+    max-width: 500px; /* Reduced from 540px for a slightly smaller logo */
     width: 100%; /* Ensures it scales within max-width */
     height: auto;
     display: block;
@@ -28,11 +28,15 @@ header {
     text-align: center;
     margin: 0 0 2px;
     padding: 10px;
-    font-size: 1.1em;
-    color: #ffffff;
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
+}
+
+.seo-description p {
+    font-size: 1em; /* Reduced from 1.1em for smaller text */
+    color: #ffffff;
+    margin: 0 0 5px; /* Added small margin to separate the two <p> tags */
 }
 
 .card {
@@ -291,10 +295,10 @@ footer p {
         margin: 0 0 2px;
     }
 
-    .seo-description {
-        font-size: 0.9em;
+    .seo-description p {
+        font-size: 0.8em; /* Reduced from 0.9em for smaller text */
         padding: 8px;
-        margin: 0 0 2px;
+        margin: 0 0 5px; /* Consistent margin for mobile */
     }
 
     .tab-content {
@@ -492,21 +496,21 @@ footer p {
     transform: translateX(-50%);
     background-color: #1a1b2f;
     color: white;
-    padding: 6px 8px; /* Increased padding for readability */
+    padding: 6px 8px;
     border-radius: 4px;
     font-size: 0.75em;
-    max-width: 250px; /* Increased to accommodate longer median tooltip */
-    width: max-content; /* Ensures tooltip fits content */
-    white-space: normal; /* Allows text to wrap */
+    max-width: 250px;
+    width: max-content;
+    white-space: normal;
     z-index: 10;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Added for better visibility */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 @media (max-width: 600px) {
     .tooltip:hover::after {
-        max-width: 200px; /* Slightly smaller for mobile */
-        font-size: 0.7em; /* Adjusted for readability */
-        padding: 5px 7px; /* Slightly reduced for mobile */
+        max-width: 200px;
+        font-size: 0.7em;
+        padding: 5px 7px;
     }
 }
 
