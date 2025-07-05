@@ -8,13 +8,12 @@
     <meta name="author" content="1MChart Team">
     <meta name="robots" content="index, follow">
     <title>1MChart - Sign Up</title>
-    <link rel="icon" type="image/png" href="/static/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=40">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=40">
 </head>
 <body>
     <header>
-        <img src="/static/logo-new.png?v=2" alt="1MChart Logo" class="logo">
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
         <div class="seo-description">
             <p>Welcome to 1MChart! Sign up to access advanced Nasdaq gap insights and 1-minute chart analytics.</p>
             <p><strong>The Edge Lies In The Data.</strong></p>
@@ -25,12 +24,9 @@
             <h2>Sign Up</h2>
             <p>Create an account to access the 1MChart data dashboard.</p>
             {% if error %}
-                <p style="color: red; font-weight: bold;">{{ error }}</p>
+                <p class="error-message">{{ error }}</p>
             {% endif %}
-            {% if success %}
-                <p style="color: green; font-weight: bold;">{{ success }}</p>
-            {% endif %}
-            <form id="signup-form" method="POST" action="/signup">
+            <form id="signup-form" method="POST" action="{{ url_for('signup') }}">
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="username" required placeholder="Enter your username">
                 <label for="email">Email:</label>
@@ -39,15 +35,15 @@
                 <input type="password" id="password" name="password" required placeholder="Enter your password">
                 <button type="submit">Sign Up</button>
             </form>
-            <p>Already have an account? <a href="/login">Log in here</a>.</p>
+            <p>Already have an account? <a href="{{ url_for('login') }}">Log in here</a>.</p>
         </div>
     </main>
     <footer class="footer">
         <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
         <p>More coming soon</p>
         <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
-        <img src="/static/logo-new.png" alt="1MChart Footer Logo" class="footer-logo">
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
-    <script src="/static/script.js?v=23"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=23"></script>
 </body>
 </html>

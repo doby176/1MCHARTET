@@ -23,38 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     earningsFilterRadios.forEach(radio => {
         radio.addEventListener('change', toggleEarningsFilterSection);
     });
-
-    // Signup form validation
-    const signupForm = document.getElementById('signup-form');
-    if (signupForm) {
-        signupForm.addEventListener('submit', (event) => {
-            const username = document.getElementById('username').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            if (!username || !email || !password) {
-                event.preventDefault();
-                alert('Please fill in all fields.');
-                return;
-            }
-            if (password.length < 8) {
-                event.preventDefault();
-                alert('Password must be at least 8 characters long.');
-            }
-        });
-    }
-
-    // Login form validation
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', (event) => {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            if (!email || !password) {
-                event.preventDefault();
-                alert('Please fill in both email and password.');
-            }
-        });
-    }
 });
 
 // Bin options for each event type

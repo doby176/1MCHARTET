@@ -182,19 +182,22 @@ def signup():
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
-        logging.debug(f"Received signup: username={username}, email={email}")
+        logging.debug(f"Received signup: username={username}, email={email}, password={'*' * len(password) if password else 'None'}")
 
         if not username or not email or not password:
+            logging.debug("Signup failed: Missing fields")
             return render_template('landing.html', error="All fields are required.")
 
         # Basic email validation
         import re
         email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_regex, email):
+            logging.debug("Signup failed: Invalid email format")
             return render_template('landing.html', error="Invalid email format.")
 
         # Password validation (minimum 8 characters)
         if len(password) < 8:
+            logging.debug("Signup failed: Password too short")
             return render_template('landing.html', error="Password must be at least 8 characters long.")
 
         # Check if email already exists
@@ -203,6 +206,7 @@ def signup():
         cursor.execute("SELECT email FROM users WHERE email = ?", (email,))
         if cursor.fetchone():
             conn.close()
+            logging.debug("Signup failed: Email already registered")
             return render_template('landing.html', error="Email already registered.")
 
         # Hash the password
