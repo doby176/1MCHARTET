@@ -1,3 +1,4 @@
+// static/script.js
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing app...');
     loadTickers();
@@ -759,7 +760,7 @@ async function loadGapInsights(event) {
             metric.className = 'insight-metric';
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
                 <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
                 <div class="metric-description">${insights[key].description}</div>
             `;
@@ -775,7 +776,7 @@ async function loadGapInsights(event) {
             metric.className = 'insight-metric';
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
                 <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
                 <div class="metric-description">${insights[key].description}</div>
             `;
@@ -791,7 +792,7 @@ async function loadGapInsights(event) {
             metric.className = 'insight-metric';
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median">${insights[key].median}</div>
+                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}</div>
                 <div class="metric-average">Avg: ${insights[key].average}</div>
                 <div class="metric-description">${insights[key].description}</div>
             `;
