@@ -20,12 +20,12 @@ header {
     width: 100%; /* Ensures it scales within max-width */
     height: auto;
     display: block;
-    margin: 0 auto 2px; /* Kept as is */
+    margin: 0 auto 2px;
 }
 
 .seo-description {
     text-align: center;
-    margin: 0 0 2px; /* Kept as is */
+    margin: 0 0 2px;
     padding: 10px;
     font-size: 1.1em;
     color: #ffffff;
@@ -100,7 +100,8 @@ form button:hover {
 .tabs {
     display: flex;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px; /* Reduced to tighten spacing */
+    margin-top: 0; /* Ensure tabs sit close to header */
 }
 
 .tab-button {
@@ -126,7 +127,7 @@ form button:hover {
 
 .tab-content {
     display: none;
-    padding: 20px;
+    padding: 15px; /* Slightly reduced padding for compactness */
     background-color: #f9f9f9;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -137,15 +138,15 @@ form button:hover {
 }
 
 .section-logo {
-    max-width: 100px; /* Same size as footer logo */
-    width: 100%; /* Scales proportionally */
+    max-width: 100px;
+    width: 100%;
     height: auto;
     display: block;
-    margin: 10px auto 0; /* Small top margin, no bottom margin */
+    margin: 10px auto 0;
 }
 
 .gap-analysis, .events-analysis, .earnings-analysis, .gap-insights {
-    margin-top: 20px;
+    margin-top: 10px; /* Reduced to align closely with tabs */
     position: relative;
 }
 
@@ -207,11 +208,11 @@ footer {
 }
 
 .footer-logo {
-    max-width: 100px; /* Same size as section logos */
-    width: 100%; /* Scales proportionally */
+    max-width: 100px;
+    width: 100%;
     height: auto;
     display: block;
-    margin: 10px auto 0; /* Small top margin, no bottom margin */
+    margin: 10px auto 0;
 }
 
 footer h2 {
@@ -268,7 +269,9 @@ footer p {
 
     .tabs {
         flex-direction: column;
-        gap: 10px;
+        gap: 8px; /* Slightly reduced for mobile */
+        margin-bottom: 8px;
+        margin-top: 0;
     }
 
     .tab-button {
@@ -281,7 +284,7 @@ footer p {
     }
 
     .logo {
-        max-width: 100%; /* Full width on mobile, constrained by 540px */
+        max-width: 100%;
         width: 100%;
         height: auto;
         margin: 0 0 2px;
@@ -293,8 +296,12 @@ footer p {
         margin: 0 0 2px;
     }
 
+    .tab-content {
+        padding: 10px; /* Reduced for mobile */
+    }
+
     .gap-analysis, .events-analysis, .earnings-analysis, .gap-insights {
-        padding: 10px;
+        margin-top: 5px; /* Tighter spacing for mobile */
     }
 
     .gap-analysis h2, .events-analysis h2, .earnings-analysis h2, .gap-insights h2 {
@@ -306,7 +313,7 @@ footer p {
     }
 
     .section-logo {
-        max-width: 80px; /* Slightly smaller on mobile */
+        max-width: 80px;
         margin: 5px auto 0;
     }
 
@@ -330,7 +337,7 @@ footer p {
     }
 
     .footer-logo {
-        max-width: 80px; /* Matches section logos on mobile */
+        max-width: 80px;
         margin: 5px auto 0;
     }
 
@@ -347,7 +354,7 @@ footer p {
     }
 
     #plotly-chart {
-        height: 400px; /* Smaller height for mobile */
+        height: 400px;
         max-height: 500px;
         width: 100%;
         max-width: 100%;
@@ -355,7 +362,7 @@ footer p {
 
     .ads-container {
         max-width: 280px;
-        margin: 0 auto;
+        margin: 10px auto; /* Adjusted for better mobile spacing */
         min-height: 100px;
     }
 }
@@ -368,7 +375,7 @@ footer p {
 .insights-container h3 {
     font-size: 1.5em;
     font-weight: 700;
-    margin-bottom: 20px;
+    margin-bottom: 15px; /* Slightly reduced */
     color: #1a1b2f;
 }
 
@@ -378,7 +385,7 @@ footer p {
     justify-content: center;
     gap: 20px;
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    margin-bottom: 15px; /* Slightly reduced */
 }
 
 /* Individual Metric Styling */
