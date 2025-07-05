@@ -671,6 +671,13 @@ def get_earnings():
         logging.error(f"Error processing earnings: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
+@app.route('/debug/permissions')
+def debug_permissions():
+    import os
+    stat = os.stat(os.path.join(os.path.dirname(__file__), 'data', 'users.db'))
+    permissions = oct(stat.st_mode & 0o777)
+    return jsonify({"permissions": permissions})
+
 @app.route('/api/earnings_by_bin', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_earnings_by_bin():
