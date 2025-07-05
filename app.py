@@ -1,5 +1,5 @@
 import redis
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, send_from_directory
 from flask_limiter import Limiter
 from flask_session import Session
 import pandas as pd
@@ -123,6 +123,15 @@ def initialize_tickers():
 
 with app.app_context():
     initialize_tickers()
+
+# Route to serve ads.txt
+@app.route('/ads.txt')
+def serve_ads_txt():
+    try:
+        return send_from_directory('.', 'ads.txt')
+    except Exception as e:
+        logging.error(f"Error serving ads.txt: {str(e)}")
+        return jsonify({'error': 'Failed to serve ads.txt'}), 404
 
 @app.route('/')
 @limiter.limit("10 per 12 hours")
