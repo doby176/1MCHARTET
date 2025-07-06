@@ -3,22 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="1MChart provides advanced Nasdaq gap insights, 1-minute chart analytics, and earnings analysis for strategic day trading. Sign up or log in to unlock powerful trading tools.">
-    <meta name="keywords" content="Nasdaq gap insights, 1-minute stock charts, day trading, earnings analysis, stock market analytics, QQQ, technical analysis">
+    <!-- SEO Meta Tags from index.html -->
+    <meta name="description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, and reversal patterns. Analyze earnings outcomes (Beat, Miss...) and key news events (CPI, FOMC...) with high-frequency 1-minute interactive charts data for strategic day trading (2015-2025).">
+    <meta name="keywords" content="1-minute stock charts, Nasdaq gap insights, QQQ gap fill rate, QQQ gap trading, intraday gap analysis, QQQ price action patterns, day trading, price action analysis, Nasdaq gap statistics, earnings price action, CPI, PPI, FOMC, NFP, QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META, intraday trading, historical stock data, trading tools, technical analysis, stock market analysis, QQQ gap trading strategies, stock gap analytics">
     <meta name="author" content="1MChart Team">
     <meta name="robots" content="index, follow">
     <!-- Open Graph for social media -->
-    <meta property="og:title" content="1MChart - Precision Nasdaq Gap & Earnings Insights">
-    <meta property="og:description" content="Unlock advanced Nasdaq gap insights, 1-minute chart analytics, and earnings analysis for strategic day trading. Sign up or log in to start trading smarter.">
+    <meta property="og:title" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025)">
+    <meta property="og:description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, adverse moves, and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025).">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://onemchart.onrender.com">
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="1MChart - Precision Nasdaq Gap & Earnings Insights">
-    <meta name="twitter:description" content="Unlock advanced Nasdaq gap insights, 1-minute chart analytics, and earnings analysis for strategic day trading. Sign up or log in to start trading smarter.">
+    <meta name="twitter:description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, adverse moves, and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025).">
+    <!-- Google Analytics from index.html -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BFDR405H06"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-BFDR405H06');
+    </script>
+    <!-- Google AdSense from index.html -->
+    <meta name="google-adsense-account" content="ca-pub-9416785017460416">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link rel="icon" type="image/png" href="/static/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=42">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;5
+00;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=43">
     <title>1MChart - Precision Trading Insights</title>
 </head>
 <body>
@@ -26,11 +39,13 @@
         <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
         <h1>Discover Powerful Nasdaq Gap Insights, News Analysis, and Earnings Data with 1MChart</h1>
         <p>Unlock advanced Nasdaq gap insights, 1-minute chart analytics, and earnings analysis for strategic day trading.</p>
+    </header>
+    <div class="header-cta">
         <div class="cta-buttons">
             <a href="{{ url_for('login') }}" class="cta-button">Log In</a>
             <a href="{{ url_for('landing') }}" class="cta-button cta-signup">Sign Up</a>
         </div>
-    </header>
+    </div>
     <main class="landing-main">
         <section class="hero">
             <h2>Trade Smarter with 1MChart</h2>
@@ -48,11 +63,10 @@
             </div>
             <!-- Ad below YouTube video -->
             <div class="ad-container">
-                <!-- Replace with your actual AdSense code -->
-                <ins class="adsense"
+                <ins class="adsbygoogle"
                      style="display:block"
-                     data-ad-client="ca-pub-your-client-id"
-                     data-ad-slot="your-slot-id"
+                     data-ad-client="ca-pub-9416785017460416"
+                     data-ad-slot="5487535867"
                      data-ad-format="auto"
                      data-full-width-responsive="true"></ins>
                 <script>
@@ -93,11 +107,10 @@
             </div>
             <!-- Ad below CTA buttons -->
             <div class="ad-container">
-                <!-- Replace with your actual AdSense code -->
-                <ins class="adsense"
+                <ins class="adsbygoogle"
                      style="display:block"
-                     data-ad-client="ca-pub-your-client-id"
-                     data-ad-slot="your-slot-id"
+                     data-ad-client="ca-pub-9416785017460416"
+                     data-ad-slot="5487535867"
                      data-ad-format="auto"
                      data-full-width-responsive="true"></ins>
                 <script>
@@ -112,7 +125,7 @@
         <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
         <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='script.js') }}?v=23"></script>
 </body>
 </html>
