@@ -874,6 +874,37 @@ form#signup-form p a:hover, form#login-form p a:hover {
     display: block;
 }
 
+/* Metric Icon Large Styling for metric1min.png */
+.metric-icon-large {
+    width: 1516px;
+    height: 746px;
+    max-width: 100%;
+    object-fit: contain;
+    margin: 20px auto;
+    display: block;
+}
+
+/* Data Section Styling */
+.data-section {
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.data-section h2 {
+    font-size: 2em;
+    font-weight: 700;
+    color: #1a1b2f;
+    margin-bottom: 20px;
+}
+
+.data-section p {
+    font-size: 1em;
+    font-weight: 400;
+    color: #555;
+    max-width: 800px;
+    margin: 0 auto 20px;
+}
+
 /* Ad Container Styling */
 .ad-container {
     margin: 20px auto;
@@ -970,6 +1001,25 @@ form#signup-form p a:hover, form#login-form p a:hover {
         width: 267px;
         height: 183px;
         max-width: 100%;
+    }
+
+    .data-section {
+        padding: 20px 10px;
+    }
+
+    .data-section h2 {
+        font-size: 1.5em;
+    }
+
+    .data-section p {
+        font-size: 0.9em;
+    }
+
+    .metric-icon-large {
+        width: 1516px;
+        height: 746px;
+        max-width: 100%;
+        margin: 10px auto;
     }
 
     .cta-section {

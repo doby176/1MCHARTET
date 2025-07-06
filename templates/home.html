@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- SEO Meta Tags from index.html -->
+    <!-- SEO Meta Tags -->
     <meta name="description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, and reversal patterns. Analyze earnings outcomes (Beat, Miss...) and key news events (CPI, FOMC...) with high-frequency 1-minute interactive charts data for strategic day trading (2015-2025).">
     <meta name="keywords" content="1-minute stock charts, Nasdaq gap insights, QQQ gap fill rate, QQQ gap trading, intraday gap analysis, QQQ price action patterns, day trading, price action analysis, Nasdaq gap statistics, earnings price action, CPI, PPI, FOMC, NFP, QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META, intraday trading, historical stock data, trading tools, technical analysis, stock market analysis, QQQ gap trading strategies, stock gap analytics">
     <meta name="author" content="1MChart Team">
@@ -17,7 +17,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="1MChart - Precision Nasdaq Gap & Earnings Insights">
     <meta name="twitter:description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, adverse moves, and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025).">
-    <!-- Google Analytics from index.html -->
+    <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BFDR405H06"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -25,20 +25,18 @@
         gtag('js', new Date());
         gtag('config', 'G-BFDR405H06');
     </script>
-    <!-- Google AdSense from index.html -->
+    <!-- Google AdSense -->
     <meta name="google-adsense-account" content="ca-pub-9416785017460416">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link rel="icon" type="image/png" href="/static/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;5
-00;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=43">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=45">
     <title>1MChart - Precision Trading Insights</title>
 </head>
 <body>
     <header class="landing-header">
         <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
         <h1>Discover Powerful Nasdaq Gap Insights, News Analysis, and Earnings Data with 1MChart</h1>
-        <p>Unlock advanced Nasdaq gap insights, 1-minute chart analytics, and earnings analysis for strategic day trading.</p>
     </header>
     <div class="header-cta">
         <div class="cta-buttons">
@@ -92,11 +90,12 @@
                     <h3>News Event Insights</h3>
                     <p>Explore price action on key economic event days (CPI, PPI, FOMC, NFP) to master intraday trading strategies.</p>
                 </div>
-                <div class="feature-card">
-                    <h3>High-Frequency Data</h3>
-                    <p>Access 1-minute chart data for stocks like QQQ, AAPL, MSFT, TSLA, and more, covering 2015–2025, for unparalleled market insights.</p>
-                </div>
             </div>
+        </section>
+        <section class="data-section">
+            <h2>High-Frequency 1-Minute Data</h2>
+            <p>Access 1-minute candle data from 2015 to 2025 for precise market analysis. Available tickers include QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, and META, enabling detailed intraday trading strategies.</p>
+            <img src="{{ url_for('static', filename='metric1min.png') }}" alt="1-Minute Data" class="metric-icon-large">
         </section>
         <section class="cta-section">
             <h2>Ready to Elevate Your Trading?</h2>
