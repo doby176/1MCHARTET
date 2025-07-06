@@ -161,11 +161,9 @@ def serve_ads_txt():
 
 # Modified index route to require authentication
 @app.route('/')
-def index():
-    if not session.get('authenticated'):
-        return redirect(url_for('login'))
-    logging.debug("Rendering index.html")
-    return render_template('index.html')
+def home():
+    logging.debug("Rendering home.html")
+    return render_template('home.html')
 
 # Signup page route
 @app.route('/landing')
@@ -552,10 +550,6 @@ def get_years():
         logging.error(f"Error fetching years: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
-@app.route('/')
-def home():
-    logging.debug("Rendering home.html")
-    return render_template('home.html')
 
 @app.route('/api/events', methods=['GET'])
 @limiter.limit("10 per 12 hours")
