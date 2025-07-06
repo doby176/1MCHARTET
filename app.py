@@ -159,11 +159,19 @@ def serve_ads_txt():
         logging.error(f"Error serving ads.txt: {str(e)}")
         return jsonify({'error': 'Failed to serve ads.txt'}), 404
 
-# Modified index route to require authentication
+# Home route for landing page (no authentication required)
 @app.route('/')
 def home():
     logging.debug("Rendering home.html")
     return render_template('home.html')
+
+# Dashboard route for authenticated users
+@app.route('/dashboard')
+def index():
+    if not session.get('authenticated'):
+        return redirect(url_for('login'))
+    logging.debug("Rendering index.html")
+    return render_template('index.html')
 
 # Signup page route
 @app.route('/landing')
@@ -549,7 +557,6 @@ def get_years():
     except Exception as e:
         logging.error(f"Error fetching years: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
-
 
 @app.route('/api/events', methods=['GET'])
 @limiter.limit("10 per 12 hours")
