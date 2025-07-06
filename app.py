@@ -288,7 +288,7 @@ def logout():
     session.pop('username', None)
     session.pop('email', None)
     logging.debug("User logged out")
-    return redirect(url_for('login'))
+    return redirect(url_for('home'))
 
 @app.route('/api/tickers', methods=['GET'])
 @limiter.limit("10 per 12 hours")

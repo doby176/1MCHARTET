@@ -583,7 +583,7 @@ form#signup-form, form#login-form {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Ensure spacing between form elements */
+    gap: 15px;
 }
 
 form#signup-form h2, form#login-form h2 {
@@ -603,15 +603,15 @@ form#signup-form label, form#login-form label {
 
 form#signup-form input, form#login-form input {
     width: 100%;
-    max-width: 100%; /* Ensure inputs take full container width */
+    max-width: 100%;
     padding: 0.75rem;
     margin-bottom: 1rem;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 1em;
-    box-sizing: border-box; /* Prevent padding from affecting width */
-    background-color: #fff; /* Ensure input background is visible */
-    color: #333; /* Ensure text is visible */
+    box-sizing: border-box;
+    background-color: #fff;
+    color: #333;
 }
 
 form#signup-form input:focus, form#login-form input:focus {
@@ -693,7 +693,7 @@ form#signup-form p a:hover, form#login-form p a:hover {
         max-width: 100%;
         margin: 1rem 10px;
         padding: 1.5rem;
-        gap: 10px; /* Adjust spacing for mobile */
+        gap: 10px;
     }
 
     form#signup-form h2, form#login-form h2 {
@@ -703,7 +703,7 @@ form#signup-form p a:hover, form#login-form p a:hover {
     form#signup-form input, form#login-form input {
         font-size: 0.875em;
         padding: 0.5rem;
-        background-color: #fff; /* Ensure visibility on mobile */
+        background-color: #fff;
         color: #333;
     }
 
@@ -857,6 +857,30 @@ form#signup-form p a:hover, form#login-form p a:hover {
     color: #555;
 }
 
+/* Metric Icon Styling for images in feature cards */
+.metric-icon {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    margin: 0 auto 10px auto;
+    display: block;
+}
+
+/* Responsive adjustments for metric icons */
+@media (max-width: 600px) {
+    .metric-icon {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* Ad Container Styling */
+.ad-container {
+    margin: 20px auto;
+    text-align: center;
+    max-width: 728px;
+}
+
 /* CTA Section */
 .cta-section {
     text-align: center;
@@ -872,7 +896,7 @@ form#signup-form p a:hover, form#login-form p a:hover {
 }
 
 .cta-section p {
-    font-size:1.1em;
+    font-size: 1.1em;
     font-weight: 400;
     max-width: 800px;
     margin: 0 auto 20px;

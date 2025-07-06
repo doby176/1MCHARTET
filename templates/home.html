@@ -3,86 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="1MChart provides advanced Nasdaq gap insights, 1-minute chart analytics, and earnings analysis for strategic day trading. Sign up or log in to unlock powerful trading tools.">
-    <meta name="keywords" content="Nasdaq gap insights, 1-minute stock charts, day trading, earnings analysis, stock market analytics, QQQ, technical analysis">
-    <meta name="author" content="1MChart Team">
-    <meta name="robots" content="index, follow">
-    <!-- Open Graph for social media -->
-    <meta property="og:title" content="1MChart - Precision Nasdaq Gap & Earnings Insights">
-    <meta property="og:description" content="Unlock advanced Nasdaq gap insights, 1-minute chart analytics, and earnings analysis for strategic day trading. Sign up or log in to start trading smarter.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://onemchart.onrender.com">
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="1MChart - Precision Nasdaq Gap & Earnings Insights">
-    <meta name="twitter:description" content="Unlock advanced Nasdaq gap insights, 1-minute chart analytics, and earnings analysis for strategic day trading. Sign up or log in to start trading smarter.">
-    <link rel="icon" type="image/png" href="/static/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>1MChart - Nasdaq Gap Insights, News, and Earnings</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=40">
-    <title>1MChart - Precision Trading Insights</title>
 </head>
 <body>
     <header class="landing-header">
         <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
-        <h1>1MChart - The Edge Lies in the Data</h1>
-        <p>Unlock advanced Nasdaq gap insights, 1-minute chart analytics, and earnings analysis for strategic day trading.</p>
-        <div class="cta-buttons">
-            <a href="{{ url_for('login') }}" class="cta-button">Log In</a>
-            <a href="{{ url_for('landing') }}" class="cta-button cta-signup">Sign Up</a>
-        </div>
+        <h1>Discover Powerful Nasdaq Gap Insights, News Analysis, and Earnings Data with 1MChart</h1>
     </header>
-    <main class="landing-main">
-        <section class="hero">
-            <h2>Trade Smarter with 1MChart</h2>
-            <p>Harness the power of high-frequency 1-minute data to analyze Nasdaq gaps, earnings reactions, and key economic events (CPI, FOMC, NFP). Build data-driven trading strategies with precision.</p>
-            <div class="video-container">
-                <iframe 
-                    width="100%" 
-                    height="315" 
-                    src="https://www.youtube.com/embed/BPywNAlhFA4" 
-                    title="1MChart Introduction" 
-                    frameborder="0" 
+
+    <section class="hero">
+        <div class="video-container">
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/your-video-id" 
+                    title="1MChart Demo" frameborder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen>
-                </iframe>
+                    allowfullscreen></iframe>
+        </div>
+        <!-- Ad below YouTube video -->
+        <div class="ad-container">
+            <!-- Replace with your actual AdSense code -->
+            <ins class="adsense"
+                 style="display:block"
+                 data-ad-client="ca-pub-your-client-id"
+                 data-ad-slot="your-slot-id"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
+    </section>
+
+    <section class="features">
+        <h2>Why Choose 1MChart?</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <img src="{{ url_for('static', filename='metrics.png') }}" alt="Nasdaq Gap Analysis" class="metric-icon">
+                <h3>Nasdaq Gap Analysis</h3>
+                <p>Unlock advanced insights into Nasdaq gap patterns to inform your trading decisions.</p>
             </div>
-        </section>
-        <section class="features">
-            <h2>Why Choose 1MChart?</h2>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h3>Nasdaq Gap Analysis</h3>
-                    <p>Filter by gap size, direction, and day to uncover intraday price action patterns. Analyze gap fill rates and reversal patterns with 1-minute precision.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Earnings Analysis</h3>
-                    <p>Study stock price reactions to earnings outcomes (Beat, Miss, Slight Beat) with 1-minute charts to identify profitable trading opportunities.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>News Event Insights</h3>
-                    <p>Explore price action on key economic event days (CPI, PPI, FOMC, NFP) to master intraday trading strategies.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>High-Frequency Data</h3>
-                    <p>Access 1-minute chart data for stocks like QQQ, AAPL, MSFT, TSLA, and more, covering 2015–2025, for unparalleled market insights.</p>
-                </div>
+            <div class="feature-item">
+                <img src="{{ url_for('static', filename='metricearning.png') }}" alt="Earnings Analysis" class="metric-icon">
+                <h3>Earnings Analysis</h3>
+                <p>Analyze earnings data to identify opportunities and trends in the market.</p>
             </div>
-        </section>
-        <section class="cta-section">
-            <h2>Ready to Elevate Your Trading?</h2>
-            <p>Join 1MChart today and gain access to powerful analytics tools designed for day traders.</p>
-            <div class="cta-buttons">
-                <a href="{{ url_for('landing') }}" class="cta-button cta-signup">Get Started</a>
-                <a href="{{ url_for('login') }}" class="cta-button">Log In</a>
+            <div class="feature-item">
+                <img src="{{ url_for('static', filename='metricnews.png') }}" alt="News Events" class="metric-icon">
+                <h3>News Events</h3>
+                <p>Stay ahead with real-time news event analysis impacting Nasdaq stocks.</p>
             </div>
-        </section>
-    </main>
-    <footer class="footer">
-        <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
-        <p>More coming soon</p>
-        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
-        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
+            <div class="feature-item">
+                <h3>High Frequency Data</h3>
+                <p>Access high-frequency data for precise and timely market analysis.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <a href="{{ url_for('landing') }}" class="btn primary">Get Started</a>
+        <a href="{{ url_for('login') }}" class="btn secondary">Login</a>
+        <!-- Ad below buttons -->
+        <div class="ad-container">
+            <!-- Replace with your actual AdSense code -->
+            <ins class="adsense"
+                 style="display:block"
+                 data-ad-client="ca-pub-your-client-id"
+                 data-ad-slot="your-slot-id"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 1MChart. All rights reserved.</p>
     </footer>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}?v=23"></script>
 </body>
 </html>
