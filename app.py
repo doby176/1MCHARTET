@@ -552,6 +552,11 @@ def get_years():
         logging.error(f"Error fetching years: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
+@app.route('/')
+def home():
+    logging.debug("Rendering home.html")
+    return render_template('home.html')
+
 @app.route('/api/events', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_events():
