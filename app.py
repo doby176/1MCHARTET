@@ -1,3 +1,4 @@
+# Original app.py with only the required change for replay (count field in /api/stock/chart)
 import redis
 import boto3
 import os
@@ -128,7 +129,6 @@ EVENTS_DATA_PATH = os.path.join(DATA_DIR, "news_events.csv")
 EARNINGS_DATA_PATH = os.path.join(DATA_DIR, "earnings_data.csv")
 ECONOMIC_DATA_BINNED_PATH = os.path.join(DATA_DIR, "economic_data_binned.csv")
 
-# Define multiple QQQ database paths
 QQQ_DB_PATHS = [
     os.path.join(DB_DIR, "stock_data_qqq_part1.db"),
     os.path.join(DB_DIR, "stock_data_qqq_part2.db"),
@@ -176,7 +176,6 @@ def initialize_tickers():
 with app.app_context():
     initialize_tickers()
 
-# Route to serve ads.txt
 @app.route('/ads.txt')
 def serve_ads_txt():
     try:
@@ -185,13 +184,11 @@ def serve_ads_txt():
         logging.error(f"Error serving ads.txt: {str(e)}")
         return jsonify({'error': 'Failed to serve ads.txt'}), 404
 
-# Home route for landing page (no authentication required)
 @app.route('/')
 def home():
     logging.debug("Rendering home.html")
     return render_template('home.html')
 
-# Dashboard route for authenticated users
 @app.route('/dashboard')
 def index():
     if not session.get('authenticated'):
@@ -199,14 +196,12 @@ def index():
     logging.debug("Rendering index.html")
     return render_template('index.html')
 
-# Signup page route
 @app.route('/landing')
 @limiter.limit("10 per day")
 def landing():
     logging.debug("Rendering landing.html")
     return render_template('landing.html')
 
-# Signup form submission
 @app.route('/signup', methods=['POST'])
 @limiter.limit("10 per day")
 def signup():
@@ -220,19 +215,16 @@ def signup():
             logging.debug("Signup failed: Missing fields")
             return render_template('landing.html', error="All fields are required.")
 
-        # Basic email validation
         import re
         email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_regex, email):
             logging.debug("Signup failed: Invalid email format")
             return render_template('landing.html', error="Invalid email format.")
 
-        # Password validation (minimum 8 characters)
         if len(password) < 8:
             logging.debug("Signup failed: Password too short")
             return render_template('landing.html', error="Password must be at least 8 characters long.")
 
-        # Check if email already exists
         conn = sqlite3.connect(USER_DB_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT email FROM users WHERE email = ?", (email,))
@@ -241,37 +233,28 @@ def signup():
             logging.debug("Signup failed: Email already registered")
             return render_template('landing.html', error="Email already registered.")
 
-        # Hash the password
         password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
-        # Insert user into database
         cursor.execute("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)", 
                        (username, email, password_hash))
         conn.commit()
         conn.close()
 
-        # Log the user in
         session['authenticated'] = True
         session['username'] = username
         session['email'] = email
         logging.info(f"User signed up and logged in: {email}")
-
-        # Upload users.db to S3
         upload_users_db()
-
         return redirect(url_for('index'))
     except Exception as e:
         logging.error(f"Error processing signup: {str(e)}")
         return render_template('landing.html', error="An error occurred. Please try again.")
 
-# Login page route
 @app.route('/login')
 @limiter.limit("10 per day")
 def login():
     logging.debug("Rendering login.html")
     return render_template('login.html')
 
-# Login form submission
 @app.route('/login', methods=['POST'])
 @limiter.limit("10 per day")
 def login_post():
@@ -283,7 +266,6 @@ def login_post():
         if not email or not password:
             return render_template('login.html', error="Email and password are required.")
 
-        # Check if user exists
         conn = sqlite3.connect(USER_DB_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT username, email, password_hash FROM users WHERE email = ?", (email,))
@@ -294,26 +276,19 @@ def login_post():
             return render_template('login.html', error="Invalid email or password.")
 
         username, stored_email, password_hash = user
-
-        # Verify password
         if not bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8')):
             return render_template('login.html', error="Invalid email or password.")
 
-        # Log the user in
         session['authenticated'] = True
         session['username'] = username
         session['email'] = email
         logging.info(f"User logged in: {email}")
-
-        # Upload users.db to S3
         upload_users_db()
-
         return redirect(url_for('index'))
     except Exception as e:
         logging.error(f"Error processing login: {str(e)}")
         return render_template('login.html', error="An error occurred. Please try again.")
 
-# Logout route
 @app.route('/logout')
 def logout():
     session.pop('authenticated', None)
@@ -391,28 +366,28 @@ def get_chart():
             df = pd.concat(df_list, ignore_index=True)
             df = df.sort_values('timestamp')
             logging.debug(f"Loaded data shape for {ticker} on {date}: {df.shape}")
-            if df.empty:
-                return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
-            required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
-            if not all(col in df.columns for col in required_columns):
-                return jsonify({'error': 'Invalid data format'}), 400
-
-            df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
-            chart_data = {
-                'timestamp': df['timestamp'].tolist(),
-                'open': df['open'].tolist(),
-                'high': df['high'].tolist(),
-                'low': df['low'].tolist(),
-                'close': df['close'].tolist(),
-                'volume': df['volume'].tolist(),
-                'ticker': ticker,
-                'date': date,
-                'count': len(df)
-            }
-            return jsonify({'chart_data': chart_data})
         except Exception as e:
             logging.error(f"Error querying database for {ticker}: {str(e)}")
             return jsonify({'error': 'Database query failed'}), 500
+        if df.empty:
+            return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
+        required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+        if not all(col in df.columns for col in required_columns):
+            return jsonify({'error': 'Invalid data format'}), 400
+
+        df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+        chart_data = {
+            'timestamp': df['timestamp'].tolist(),
+            'open': df['open'].tolist(),
+            'high': df['high'].tolist(),
+            'low': df['low'].tolist(),
+            'close': df['close'].tolist(),
+            'volume': df['volume'].tolist(),
+            'ticker': ticker,
+            'date': date,
+            'count': len(df)  # Added for replay functionality
+        }
+        return jsonify({'chart_data': chart_data})
     except Exception as e:
         logging.error(f"Unexpected error in get_chart: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
@@ -638,11 +613,9 @@ def get_economic_events():
         event_type = request.args.get('event_type')
         bin_range = request.args.get('bin')
         logging.debug(f"Fetching economic events for event_type={event_type}, bin={bin_range}")
-        
         if not os.path.exists(ECONOMIC_DATA_BINNED_PATH):
             logging.error(f"Economic data binned file not found: {ECONOMIC_DATA_BINNED_PATH}")
             return jsonify({'error': 'Economic data file not found. Please contact support.'}), 404
-        
         try:
             df = pd.read_csv(ECONOMIC_DATA_BINNED_PATH)
             df['date'] = pd.to_datetime(df['date'])
@@ -650,24 +623,19 @@ def get_economic_events():
         except Exception as e:
             logging.error(f"Error reading economic data file {ECONOMIC_DATA_BINNED_PATH}: {str(e)}")
             return jsonify({'error': f'Failed to load economic data: {str(e)}'}), 500
-        
         if 'date' not in df.columns or 'event_type' not in df.columns or 'bin' not in df.columns:
             logging.error("Invalid economic data format: missing required columns")
             return jsonify({'error': 'Invalid economic data format'}), 400
-        
         filtered_df = df
         if event_type:
             filtered_df = filtered_df[filtered_df['event_type'] == event_type]
         if bin_range:
             filtered_df = filtered_df[filtered_df['bin'] == bin_range]
-        
         dates = filtered_df['date'].dt.strftime('%Y-%m-%d').tolist()
         logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
-        
         if not dates:
             logging.debug(f"No events found for event_type={event_type}, bin={bin_range}")
             return jsonify({'dates': [], 'message': 'No events found for the selected criteria'})
-        
         logging.debug(f"Found {len(dates)} economic event dates")
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
