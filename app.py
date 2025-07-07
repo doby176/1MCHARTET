@@ -109,7 +109,7 @@ def upload_users_db():
             "s3",
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
-            region_name='us-west-2'  # Specify the correct region
+            region_name='us-west-2'
         )
         bucket = os.environ.get("AWS_S3_BUCKET", "onemchart-backup")
         db_path = os.path.join(DATA_DIR, "users.db")
@@ -391,27 +391,28 @@ def get_chart():
             df = pd.concat(df_list, ignore_index=True)
             df = df.sort_values('timestamp')
             logging.debug(f"Loaded data shape for {ticker} on {date}: {df.shape}")
+            if df.empty:
+                return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
+            required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+            if not all(col in df.columns for col in required_columns):
+                return jsonify({'error': 'Invalid data format'}), 400
+
+            df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            chart_data = {
+                'timestamp': df['timestamp'].tolist(),
+                'open': df['open'].tolist(),
+                'high': df['high'].tolist(),
+                'low': df['low'].tolist(),
+                'close': df['close'].tolist(),
+                'volume': df['volume'].tolist(),
+                'ticker': ticker,
+                'date': date,
+                'count': len(df)
+            }
+            return jsonify({'chart_data': chart_data})
         except Exception as e:
             logging.error(f"Error querying database for {ticker}: {str(e)}")
             return jsonify({'error': 'Database query failed'}), 500
-        if df.empty:
-            return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
-        required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
-        if not all(col in df.columns for col in required_columns):
-            return jsonify({'error': 'Invalid data format'}), 400
-
-        df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
-        chart_data = {
-            'timestamp': df['timestamp'].tolist(),
-            'open': df['open'].tolist(),
-            'high': df['high'].tolist(),
-            'low': df['low'].tolist(),
-            'close': df['close'].tolist(),
-            'volume': df['volume'].tolist(),
-            'ticker': ticker,
-            'date': date
-        }
-        return jsonify({'chart_data': chart_data})
     except Exception as e:
         logging.error(f"Unexpected error in get_chart: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
@@ -635,7 +636,7 @@ def get_events():
 def get_economic_events():
     try:
         event_type = request.args.get('event_type')
-        bin_range = request.args.get('bin')  # Renamed from 'bin' to 'bin_range' for clarity
+        bin_range = request.args.get('bin')
         logging.debug(f"Fetching economic events for event_type={event_type}, bin={bin_range}")
         
         if not os.path.exists(ECONOMIC_DATA_BINNED_PATH):
@@ -749,19 +750,6 @@ def get_earnings_by_bin():
     except Exception as e:
         logging.error(f"Error processing earnings by bin: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
-
-# In the /api/stock/chart endpoint, modify the chart_data dictionary
-chart_data = {
-    'timestamp': df['timestamp'].tolist(),
-    'open': df['open'].tolist(),
-    'high': df['high'].tolist(),
-    'low': df['low'].tolist(),
-    'close': df['close'].tolist(),
-    'volume': df['volume'].tolist(),
-    'ticker': ticker,
-    'date': date,
-    'count': len(df)  # Add total number of bars
-}
 
 if __name__ == '__main__':
     app.run(debug=True)
