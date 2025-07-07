@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Replay control listeners
     document.getElementById('play-replay').addEventListener('click', startReplay);
     document.getElementById('pause-replay').addEventListener('click', pauseReplay);
+    document.getElementById('restart-replay').addEventListener('click', restartReplay);
     document.getElementById('prev-candle').addEventListener('click', prevCandle);
     document.getElementById('next-candle').addEventListener('click', nextCandle);
     document.getElementById('replay-speed').addEventListener('change', updateReplaySpeed);
@@ -280,6 +281,7 @@ async function loadChart(event) {
     const replayControls = document.getElementById('replay-controls');
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
+    const restartButton = document.getElementById('restart-replay');
     const prevButton = document.getElementById('prev-candle');
     const nextButton = document.getElementById('next-candle');
     const form = document.getElementById('stock-form');
@@ -404,6 +406,7 @@ async function loadChart(event) {
         playButton.textContent = 'Play Replay';
         playButton.disabled = false;
         pauseButton.disabled = true;
+        restartButton.disabled = false;
         prevButton.disabled = true;
         nextButton.disabled = true;
         document.getElementById('replay-start-time').value = '';
@@ -425,6 +428,7 @@ function startReplay() {
     if (!chartData) return;
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
+    const restartButton = document.getElementById('restart-replay');
     const prevButton = document.getElementById('prev-candle');
     const nextButton = document.getElementById('next-candle');
     const chartContainer = document.getElementById('plotly-chart');
@@ -459,6 +463,7 @@ function startReplay() {
     playButton.textContent = 'Play Replay';
     playButton.disabled = true;
     pauseButton.disabled = false;
+    restartButton.disabled = false;
     prevButton.disabled = currentReplayIndex <= 0;
     nextButton.disabled = currentReplayIndex >= chartData.count;
 
@@ -546,7 +551,6 @@ function startReplay() {
     });
 }
 
-// pauseReplay, stopReplay, prevCandle, nextCandle, updateChartToIndex, and updateReplaySpeed remain unchanged
 function pauseReplay() {
     if (!isReplaying) return;
     isReplaying = false;
@@ -554,9 +558,11 @@ function pauseReplay() {
     clearInterval(replayInterval);
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
+    const restartButton = document.getElementById('restart-replay');
     playButton.textContent = 'Resume Replay';
     playButton.disabled = false;
     pauseButton.disabled = true;
+    restartButton.disabled = false;
 }
 
 function stopReplay() {
@@ -566,11 +572,13 @@ function stopReplay() {
     clearInterval(replayInterval);
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
+    const restartButton = document.getElementById('restart-replay');
     const prevButton = document.getElementById('prev-candle');
     const nextButton = document.getElementById('next-candle');
     playButton.textContent = 'Play Replay';
     playButton.disabled = false;
     pauseButton.disabled = true;
+    restartButton.disabled = false;
     prevButton.disabled = true;
     nextButton.disabled = true;
 
@@ -619,6 +627,79 @@ function stopReplay() {
     Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, { responsive: true });
 
     document.getElementById('replay-timestamp').textContent = 'Current Time: --:--:--';
+}
+
+function restartReplay() {
+    if (!chartData) return;
+    // Stop any ongoing replay
+    if (isReplaying || isPaused) {
+        isReplaying = false;
+        isPaused = false;
+        clearInterval(replayInterval);
+    }
+    // Reset index to 0 to allow new start time evaluation
+    currentReplayIndex = 0;
+    // Update button states
+    const playButton = document.getElementById('play-replay');
+    const pauseButton = document.getElementById('pause-replay');
+    const restartButton = document.getElementById('restart-replay');
+    const prevButton = document.getElementById('prev-candle');
+    const nextButton = document.getElementById('next-candle');
+    playButton.textContent = 'Play Replay';
+    playButton.disabled = false;
+    pauseButton.disabled = true;
+    restartButton.disabled = false;
+    prevButton.disabled = true;
+    nextButton.disabled = true;
+    document.getElementById('replay-timestamp').textContent = 'Current Time: --:--:--';
+    // Restore full chart
+    const candlestickTrace = {
+        x: chartData.timestamp,
+        open: chartData.open,
+        high: chartData.high,
+        low: chartData.low,
+        close: chartData.close,
+        type: 'candlestick',
+        name: chartData.ticker,
+        increasing: { line: { color: '#00cc00' } },
+        decreasing: { line: { color: '#ff0000' } }
+    };
+    const volumeTrace = {
+        x: chartData.timestamp,
+        y: chartData.volume,
+        type: 'bar',
+        name: 'Volume',
+        yaxis: 'y2',
+        marker: { color: '#888888' }
+    };
+    const layout = {
+        title: `${chartData.ticker} Candlestick Chart - ${chartData.date}`,
+        xaxis: {
+            title: 'Time',
+            type: 'date',
+            rangeslider: { visible: false },
+            tickformat: '%H:%M'
+        },
+        yaxis: {
+            title: 'Price',
+            domain: [0.3, 1]
+        },
+        yaxis2: {
+            title: 'Volume',
+            domain: [0, 0.25],
+            anchor: 'x'
+        },
+        showlegend: true,
+        margin: { t: 50, b: 50, l: 50, r: 50 },
+        plot_bgcolor: '#ffffff',
+        paper_bgcolor: '#ffffff'
+    };
+    Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, { responsive: true });
+
+    gtag('event', 'replay_restart', {
+        'event_category': 'Chart',
+        'event_label': `${chartData.ticker}_${chartData.date}`
+    });
 }
 
 function prevCandle() {
