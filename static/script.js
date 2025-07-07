@@ -401,6 +401,7 @@ async function loadChart(event) {
 
         // Show replay controls
         replayControls.style.display = 'block';
+        playButton.textContent = 'Play Replay';
         playButton.disabled = false;
         pauseButton.disabled = true;
         prevButton.disabled = true;
@@ -421,9 +422,7 @@ async function loadChart(event) {
 }
 
 function startReplay() {
-    if (!chartData || (isReplaying && !isPaused)) return;
-    isReplaying = true;
-    isPaused = false;
+    if (!chartData) return;
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
     const prevButton = document.getElementById('prev-candle');
@@ -431,30 +430,37 @@ function startReplay() {
     const chartContainer = document.getElementById('plotly-chart');
     const timestampDisplay = document.getElementById('replay-timestamp');
     const startTimeInput = document.getElementById('replay-start-time').value;
+    const replaySpeed = parseInt(document.getElementById('replay-speed').value);
 
+    // If not paused, determine start index based on user input
+    if (!isPaused) {
+        if (startTimeInput && startTimeInput.match(/^[0-2][0-9]:[0-5][0-9]$/)) {
+            const [hours, minutes] = startTimeInput.split(':').map(Number);
+            const dateStr = chartData.date;
+            const targetTime = new Date(`${dateStr}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
+            currentReplayIndex = chartData.timestamp.findIndex(ts => {
+                const candleTime = new Date(ts);
+                return candleTime.getTime() >= targetTime.getTime();
+            });
+            if (currentReplayIndex === -1) {
+                currentReplayIndex = 0;
+                alert('Start time not found in chart data. Starting from first candle.');
+            }
+        } else {
+            currentReplayIndex = 0;
+        }
+    }
+
+    // Prevent starting if already replaying
+    if (isReplaying && !isPaused) return;
+
+    isReplaying = true;
+    isPaused = false;
+    playButton.textContent = 'Play Replay';
     playButton.disabled = true;
     pauseButton.disabled = false;
     prevButton.disabled = false;
-    nextButton.disabled = false;
-
-    const replaySpeed = parseInt(document.getElementById('replay-speed').value);
-
-    // Determine start index based on user input
-    if (startTimeInput && startTimeInput.match(/^[0-2][0-9]:[0-5][0-9]$/)) {
-        const [hours, minutes] = startTimeInput.split(':').map(Number);
-        const dateStr = chartData.date;
-        const targetTime = new Date(`${dateStr} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
-        currentReplayIndex = chartData.timestamp.findIndex(ts => {
-            const candleTime = new Date(ts);
-            return candleTime >= targetTime;
-        });
-        if (currentReplayIndex === -1) {
-            currentReplayIndex = 0; // Fallback to start if time not found
-            alert('Start time not found in chart data. Starting from first candle.');
-        }
-    } else {
-        currentReplayIndex = 0; // Start from first candle if no valid input
-    }
+    nextButton.disabled = currentReplayIndex >= chartData.count;
 
     // Initialize chart if starting fresh
     if (currentReplayIndex === 0 && !isPaused) {
@@ -506,15 +512,15 @@ function startReplay() {
     // Add candles up to currentReplayIndex if resuming or starting at specific time
     if (currentReplayIndex > 0) {
         const candlestickUpdate = {
-            x: chartData.timestamp.slice(0, currentReplayIndex),
-            open: chartData.open.slice(0, currentReplayIndex),
-            high: chartData.high.slice(0, currentReplayIndex),
-            low: chartData.low.slice(0, currentReplayIndex),
-            close: chartData.close.slice(0, currentReplayIndex)
+            x: [chartData.timestamp.slice(0, currentReplayIndex)],
+            open: [chartData.open.slice(0, currentReplayIndex)],
+            high: [chartData.high.slice(0, currentReplayIndex)],
+            low: [chartData.low.slice(0, currentReplayIndex)],
+            close: [chartData.close.slice(0, currentReplayIndex)]
         };
         const volumeUpdate = {
-            x: chartData.timestamp.slice(0, currentReplayIndex),
-            y: chartData.volume.slice(0, currentReplayIndex)
+            x: [chartData.timestamp.slice(0, currentReplayIndex)],
+            y: [chartData.volume.slice(0, currentReplayIndex)]
         };
         Plotly.extendTraces('plotly-chart', candlestickUpdate, [0]);
         Plotly.extendTraces('plotly-chart', volumeUpdate, [1]);
@@ -541,8 +547,9 @@ function startReplay() {
             y: [[chartData.volume[currentReplayIndex]]]
         }, [1]);
 
-        // Update timestamp display
+        // Update timestamp display and next button
         timestampDisplay.textContent = `Current Time: ${chartData.timestamp[currentReplayIndex].split(' ')[1]}`;
+        nextButton.disabled = currentReplayIndex + 1 >= chartData.count;
 
         currentReplayIndex++;
     }, replaySpeed);
@@ -560,6 +567,7 @@ function pauseReplay() {
     clearInterval(replayInterval);
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
+    playButton.textContent = 'Resume Replay';
     playButton.disabled = false;
     pauseButton.disabled = true;
 }
@@ -573,6 +581,7 @@ function stopReplay() {
     const pauseButton = document.getElementById('pause-replay');
     const prevButton = document.getElementById('prev-candle');
     const nextButton = document.getElementById('next-candle');
+    playButton.textContent = 'Play Replay';
     playButton.disabled = false;
     pauseButton.disabled = true;
     prevButton.disabled = true;
@@ -625,6 +634,7 @@ function stopReplay() {
     document.getElementById('replay-timestamp').textContent = 'Current Time: --:--:--';
 }
 
+// prevCandle, nextCandle, and updateChartToIndex remain unchanged
 function prevCandle() {
     if (!chartData || isReplaying || currentReplayIndex <= 0) return;
     currentReplayIndex--;
@@ -698,7 +708,7 @@ function updateChartToIndex() {
 
 function updateReplaySpeed() {
     if (isReplaying) {
-        clearInterval(replayInterval);
+        pauseReplay();
         startReplay();
     }
 }
