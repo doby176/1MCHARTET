@@ -1,11 +1,12 @@
 import redis
+import boto3
+import os
 from flask import Flask, render_template, request, jsonify, session, send_from_directory, redirect, url_for
 from flask_limiter import Limiter
 from flask_session import Session
 import pandas as pd
 import logging
 import sqlite3
-import os
 import uuid
 import bcrypt
 from werkzeug.exceptions import TooManyRequests
@@ -71,7 +72,8 @@ def ratelimit_handler(e):
     }), 429
 
 # Initialize SQLite database for users
-USER_DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'users.db')
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+USER_DB_PATH = os.path.join(DATA_DIR, 'users.db')
 
 def init_user_db():
     try:
@@ -95,12 +97,36 @@ def init_user_db():
 # Initialize user database
 init_user_db()
 
+# Function to upload users.db to S3
+def upload_users_db():
+    try:
+        aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
+        aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+        if not aws_access_key_id or not aws_secret_access_key:
+            logging.error("AWS credentials not found in environment variables")
+            return
+        s3 = boto3.client(
+            "s3",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            region_name='us-west-2'  # Specify the correct region
+        )
+        bucket = os.environ.get("AWS_S3_BUCKET", "onemchart-backup")
+        db_path = os.path.join(DATA_DIR, "users.db")
+        if not os.path.exists(db_path):
+            logging.error(f"users.db not found at {db_path}")
+            return
+        s3.upload_file(db_path, bucket, "users.db_latest")
+        logging.info("Uploaded users.db to s3://%s/users.db_latest", bucket)
+    except Exception as e:
+        logging.error(f"Failed to upload users.db to S3: {str(e)}")
+
 TICKERS = ['QQQ', 'AAPL', 'MSFT', 'TSLA', 'ORCL', 'NVDA', 'MSTR', 'UBER', 'PLTR', 'META']
-DB_DIR = os.path.join(os.path.dirname(__file__), "data", "db")
-GAP_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "qqq_central_data_updated.csv")
-EVENTS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "news_events.csv")
-EARNINGS_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "earnings_data.csv")
-ECONOMIC_DATA_BINNED_PATH = os.path.join(os.path.dirname(__file__), "data", "economic_data_binned.csv")
+DB_DIR = os.path.join(DATA_DIR, "db")
+GAP_DATA_PATH = os.path.join(DATA_DIR, "qqq_central_data_updated.csv")
+EVENTS_DATA_PATH = os.path.join(DATA_DIR, "news_events.csv")
+EARNINGS_DATA_PATH = os.path.join(DATA_DIR, "earnings_data.csv")
+ECONOMIC_DATA_BINNED_PATH = os.path.join(DATA_DIR, "economic_data_binned.csv")
 
 # Define multiple QQQ database paths
 QQQ_DB_PATHS = [
@@ -230,6 +256,9 @@ def signup():
         session['email'] = email
         logging.info(f"User signed up and logged in: {email}")
 
+        # Upload users.db to S3
+        upload_users_db()
+
         return redirect(url_for('index'))
     except Exception as e:
         logging.error(f"Error processing signup: {str(e)}")
@@ -275,6 +304,9 @@ def login_post():
         session['username'] = username
         session['email'] = email
         logging.info(f"User logged in: {email}")
+
+        # Upload users.db to S3
+        upload_users_db()
 
         return redirect(url_for('index'))
     except Exception as e:

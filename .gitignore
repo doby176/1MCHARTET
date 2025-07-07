@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+.env
+
+# Logs
+*.log
+
+# Data files (exclude processed and split_dbs, but allow specific files)
+data/processed/
+data/split_dbs/
+!data/news_events.csv
+!data/qqq_central_data_updated.csv
+!data/earnings_data.csv
+!data/economic_data_binned.csv
+!data/db/
+!data/db/*.db
+
+# IDEs
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS
+.DS_Store

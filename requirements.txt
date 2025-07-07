@@ -10,5 +10,7 @@ pytz==2025.1
 python-dateutil==2.9.0.post0
 requests==2.32.3
 Flask-Session==0.6.0
-redis
+redis==6.2.0
 bcrypt==4.0.1
+awscli==1.35.21
+boto3==1.35.55
