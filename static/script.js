@@ -33,7 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
 let chartData = null; // Store chart data for replay
 let replayInterval = null; // Store interval ID for replay
 let currentReplayIndex = 0; // Track current candle index
+let currentSubStep = 0; // Track sub-step within a candle (0: open, 1: high/low, 2: close)
 let isReplaying = false; // Track replay state
+let isPaused = false; // Track pause state
 
 // Bin options for each event type
 const binOptions = {
@@ -344,7 +346,9 @@ async function loadChart(event) {
         // Store chart data for replay
         chartData = data.chart_data;
         currentReplayIndex = 0;
+        currentSubStep = 0;
         isReplaying = false;
+        isPaused = false;
         if (replayInterval) clearInterval(replayInterval);
 
         // Render full chart initially
@@ -412,91 +416,109 @@ async function loadChart(event) {
 }
 
 function startReplay() {
-    if (!chartData || isReplaying) return;
+    if (!chartData || (isReplaying && !isPaused)) return;
     isReplaying = true;
-    currentReplayIndex = 0;
+    isPaused = false;
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
     playButton.disabled = true;
     pauseButton.disabled = false;
 
-    const replaySpeed = parseInt(document.getElementById('replay-speed').value);
+    const replaySpeed = parseInt(document.getElementById('replay-speed').value) / 3; // Divide by 3 for sub-steps
     const chartContainer = document.getElementById('plotly-chart');
     const timestampDisplay = document.getElementById('replay-timestamp');
 
-    // Clear existing chart
-    Plotly.purge(chartContainer);
-
-    // Initialize traces for replay
-    const candlestickTrace = {
-        x: [],
-        open: [],
-        high: [],
-        low: [],
-        close: [],
-        type: 'candlestick',
-        name: chartData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: [],
-        y: [],
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    const layout = {
-        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
-        xaxis: {
-            title: 'Time',
-            type: 'date',
-            rangeslider: { visible: false },
-            tickformat: '%H:%M'
-        },
-        yaxis: {
-            title: 'Price',
-            domain: [0.3, 1]
-        },
-        yaxis2: {
-            title: 'Volume',
-            domain: [0, 0.25],
-            anchor: 'x'
-        },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-
-    // Render initial empty chart
-    Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, { responsive: true });
+    // If starting fresh, clear chart and initialize
+    if (currentReplayIndex === 0 && currentSubStep === 0) {
+        Plotly.purge(chartContainer);
+        const candlestickTrace = {
+            x: [],
+            open: [],
+            high: [],
+            low: [],
+            close: [],
+            type: 'candlestick',
+            name: chartData.ticker,
+            increasing: { line: { color: '#00cc00' } },
+            decreasing: { line: { color: '#ff0000' } }
+        };
+        const volumeTrace = {
+            x: [],
+            y: [],
+            type: 'bar',
+            name: 'Volume',
+            yaxis: 'y2',
+            marker: { color: '#888888' }
+        };
+        const layout = {
+            title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
+            xaxis: {
+                title: 'Time',
+                type: 'date',
+                rangeslider: { visible: false },
+                tickformat: '%H:%M'
+            },
+            yaxis: {
+                title: 'Price',
+                domain: [0.3, 1]
+            },
+            yaxis2: {
+                title: 'Volume',
+                domain: [0, 0.25],
+                anchor: 'x'
+            },
+            showlegend: true,
+            margin: { t: 50, b: 50, l: 50, r: 50 },
+            plot_bgcolor: '#ffffff',
+            paper_bgcolor: '#ffffff'
+        };
+        Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, { responsive: true });
+    }
 
     // Replay loop
     replayInterval = setInterval(() => {
         if (currentReplayIndex >= chartData.count) {
-            stopReplay();
+            stopReplay(true);
             return;
         }
 
-        // Add next candle
-        Plotly.extendTraces('plotly-chart', {
-            x: [[chartData.timestamp[currentReplayIndex]]],
-            open: [[chartData.open[currentReplayIndex]]],
-            high: [[chartData.high[currentReplayIndex]]],
-            low: [[chartData.low[currentReplayIndex]]],
-            close: [[chartData.close[currentReplayIndex]]]
-        }, [0]); // Update candlestick trace
-        Plotly.extendTraces('plotly-chart', {
-            x: [[chartData.timestamp[currentReplayIndex]]],
-            y: [[chartData.volume[currentReplayIndex]]]
-        }, [1]); // Update volume trace
+        const index = currentReplayIndex;
+        const isBullish = chartData.close[index] >= chartData.open[index];
+        let update;
 
-        // Update timestamp display
-        timestampDisplay.textContent = `Current Time: ${chartData.timestamp[currentReplayIndex].split(' ')[1]}`;
-
-        currentReplayIndex++;
+        if (currentSubStep === 0) {
+            // Step 1: Add open price
+            update = {
+                x: [[chartData.timestamp[index]]],
+                open: [[chartData.open[index]]],
+                high: [[chartData.open[index]]], // Use open as temporary high
+                low: [[chartData.open[index]]],  // Use open as temporary low
+                close: [[chartData.open[index]]] // Use open as temporary close
+            };
+            Plotly.extendTraces('plotly-chart', update, [0]);
+            Plotly.extendTraces('plotly-chart', { x: [[chartData.timestamp[index]]], y: [[chartData.volume[index]]] }, [1]);
+            timestampDisplay.textContent = `Current Time: ${chartData.timestamp[index].split(' ')[1]}`;
+            currentSubStep++;
+        } else if (currentSubStep === 1) {
+            // Step 2: Add high or low (depending on candle direction)
+            update = {
+                high: [[isBullish ? chartData.high[index] : chartData.low[index]]],
+                low: [[isBullish ? chartData.open[index] : chartData.low[index]]],
+                close: [[isBullish ? chartData.high[index] : chartData.low[index]]]
+            };
+            Plotly.update('plotly-chart', update, {}, [0]);
+            currentSubStep++;
+        } else if (currentSubStep === 2) {
+            // Step 3: Add close price
+            update = {
+                high: [[chartData.high[index]]],
+                low: [[chartData.low[index]]],
+                close: [[chartData.close[index]]]
+            };
+            Plotly.update('plotly-chart', update, {}, [0]);
+            currentSubStep = 0;
+            currentReplayIndex++;
+        }
     }, replaySpeed);
 
     gtag('event', 'replay_start', {
@@ -505,69 +527,78 @@ function startReplay() {
     });
 }
 
-function stopReplay() {
+function stopReplay(complete = false) {
     if (!isReplaying) return;
-    isReplaying = false;
     clearInterval(replayInterval);
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
-    playButton.disabled = false;
-    pauseButton.disabled = true;
 
-    // Restore full chart
-    const candlestickTrace = {
-        x: chartData.timestamp,
-        open: chartData.open,
-        high: chartData.high,
-        low: chartData.low,
-        close: chartData.close,
-        type: 'candlestick',
-        name: chartData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: chartData.timestamp,
-        y: chartData.volume,
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    const layout = {
-        title: `${chartData.ticker} Candlestick Chart - ${chartData.date}`,
-        xaxis: {
-            title: 'Time',
-            type: 'date',
-            rangeslider: { visible: false },
-            tickformat: '%H:%M'
-        },
-        yaxis: {
-            title: 'Price',
-            domain: [0.3, 1]
-        },
-        yaxis2: {
-            title: 'Volume',
-            domain: [0, 0.25],
-            anchor: 'x'
-        },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-    Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, { responsive: true });
-
-    document.getElementById('replay-timestamp').textContent = 'Current Time: --:--:--';
+    if (complete) {
+        // Reset to full chart if replay completes
+        isReplaying = false;
+        isPaused = false;
+        currentReplayIndex = 0;
+        currentSubStep = 0;
+        playButton.disabled = false;
+        pauseButton.disabled = true;
+        const candlestickTrace = {
+            x: chartData.timestamp,
+            open: chartData.open,
+            high: chartData.high,
+            low: chartData.low,
+            close: chartData.close,
+            type: 'candlestick',
+            name: chartData.ticker,
+            increasing: { line: { color: '#00cc00' } },
+            decreasing: { line: { color: '#ff0000' } }
+        };
+        const volumeTrace = {
+            x: chartData.timestamp,
+            y: chartData.volume,
+            type: 'bar',
+            name: 'Volume',
+            yaxis: 'y2',
+            marker: { color: '#888888' }
+        };
+        const layout = {
+            title: `${chartData.ticker} Candlestick Chart - ${chartData.date}`,
+            xaxis: {
+                title: 'Time',
+                type: 'date',
+                rangeslider: { visible: false },
+                tickformat: '%H:%M'
+            },
+            yaxis: {
+                title: 'Price',
+                domain: [0.3, 1]
+            },
+            yaxis2: {
+                title: 'Volume',
+                domain: [0, 0.25],
+                anchor: 'x'
+            },
+            showlegend: true,
+            margin: { t: 50, b: 50, l: 50, r: 50 },
+            plot_bgcolor: '#ffffff',
+            paper_bgcolor: '#ffffff'
+        };
+        Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, { responsive: true });
+        document.getElementById('replay-timestamp').textContent = 'Current Time: --:--:--';
+    } else {
+        // Pause without resetting
+        isPaused = true;
+        isReplaying = false;
+        playButton.disabled = false;
+        pauseButton.disabled = true;
+    }
 }
 
 function updateReplaySpeed() {
     if (isReplaying) {
-        stopReplay();
+        clearInterval(replayInterval);
         startReplay();
     }
 }
-
 async function loadGapDates(event) {
     event.preventDefault();
     const gapSize = document.getElementById('gap-size-select').value;
