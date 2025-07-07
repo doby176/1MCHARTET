@@ -214,6 +214,17 @@
             </form>
             <div id="chart-container">
                 <div id="plotly-chart"></div>
+                <div id="replay-controls" class="replay-controls">
+                    <button id="play-replay" disabled>Play Replay</button>
+                    <button id="pause-replay" disabled>Pause</button>
+                    <label for="replay-speed">Replay Speed:</label>
+                    <select id="replay-speed">
+                        <option value="1000">1x (1 sec/bar)</option>
+                        <option value="500">2x (0.5 sec/bar)</option>
+                        <option value="250">4x (0.25 sec/bar)</option>
+                    </select>
+                    <span id="replay-timestamp">Current Time: --:--:--</span>
+                </div>
             </div>
             <!-- AdSense Ad Unit -->
             <div class="ads-container">

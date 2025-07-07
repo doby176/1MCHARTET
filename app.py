@@ -400,7 +400,6 @@ def get_chart():
         if not all(col in df.columns for col in required_columns):
             return jsonify({'error': 'Invalid data format'}), 400
 
-        # Prepare data for Plotly.js
         df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
         chart_data = {
             'timestamp': df['timestamp'].tolist(),
@@ -750,6 +749,19 @@ def get_earnings_by_bin():
     except Exception as e:
         logging.error(f"Error processing earnings by bin: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
+
+# In the /api/stock/chart endpoint, modify the chart_data dictionary
+chart_data = {
+    'timestamp': df['timestamp'].tolist(),
+    'open': df['open'].tolist(),
+    'high': df['high'].tolist(),
+    'low': df['low'].tolist(),
+    'close': df['close'].tolist(),
+    'volume': df['volume'].tolist(),
+    'ticker': ticker,
+    'date': date,
+    'count': len(df)  # Add total number of bars
+}
 
 if __name__ == '__main__':
     app.run(debug=True)
