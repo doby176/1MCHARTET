@@ -459,73 +459,58 @@ function startReplay() {
     playButton.textContent = 'Play Replay';
     playButton.disabled = true;
     pauseButton.disabled = false;
-    prevButton.disabled = false;
+    prevButton.disabled = currentReplayIndex <= 0;
     nextButton.disabled = currentReplayIndex >= chartData.count;
 
-    // Initialize chart if starting fresh
-    if (currentReplayIndex === 0 && !isPaused) {
-        Plotly.purge(chartContainer);
-        const candlestickTrace = {
-            x: [],
-            open: [],
-            high: [],
-            low: [],
-            close: [],
-            type: 'candlestick',
-            name: chartData.ticker,
-            increasing: { line: { color: '#00cc00' } },
-            decreasing: { line: { color: '#ff0000' } }
-        };
-        const volumeTrace = {
-            x: [],
-            y: [],
-            type: 'bar',
-            name: 'Volume',
-            yaxis: 'y2',
-            marker: { color: '#888888' }
-        };
-        const layout = {
-            title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
-            xaxis: {
-                title: 'Time',
-                type: 'date',
-                rangeslider: { visible: false },
-                tickformat: '%H:%M'
-            },
-            yaxis: {
-                title: 'Price',
-                domain: [0.3, 1]
-            },
-            yaxis2: {
-                title: 'Volume',
-                domain: [0, 0.25],
-                anchor: 'x'
-            },
-            showlegend: true,
-            margin: { t: 50, b: 50, l: 50, r: 50 },
-            plot_bgcolor: '#ffffff',
-            paper_bgcolor: '#ffffff'
-        };
-        Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, { responsive: true });
-    }
+    // Always initialize chart for replay, showing only candles up to currentReplayIndex
+    Plotly.purge(chartContainer);
+    const candlestickTrace = {
+        x: chartData.timestamp.slice(0, currentReplayIndex),
+        open: chartData.open.slice(0, currentReplayIndex),
+        high: chartData.high.slice(0, currentReplayIndex),
+        low: chartData.low.slice(0, currentReplayIndex),
+        close: chartData.close.slice(0, currentReplayIndex),
+        type: 'candlestick',
+        name: chartData.ticker,
+        increasing: { line: { color: '#00cc00' } },
+        decreasing: { line: { color: '#ff0000' } }
+    };
+    const volumeTrace = {
+        x: chartData.timestamp.slice(0, currentReplayIndex),
+        y: chartData.volume.slice(0, currentReplayIndex),
+        type: 'bar',
+        name: 'Volume',
+        yaxis: 'y2',
+        marker: { color: '#888888' }
+    };
+    const layout = {
+        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
+        xaxis: {
+            title: 'Time',
+            type: 'date',
+            rangeslider: { visible: false },
+            tickformat: '%H:%M'
+        },
+        yaxis: {
+            title: 'Price',
+            domain: [0.3, 1]
+        },
+        yaxis2: {
+            title: 'Volume',
+            domain: [0, 0.25],
+            anchor: 'x'
+        },
+        showlegend: true,
+        margin: { t: 50, b: 50, l: 50, r: 50 },
+        plot_bgcolor: '#ffffff',
+        paper_bgcolor: '#ffffff'
+    };
+    Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, { responsive: true });
 
-    // Add candles up to currentReplayIndex if resuming or starting at specific time
-    if (currentReplayIndex > 0) {
-        const candlestickUpdate = {
-            x: [chartData.timestamp.slice(0, currentReplayIndex)],
-            open: [chartData.open.slice(0, currentReplayIndex)],
-            high: [chartData.high.slice(0, currentReplayIndex)],
-            low: [chartData.low.slice(0, currentReplayIndex)],
-            close: [chartData.close.slice(0, currentReplayIndex)]
-        };
-        const volumeUpdate = {
-            x: [chartData.timestamp.slice(0, currentReplayIndex)],
-            y: [chartData.volume.slice(0, currentReplayIndex)]
-        };
-        Plotly.extendTraces('plotly-chart', candlestickUpdate, [0]);
-        Plotly.extendTraces('plotly-chart', volumeUpdate, [1]);
-        timestampDisplay.textContent = `Current Time: ${chartData.timestamp[currentReplayIndex - 1].split(' ')[1]}`;
-    }
+    // Update timestamp display
+    timestampDisplay.textContent = currentReplayIndex > 0 
+        ? `Current Time: ${chartData.timestamp[currentReplayIndex - 1].split(' ')[1]}`
+        : 'Current Time: --:--:--';
 
     // Replay loop
     replayInterval = setInterval(() => {
@@ -547,8 +532,9 @@ function startReplay() {
             y: [[chartData.volume[currentReplayIndex]]]
         }, [1]);
 
-        // Update timestamp display and next button
+        // Update timestamp display and button states
         timestampDisplay.textContent = `Current Time: ${chartData.timestamp[currentReplayIndex].split(' ')[1]}`;
+        prevButton.disabled = currentReplayIndex <= 0;
         nextButton.disabled = currentReplayIndex + 1 >= chartData.count;
 
         currentReplayIndex++;
@@ -560,6 +546,7 @@ function startReplay() {
     });
 }
 
+// pauseReplay, stopReplay, prevCandle, nextCandle, updateChartToIndex, and updateReplaySpeed remain unchanged
 function pauseReplay() {
     if (!isReplaying) return;
     isReplaying = false;
@@ -634,7 +621,6 @@ function stopReplay() {
     document.getElementById('replay-timestamp').textContent = 'Current Time: --:--:--';
 }
 
-// prevCandle, nextCandle, and updateChartToIndex remain unchanged
 function prevCandle() {
     if (!chartData || isReplaying || currentReplayIndex <= 0) return;
     currentReplayIndex--;
