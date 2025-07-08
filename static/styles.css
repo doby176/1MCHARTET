@@ -236,6 +236,106 @@ footer p {
     font-style: italic;
 }
 
+/* Replay Controls Styling */
+#replay-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#replay-controls button {
+    padding: 8px 16px;
+    background-color: #153097;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+#replay-controls button:hover:not(:disabled) {
+    background-color: #112A7F;
+}
+
+#replay-controls button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+#replay-controls select {
+    padding: 8px;
+    font-size: 1em;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#replay-timestamp {
+    font-size: 1em;
+    font-weight: 500;
+    color: #1a1b2f;
+    margin: 0 10px;
+}
+
+/* Trade Summary Styling */
+#trade-summary {
+    width: 100%;
+    max-width: 600px;
+    margin: 10px auto;
+    padding: 10px;
+    background-color: #ffffff;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+#trade-summary h4 {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #1a1b2f;
+    margin: 0 0 10px;
+}
+
+#trade-summary p {
+    font-size: 0.9em;
+    font-weight: 400;
+    color: #555;
+    margin: 5px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Collapsible Trade Summary for Mobile */
+#trade-summary.collapsed {
+    display: none;
+}
+
+#trade-toggle {
+    display: none;
+    padding: 8px 16px;
+    background-color: #153097;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 500;
+    margin: 0 auto;
+}
+
+#trade-toggle:hover {
+    background-color: #112A7F;
+}
+
 /* Mobile-specific styles */
 @media (max-width: 600px) {
     .card {
@@ -357,8 +457,8 @@ footer p {
     }
 
     #plotly-chart {
-        height: 400px;
-        max-height: 500px;
+        height: 300px; /* Reduced height to accommodate trade summary */
+        max-height: 400px;
         width: 100%;
         max-width: 100%;
     }
@@ -367,6 +467,54 @@ footer p {
         max-width: 280px;
         margin: 10px auto;
         min-height: 100px;
+    }
+
+    /* Replay Controls Mobile Styling */
+    #replay-controls {
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px;
+    }
+
+    #replay-controls button {
+        font-size: 0.875em;
+        padding: 6px 12px;
+        width: 100%;
+        max-width: 200px; /* Smaller buttons for mobile */
+    }
+
+    #replay-controls select {
+        font-size: 0.875em;
+        padding: 6px;
+        width: 100%;
+        max-width: 200px;
+    }
+
+    #replay-timestamp {
+        font-size: 0.9em;
+    }
+
+    /* Trade Summary Mobile Styling */
+    #trade-summary {
+        max-width: 100%;
+        padding: 8px;
+        position: sticky;
+        bottom: 0;
+        background-color: #ffffff;
+        z-index: 10;
+        box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+    }
+
+    #trade-summary h4 {
+        font-size: 1em;
+    }
+
+    #trade-summary p {
+        font-size: 0.8em;
+    }
+
+    #trade-toggle {
+        display: block; /* Show toggle button on mobile */
     }
 }
 
@@ -382,7 +530,6 @@ footer p {
     color: #1a1b2f;
 }
 
-/* Row for side-by-side metrics */
 .insights-row {
     display: flex;
     justify-content: center;
@@ -391,7 +538,6 @@ footer p {
     margin-bottom: 15px;
 }
 
-/* Individual Metric Styling */
 .insight-metric {
     display: flex;
     flex-direction: column;
@@ -403,18 +549,15 @@ footer p {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Center two metrics in second and third rows */
 .insights-row.two-metrics {
     justify-content: center;
 }
 
-/* Center four metrics in first row */
 .insights-row.four-metrics {
     justify-content: center;
     gap: 15px;
 }
 
-/* Responsive adjustments for mobile */
 @media (max-width: 600px) {
     .insights-row, .insights-row.two-metrics, .insights-row.four-metrics {
         flex-direction: column;
@@ -480,7 +623,6 @@ footer p {
     text-align: center;
 }
 
-/* Tooltip styling */
 .tooltip {
     position: relative;
     cursor: help;
@@ -658,7 +800,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
     text-decoration: underline;
 }
 
-/* User Info Section in Header (index.html) */
 .user-info {
     margin-top: 10px;
     text-align: center;
@@ -685,7 +826,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
     text-decoration: underline;
 }
 
-/* Mobile-specific styles for signup/login forms and user-info */
 @media (max-width: 600px) {
     form#signup-form, form#login-form {
         max-width: 100%;
@@ -728,7 +868,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
     }
 }
 
-/* Landing Page Header */
 .landing-header {
     text-align: center;
     padding: 40px 20px;
@@ -749,14 +888,12 @@ form#signup-form p a:hover, form#login-form p a:hover {
     margin: 10px auto;
 }
 
-/* Header CTA (Moved Log In/Sign Up buttons) */
 .header-cta {
     text-align: center;
     padding: 20px 0;
     background-color: #f4f4f4;
 }
 
-/* CTA Buttons */
 .cta-buttons {
     display: flex;
     justify-content: center;
@@ -787,7 +924,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
     background-color: #00b300;
 }
 
-/* Hero Section */
 .hero {
     text-align: center;
     padding: 40px 20px;
@@ -821,7 +957,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
     border-radius: 8px;
 }
 
-/* Features Section */
 .features {
     padding: 40px 20px;
     text-align: center;
@@ -862,7 +997,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
     color: #555;
 }
 
-/* Metric Icon Styling for images in feature cards */
 .metric-icon {
     width: 267px;
     height: 183px;
@@ -872,7 +1006,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
     display: block;
 }
 
-/* Metric Icon Large Styling for metric1min.png */
 .metric-icon-large {
     width: 1516px;
     height: 746px;
@@ -882,7 +1015,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
     display: block;
 }
 
-/* Data Section Styling */
 .data-section {
     padding: 40px 20px;
     text-align: center;
@@ -903,14 +1035,12 @@ form#signup-form p a:hover, form#login-form p a:hover {
     margin: 0 auto 20px;
 }
 
-/* Ad Container Styling */
 .ad-container {
     margin: 20px auto;
     text-align: center;
     max-width: 728px;
 }
 
-/* CTA Section */
 .cta-section {
     text-align: center;
     padding: 40px 20px;
@@ -931,50 +1061,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
     margin: 0 auto 20px;
 }
 
-/* Replay Controls Styling */
-#replay-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-#replay-controls button {
-    padding: 8px 16px;
-    background-color: #153097;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: 500;
-}
-
-#replay-controls button:hover:not(:disabled) {
-    background-color: #112A7F;
-}
-
-#replay-controls button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-#replay-controls select {
-    padding: 8px;
-    font-size: 1em;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-#replay-timestamp {
-    font-size: 1em;
-    font-weight: 500;
-    color: #1a1b2f;
-}
-
-/* Mobile-specific styles */
 @media (max-width: 600px) {
     .landing-header {
         padding: 20px 10px;
@@ -1072,29 +1158,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
     }
 
     .cta-section p {
-        font-size: 0.9em;
-    }
-
-    #replay-controls {
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    #replay-controls button {
-        font-size: 0.875em;
-        padding: 6px 12px;
-        width: 100%;
-        max-width: 300px;
-    }
-
-    #replay-controls select {
-        font-size: 0.875em;
-        padding: 6px;
-        width: 100%;
-        max-width: 300px;
-    }
-
-    #replay-timestamp {
         font-size: 0.9em;
     }
 }
