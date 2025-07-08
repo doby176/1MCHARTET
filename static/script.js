@@ -288,6 +288,9 @@ async function loadChart(event) {
     const button = form.querySelector('button[type="submit"]');
     const inputs = form.querySelectorAll('select, input');
 
+    // Determine if the chart is loaded from the gap analysis section
+    const isGapAnalysis = document.getElementById('gap-analysis').classList.contains('active');
+
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('chartRateLimitReset');
     if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
@@ -304,8 +307,8 @@ async function loadChart(event) {
         return;
     }
 
-    console.log(`Loading chart for ticker=${ticker}, date=${date}`);
-    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}`;
+    console.log(`Loading chart for ticker=${ticker}, date=${date}, restrict_hours=${isGapAnalysis}`);
+    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}${isGapAnalysis ? '&restrict_hours=true' : ''}`;
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
@@ -376,7 +379,7 @@ async function loadChart(event) {
             marker: { color: '#888888' }
         };
         const layout = {
-            title: `${chartData.ticker} Candlestick Chart - ${chartData.date}`,
+            title: `${chartData.ticker} Candlestick Chart - ${chartData.date}${isGapAnalysis ? ' (Regular Hours)' : ''}`,
             xaxis: {
                 title: 'Time',
                 type: 'date',
@@ -409,12 +412,12 @@ async function loadChart(event) {
         startOverButton.disabled = true;
         prevButton.disabled = true;
         nextButton.disabled = true;
-        document.getElementById('replay-start-time').value = '';
+        document.getElementById('replay-start-time').value = isGapAnalysis ? '09:30' : ''; // Default to 9:30 for gap analysis
         document.getElementById('replay-timestamp').textContent = 'Current Time: --:--:--';
 
         gtag('event', 'chart_load', {
             'event_category': 'Chart',
-            'event_label': `${ticker}_${date}`
+            'event_label': `${ticker}_${date}${isGapAnalysis ? '_regular_hours' : ''}`
         });
     } catch (error) {
         console.error('Error loading chart:', error.message);
@@ -876,9 +879,11 @@ async function loadGapDates(event) {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log(`Clicked gap date: ${date}`);
+                // Open the gap analysis tab
+                openTab('gap-analysis');
                 document.getElementById('ticker-select').value = 'QQQ';
                 document.getElementById('date').value = date;
-                loadChart(new Event('submit'));
+                loadChart(new Event('submit')); // This will include restrict_hours=true
                 gtag('event', 'gap_date_click', {
                     'event_category': 'Gap Analysis',
                     'event_label': `QQQ_${date}_${gapDirection}`

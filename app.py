@@ -1,3 +1,4 @@
+
 # Original app.py with only the required change for replay (count field in /api/stock/chart)
 import redis
 import boto3
@@ -338,7 +339,8 @@ def get_chart():
     try:
         ticker = request.args.get('ticker')
         date = request.args.get('date')
-        logging.debug(f"Processing chart request for ticker={ticker}, date={date}")
+        restrict_hours = request.args.get('restrict_hours', 'false').lower() == 'true'
+        logging.debug(f"Processing chart request for ticker={ticker}, date={date}, restrict_hours={restrict_hours}")
         if not ticker or not date:
             return jsonify({'error': 'Missing ticker or date'}), 400
         if ticker not in TICKERS:
@@ -366,6 +368,16 @@ def get_chart():
             df = pd.concat(df_list, ignore_index=True)
             df = df.sort_values('timestamp')
             logging.debug(f"Loaded data shape for {ticker} on {date}: {df.shape}")
+
+            # Filter to regular market hours (9:30 AM to 4:00 PM) if restrict_hours is True
+            if restrict_hours:
+                df['time'] = df['timestamp'].dt.time
+                start_time = pd.to_datetime('09:30:00').time()
+                end_time = pd.to_datetime('16:00:00').time()
+                df = df[(df['time'] >= start_time) & (df['time'] <= end_time)]
+                df = df.drop(columns=['time'])  # Remove temporary time column
+                logging.debug(f"Filtered to regular hours, new shape: {df.shape}")
+
         except Exception as e:
             logging.error(f"Error querying database for {ticker}: {str(e)}")
             return jsonify({'error': 'Database query failed'}), 500
@@ -385,7 +397,7 @@ def get_chart():
             'volume': df['volume'].tolist(),
             'ticker': ticker,
             'date': date,
-            'count': len(df)  # Added for replay functionality
+            'count': len(df)  # Update count to reflect filtered data
         }
         return jsonify({'chart_data': chart_data})
     except Exception as e:
