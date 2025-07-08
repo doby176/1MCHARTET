@@ -52,6 +52,7 @@
                 <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
                 <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
                 <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
+                <button class="tab-button" onclick="openTab('replay-simulator')">Replay Simulator</button>
             </div>
             <!-- Nasdaq Gap Analysis Section -->
             <div id="gap-analysis" class="tab-content active">
@@ -59,7 +60,7 @@
                 <p>Uncover Nasdaq gap trading opportunities with 1-minute chart analytics. Filter by gap size and direction to reveal intraday price action patterns missed by daily charts.</p>
                 <form id="gap-form">
                     <label for="gap-size-select">Select Gap Size Bin:</label>
-                    <select id="gap-size-select" name="gap_size" required>
+                    <select id="gap-size-select" name="gap_size">
                         <option value="">Select gap size</option>
                         <option value="0.15-0.35%">0.15-0.35%</option>
                         <option value="0.35-0.5%">0.35-0.5%</option>
@@ -68,7 +69,7 @@
                         <option value="1.5%+">1.5%+</option>
                     </select>
                     <label for="day-select">Select Day of Week:</label>
-                    <select id="day-select" name="day" required>
+                    <select id="day-select" name="day">
                         <option value="">Select day</option>
                         <option value="Monday">Monday</option>
                         <option value="Tuesday">Tuesday</option>
@@ -77,7 +78,7 @@
                         <option value="Friday">Friday</option>
                     </select>
                     <label for="gap-direction-select">Select Gap Direction:</label>
-                    <select id="gap-direction-select" name="gap_direction" required>
+                    <select id="gap-direction-select" name="gap_direction">
                         <option value="">Select gap direction</option>
                         <option value="up">Gap Up</option>
                         <option value="down">Gap Down</option>
@@ -92,10 +93,10 @@
             <!-- Nasdaq Gap Insights Section -->
             <div id="gap-insights" class="tab-content">
                 <h2>Nasdaq Gap Insights</h2>
-                <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, max moves for unfilled gaps, and reversal patterns, powered by precise 1-minute data analytics.</p>
+                <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
                 <form id="gap-insights-form">
                     <label for="gap-insights-size-select">Select Gap Size Bin:</label>
-                    <select id="gap-insights-size-select" name="gap_size" required>
+                    <select id="gap-insights-size-select" name="gap_size">
                         <option value="">Select gap size</option>
                         <option value="0.15-0.35%">0.15-0.35%</option>
                         <option value="0.35-0.5%">0.35-0.5%</option>
@@ -104,7 +105,7 @@
                         <option value="1.5%+">1.5%+</option>
                     </select>
                     <label for="gap-insights-day-select">Select Day of Week:</label>
-                    <select id="gap-insights-day-select" name="day" required>
+                    <select id="gap-insights-day-select" name="day">
                         <option value="">Select day</option>
                         <option value="Monday">Monday</option>
                         <option value="Tuesday">Tuesday</option>
@@ -113,7 +114,7 @@
                         <option value="Friday">Friday</option>
                     </select>
                     <label for="gap-insights-direction-select">Select Gap Direction:</label>
-                    <select id="gap-insights-direction-select" name="gap_direction" required>
+                    <select id="gap-insights-direction-select" name="gap_direction">
                         <option value="">Select gap direction</option>
                         <option value="up">Gap Up</option>
                         <option value="down">Gap Down</option>
@@ -200,6 +201,47 @@
                 <div id="earnings-dates">
                     <p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>
                 </div>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
+            </div>
+            <!-- Replay Simulator Section -->
+            <div id="replay-simulator" class="tab-content">
+                <h2>Replay Simulator</h2>
+                <p>Practice trading strategies with a simulated replay of historical 1-minute stock data. Select a ticker and date to simulate trades and analyze price action.</p>
+                <form id="simulator-form">
+                    <label for="simulator-ticker-select">Select Ticker:</label>
+                    <select id="simulator-ticker-select" name="ticker" required>
+                        <option value="">Select a ticker</option>
+                    </select>
+                    <label for="simulator-date">Select Date:</label>
+                    <input type="date" id="simulator-date" name="date" required>
+                    <button type="submit">Start Simulation</button>
+                </form>
+                <div id="simulator-controls" class="replay-controls">
+                    <button id="simulator-play" disabled>Play Replay</button>
+                    <button id="simulator-pause" disabled>Pause</button>
+                    <button id="simulator-start-over" disabled>Start Over</button>
+                    <button id="simulator-restart" disabled>Restart Replay</button>
+                    <button id="simulator-next-candle" disabled>Next Candle</button>
+                    <button id="simulator-prev-candle" disabled>Previous Candle</button>
+                    <label for="simulator-start-time">Start Time (HH:MM):</label>
+                    <input type="text" id="simulator-start-time" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                    <label for="simulator-speed">Replay Speed:</label>
+                    <select id="simulator-speed">
+                        <option value="1000">1x (1 sec/bar)</option>
+                        <option value="500">2x (0.5 sec/bar)</option>
+                        <option value="250">4x (0.25 sec/bar)</option>
+                    </select>
+                    <span id="simulator-timestamp">Current Time: --:--:--</span>
+                    <button id="simulator-buy" disabled>Buy</button>
+                    <button id="simulator-sell" disabled>Sell</button>
+                    <div id="simulator-trade-summary">
+                        <h4>Trade Simulator</h4>
+                        <p id="simulator-position-status">No open position</p>
+                        <p id="simulator-trade-pnl">P/L: $0.00</p>
+                        <p id="simulator-trade-history">Trade History: None</p>
+                    </div>
+                </div>
+                <div id="simulator-chart"></div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
             <!-- Stock Selection Form and Chart -->
