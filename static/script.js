@@ -463,7 +463,7 @@ function startReplay() {
     playButton.textContent = 'Play Replay';
     playButton.disabled = true;
     pauseButton.disabled = false;
-    startOverButton.disabled = false;
+    startOverButton.disabled = currentReplayIndex <= 0;
     prevButton.disabled = currentReplayIndex <= 0;
     nextButton.disabled = currentReplayIndex >= chartData.count;
 
@@ -574,6 +574,7 @@ function startOverReplay() {
     const prevButton = document.getElementById('prev-candle');
     const nextButton = document.getElementById('next-candle');
     const timestampDisplay = document.getElementById('replay-timestamp');
+    const chartContainer = document.getElementById('plotly-chart');
 
     // Stop any ongoing replay
     if (isReplaying || isPaused) {
@@ -586,7 +587,7 @@ function startOverReplay() {
     currentReplayIndex = 0;
 
     // Update chart to show no candles (initial state)
-    Plotly.purge('plotly-chart');
+    Plotly.purge(chartContainer);
     const candlestickTrace = {
         x: [],
         open: [],
@@ -657,6 +658,7 @@ function stopReplay() {
     const startOverButton = document.getElementById('start-over-replay');
     const prevButton = document.getElementById('prev-candle');
     const nextButton = document.getElementById('next-candle');
+
     playButton.textContent = 'Play Replay';
     playButton.disabled = false;
     pauseButton.disabled = true;
