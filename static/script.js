@@ -30,68 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     earningsFilterRadios.forEach(radio => {
         radio.addEventListener('change', toggleEarningsFilterSection);
     });
-
-    // Add input formatting for replay-start-time
-    const startTimeInput = document.getElementById('replay-start-time');
-    startTimeInput.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/[^0-9:]/g, ''); // Allow only digits and colon
-        let cursorPosition = e.target.selectionStart;
-
-        // Split into parts before and after the colon
-        const parts = value.split(':');
-        let hours = parts[0] || '';
-        let minutes = parts[1] || '';
-
-        // Handle hours input
-        if (hours.length > 2) {
-            hours = hours.slice(0, 2); // Limit hours to 2 digits
-        }
-        if (hours.length === 2 && parseInt(hours) > 23) {
-            hours = '23'; // Cap hours at 23
-        }
-
-        // Auto-insert colon after valid hours when needed
-        if (hours.length >= 1 && !value.includes(':') && (cursorPosition >= hours.length || value.length >= 3)) {
-            value = hours + ':';
-            cursorPosition = value.length; // Move cursor after colon
-        }
-
-        // Handle minutes input
-        if (minutes.length > 2) {
-            minutes = minutes.slice(0, 2); // Limit minutes to 2 digits
-        }
-        if (minutes.length === 2 && parseInt(minutes) > 59) {
-            minutes = '59'; // Cap minutes at 59
-        }
-
-        // Reconstruct value
-        value = minutes ? `${hours}:${minutes}` : hours;
-        if (value.length > 5) {
-            value = value.slice(0, 5); // Limit to HH:MM
-        }
-
-        e.target.value = value;
-
-        // Restore cursor position
-        if (value.includes(':')) {
-            if (cursorPosition <= hours.length) {
-                e.target.setSelectionRange(cursorPosition, cursorPosition);
-            } else {
-                e.target.setSelectionRange(cursorPosition, cursorPosition);
-            }
-        }
-    });
-
-    // Validate on blur to ensure proper format
-    startTimeInput.addEventListener('blur', (e) => {
-        const value = e.target.value;
-        if (value && !value.match(/^[0-2]?[0-9]:[0-5][0-9]$/)) {
-            e.target.value = '';
-            alert('Please enter a valid time in HH:MM format (e.g., 09:45).');
-        } else if (value.match(/^[0-9]:[0-5][0-9]$/)) {
-            e.target.value = '0' + value; // Pad single-digit hour on blur
-        }
-    });
 });
 
 // Global variables for replay
@@ -495,17 +433,12 @@ function startReplay() {
     const nextButton = document.getElementById('next-candle');
     const chartContainer = document.getElementById('plotly-chart');
     const timestampDisplay = document.getElementById('replay-timestamp');
-    let startTimeInput = document.getElementById('replay-start-time').value;
+    const startTimeInput = document.getElementById('replay-start-time').value;
     const replaySpeed = parseInt(document.getElementById('replay-speed').value);
 
     // If not paused, determine start index based on user input
     if (!isPaused) {
-        // Normalize input: accept "9:45" or "09:45"
-        if (startTimeInput && startTimeInput.match(/^[0-2]?[0-9]:[0-5][0-9]$/)) {
-            // Pad single-digit hour if necessary
-            if (startTimeInput.length === 4) {
-                startTimeInput = '0' + startTimeInput; // e.g., "9:45" → "09:45"
-            }
+        if (startTimeInput && startTimeInput.match(/^[0-2][0-9]:[0-5][0-9]$/)) {
             const [hours, minutes] = startTimeInput.split(':').map(Number);
             const dateStr = chartData.date;
             const targetTime = new Date(`${dateStr}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
@@ -519,9 +452,6 @@ function startReplay() {
             }
         } else {
             currentReplayIndex = 0;
-            if (startTimeInput) {
-                alert('Invalid time format. Please use HH:MM (e.g., 09:45). Starting from first candle.');
-            }
         }
     }
 
