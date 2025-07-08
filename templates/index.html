@@ -223,8 +223,8 @@
                     <button id="simulator-restart" disabled>Restart Replay</button>
                     <button id="simulator-next-candle" disabled>Next Candle</button>
                     <button id="simulator-prev-candle" disabled>Previous Candle</button>
-                    <label for="simulator-start-time">Start Time (HH:MM):</label>
-                    <input type="text" id="simulator-start-time" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                    <label for="simulator-start-time">Start Time:</label>
+                    <input type="time" id="simulator-start-time" min="04:00" max="16:00" step="60" value="09:30">
                     <label for="simulator-speed">Replay Speed:</label>
                     <select id="simulator-speed">
                         <option value="1000">1x (1 sec/bar)</option>
@@ -242,45 +242,6 @@
                     </div>
                 </div>
                 <div id="simulator-chart"></div>
-                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
-            </div>
-            <!-- Stock Selection Form and Chart -->
-            <form id="stock-form">
-                <label for="ticker-select">Select Ticker:</label>
-                <select id="ticker-select" name="ticker">
-                    <option value="">Select a ticker</option>
-                </select>
-                <label for="date">Select Date:</label>
-                <input type="date" id="date" name="date">
-                <button type="submit">Load Chart</button>
-            </form>
-            <div id="chart-container">
-                <div id="plotly-chart"></div>
-                <div id="replay-controls" class="replay-controls">
-                    <button id="play-replay" disabled>Play Replay</button>
-                    <button id="pause-replay" disabled>Pause</button>
-                    <button id="start-over-replay" disabled>Start Over</button>
-                    <button id="restart-replay" disabled>Restart Replay</button>
-                    <button id="next-candle" disabled>Next Candle</button>
-                    <button id="prev-candle" disabled>Previous Candle</button>
-                    <label for="replay-start-time">Start Time (HH:MM):</label>
-                    <input type="text" id="replay-start-time" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
-                    <label for="replay-speed">Replay Speed:</label>
-                    <select id="replay-speed">
-                        <option value="1000">1x (1 sec/bar)</option>
-                        <option value="500">2x (0.5 sec/bar)</option>
-                        <option value="250">4x (0.25 sec/bar)</option>
-                    </select>
-                    <span id="replay-timestamp">Current Time: --:--:--</span>
-                    <button id="buy-trade" disabled>Buy</button>
-                    <button id="sell-trade" disabled>Sell</button>
-                    <div id="trade-summary">
-                        <h4>Trade Simulator</h4>
-                        <p id="position-status">No open position</p>
-                        <p id="trade-pnl">P/L: $0.00</p>
-                        <p id="trade-history">Trade History: None</p>
-                    </div>
-                </div>
                 <!-- AdSense Ad Unit -->
                 <div class="ads-container">
                     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
@@ -295,6 +256,7 @@
                         (adsbygoogle = window.adsbygoogle || []).push({});
                     </script>
                 </div>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
         </div>
     </main>
