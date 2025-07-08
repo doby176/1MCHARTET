@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Replay control listeners
     document.getElementById('play-replay').addEventListener('click', startReplay);
     document.getElementById('pause-replay').addEventListener('click', pauseReplay);
+    document.getElementById('start-over-replay').addEventListener('click', startOverReplay);
     document.getElementById('prev-candle').addEventListener('click', prevCandle);
     document.getElementById('next-candle').addEventListener('click', nextCandle);
     document.getElementById('replay-speed').addEventListener('change', updateReplaySpeed);
@@ -280,6 +281,7 @@ async function loadChart(event) {
     const replayControls = document.getElementById('replay-controls');
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
+    const startOverButton = document.getElementById('start-over-replay');
     const prevButton = document.getElementById('prev-candle');
     const nextButton = document.getElementById('next-candle');
     const form = document.getElementById('stock-form');
@@ -404,6 +406,7 @@ async function loadChart(event) {
         playButton.textContent = 'Play Replay';
         playButton.disabled = false;
         pauseButton.disabled = true;
+        startOverButton.disabled = true;
         prevButton.disabled = true;
         nextButton.disabled = true;
         document.getElementById('replay-start-time').value = '';
@@ -425,6 +428,7 @@ function startReplay() {
     if (!chartData) return;
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
+    const startOverButton = document.getElementById('start-over-replay');
     const prevButton = document.getElementById('prev-candle');
     const nextButton = document.getElementById('next-candle');
     const chartContainer = document.getElementById('plotly-chart');
@@ -459,6 +463,7 @@ function startReplay() {
     playButton.textContent = 'Play Replay';
     playButton.disabled = true;
     pauseButton.disabled = false;
+    startOverButton.disabled = false;
     prevButton.disabled = currentReplayIndex <= 0;
     nextButton.disabled = currentReplayIndex >= chartData.count;
 
@@ -536,6 +541,7 @@ function startReplay() {
         timestampDisplay.textContent = `Current Time: ${chartData.timestamp[currentReplayIndex].split(' ')[1]}`;
         prevButton.disabled = currentReplayIndex <= 0;
         nextButton.disabled = currentReplayIndex + 1 >= chartData.count;
+        startOverButton.disabled = currentReplayIndex <= 0;
 
         currentReplayIndex++;
     }, replaySpeed);
@@ -546,7 +552,6 @@ function startReplay() {
     });
 }
 
-// pauseReplay, stopReplay, prevCandle, nextCandle, updateChartToIndex, and updateReplaySpeed remain unchanged
 function pauseReplay() {
     if (!isReplaying) return;
     isReplaying = false;
@@ -554,9 +559,92 @@ function pauseReplay() {
     clearInterval(replayInterval);
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
+    const startOverButton = document.getElementById('start-over-replay');
     playButton.textContent = 'Resume Replay';
     playButton.disabled = false;
     pauseButton.disabled = true;
+    startOverButton.disabled = currentReplayIndex <= 0;
+}
+
+function startOverReplay() {
+    if (!chartData) return;
+    const playButton = document.getElementById('play-replay');
+    const pauseButton = document.getElementById('pause-replay');
+    const startOverButton = document.getElementById('start-over-replay');
+    const prevButton = document.getElementById('prev-candle');
+    const nextButton = document.getElementById('next-candle');
+    const timestampDisplay = document.getElementById('replay-timestamp');
+
+    // Stop any ongoing replay
+    if (isReplaying || isPaused) {
+        clearInterval(replayInterval);
+        isReplaying = false;
+        isPaused = false;
+    }
+
+    // Reset to the beginning
+    currentReplayIndex = 0;
+
+    // Update chart to show no candles (initial state)
+    Plotly.purge('plotly-chart');
+    const candlestickTrace = {
+        x: [],
+        open: [],
+        high: [],
+        low: [],
+        close: [],
+        type: 'candlestick',
+        name: chartData.ticker,
+        increasing: { line: { color: '#00cc00' } },
+        decreasing: { line: { color: '#ff0000' } }
+    };
+    const volumeTrace = {
+        x: [],
+        y: [],
+        type: 'bar',
+        name: 'Volume',
+        yaxis: 'y2',
+        marker: { color: '#888888' }
+    };
+    const layout = {
+        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
+        xaxis: {
+            title: 'Time',
+            type: 'date',
+            rangeslider: { visible: false },
+            tickformat: '%H:%M'
+        },
+        yaxis: {
+            title: 'Price',
+            domain: [0.3, 1]
+        },
+        yaxis2: {
+            title: 'Volume',
+            domain: [0, 0.25],
+            anchor: 'x'
+        },
+        showlegend: true,
+        margin: { t: 50, b: 50, l: 50, r: 50 },
+        plot_bgcolor: '#ffffff',
+        paper_bgcolor: '#ffffff'
+    };
+    Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, { responsive: true });
+
+    // Update button states
+    playButton.textContent = 'Play Replay';
+    playButton.disabled = false;
+    pauseButton.disabled = true;
+    startOverButton.disabled = true;
+    prevButton.disabled = true;
+    nextButton.disabled = chartData.count === 0;
+
+    // Reset timestamp
+    timestampDisplay.textContent = 'Current Time: --:--:--';
+
+    gtag('event', 'replay_start_over', {
+        'event_category': 'Chart',
+        'event_label': `${chartData.ticker}_${chartData.date}`
+    });
 }
 
 function stopReplay() {
@@ -566,11 +654,13 @@ function stopReplay() {
     clearInterval(replayInterval);
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
+    const startOverButton = document.getElementById('start-over-replay');
     const prevButton = document.getElementById('prev-candle');
     const nextButton = document.getElementById('next-candle');
     playButton.textContent = 'Play Replay';
     playButton.disabled = false;
     pauseButton.disabled = true;
+    startOverButton.disabled = true;
     prevButton.disabled = true;
     nextButton.disabled = true;
 
@@ -638,6 +728,7 @@ function updateChartToIndex() {
     const timestampDisplay = document.getElementById('replay-timestamp');
     const prevButton = document.getElementById('prev-candle');
     const nextButton = document.getElementById('next-candle');
+    const startOverButton = document.getElementById('start-over-replay');
 
     // Update chart to show candles up to currentReplayIndex
     Plotly.purge(chartContainer);
@@ -690,6 +781,7 @@ function updateChartToIndex() {
         : 'Current Time: --:--:--';
     prevButton.disabled = currentReplayIndex <= 0;
     nextButton.disabled = currentReplayIndex >= chartData.count;
+    startOverButton.disabled = currentReplayIndex <= 0;
 }
 
 function updateReplaySpeed() {
@@ -1201,8 +1293,7 @@ async function loadGapInsights(event) {
             metric.className = 'insight-metric';
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}</div>
-                <div class="metric-average">Avg: ${insights[key].average}</div>
+                <div class="metric-median">${insights[key].median}</div>
                 <div class="metric-description">${insights[key].description}</div>
             `;
             row3.appendChild(metric);
@@ -1212,9 +1303,10 @@ async function loadGapInsights(event) {
         insightsContainer.innerHTML = '';
         insightsContainer.appendChild(container);
         console.log('Gap insights rendered successfully');
+
         gtag('event', 'gap_insights_load', {
             'event_category': 'Gap Insights',
-            'event_label': `${gapSize}_${day}_${gapDirection}`
+            'event_label': `QQQ_${gapSize}_${day}_${gapDirection}`
         });
     } catch (error) {
         console.error('Error loading gap insights:', error.message);
