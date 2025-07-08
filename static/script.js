@@ -34,20 +34,63 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add input formatting for replay-start-time
     const startTimeInput = document.getElementById('replay-start-time');
     startTimeInput.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-digits
-        if (value.length === 1 && value < 10) {
-            // Pad single-digit hour with leading zero
-            value = '0' + value;
+        let value = e.target.value.replace(/[^0-9:]/g, ''); // Allow only digits and colon
+        let cursorPosition = e.target.selectionStart;
+
+        // Split into parts before and after the colon
+        const parts = value.split(':');
+        let hours = parts[0] || '';
+        let minutes = parts[1] || '';
+
+        // Handle hours input
+        if (hours.length > 2) {
+            hours = hours.slice(0, 2); // Limit hours to 2 digits
         }
-        if (value.length >= 2 && value.length < 4) {
-            // Auto-insert colon after two digits
-            value = value.slice(0, 2) + ':' + value.slice(2);
+        if (hours.length === 2 && parseInt(hours) > 23) {
+            hours = '23'; // Cap hours at 23
         }
+
+        // Auto-insert colon after valid hours when needed
+        if (hours.length >= 1 && !value.includes(':') && (cursorPosition >= hours.length || value.length >= 3)) {
+            value = hours + ':';
+            cursorPosition = value.length; // Move cursor after colon
+        }
+
+        // Handle minutes input
+        if (minutes.length > 2) {
+            minutes = minutes.slice(0, 2); // Limit minutes to 2 digits
+        }
+        if (minutes.length === 2 && parseInt(minutes) > 59) {
+            minutes = '59'; // Cap minutes at 59
+        }
+
+        // Reconstruct value
+        value = minutes ? `${hours}:${minutes}` : hours;
         if (value.length > 5) {
-            // Limit to HH:MM format (e.g., 12:34)
-            value = value.slice(0, 5);
+            value = value.slice(0, 5); // Limit to HH:MM
         }
+
         e.target.value = value;
+
+        // Restore cursor position
+        if (value.includes(':')) {
+            if (cursorPosition <= hours.length) {
+                e.target.setSelectionRange(cursorPosition, cursorPosition);
+            } else {
+                e.target.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        }
+    });
+
+    // Validate on blur to ensure proper format
+    startTimeInput.addEventListener('blur', (e) => {
+        const value = e.target.value;
+        if (value && !value.match(/^[0-2]?[0-9]:[0-5][0-9]$/)) {
+            e.target.value = '';
+            alert('Please enter a valid time in HH:MM format (e.g., 09:45).');
+        } else if (value.match(/^[0-9]:[0-5][0-9]$/)) {
+            e.target.value = '0' + value; // Pad single-digit hour on blur
+        }
     });
 });
 
@@ -476,6 +519,9 @@ function startReplay() {
             }
         } else {
             currentReplayIndex = 0;
+            if (startTimeInput) {
+                alert('Invalid time format. Please use HH:MM (e.g., 09:45). Starting from first candle.');
+            }
         }
     }
 
@@ -1319,8 +1365,7 @@ async function loadGapInsights(event) {
             metric.className = 'insight-metric';
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}</div>
-                <div class="metric-average">Avg: ${insights[key].average}</div>
+                <div class="metric-median">${insights[key].median}</div>
                 <div class="metric-description">${insights[key].description}</div>
             `;
             row3.appendChild(metric);
@@ -1330,9 +1375,10 @@ async function loadGapInsights(event) {
         insightsContainer.innerHTML = '';
         insightsContainer.appendChild(container);
         console.log('Gap insights rendered successfully');
+
         gtag('event', 'gap_insights_load', {
             'event_category': 'Gap Insights',
-            'event_label': `${gapSize}_${day}_${gapDirection}`
+            'event_label': `QQQ_${gapSize}_${day}_${gapDirection}`
         });
     } catch (error) {
         console.error('Error loading gap insights:', error.message);
