@@ -30,6 +30,25 @@ document.addEventListener('DOMContentLoaded', () => {
     earningsFilterRadios.forEach(radio => {
         radio.addEventListener('change', toggleEarningsFilterSection);
     });
+
+    // Add input formatting for replay-start-time
+    const startTimeInput = document.getElementById('replay-start-time');
+    startTimeInput.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-digits
+        if (value.length === 1 && value < 10) {
+            // Pad single-digit hour with leading zero
+            value = '0' + value;
+        }
+        if (value.length >= 2 && value.length < 4) {
+            // Auto-insert colon after two digits
+            value = value.slice(0, 2) + ':' + value.slice(2);
+        }
+        if (value.length > 5) {
+            // Limit to HH:MM format (e.g., 12:34)
+            value = value.slice(0, 5);
+        }
+        e.target.value = value;
+    });
 });
 
 // Global variables for replay
@@ -433,12 +452,17 @@ function startReplay() {
     const nextButton = document.getElementById('next-candle');
     const chartContainer = document.getElementById('plotly-chart');
     const timestampDisplay = document.getElementById('replay-timestamp');
-    const startTimeInput = document.getElementById('replay-start-time').value;
+    let startTimeInput = document.getElementById('replay-start-time').value;
     const replaySpeed = parseInt(document.getElementById('replay-speed').value);
 
     // If not paused, determine start index based on user input
     if (!isPaused) {
-        if (startTimeInput && startTimeInput.match(/^[0-2][0-9]:[0-5][0-9]$/)) {
+        // Normalize input: accept "9:45" or "09:45"
+        if (startTimeInput && startTimeInput.match(/^[0-2]?[0-9]:[0-5][0-9]$/)) {
+            // Pad single-digit hour if necessary
+            if (startTimeInput.length === 4) {
+                startTimeInput = '0' + startTimeInput; // e.g., "9:45" → "09:45"
+            }
             const [hours, minutes] = startTimeInput.split(':').map(Number);
             const dateStr = chartData.date;
             const targetTime = new Date(`${dateStr}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
@@ -1295,7 +1319,8 @@ async function loadGapInsights(event) {
             metric.className = 'insight-metric';
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median">${insights[key].median}</div>
+                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}</div>
+                <div class="metric-average">Avg: ${insights[key].average}</div>
                 <div class="metric-description">${insights[key].description}</div>
             `;
             row3.appendChild(metric);
@@ -1305,10 +1330,9 @@ async function loadGapInsights(event) {
         insightsContainer.innerHTML = '';
         insightsContainer.appendChild(container);
         console.log('Gap insights rendered successfully');
-
         gtag('event', 'gap_insights_load', {
             'event_category': 'Gap Insights',
-            'event_label': `QQQ_${gapSize}_${day}_${gapDirection}`
+            'event_label': `${gapSize}_${day}_${gapDirection}`
         });
     } catch (error) {
         console.error('Error loading gap insights:', error.message);
