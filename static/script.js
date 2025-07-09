@@ -1718,3 +1718,22 @@ async function loadGapInsights(event) {
         alert('Failed to load gap insights: ' + error.message);
     }
 }
+
+function openTab(tabName) {
+    console.log(`Opening tab: ${tabName}`);
+    const tabs = document.getElementsByClassName('tab-content');
+    const buttons = document.getElementsByClassName('tab-button');
+    for (let i = 0; i < tabs.length; i++) {
+        tabs[i].style.display = 'none';
+        buttons[i].classList.remove('active');
+    }
+    document.getElementById(tabName).style.display = 'block';
+    const activeButton = Array.from(buttons).find(button => button.getAttribute('onclick').includes(tabName));
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
+    gtag('event', 'tab_open', {
+        'event_category': 'Navigation',
+        'event_label': tabName
+    });
+}
