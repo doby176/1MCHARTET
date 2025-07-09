@@ -44,14 +44,14 @@
         </div>
     </header>
     <main>
-        <div class="tabs">
-            <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
-            <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
-            <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
-            <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
-            <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
-        </div>
         <div class="card">
+            <div class="tabs">
+                <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
+                <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
+                <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
+                <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
+                <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
+            </div>
             <!-- Market Simulator Section -->
             <div id="market-simulator" class="tab-content active">
                 <h2>Market Simulator</h2>
@@ -130,7 +130,6 @@
                     <p>Select a gap size, day, and direction to view dates with gaps.</p>
                     <ul id="gap-dates-list"></ul>
                 </div>
-
                 <div id="chart-container-gap">
                     <div id="plotly-chart-gap"></div>
                 </div>
@@ -144,9 +143,9 @@
                     <input type="text" id="replay-start-time-gap" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
                     <label for="replay-speed-gap">Replay Speed:</label>
                     <select id="replay-speed-gap">
-                      <option value="1000">1x (1 sec/bar)</option>
-                      <option value="500">2x (0.5 sec/bar)</option>
-                      <option value="250">4x (0.25 sec/bar)</option>
+                        <option value="1000">1x (1 sec/bar)</option>
+                        <option value="500">2x (0.5 sec/bar)</option>
+                        <option value="250">4x (0.25 sec/bar)</option>
                     </select>
                     <span id="replay-timestamp-gap">Current Time: --:--:--</span>
                 </div>
@@ -159,13 +158,9 @@
                     <input type="date" id="date-gap" name="date">
                     <button type="submit">Load Chart</button>
                 </form>
-                
-                    
-                    
-                
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- Nasdaq Insights Section -->
+            <!-- Nasdaq Gap Insights Section -->
             <div id="gap-insights" class="tab-content">
                 <h2>Nasdaq Gap Insights</h2>
                 <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
@@ -251,21 +246,21 @@
                     <div id="plotly-chart-events"></div>
                 </div>
                 <div id="replay-controls-events" class="replay-controls" style="display: none;">
-                   <button id="play-replay-events" disabled>Play Replay</button>
-                   <button id="pause-replay-events" disabled>Pause</button>
-                   <button id="start-over-replay-events" disabled>Start Over</button>
-                   <button id="next-candle-events" disabled>Next Candle</button>
-                   <button id="prev-candle-events" disabled>Previous Candle</button>
-                   <label for="replay-start-time-events">Start Time (HH:MM):</label>
-                   <input type="text" id="replay-start-time-events" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
-                   <label for="replay-speed-events">Replay Speed:</label>
-                   <select id="replay-speed-events">
-                     <option value="1000">1x (1 sec/bar)</option>
-                     <option value="500">2x (0.5 sec/bar)</option>
-                     <option value="250">4x (0.25 sec/bar)</option>
-                   </select>
-                   <span id="replay-timestamp-events">Current Time: --:--:--</span>
-               </div>
+                    <button id="play-replay-events" disabled>Play Replay</button>
+                    <button id="pause-replay-events" disabled>Pause</button>
+                    <button id="start-over-replay-events" disabled>Start Over</button>
+                    <button id="next-candle-events" disabled>Next Candle</button>
+                    <button id="prev-candle-events" disabled>Previous Candle</button>
+                    <label for="replay-start-time-events">Start Time (HH:MM):</label>
+                    <input type="text" id="replay-start-time-events" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                    <label for="replay-speed-events">Replay Speed:</label>
+                    <select id="replay-speed-events">
+                        <option value="1000">1x (1 sec/bar)</option>
+                        <option value="500">2x (0.5 sec/bar)</option>
+                        <option value="250">4x (0.25 sec/bar)</option>
+                    </select>
+                    <span id="replay-timestamp-events">Current Time: --:--:--</span>
+                </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
             <!-- Earnings Analysis Section -->
@@ -307,23 +302,23 @@
                 </div>
                 <div id="chart-container-earnings">
                     <div id="plotly-chart-earnings"></div>
-                </div> 
+                </div>
                 <div id="replay-controls-earnings" class="replay-controls" style="display: none;">
-                   <button id="play-replay-earnings" disabled>Play Replay</button>
-                   <button id="pause-replay-earnings" disabled>Pause</button>
-                   <button id="start-over-replay-earnings" disabled>Start Over</button>
-                   <button id="next-candle-earnings" disabled>Next Candle</button>
-                   <button id="prev-candle-earnings" disabled>Previous Candle</button>
-                   <label for="replay-start-time-earnings">Start Time (HH:MM):</label>
-                   <input type="text" id="replay-start-time-earnings" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
-                   <label for="replay-speed-earnings">Replay Speed:</label>
-                   <select id="replay-speed-earnings">
-                      <option value="1000">1x (1 sec/bar)</option>
-                      <option value="500">2x (0.5 sec/bar)</option>
-                      <option value="250">4x (0.25 sec/bar)</option>
-                   </select>
-                   <span id="replay-timestamp-earnings">Current Time: --:--:--</span>
-               </div>
+                    <button id="play-replay-earnings" disabled>Play Replay</button>
+                    <button id="pause-replay-earnings" disabled>Pause</button>
+                    <button id="start-over-replay-earnings" disabled>Start Over</button>
+                    <button id="next-candle-earnings" disabled>Next Candle</button>
+                    <button id="prev-candle-earnings" disabled>Previous Candle</button>
+                    <label for="replay-start-time-earnings">Start Time (HH:MM):</label>
+                    <input type="text" id="replay-start-time-earnings" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                    <label for="replay-speed-earnings">Replay Speed:</label>
+                    <select id="replay-speed-earnings">
+                        <option value="1000">1x (1 sec/bar)</option>
+                        <option value="500">2x (0.5 sec/bar)</option>
+                        <option value="250">4x (0.25 sec/bar)</option>
+                    </select>
+                    <span id="replay-timestamp-earnings">Current Time: --:--:--</span>
+                </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
             <!-- AdSense Ad Unit -->
