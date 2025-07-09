@@ -1657,7 +1657,6 @@ async function loadGapInsights(event) {
         console.log('Response status:', response.status);
         if (response.status === 429) {
             const data = await response.json();
-            console.error('Rate limit error:', data.error);
             insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
             button.disabled = true;
             button.textContent = 'Rate Limit Exceeded';
@@ -1666,11 +1665,11 @@ async function loadGapInsights(event) {
             localStorage.setItem('gapInsightsRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
-                button.textContent = 'Generate Insights';
+                button.textContent = 'Get Insights';
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('gapInsightsRateLimitReset');
-                insightsContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction to generate insights.</p>';
-            }, 12 * 60 * 60 * 1000);
+                insightsContainer.innerHTML = '<p>Select a gap size, day of the week, and gap direction to view gap insights.</p>';
+            }, 1000);
             alert(data.error);
             return;
         }
@@ -1679,37 +1678,78 @@ async function loadGapInsights(event) {
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
         }
         const data = await response.json();
-        console.log('Gap insights response:', JSON.stringify(data, null, 2));
+        console.log('Gap insights API response:', JSON.stringify(data, null, 2));
         if (data.error) {
             console.error('Error from gap insights API:', data.error);
             insightsContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
-        if (!data.insights) {
-            console.log('No insights found:', data.message || 'No insights returned');
-            insightsContainer.innerHTML = `<p>${data.message || 'No insights available for the selected criteria'}</p>`;
+        if (!data.insights || Object.keys(data.insights).length === 0) {
+            console.log('No gap insights found:', data.message || 'No insights returned');
+            insightsContainer.innerHTML = `<p>${data.message || 'No gap insights found for the selected criteria'}</p>`;
             return;
         }
         console.log('Rendering gap insights:', data.insights);
+
+        const insights = data.insights;
+        const container = document.createElement('div');
+        container.className = 'insights-container';
+        container.innerHTML = `<h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>`;
+
+        // First row: 4 metrics
+        const row1 = document.createElement('div');
+        row1.className = 'insights-row four-metrics';
+        ['gap_fill_rate', 'median_move_before_fill', 'median_max_move_unfilled', 'median_time_to_fill'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row1.appendChild(metric);
+        });
+        container.appendChild(row1);
+
+        // Second row: 2 metrics
+        const row2 = document.createElement('div');
+        row2.className = 'insights-row two-metrics';
+        ['reversal_after_fill_rate', 'median_move_before_reversal'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row2.appendChild(metric);
+        });
+        container.appendChild(row2);
+
+        // Third row: 2 metrics
+        const row3 = document.createElement('div');
+        row3.className = 'insights-row two-metrics';
+        ['median_time_of_low', 'median_time_of_high'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median">${insights[key].median}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row3.appendChild(metric);
+        });
+        container.appendChild(row3);
+
         insightsContainer.innerHTML = '';
-        const summary = document.createElement('div');
-        summary.innerHTML = `
-            <h3>Gap Insights for ${gapDirection} Gaps of ${gapSize} on ${day}</h3>
-            <p><strong>Total Occurrences:</strong> ${data.insights.total_occurrences || 'N/A'}</p>
-            <p><strong>Gap Fill Rate:</strong> ${data.insights.gap_fill_rate?.median?.toFixed(2) || 'N/A'}%</p>
-            <p><strong>Median Move Before Fill:</strong> ${data.insights.median_move_before_fill?.median?.toFixed(2) || 'N/A'}%</p>
-            <p><strong>Median Max Move (Unfilled):</strong> ${data.insights.median_max_move_unfilled?.median?.toFixed(2) || 'N/A'}%</p>
-            <p><strong>Median Time to Fill:</strong> ${data.insights.median_time_to_fill?.median?.toFixed(0) || 'N/A'} minutes</p>
-            <p><strong>Median Time of Low:</strong> ${data.insights.median_time_of_low?.median || 'N/A'}</p>
-            <p><strong>Median Time of High:</strong> ${data.insights.median_time_of_high?.median || 'N/A'}</p>
-            <p><strong>Reversal After Fill Rate:</strong> ${data.insights.reversal_after_fill_rate?.median?.toFixed(2) || 'N/A'}%</p>
-            <p><strong>Median Move Before Reversal:</strong> ${data.insights.median_move_before_reversal?.median?.toFixed(2) || 'N/A'}%</p>
-        `;
-        insightsContainer.appendChild(summary);
+        insightsContainer.appendChild(container);
         console.log('Gap insights rendered successfully');
+
         gtag('event', 'gap_insights_load', {
             'event_category': 'Gap Insights',
-            'event_label': `${gapSize}_${day}_${gapDirection}`
+            'event_label': `QQQ_${gapSize}_${day}_${gapDirection}`
         });
     } catch (error) {
         console.error('Error loading gap insights:', error.message);
