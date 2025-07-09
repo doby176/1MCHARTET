@@ -5,20 +5,23 @@ document.addEventListener('DOMContentLoaded', () => {
     loadEarningsTickers();
     loadBinOptions();
     populateEarningsOutcomes();
-    document.getElementById('stock-form').addEventListener('submit', loadChart);
+    
+    // Initialize stock forms for both tabs
+    document.getElementById('stock-form').addEventListener('submit', (e) => loadChart(e, 'market-simulator'));
+    document.getElementById('stock-form-gap').addEventListener('submit', (e) => loadChart(e, 'gap-analysis'));
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
     document.getElementById('events-form').addEventListener('submit', loadEventDates);
     document.getElementById('earnings-form').addEventListener('submit', loadEarningsDates);
     document.getElementById('gap-insights-form').addEventListener('submit', loadGapInsights);
     
-    // Replay control listeners
+    // Replay control listeners (exclusive to Market Simulator)
     document.getElementById('play-replay').addEventListener('click', startReplay);
     document.getElementById('pause-replay').addEventListener('click', pauseReplay);
     document.getElementById('start-over-replay').addEventListener('click', startOverReplay);
     document.getElementById('prev-candle').addEventListener('click', prevCandle);
     document.getElementById('next-candle').addEventListener('click', nextCandle);
     document.getElementById('replay-speed').addEventListener('change', updateReplaySpeed);
-    // Trade simulator listeners
+    // Trade simulator listeners (exclusive to Market Simulator)
     document.getElementById('buy-trade').addEventListener('click', placeBuyTrade);
     document.getElementById('sell-trade').addEventListener('click', placeSellTrade);
 
@@ -33,9 +36,13 @@ document.addEventListener('DOMContentLoaded', () => {
     earningsFilterRadios.forEach(radio => {
         radio.addEventListener('change', toggleEarningsFilterSection);
     });
+
+    // Initialize ticker selects for both tabs
+    document.getElementById('ticker-select').addEventListener('change', () => loadDates('ticker-select', 'date'));
+    document.getElementById('ticker-select-gap').addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
 });
 
-// Global variables for replay
+// Global variables for replay (Market Simulator only)
 let chartData = null; // Store chart data for replay
 let replayInterval = null; // Store interval ID for replay
 let currentReplayIndex = 0; // Track current candle index
@@ -134,8 +141,11 @@ function loadBinOptions() {
 
 async function loadTickers() {
     const tickerSelect = document.getElementById('ticker-select');
+    const tickerSelectGap = document.getElementById('ticker-select-gap');
     tickerSelect.disabled = true;
+    tickerSelectGap.disabled = true;
     tickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
+    tickerSelectGap.innerHTML = '<option value="">Loading tickers...</option>';
     try {
         console.log('Fetching tickers from /api/tickers');
         const response = await fetch('/api/tickers', {
@@ -150,6 +160,7 @@ async function loadTickers() {
             const data = await response.json();
             console.error('Rate limit error:', data.error);
             tickerSelect.innerHTML = `<option value="">${data.error}</option>`;
+            tickerSelectGap.innerHTML = `<option value="">${data.error}</option>`;
             alert(data.error);
             return;
         }
@@ -163,17 +174,20 @@ async function loadTickers() {
             throw new Error('Invalid response format: tickers array not found');
         }
         tickerSelect.innerHTML = '<option value="">Select a ticker</option>';
+        tickerSelectGap.innerHTML = '<option value="">Select a ticker</option>';
         data.tickers.forEach(ticker => {
             const option = document.createElement('option');
             option.value = ticker;
             option.textContent = ticker;
-            tickerSelect.appendChild(option);
+            tickerSelect.appendChild(option.cloneNode(true));
+            tickerSelectGap.appendChild(option);
         });
         tickerSelect.disabled = false;
-        tickerSelect.addEventListener('change', loadDates);
+        tickerSelectGap.disabled = false;
     } catch (error) {
         console.error('Error loading tickers:', error.message);
         tickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
+        tickerSelectGap.innerHTML = '<option value="">Error loading tickers</option>';
         alert('Failed to load tickers: ' + error.message + '. Please refresh the page or try again later.');
     }
 }
@@ -231,9 +245,9 @@ async function loadEarningsTickers() {
     }
 }
 
-async function loadDates() {
-    const tickerSelect = document.getElementById('ticker-select');
-    const dateInput = document.getElementById('date');
+async function loadDates(tickerSelectId, dateInputId) {
+    const tickerSelect = document.getElementById(tickerSelectId);
+    const dateInput = document.getElementById(dateInputId);
     dateInput.disabled = true;
     dateInput.value = '';
     const ticker = tickerSelect.value;
@@ -280,11 +294,20 @@ async function loadDates() {
     }
 }
 
-async function loadChart(event) {
+async function loadChart(event, tabId) {
     event.preventDefault();
-    const ticker = document.getElementById('ticker-select').value;
-    const date = document.getElementById('date').value;
-    const chartContainer = document.getElementById('plotly-chart');
+    const isGapAnalysis = tabId === 'gap-analysis';
+    const tickerSelectId = isGapAnalysis ? 'ticker-select-gap' : 'ticker-select';
+    const dateInputId = isGapAnalysis ? 'date-gap' : 'date';
+    const chartContainerId = isGapAnalysis ? 'plotly-chart-gap' : 'plotly-chart';
+    const ticker = document.getElementById(tickerSelectId).value;
+    const date = document.getElementById(dateInputId).value;
+    const chartContainer = document.getElementById(chartContainerId);
+    const form = document.getElementById(isGapAnalysis ? 'stock-form-gap' : 'stock-form');
+    const button = form.querySelector('button[type="submit"]');
+    const inputs = form.querySelectorAll('select, input');
+    
+    // Replay controls and trade buttons (only for Market Simulator)
     const replayControls = document.getElementById('replay-controls');
     const playButton = document.getElementById('play-replay');
     const pauseButton = document.getElementById('pause-replay');
@@ -293,15 +316,9 @@ async function loadChart(event) {
     const nextButton = document.getElementById('next-candle');
     const buyButton = document.getElementById('buy-trade');
     const sellButton = document.getElementById('sell-trade');
-    const form = document.getElementById('stock-form');
-    const button = form.querySelector('button[type="submit"]');
-    const inputs = form.querySelectorAll('select, input');
-
-    // Determine if the chart is loaded from the gap analysis section
-    const isGapAnalysis = document.getElementById('gap-analysis').classList.contains('active');
 
     // Check rate limit state
-    const rateLimitResetTime = localStorage.getItem('chartRateLimitReset');
+    const rateLimitResetTime = localStorage.getItem(`chartRateLimitReset_${tabId}`);
     if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
         chartContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
         button.disabled = true;
@@ -312,11 +329,11 @@ async function loadChart(event) {
 
     if (!ticker || !date) {
         chartContainer.innerHTML = '<p>Please select a ticker and date.</p>';
-        replayControls.style.display = 'none';
+        if (!isGapAnalysis) replayControls.style.display = 'none';
         return;
     }
 
-    console.log(`Loading chart for ticker=${ticker}, date=${date}, restrict_hours=${isGapAnalysis}`);
+    console.log(`Loading chart for ticker=${ticker}, date=${date}, restrict_hours=${isGapAnalysis}, tab=${tabId}`);
     const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}${isGapAnalysis ? '&restrict_hours=true' : ''}`;
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
@@ -337,12 +354,12 @@ async function loadChart(event) {
             button.textContent = 'Rate Limit Exceeded';
             inputs.forEach(input => input.disabled = true);
             const resetTime = Date.now() + 12 * 60 * 60 * 1000;
-            localStorage.setItem('chartRateLimitReset', resetTime);
+            localStorage.setItem(`chartRateLimitReset_${tabId}`, resetTime);
             setTimeout(() => {
                 button.disabled = false;
                 button.textContent = 'Load Chart';
                 inputs.forEach(input => input.disabled = false);
-                localStorage.removeItem('chartRateLimitReset');
+                localStorage.removeItem(`chartRateLimitReset_${tabId}`);
                 chartContainer.innerHTML = '<p>Please select a ticker and date to generate a chart.</p>';
             }, 12 * 60 * 60 * 1000);
             alert(data.error);
@@ -356,52 +373,46 @@ async function loadChart(event) {
         if (data.error) {
             console.error('Chart error:', data.error);
             chartContainer.innerHTML = `<p>${data.error}</p>`;
-            replayControls.style.display = 'none';
+            if (!isGapAnalysis) replayControls.style.display = 'none';
             return;
         }
 
-        // Validate chart data structure to prevent CSV-related issues
-        if (!data.chart_data || !Array.isArray(data.chart_data.timestamp) || 
-            !Array.isArray(data.chart_data.open) || !Array.isArray(data.chart_data.high) ||
-            !Array.isArray(data.chart_data.low) || !Array.isArray(data.chart_data.close) ||
-            !Array.isArray(data.chart_data.volume)) {
-            throw new Error('Invalid chart data format: missing or invalid arrays');
+        // Store chart data for replay (only for Market Simulator)
+        if (!isGapAnalysis) {
+            chartData = data.chart_data;
+            currentReplayIndex = 0;
+            isReplaying = false;
+            isPaused = false;
+            if (replayInterval) clearInterval(replayInterval);
+
+            // Reset trade simulator state
+            openPosition = null;
+            tradeHistory = [];
+            updateTradeSummary();
         }
 
-        // Store chart data for replay
-        chartData = data.chart_data;
-        currentReplayIndex = 0;
-        isReplaying = false;
-        isPaused = false;
-        if (replayInterval) clearInterval(replayInterval);
-
-        // Reset trade simulator state
-        openPosition = null;
-        tradeHistory = [];
-        updateTradeSummary();
-
-        // Render full chart initially
+        // Render chart
         const candlestickTrace = {
-            x: chartData.timestamp,
-            open: chartData.open,
-            high: chartData.high,
-            low: chartData.low,
-            close: chartData.close,
+            x: data.chart_data.timestamp,
+            open: data.chart_data.open,
+            high: data.chart_data.high,
+            low: data.chart_data.low,
+            close: data.chart_data.close,
             type: 'candlestick',
-            name: chartData.ticker,
+            name: data.chart_data.ticker,
             increasing: { line: { color: '#00cc00' } },
             decreasing: { line: { color: '#ff0000' } }
         };
         const volumeTrace = {
-            x: chartData.timestamp,
-            y: chartData.volume,
+            x: data.chart_data.timestamp,
+            y: data.chart_data.volume,
             type: 'bar',
             name: 'Volume',
             yaxis: 'y2',
             marker: { color: '#888888' }
         };
         const layout = {
-            title: `${chartData.ticker} Candlestick Chart - ${chartData.date}${isGapAnalysis ? ' (Regular Hours)' : ''}`,
+            title: `${data.chart_data.ticker} Candlestick Chart - ${data.chart_data.date}${isGapAnalysis ? ' (Regular Hours)' : ''}`,
             xaxis: {
                 title: 'Time',
                 type: 'date',
@@ -422,31 +433,34 @@ async function loadChart(event) {
             plot_bgcolor: '#ffffff',
             paper_bgcolor: '#ffffff'
         };
-        Plotly.newPlot('plotly-chart', [candlestickTrace, volumeTrace], layout, {
+        Plotly.newPlot(chartContainerId, [candlestickTrace, volumeTrace], layout, {
             responsive: true
         });
 
-        // Show replay controls
-        replayControls.style.display = 'block';
-        playButton.textContent = 'Play Replay';
-        playButton.disabled = false;
-        pauseButton.disabled = true;
-        startOverButton.disabled = true;
-        prevButton.disabled = true;
-        nextButton.disabled = true;
-        buyButton.disabled = true;
-        sellButton.disabled = true;
-        document.getElementById('replay-start-time').value = isGapAnalysis ? '09:30' : ''; // Default to 9:30 for gap analysis
-        document.getElementById('replay-timestamp').textContent = 'Current Time: --:--:--';
+        // Handle replay controls (only for Market Simulator)
+        if (!isGapAnalysis) {
+            replayControls.style.display = 'block';
+            playButton.textContent = 'Play Replay';
+            playButton.disabled = false;
+            pauseButton.disabled = true;
+            startOverButton.disabled = true;
+            prevButton.disabled = true;
+            nextButton.disabled = true;
+            buyButton.disabled = true;
+            sellButton.disabled = true;
+            document.getElementById('replay-start-time').value = '';
+            document.getElementById('replay-timestamp').textContent = 'Current Time: --:--:--';
+        }
 
         gtag('event', 'chart_load', {
             'event_category': 'Chart',
-            'event_label': `${ticker}_${date}${isGapAnalysis ? '_regular_hours' : ''}`
+            'event_label': `${ticker}_${date}${isGapAnalysis ? '_regular_hours' : ''}`,
+            'tab': tabId
         });
     } catch (error) {
         console.error('Error loading chart:', error.message);
-        chartContainer.innerHTML = '<p>Failed to load chart: ' + error.message + '. Please check data source or try again later.</p>';
-        replayControls.style.display = 'none';
+        chartContainer.innerHTML = '<p>Failed to load chart: ' + error.message + '. Please try again later.</p>';
+        if (!isGapAnalysis) replayControls.style.display = 'none';
         alert('Failed to load chart: ' + error.message);
     }
 }
@@ -593,7 +607,7 @@ function startReplay() {
     buyButton.disabled = currentReplayIndex <= 0 || currentReplayIndex > chartData.count;
     sellButton.disabled = currentReplayIndex <= 0 || currentReplayIndex > chartData.count;
 
-    // Always initialize chart for replay, showing only candles up to currentReplayIndex
+    // Initialize chart for replay
     Plotly.purge(chartContainer);
     const candlestickTrace = {
         x: chartData.timestamp.slice(0, currentReplayIndex),
@@ -1050,9 +1064,9 @@ async function loadGapDates(event) {
                 console.log(`Clicked gap date: ${date}`);
                 // Open the gap analysis tab
                 openTab('gap-analysis');
-                document.getElementById('ticker-select').value = 'QQQ';
-                document.getElementById('date').value = date;
-                loadChart(new Event('submit')); // This will include restrict_hours=true
+                document.getElementById('ticker-select-gap').value = 'QQQ';
+                document.getElementById('date-gap').value = date;
+                loadChart(new Event('submit'), 'gap-analysis');
                 gtag('event', 'gap_date_click', {
                     'event_category': 'Gap Analysis',
                     'event_label': `QQQ_${date}_${gapDirection}`
@@ -1066,7 +1080,7 @@ async function loadGapDates(event) {
         console.log('Gap dates rendered successfully');
     } catch (error) {
         console.error('Error loading gap dates:', error.message);
-        gapDatesContainer.innerHTML = '<p>Failed to load gap dates: ' + error.message + '. Please check data source or try again later.</p>';
+        gapDatesContainer.innerHTML = '<p>Failed to load gap dates: ' + error.message + '. Please try again later.</p>';
         alert('Failed to load gap dates: ' + error.message);
     }
 }
@@ -1214,9 +1228,10 @@ async function loadEventDates(event) {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log(`Clicked event date: ${date}`);
-                document.getElementById('ticker-select').value = 'QQQ';
-                document.getElementById('date').value = date;
-                loadChart(new Event('submit'));
+                openTab('gap-analysis');
+                document.getElementById('ticker-select-gap').value = 'QQQ';
+                document.getElementById('date-gap').value = date;
+                loadChart(new Event('submit'), 'gap-analysis');
                 gtag('event', 'event_date_click', {
                     'event_category': 'Event Analysis',
                     'event_label': `QQQ_${date}_${eventType}${bin ? '_' + bin : ''}`
@@ -1230,7 +1245,7 @@ async function loadEventDates(event) {
         console.log('Event dates rendered successfully');
     } catch (error) {
         console.error('Error loading event dates:', error.message);
-        eventDatesContainer.innerHTML = '<p>Failed to load event dates: ' + error.message + '. Please check data source or try again later.</p>';
+        eventDatesContainer.innerHTML = '<p>Failed to load event dates: ' + error.message + '. Please try again later.</p>';
         alert('Failed to load event dates: ' + error.message);
     }
 }
@@ -1330,9 +1345,10 @@ async function loadEarningsDates(event) {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log(`Clicked earnings date: ${date}`);
-                document.getElementById('ticker-select').value = ticker;
-                document.getElementById('date').value = date;
-                loadChart(new Event('submit'));
+                openTab('gap-analysis');
+                document.getElementById('ticker-select-gap').value = ticker;
+                document.getElementById('date-gap').value = date;
+                loadChart(new Event('submit'), 'gap-analysis');
                 gtag('event', 'earnings_date_click', {
                     'event_category': 'Earnings Analysis',
                     'event_label': `${ticker}_${date}${bin ? '_' + bin : ''}`
@@ -1346,7 +1362,7 @@ async function loadEarningsDates(event) {
         console.log('Earnings dates rendered successfully');
     } catch (error) {
         console.error('Error loading earnings dates:', error.message);
-        earningsDatesContainer.innerHTML = '<p>Failed to load earnings dates: ' + error.message + '. Please check data source or try again later.</p>';
+        earningsDatesContainer.innerHTML = '<p>Failed to load earnings dates: ' + error.message + '. Please try again later.</p>';
         alert('Failed to load earnings dates: ' + error.message);
     }
 }
@@ -1424,18 +1440,6 @@ async function loadGapInsights(event) {
         }
         console.log('Rendering gap insights:', data.insights);
 
-        // Validate insights data structure to prevent CSV-related issues
-        const requiredKeys = [
-            'gap_fill_rate', 'median_move_before_fill', 
-            'median_max_move_unfilled', 'median_time_to_fill',
-            'reversal_after_fill_rate', 'median_move_before_reversal',
-            'median_time_of_low', 'median_time_of_high'
-        ];
-        const missingKeys = requiredKeys.filter(key => !data.insights[key]);
-        if (missingKeys.length > 0) {
-            throw new Error(`Invalid insights data: missing keys - ${missingKeys.join(', ')}`);
-        }
-
         const insights = data.insights;
         const container = document.createElement('div');
         container.className = 'insights-container';
@@ -1498,7 +1502,19 @@ async function loadGapInsights(event) {
         });
     } catch (error) {
         console.error('Error loading gap insights:', error.message);
-        insightsContainer.innerHTML = '<p>Failed to load gap insights: ' + error.message + '. Please check data source or try again later.</p>';
+        insightsContainer.innerHTML = '<p>Failed to load gap insights: ' + error.message + '. Please try again later.</p>';
         alert('Failed to load gap insights: ' + error.message);
     }
+}
+
+// Tab switching function
+function openTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    document.getElementById(tabId).classList.add('active');
+    document.querySelector(`.tab-link[onclick="openTab('${tabId}')"]`).classList.add('active');
 }

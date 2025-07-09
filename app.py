@@ -1,5 +1,3 @@
-
-# Original app.py with only the required change for replay (count field in /api/stock/chart)
 import redis
 import boto3
 import os
