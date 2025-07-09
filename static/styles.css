@@ -106,7 +106,6 @@ form button:hover {
     justify-content: center;
     margin-bottom: 10px;
     margin-top: 0;
-    padding: 0 15px; /* Added to align with card padding */
 }
 
 .tab-button {
@@ -117,7 +116,7 @@ form button:hover {
     background-color: #153097;
     color: white;
     cursor: pointer;
-    border-radius: 4px; /* Changed to full border-radius for cleaner look inside card */
+    border-radius: 4px 4px 0 0;
     margin: 0 5px;
 }
 
@@ -238,7 +237,7 @@ footer p {
 }
 
 /* Replay Controls Styling */
-.replay-controls { /* Changed from #replay-controls to .replay-controls */
+#replay-controls {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -251,7 +250,7 @@ footer p {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.replay-controls button:not(#buy-trade):not(#sell-trade) { /* Exclude Buy/Sell buttons */
+#replay-controls button {
     padding: 8px 16px;
     background-color: #153097;
     color: white;
@@ -262,50 +261,28 @@ footer p {
     font-weight: 500;
 }
 
-.replay-controls button:not(#buy-trade):not(#sell-trade):hover:not(:disabled) { /* Exclude Buy/Sell buttons */
+#replay-controls button:hover:not(:disabled) {
     background-color: #112A7F;
 }
 
-.replay-controls button:not(#buy-trade):not(#sell-trade):disabled { /* Exclude Buy/Sell buttons */
+#replay-controls button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
     opacity: 0.6;
 }
 
-.replay-controls select {
+#replay-controls select {
     padding: 8px;
     font-size: 1em;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
-.replay-controls span[id^="replay-timestamp"] { /* Target all replay-timestamp IDs */
+#replay-timestamp {
     font-size: 1em;
     font-weight: 500;
     color: #1a1b2f;
     margin: 0 10px;
-}
-
-/* Specific styling for Buy/Sell buttons */
-#buy-trade, #sell-trade {
-    padding: 8px 16px;
-    background-color: #153097;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: 500;
-}
-
-#buy-trade:hover:not(:disabled), #sell-trade:hover:not(:disabled) {
-    background-color: #112A7F;
-}
-
-#buy-trade:disabled, #sell-trade:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-    opacity: 0.6;
 }
 
 /* Trade Summary Styling */
@@ -428,13 +405,11 @@ footer p {
         gap: 8px;
         margin-bottom: 8px;
         margin-top: 0;
-        padding: 0 10px; /* Adjusted for mobile */
     }
 
     .tab-button {
         font-size: 0.875em;
         padding: 8px;
-        border-radius: 4px; /* Consistent with desktop */
     }
 
     header {
@@ -525,36 +500,28 @@ footer p {
     }
 
     /* Replay Controls Mobile Styling */
-    .replay-controls { /* Changed from #replay-controls to .replay-controls */
+    #replay-controls {
         flex-direction: column;
         gap: 8px;
         padding: 8px;
     }
 
-    .replay-controls button:not(#buy-trade):not(#sell-trade) { /* Exclude Buy/Sell buttons */
+    #replay-controls button {
         font-size: 0.875em;
         padding: 6px 12px;
         width: 100%;
         max-width: 200px;
     }
 
-    .replay-controls select {
+    #replay-controls select {
         font-size: 0.875em;
         padding: 6px;
         width: 100%;
         max-width: 200px;
     }
 
-    .replay-controls span[id^="replay-timestamp"] { /* Target all replay-timestamp IDs */
+    #replay-timestamp {
         font-size: 0.9em;
-    }
-
-    /* Specific Buy/Sell buttons for mobile */
-    #buy-trade, #sell-trade {
-        font-size: 0.875em;
-        padding: 6px 12px;
-        width: 100%;
-        max-width: 200px;
     }
 
     /* Trade Summary Mobile Styling */
