@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBinOptions();
     populateEarningsOutcomes();
     
-    // Initialize stock forms for both tabs
+    // Initialize stock forms for all tabs
     document.getElementById('stock-form').addEventListener('submit', (e) => loadChart(e, 'market-simulator'));
     document.getElementById('stock-form-gap').addEventListener('submit', (e) => loadChart(e, 'gap-analysis'));
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
@@ -296,14 +296,49 @@ async function loadDates(tickerSelectId, dateInputId) {
 
 async function loadChart(event, tabId) {
     event.preventDefault();
-    const isGapAnalysis = tabId === 'gap-analysis';
-    const tickerSelectId = isGapAnalysis ? 'ticker-select-gap' : 'ticker-select';
-    const dateInputId = isGapAnalysis ? 'date-gap' : 'date';
-    const chartContainerId = isGapAnalysis ? 'plotly-chart-gap' : 'plotly-chart';
+    // Map tabId to ticker select, date input, and chart container IDs
+    const tabConfig = {
+        'market-simulator': {
+            tickerSelectId: 'ticker-select',
+            dateInputId: 'date',
+            chartContainerId: 'plotly-chart',
+            formId: 'stock-form',
+            restrictHours: false
+        },
+        'gap-analysis': {
+            tickerSelectId: 'ticker-select-gap',
+            dateInputId: 'date-gap',
+            chartContainerId: 'plotly-chart-gap',
+            formId: 'stock-form-gap',
+            restrictHours: true
+        },
+        'events-analysis': { // NEW: Config for News Event Analysis
+            tickerSelectId: 'ticker-select-gap', // Reuse gap ticker select for simplicity
+            dateInputId: 'date-gap', // Reuse gap date input
+            chartContainerId: 'plotly-chart-events',
+            formId: 'stock-form-gap', // Reuse gap form
+            restrictHours: true
+        },
+        'earnings-analysis': { // NEW: Config for Earnings Analysis
+            tickerSelectId: 'earnings-ticker-select', // Use earnings ticker select
+            dateInputId: 'date-gap', // Reuse gap date input
+            chartContainerId: 'plotly-chart-earnings',
+            formId: 'stock-form-gap', // Reuse gap form
+            restrictHours: true
+        }
+    };
+
+    const config = tabConfig[tabId];
+    if (!config) {
+        console.error(`Invalid tabId: ${tabId}`);
+        return;
+    }
+
+    const { tickerSelectId, dateInputId, chartContainerId, formId, restrictHours } = config;
     const ticker = document.getElementById(tickerSelectId).value;
     const date = document.getElementById(dateInputId).value;
     const chartContainer = document.getElementById(chartContainerId);
-    const form = document.getElementById(isGapAnalysis ? 'stock-form-gap' : 'stock-form');
+    const form = document.getElementById(formId);
     const button = form.querySelector('button[type="submit"]');
     const inputs = form.querySelectorAll('select, input');
     
@@ -329,12 +364,12 @@ async function loadChart(event, tabId) {
 
     if (!ticker || !date) {
         chartContainer.innerHTML = '<p>Please select a ticker and date.</p>';
-        if (!isGapAnalysis) replayControls.style.display = 'none';
+        if (tabId === 'market-simulator') replayControls.style.display = 'none';
         return;
     }
 
-    console.log(`Loading chart for ticker=${ticker}, date=${date}, restrict_hours=${isGapAnalysis}, tab=${tabId}`);
-    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}${isGapAnalysis ? '&restrict_hours=true' : ''}`;
+    console.log(`Loading chart for ticker=${ticker}, date=${date}, restrict_hours=${restrictHours}, tab=${tabId}`);
+    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}${restrictHours ? '&restrict_hours=true' : ''}`;
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
@@ -373,12 +408,12 @@ async function loadChart(event, tabId) {
         if (data.error) {
             console.error('Chart error:', data.error);
             chartContainer.innerHTML = `<p>${data.error}</p>`;
-            if (!isGapAnalysis) replayControls.style.display = 'none';
+            if (tabId === 'market-simulator') replayControls.style.display = 'none';
             return;
         }
 
         // Store chart data for replay (only for Market Simulator)
-        if (!isGapAnalysis) {
+        if (tabId === 'market-simulator') {
             chartData = data.chart_data;
             currentReplayIndex = 0;
             isReplaying = false;
@@ -412,7 +447,7 @@ async function loadChart(event, tabId) {
             marker: { color: '#888888' }
         };
         const layout = {
-            title: `${data.chart_data.ticker} Candlestick Chart - ${data.chart_data.date}${isGapAnalysis ? ' (Regular Hours)' : ''}`,
+            title: `${data.chart_data.ticker} Candlestick Chart - ${data.chart_data.date}${restrictHours ? ' (Regular Hours)' : ''}`,
             xaxis: {
                 title: 'Time',
                 type: 'date',
@@ -438,7 +473,7 @@ async function loadChart(event, tabId) {
         });
 
         // Handle replay controls (only for Market Simulator)
-        if (!isGapAnalysis) {
+        if (tabId === 'market-simulator') {
             replayControls.style.display = 'block';
             playButton.textContent = 'Play Replay';
             playButton.disabled = false;
@@ -454,13 +489,13 @@ async function loadChart(event, tabId) {
 
         gtag('event', 'chart_load', {
             'event_category': 'Chart',
-            'event_label': `${ticker}_${date}${isGapAnalysis ? '_regular_hours' : ''}`,
+            'event_label': `${ticker}_${date}${restrictHours ? '_regular_hours' : ''}`,
             'tab': tabId
         });
     } catch (error) {
         console.error('Error loading chart:', error.message);
         chartContainer.innerHTML = '<p>Failed to load chart: ' + error.message + '. Please try again later.</p>';
-        if (!isGapAnalysis) replayControls.style.display = 'none';
+        if (tabId === 'market-simulator') replayControls.style.display = 'none';
         alert('Failed to load chart: ' + error.message);
     }
 }
@@ -1054,6 +1089,7 @@ async function loadGapDates(event) {
         }
         console.log(`Rendering ${data.dates.length} gap dates:`, data.dates);
         const ul = document.createElement('ul');
+        ul.id = 'gap-dates-list'; // Ensure ID is set
         data.dates.forEach(date => {
             const li = document.createElement('li');
             const link = document.createElement('a');
@@ -1066,7 +1102,7 @@ async function loadGapDates(event) {
                 openTab('gap-analysis');
                 document.getElementById('ticker-select-gap').value = 'QQQ';
                 document.getElementById('date-gap').value = date;
-                loadChart(new Event('submit'), 'gap-analysis');
+                loadChart(new Event('submit'), 'gap-analysis'); // Load chart in #plotly-chart-gap
                 gtag('event', 'gap_date_click', {
                     'event_category': 'Gap Analysis',
                     'event_label': `QQQ_${date}_${gapDirection}`
@@ -1136,7 +1172,7 @@ async function loadEventDates(event) {
     const eventDatesContainer = document.getElementById('event-dates');
     const form = document.getElementById('events-form');
     const button = form.querySelector('button[type="submit"]');
-    const selects = document.querySelectorAll('select');
+    const selects = form.querySelectorAll('select');
 
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('eventDatesRateLimitReset');
@@ -1198,7 +1234,7 @@ async function loadEventDates(event) {
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('eventDatesRateLimitReset');
                 eventDatesContainer.innerHTML = '<p>Select filters to view dates with events.</p>';
-            }, 12 * 60 * 60 * 1000);
+            }, 1000);
             alert(data.error);
             return;
         }
@@ -1220,6 +1256,7 @@ async function loadEventDates(event) {
         }
         console.log(`Rendering ${data.dates.length} event dates:`, data.dates);
         const ul = document.createElement('ul');
+        ul.id = 'event-dates-list'; // Ensure ID is set
         data.dates.forEach(date => {
             const li = document.createElement('li');
             const link = document.createElement('a');
@@ -1228,10 +1265,11 @@ async function loadEventDates(event) {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log(`Clicked event date: ${date}`);
-                openTab('gap-analysis');
-                document.getElementById('ticker-select-gap').value = 'QQQ';
-                document.getElementById('date-gap').value = date;
-                loadChart(new Event('submit'), 'gap-analysis');
+                // MODIFIED: Open the events-analysis tab and load chart in #plotly-chart-events
+                openTab('events-analysis');
+                document.getElementById('ticker-select-gap').value = 'QQQ'; // Set ticker
+                document.getElementById('date-gap').value = date; // Set date
+                loadChart(new Event('submit'), 'events-analysis'); // Load chart in #plotly-chart-events
                 gtag('event', 'event_date_click', {
                     'event_category': 'Event Analysis',
                     'event_label': `QQQ_${date}_${eventType}${bin ? '_' + bin : ''}`
@@ -1315,7 +1353,7 @@ async function loadEarningsDates(event) {
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('earningsDatesRateLimitReset');
                 earningsDatesContainer.innerHTML = '<p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>';
-            }, 12 * 60 * 60 * 1000);
+            }, 1000);
             alert(data.error);
             return;
         }
@@ -1326,7 +1364,7 @@ async function loadEarningsDates(event) {
         const data = await response.json();
         console.log('Earnings API response:', JSON.stringify(data, null, 2));
         if (data.error) {
-            console.error('Error from earnings API:', data.error);
+            console.error('Error from earnings data:', data.error);
             earningsDatesContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
@@ -1337,6 +1375,7 @@ async function loadEarningsDates(event) {
         }
         console.log(`Rendering ${data.dates.length} earnings dates:`, data.dates);
         const ul = document.createElement('ul');
+        ul.id = 'earnings-dates-list'; // Ensure ID is set
         data.dates.forEach(date => {
             const li = document.createElement('li');
             const link = document.createElement('a');
@@ -1345,10 +1384,11 @@ async function loadEarningsDates(event) {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log(`Clicked earnings date: ${date}`);
-                openTab('gap-analysis');
-                document.getElementById('ticker-select-gap').value = ticker;
-                document.getElementById('date-gap').value = date;
-                loadChart(new Event('submit'), 'gap-analysis');
+                // MODIFIED: Open the earnings-analysis tab and load chart in #plotly-chart-earnings
+                openTab('earnings-analysis');
+                document.getElementById('earnings-ticker-select').value = ticker; // Set ticker
+                document.getElementById('date-gap').value = date; // Set date
+                loadChart(new Event('submit'), 'earnings-analysis'); // Load chart in #plotly-chart-earnings
                 gtag('event', 'earnings_date_click', {
                     'event_category': 'Earnings Analysis',
                     'event_label': `${ticker}_${date}${bin ? '_' + bin : ''}`
@@ -1418,7 +1458,7 @@ async function loadGapInsights(event) {
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('gapInsightsRateLimitReset');
                 insightsContainer.innerHTML = '<p>Select a gap size, day of the week, and gap direction to view gap insights.</p>';
-            }, 12 * 60 * 60 * 1000);
+            }, 1000);
             alert(data.error);
             return;
         }
@@ -1512,9 +1552,9 @@ function openTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
-    document.querySelectorAll('.tab-link').forEach(link => {
-        link.classList.remove('active');
+    document.querySelectorAll('.tab-button').forEach(button => { // MODIFIED: Changed .tab-link to .tab-button to match index.html
+        button.classList.remove('active');
     });
     document.getElementById(tabId).classList.add('active');
-    document.querySelector(`.tab-link[onclick="openTab('${tabId}')"]`).classList.add('active');
+    document.querySelector(`.tab-button[onclick="openTab('${tabId}')"]`).classList.add('active');
 }

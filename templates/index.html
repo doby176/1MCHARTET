@@ -29,8 +29,7 @@
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=40">
-    <!-- Add Plotly.js CDN -->
+    <link rel="stylesheet" href="/static/styles.css?v=41">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
@@ -45,15 +44,14 @@
         </div>
     </header>
     <main>
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
+            <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
+            <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
+            <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
+            <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
+        </div>
         <div class="card">
-            <!-- Tabbed Interface -->
-            <div class="tabs">
-                <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
-                <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
-                <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
-                <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
-                <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
-            </div>
             <!-- Market Simulator Section -->
             <div id="market-simulator" class="tab-content active">
                 <h2>Market Simulator</h2>
@@ -101,18 +99,6 @@
             <div id="gap-analysis" class="tab-content">
                 <h2>Nasdaq Gap Analysis</h2>
                 <p>Uncover Nasdaq gap trading opportunities with 1-minute chart analytics. Filter by gap size and direction to reveal intraday price action patterns missed by daily charts.</p>
-                <form id="stock-form-gap">
-                    <label for="ticker-select-gap">Select Ticker:</label>
-                    <select id="ticker-select-gap" name="ticker">
-                        <option value="">Select a ticker</option>
-                    </select>
-                    <label for="date-gap">Select Date:</label>
-                    <input type="date" id="date-gap" name="date">
-                    <button type="submit">Load Chart</button>
-                </form>
-                <div id="chart-container-gap">
-                    <div id="plotly-chart-gap"></div>
-                </div>
                 <form id="gap-form">
                     <label for="gap-size-select">Select Gap Size Bin:</label>
                     <select id="gap-size-select" name="gap_size">
@@ -140,8 +126,21 @@
                     </select>
                     <button type="submit">Find Gap Dates</button>
                 </form>
+                <div id="chart-container-gap">
+                    <div id="plotly-chart-gap"></div>
+                </div>
+                <form id="stock-form-gap">
+                    <label for="ticker-select-gap">Select Ticker:</label>
+                    <select id="ticker-select-gap" name="ticker">
+                        <option value="">Select a ticker</option>
+                    </select>
+                    <label for="date-gap">Select Date:</label>
+                    <input type="date" id="date-gap" name="date">
+                    <button type="submit">Load Chart</button>
+                </form>
                 <div id="gap-dates">
                     <p>Select a gap size, day, and direction to view dates with gaps.</p>
+                    <ul id="gap-dates-list"></ul>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
@@ -216,12 +215,19 @@
                         <label for="bin-select">Select Economic Impact Range:</label>
                         <select id="bin-select" name="bin">
                             <option value="">Select range</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
                         </select>
                     </div>
                     <button type="submit">Find Event Dates</button>
                 </form>
+                <div id="chart-container-events">
+                    <div id="plotly-chart-events"></div>
+                </div>
                 <div id="event-dates">
                     <p>Select filters to view dates with events.</p>
+                    <ul id="event-dates-list"></ul>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
@@ -242,6 +248,11 @@
                         <label for="earnings-bin-select">Select Earnings Outcome:</label>
                         <select id="earnings-bin-select" name="bin">
                             <option value="">Select outcome</option>
+                            <option value="miss">Miss (<-10%)</option>
+                            <option value="slight-miss">Slight Miss (-10% to 0%)</option>
+                            <option value="slight-beat">Slight Beat (0% to 10%)</option>
+                            <option value="beat">Beat (>10%)</option>
+                            <option value="unknown">Unknown</option>
                         </select>
                         <p class="earnings-outcome-note">Earnings outcomes reflect stock price movement: Miss (<-10%), Slight Miss (-10% to 0%), Slight Beat (0% to 10%), Beat (>10%), Unknown (data unavailable).</p>
                     </div>
@@ -253,15 +264,18 @@
                     </div>
                     <button type="submit">Find Earnings Dates</button>
                 </form>
+                <div id="chart-container-earnings">
+                    <div id="plotly-chart-earnings"></div>
+                </div>
                 <div id="earnings-dates">
                     <p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>
+                    <ul id="earnings-dates-list"></ul>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
             <!-- AdSense Ad Unit -->
             <div class="ads-container">
                 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
-                <!-- StockChartBanner -->
                 <ins class="adsbygoogle"
                     style="display:block"
                     data-ad-client="ca-pub-9416785017460416"
@@ -305,6 +319,6 @@
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
     </script>
-    <script src="/static/script.js?v=23"></script>
+    <script src="/static/script.js?v=24"></script>
 </body>
 </html>
