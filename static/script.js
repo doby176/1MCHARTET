@@ -1695,16 +1695,15 @@ async function loadGapInsights(event) {
         const summary = document.createElement('div');
         summary.innerHTML = `
             <h3>Gap Insights for ${gapDirection} Gaps of ${gapSize} on ${day}</h3>
-            <p><strong>Total Occurrences:</strong> ${data.insights.total_occurrences}</p>
-            <p><strong>Average Gap Size:</strong> ${data.insights.avg_gap_size.toFixed(2)}%</p>
-            <p><strong>Fill Rate (within day):</strong> ${data.insights.fill_rate.toFixed(2)}%</p>
-            <p><strong>Average Time to Fill:</strong> ${data.insights.avg_time_to_fill || 'N/A'}</p>
-            <p><strong>Price Movement Post-Gap:</strong></p>
-            <ul>
-                <li>1 Hour: ${data.insights.price_movement['1h'].toFixed(2)}%</li>
-                <li>4 Hours: ${data.insights.price_movement['4h'].toFixed(2)}%</li>
-                <li>End of Day: ${data.insights.price_movement['eod'].toFixed(2)}%</li>
-            </ul>
+            <p><strong>Total Occurrences:</strong> ${data.insights.total_occurrences || 'N/A'}</p>
+            <p><strong>Gap Fill Rate:</strong> ${data.insights.gap_fill_rate?.median?.toFixed(2) || 'N/A'}%</p>
+            <p><strong>Median Move Before Fill:</strong> ${data.insights.median_move_before_fill?.median?.toFixed(2) || 'N/A'}%</p>
+            <p><strong>Median Max Move (Unfilled):</strong> ${data.insights.median_max_move_unfilled?.median?.toFixed(2) || 'N/A'}%</p>
+            <p><strong>Median Time to Fill:</strong> ${data.insights.median_time_to_fill?.median?.toFixed(0) || 'N/A'} minutes</p>
+            <p><strong>Median Time of Low:</strong> ${data.insights.median_time_of_low?.median || 'N/A'}</p>
+            <p><strong>Median Time of High:</strong> ${data.insights.median_time_of_high?.median || 'N/A'}</p>
+            <p><strong>Reversal After Fill Rate:</strong> ${data.insights.reversal_after_fill_rate?.median?.toFixed(2) || 'N/A'}%</p>
+            <p><strong>Median Move Before Reversal:</strong> ${data.insights.median_move_before_reversal?.median?.toFixed(2) || 'N/A'}%</p>
         `;
         insightsContainer.appendChild(summary);
         console.log('Gap insights rendered successfully');
