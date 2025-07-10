@@ -434,7 +434,6 @@ async function loadChart(event, tabId) {
         if (data.error) {
             console.error('Chart error:', data.error);
             chartContainer.innerHTML = `<p>${data.error}</p>`;
-            replayControls.style.display = 'none';
             return;
         }
 
@@ -454,19 +453,19 @@ async function loadChart(event, tabId) {
             currentReplayIndexGap = 0;
             isReplayingGap = false;
             isPausedGap = false;
-            if (replayIntervalGap) clearInterval(replayIntervalGap);
+            if (replayIntervalGap) clearIntervalGap(replayInterval);
         } else if (replayPrefix === 'events') {
             chartDataEvents = data.chart_data;
             currentReplayIndexEvents = 0;
             isReplayingEvents = false;
             isPausedEvents = false;
-            if (replayIntervalEvents) clearInterval(replayIntervalEvents);
-        } else if (replayPrefix === 'earnings') {
+            if (isReplayingEvents) replayIntervalEvents(replayIntervalEvents);
+        } else (replayPrefix === 'earnings') {
             chartDataEarnings = data.chart_data;
             currentReplayIndexEarnings = 0;
             isReplayingEarnings = false;
             isPausedEarnings = false;
-            if (replayIntervalEarnings) clearInterval(replayIntervalEarnings);
+            if (replayEarningsInterval) clearInterval(replayIntervalEarnings);
         }
 
         // Render chart
@@ -1623,9 +1622,11 @@ async function loadEarningsDates(event) {
 
 async function loadGapInsights(event) {
     event.preventDefault();
-    const gapSize = document.getElementById('gap-size-insights').value;
-    const gapDirection = document.getElementById('gap-direction-insights').value;
-    const insightsContainer = document.getElementById('gap-insights');
+    const gapSize = document.getElementById('gap-size-insights-select').value;
+    const day = document.getElementById('day-insights-select').value;
+    const gapDirection = document.getElementById('gap-direction-insights-select').value;
+    const timeframe = document.getElementById('timeframe-insights-select').value;
+    const gapInsightsContainer = document.getElementById('gap-insights');
     const form = document.getElementById('gap-insights-form');
     const button = form.querySelector('button[type="submit"]');
     const selects = form.querySelectorAll('select');
@@ -1633,22 +1634,22 @@ async function loadGapInsights(event) {
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('gapInsightsRateLimitReset');
     if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
-        insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        gapInsightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
         button.disabled = true;
         button.textContent = 'Rate Limit Exceeded';
         selects.forEach(select => select.disabled = true);
         return;
     }
 
-    if (!gapSize || !gapDirection) {
-        insightsContainer.innerHTML = '<p>Please select a gap size and gap direction.</p>';
+    if (!gapSize || !day || !gapDirection || !timeframe) {
+        gapInsightsContainer.innerHTML = '<p>Please select a gap size, day of the week, gap direction, and timeframe.</p>';
         return;
     }
 
-    console.log(`Fetching gap insights for gap_size=${gapSize}, gap_direction=${gapDirection}`);
-    const url = `/api/gap_insights?gap_size=${encodeURIComponent(gapSize)}&gap_direction=${encodeURIComponent(gapDirection)}`;
+    console.log(`Fetching gap insights for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}, timeframe=${timeframe}`);
+    const url = `/api/gap_insights?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}&timeframe=${encodeURIComponent(timeframe)}`;
     console.log('Fetching URL:', url);
-    insightsContainer.innerHTML = '<p>Loading gap insights...</p>';
+    gapInsightsContainer.innerHTML = '<p>Loading gap insights...</p>';
     try {
         const response = await fetch(url, {
             method: 'GET',
@@ -1661,7 +1662,7 @@ async function loadGapInsights(event) {
         if (response.status === 429) {
             const data = await response.json();
             console.error('Rate limit error:', data.error);
-            insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            gapInsightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
             button.disabled = true;
             button.textContent = 'Rate Limit Exceeded';
             selects.forEach(select => select.disabled = true);
@@ -1669,10 +1670,10 @@ async function loadGapInsights(event) {
             localStorage.setItem('gapInsightsRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
-                button.textContent = 'Load Insights';
+                button.textContent = 'Load Gap Insights';
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('gapInsightsRateLimitReset');
-                insightsContainer.innerHTML = '<p>Please select a gap size and gap direction to view insights.</p>';
+                gapInsightsContainer.innerHTML = '<p>Please select a gap size, day of the week, gap direction, and timeframe to view gap insights.</p>';
             }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
@@ -1685,74 +1686,117 @@ async function loadGapInsights(event) {
         console.log('Gap insights API response:', JSON.stringify(data, null, 2));
         if (data.error) {
             console.error('Error from gap insights API:', data.error);
-            insightsContainer.innerHTML = `<p>${data.error}</p>`;
+            gapInsightsContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
         if (!data.insights || Object.keys(data.insights).length === 0) {
             console.log('No gap insights found:', data.message || 'No insights returned');
-            insightsContainer.innerHTML = `<p>${data.message || 'No insights found for the selected criteria'}</p>`;
+            gapInsightsContainer.innerHTML = `<p>${data.message || 'No gap insights found for the selected criteria'}</p>`;
             return;
         }
         console.log('Rendering gap insights:', data.insights);
+
+        // Render insights as a table
+        const timeframeText = {
+            '1m': '1 Minute',
+            '2m': '2 Minutes',
+            '3m': '3 Minutes',
+            '5m': '5 Minutes',
+            '10m': '10 Minutes'
+        }[timeframe] || timeframe;
         const table = document.createElement('table');
-        table.className = 'insights-table';
-        const thead = document.createElement('thead');
-        const tbody = document.createElement('tbody');
-        const headerRow = document.createElement('tr');
-        ['Metric', 'Value'].forEach(header => {
-            const th = document.createElement('th');
-            th.textContent = header;
-            headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-        Object.entries(data.insights).forEach(([metric, value]) => {
-            const row = document.createElement('tr');
-            const metricCell = document.createElement('td');
-            metricCell.textContent = metric;
-            const valueCell = document.createElement('td');
-            valueCell.textContent = typeof value === 'number' ? value.toFixed(2) : value;
-            row.appendChild(metricCell);
-            row.appendChild(valueCell);
-            tbody.appendChild(row);
-        });
-        table.appendChild(thead);
-        table.appendChild(tbody);
-        insightsContainer.innerHTML = '';
-        insightsContainer.appendChild(table);
-        console.log('Gap insights rendered successfully');
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+        table.innerHTML = `
+            <thead>
+                <tr style="background-color: #f2f2f2;">
+                    <th style="border: 1px solid #ddd; padding: 8px;">Metric</th>
+                    <th style="border: 1px solid #ddd; padding: 8px;">Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Total Gaps Analyzed</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${data.insights.total_gaps}</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Average Gap Size</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${data.insights.avg_gap_size.toFixed(2)}%</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Average ${timeframeText} Return</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${data.insights.avg_return.toFixed(2)}%</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Win Rate</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${data.insights.win_rate.toFixed(2)}%</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">Average Volume</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${data.insights.avg_volume.toFixed(0)}</td>
+                </tr>
+            </tbody>
+        `;
+        gapInsightsContainer.innerHTML = '';
+        gapInsightsContainer.appendChild(table);
+
+        // Add a chart for return distribution if available
+        if (data.insights.return_distribution && data.insights.return_distribution.length > 0) {
+            const chartContainer = document.createElement('div');
+            chartContainer.id = 'gap-insights-chart';
+            chartContainer.style.height = '400px';
+            gapInsightsContainer.appendChild(chartContainer);
+
+            const trace = {
+                x: data.insights.return_distribution.map(item => item.bin),
+                y: data.insights.return_distribution.map(item => item.count),
+                type: 'histogram',
+                name: 'Return Distribution',
+                marker: { color: '#1f77b4' }
+            };
+            const layout = {
+                title: `Return Distribution (${timeframeText})`,
+                xaxis: { title: 'Return (%)' },
+                yaxis: { title: 'Frequency' },
+                bargap: 0.1,
+                plot_bgcolor: '#ffffff',
+                paper_bgcolor: '#ffffff'
+            };
+            Plotly.newPlot('gap-insights-chart', [trace], layout, { responsive: true });
+        }
+
         gtag('event', 'gap_insights_load', {
             'event_category': 'Gap Insights',
-            'event_label': `${gapSize}_${gapDirection}`
+            'event_label': `gap_size=${gapSize}_day=${day}_direction=${gapDirection}_timeframe=${timeframe}`
         });
     } catch (error) {
         console.error('Error loading gap insights:', error.message);
-        insightsContainer.innerHTML = '<p>Failed to load gap insights: ' + error.message + '. Please try again later.</p>';
+        gapInsightsContainer.innerHTML = '<p>Failed to load gap insights: ' + error.message + '. Please try again later.</p>';
         alert('Failed to load gap insights: ' + error.message);
     }
 }
 
 function openTab(tabId) {
-    console.log(`Opening tab: ${tabId}`);
-    const tabs = document.getElementsByClassName('tab-content');
-    for (let i = 0; i < tabs.length; i++) {
-        tabs[i].style.display = 'none';
-    }
-    const tabButtons = document.getElementsByClassName('tab-button');
-    for (let i = 0; i < tabButtons.length; i++) {
-        tabButtons[i].classList.remove('active');
-    }
-    document.getElementById(tabId).style.display = 'block';
-    const activeButton = Array.from(tabButtons).find(btn => btn.getAttribute('onclick').includes(`openTab('${tabId}'`));
-    if (activeButton) {
-        activeButton.classList.add('active');
-    }
-    gtag('event', 'tab_open', {
+    const tabs = document.querySelectorAll('.tabcontent');
+    const tabLinks = document.querySelectorAll('.tablink');
+
+    tabs.forEach(tab => {
+        tab.style.display = tab.id === tabId ? 'block' : 'none';
+    });
+
+    tabLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('data-tab') === tabId);
+    });
+
+    console.log(`Switched to tab: ${tabId}`);
+    gtag('event', 'tab_switch', {
         'event_category': 'Navigation',
         'event_label': tabId
     });
 }
 
-// Ensure the initial tab is set correctly
-document.addEventListener('DOMContentLoaded', () => {
-    openTab('market-simulator');
-});
+// Ensure Plotly is available globally
+if (typeof Plotly === 'undefined') {
+    console.error('Plotly is not loaded. Please ensure the Plotly library is included.');
+    alert('Charting library is not loaded. Some features may not work correctly.');
+}

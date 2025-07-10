@@ -337,26 +337,26 @@ def get_chart():
     try:
         ticker = request.args.get('ticker')
         date = request.args.get('date')
+        timeframe = request.args.get('timeframe', '1min')  # Default to 1min if not provided
         restrict_hours = request.args.get('restrict_hours', 'false').lower() == 'true'
-        timeframe = request.args.get('timeframe', '1m')  # Default to 1-minute
-        logging.debug(f"Processing chart request for ticker={ticker}, date={date}, restrict_hours={restrict_hours}, timeframe={timeframe}")
+        logging.debug(f"Processing chart request for ticker={ticker}, date={date}, timeframe={timeframe}, restrict_hours={restrict_hours}")
         
         if not ticker or not date:
             return jsonify({'error': 'Missing ticker or date'}), 400
         if ticker not in TICKERS:
             return jsonify({'error': 'Invalid ticker'}), 400
-        if timeframe not in ['1m', '2m', '3m', '5m', '10m']:
-            return jsonify({'error': 'Invalid timeframe. Choose from 1m, 2m, 3m, 5m, 10m'}), 400
-
+        if timeframe not in ['1min', '2min', '3min', '5min', '10min']:
+            return jsonify({'error': 'Invalid timeframe. Choose from 1min, 2min, 3min, 5min, 10min.'}), 400
+        
         try:
             target_date = pd.to_datetime(date).date()
         except ValueError:
             return jsonify({'error': 'Invalid date format'}), 400
-
+        
         db_paths = get_db_paths(ticker)
         if not db_paths:
             return jsonify({'error': f'No database available for {ticker}'}), 404
-
+        
         try:
             df_list = []
             query = """
@@ -380,19 +380,19 @@ def get_chart():
                 start_time = pd.to_datetime('09:30:00').time()
                 end_time = pd.to_datetime('16:00:00').time()
                 df = df[(df['time'] >= start_time) & (df['time'] <= end_time)]
-                df = df.drop(columns=['time'])
+                df = df.drop(columns=['time'])  # Remove temporary time column
                 logging.debug(f"Filtered to regular hours, new shape: {df.shape}")
 
-            # Aggregate data to the specified timeframe
-            if timeframe != '1m':
-                # Convert timeframe to pandas offset string
-                timeframe_map = {'2m': '2min', '3m': '3min', '5m': '5min', '10m': '10min'}
+            # Resample data based on timeframe
+            if timeframe != '1min':
+                timeframe_map = {
+                    '2min': '2T',
+                    '3min': '3T',
+                    '5min': '5T',
+                    '10min': '10T'
+                }
                 resample_rule = timeframe_map[timeframe]
-                
-                # Set timestamp as index for resampling
                 df.set_index('timestamp', inplace=True)
-                
-                # Resample and aggregate
                 df = df.resample(resample_rule).agg({
                     'open': 'first',
                     'high': 'max',
@@ -400,18 +400,16 @@ def get_chart():
                     'close': 'last',
                     'volume': 'sum'
                 }).dropna()
-                
-                # Reset index to make timestamp a column again
                 df.reset_index(inplace=True)
-                logging.debug(f"Resampled to {timeframe}, new shape: {df.shape}")
+                logging.debug(f"Resampled data to {timeframe}, new shape: {df.shape}")
 
         except Exception as e:
             logging.error(f"Error querying or processing database for {ticker}: {str(e)}")
             return jsonify({'error': 'Database query or processing failed'}), 500
-
+        
         if df.empty:
-            return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
-
+            return jsonify({'error': 'No data available for the selected date and timeframe. Try another date.'}), 404
+        
         required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
         if not all(col in df.columns for col in required_columns):
             return jsonify({'error': 'Invalid data format'}), 400
@@ -426,8 +424,8 @@ def get_chart():
             'volume': df['volume'].tolist(),
             'ticker': ticker,
             'date': date,
-            'timeframe': timeframe,  # Include timeframe in response
-            'count': len(df)
+            'timeframe': timeframe,
+            'count': len(df)  # Update count to reflect filtered/resampled data
         }
         return jsonify({'chart_data': chart_data})
     except Exception as e:
