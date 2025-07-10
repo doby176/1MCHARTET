@@ -337,26 +337,26 @@ def get_chart():
     try:
         ticker = request.args.get('ticker')
         date = request.args.get('date')
-        timeframe = request.args.get('timeframe', '1min')  # Default to 1min if not provided
+        timeframe = request.args.get('timeframe', '1')  # Default to 1 minute
         restrict_hours = request.args.get('restrict_hours', 'false').lower() == 'true'
         logging.debug(f"Processing chart request for ticker={ticker}, date={date}, timeframe={timeframe}, restrict_hours={restrict_hours}")
-        
-        if not ticker or not date:
-            return jsonify({'error': 'Missing ticker or date'}), 400
+        if not ticker or not date or not timeframe:
+            return jsonify({'error': 'Missing ticker, date, or timeframe'}), 400
         if ticker not in TICKERS:
             return jsonify({'error': 'Invalid ticker'}), 400
-        if timeframe not in ['1min', '2min', '3min', '5min', '10min']:
-            return jsonify({'error': 'Invalid timeframe. Choose from 1min, 2min, 3min, 5min, 10min.'}), 400
-        
+        try:
+            timeframe = int(timeframe)
+            if timeframe not in [1, 2, 3, 5, 10]:
+                return jsonify({'error': 'Invalid timeframe. Must be 1, 2, 3, 5, or 10 minutes.'}), 400
+        except ValueError:
+            return jsonify({'error': 'Invalid timeframe format'}), 400
         try:
             target_date = pd.to_datetime(date).date()
         except ValueError:
             return jsonify({'error': 'Invalid date format'}), 400
-        
         db_paths = get_db_paths(ticker)
         if not db_paths:
             return jsonify({'error': f'No database available for {ticker}'}), 404
-        
         try:
             df_list = []
             query = """
@@ -383,17 +383,10 @@ def get_chart():
                 df = df.drop(columns=['time'])  # Remove temporary time column
                 logging.debug(f"Filtered to regular hours, new shape: {df.shape}")
 
-            # Resample data based on timeframe
-            if timeframe != '1min':
-                timeframe_map = {
-                    '2min': '2T',
-                    '3min': '3T',
-                    '5min': '5T',
-                    '10min': '10T'
-                }
-                resample_rule = timeframe_map[timeframe]
+            # Resample to the requested timeframe if not 1 minute
+            if timeframe > 1:
                 df.set_index('timestamp', inplace=True)
-                df = df.resample(resample_rule).agg({
+                df = df.resample(f'{timeframe}T').agg({
                     'open': 'first',
                     'high': 'max',
                     'low': 'min',
@@ -401,15 +394,13 @@ def get_chart():
                     'volume': 'sum'
                 }).dropna()
                 df.reset_index(inplace=True)
-                logging.debug(f"Resampled data to {timeframe}, new shape: {df.shape}")
+                logging.debug(f"Resampled data to {timeframe}-minute timeframe, new shape: {df.shape}")
 
         except Exception as e:
-            logging.error(f"Error querying or processing database for {ticker}: {str(e)}")
-            return jsonify({'error': 'Database query or processing failed'}), 500
-        
+            logging.error(f"Error querying database for {ticker}: {str(e)}")
+            return jsonify({'error': 'Database query failed'}), 500
         if df.empty:
-            return jsonify({'error': 'No data available for the selected date and timeframe. Try another date.'}), 404
-        
+            return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
         required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
         if not all(col in df.columns for col in required_columns):
             return jsonify({'error': 'Invalid data format'}), 400
@@ -424,7 +415,6 @@ def get_chart():
             'volume': df['volume'].tolist(),
             'ticker': ticker,
             'date': date,
-            'timeframe': timeframe,
             'count': len(df)  # Update count to reflect filtered/resampled data
         }
         return jsonify({'chart_data': chart_data})
