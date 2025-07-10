@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Candlestick Chart with Replay</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+        #stock-form {
+            margin-bottom: 20px;
+        }
+        #stock-form select, #stock-form input, #stock-form button {
+            margin-right: 10px;
+            padding: 5px;
+        }
+        #plotly-chart {
+            width: 100%;
+            height: 600px;
+        }
+        #replay-controls {
+            display: none;
+            margin-top: 10px;
+        }
+        #replay-controls button, #replay-controls select, #replay-controls input {
+            margin-right: 10px;
+            padding: 5px;
+        }
+        #replay-timestamp {
+            font-weight: bold;
+        }
+    </style>
+    <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Test Candlestick Chart</h2>
+        <form id="stock-form">
+            <select id="ticker-select">
+                <option value="">Select Ticker</option>
+                <!-- Populated dynamically -->
+            </select>
+            <input type="date" id="date">
+            <select id="timeframe-select">
+                <option value="1">1 Minute</option>
+                <option value="5">5 Minute</option>
+                <option value="15">15 Minute</option>
+            </select>
+            <button type="submit">Load Chart</button>
+        </form>
+        <div id="plotly-chart"></div>
+        <div id="replay-controls">
+            <button id="play-replay">Play Replay</button>
+            <button id="pause-replay" disabled>Pause Replay</button>
+            <button id="start-over-replay" disabled>Start Over</button>
+            <button id="prev-candle" disabled>Previous Candle</button>
+            <button id="next-candle" disabled>Next Candle</button>
+            <select id="replay-speed">
+                <option value="1000">1x (1s)</option>
+                <option value="500">2x (0.5s)</option>
+                <option value="250">4x (0.25s)</option>
+            </select>
+            <input type="time" id="replay-start-time" placeholder="HH:MM">
+            <span id="replay-timestamp">Current Time: --:--:--</span>
+        </div>
+    </div>
+    <script src="/static/test.js"></script>
+</body>
+</html>

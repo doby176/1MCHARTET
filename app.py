@@ -331,6 +331,10 @@ def get_valid_dates():
         logging.error(f"Error fetching dates for {ticker}: {str(e)}")
         return jsonify({'error': f'Failed to fetch dates for {ticker}'}), 500
 
+@app.route('/test')
+def test():
+    return render_template('test.html')
+
 @app.route('/api/stock/chart', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_chart():
