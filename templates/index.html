@@ -3,320 +3,415 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chart Replay Test</title>
+    <!-- Google Analytics Tag -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BFDR405H06"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-BFDR405H06');
+    </script>
+    <meta name="google-adsense-account" content="ca-pub-9416785017460416">
+    <title>1MChart - Precision Nasdaq Gap & Earnings Insights</title>
+    <meta name="description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, and reversal patterns. Analyze earnings outcomes (Beat, Miss...) and key news events (CPI, FOMC...) with high-frequency 1-minute interactive charts data for strategic day trading (2015-2025).">
+    <meta name="keywords" content="1-minute stock charts, Nasdaq gap insights, QQQ gap fill rate, QQQ gap trading, intraday gap analysis, QQQ price action patterns, day trading, price action analysis, Nasdaq gap statistics, earnings price action, CPI, PPI, FOMC, NFP, QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META, intraday trading, historical stock data, trading tools, technical analysis, stock market analysis, QQQ gap trading strategies, stock gap analytics">
+    <meta name="author" content="1MChart Team">
+    <meta name="robots" content="index, follow">
+    <!-- Open Graph for social media -->
+    <meta property="og:title" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025)">
+    <meta property="og:description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, adverse moves, and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025).">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://onemchart.onrender.com">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="1MChart - Precision Nasdaq Gap & Earnings Insights">
+    <meta name="twitter:description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, adverse moves, and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025).">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css?v=41">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <style>
-        #chart-container { width: 100%; height: 600px; }
-        #replay-controls { margin: 10px 0; }
-        #replay-controls button, #replay-controls select, #replay-controls input { margin-right: 10px; }
-        #timestamp { font-weight: bold; }
-    </style>
 </head>
 <body>
-    <h1>Chart Replay Test</h1>
-    <form id="chart-form">
-        <label for="timeframe-select">Timeframe (minutes):</label>
-        <select id="timeframe-select">
-            <option value="1">1 Minute</option>
-            <option value="5">5 Minutes</option>
-        </select>
-        <button type="submit">Load Chart</button>
-    </form>
-    <div id="chart-container"></div>
-    <div id="replay-controls" style="display: none;">
-        <button id="play-replay">Play Replay</button>
-        <button id="pause-replay" disabled>Pause Replay</button>
-        <button id="start-over-replay" disabled>Start Over</button>
-        <button id="prev-candle" disabled>Previous</button>
-        <button id="next-candle" disabled>Next</button>
-        <label for="replay-speed">Speed (ms):</label>
-        <select id="replay-speed">
-            <option value="1000">1s</option>
-            <option value="500">0.5s</option>
-            <option value="250">0.25s</option>
-        </select>
-        <label for="replay-start-time">Start Time (HH:MM):</label>
-        <input type="text" id="replay-start-time" placeholder="09:30">
-        <span id="timestamp">Current Time: --:--:--</span>
-    </div>
-
+    <header>
+        <img src="/static/logo-new.png?v=2" alt="1MChart Logo" class="logo">
+        <div class="seo-description">
+            <p>Advanced Nasdaq gap insights, News events, Earnings analysis and 1-minute charts  (2015–2025).</p>
+            <p><strong>The Edge Lies In The Data.</strong></p>
+        </div>
+        <div class="user-info">
+            <p>Welcome, <span id="username">{{ session.username | default('Guest') }}</span> | <a href="/logout">Log Out</a></p>
+        </div>
+    </header>
+    <main>
+        <div class="card">
+            <div class="tabs">
+                <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
+                <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
+                <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
+                <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
+                <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
+            </div>
+            <!-- Market Simulator Section -->
+            <div id="market-simulator" class="tab-content active">
+                <h2>Market Simulator</h2>
+                <p>Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls.</p>
+                <form id="stock-form">
+                    <label for="ticker-select">Select Ticker:</label>
+                    <select id="ticker-select" name="ticker">
+                        <option value="">Select a ticker</option>
+                    </select>
+                    <label for="date">Select Date:</label>
+                    <input type="date" id="date" name="date">
+                    <label for="timeframe-select">Select Timeframe:</label>
+                    <select id="timeframe-select" name="timeframe">
+                        <option value="1">1 Minute</option>
+                        <option value="2">2 Minutes</option>
+                        <option value="3">3 Minutes</option>
+                        <option value="5">5 Minutes</option>
+                        <option value="10">10 Minutes</option>
+                    </select>
+                    <button type="submit">Load Chart</button>
+                </form>
+                <div id="chart-container">
+                    <div id="plotly-chart"></div>
+                    <div id="replay-controls" class="replay-controls">
+                        <button id="play-replay" disabled>Play Replay</button>
+                        <button id="pause-replay" disabled>Pause</button>
+                        <button id="start-over-replay" disabled>Start Over</button>
+                        <button id="prev-candle" disabled>Previous Candle</button>
+                        <button id="next-candle" disabled>Next Candle</button>
+                        <label for="replay-start-time">Start Time (HH:MM):</label>
+                        <input type="text" id="replay-start-time" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                        <label for="replay-speed">Replay Speed:</label>
+                        <select id="replay-speed">
+                            <option value="1">1x</option>
+                            <option value="2">2x</option>
+                            <option value="4">4x</option>
+                        </select>
+                        <span id="replay-timestamp">Current Time: --:--:--</span>
+                        <button id="buy-trade" disabled>Buy</button>
+                        <button id="sell-trade" disabled>Sell</button>
+                        <div id="trade-summary">
+                            <h4>Trade Simulator</h4>
+                            <p id="position-status">No open position</p>
+                            <p id="trade-pnl">P/L: $0.00</p>
+                            <p id="trade-history">Trade History: None</p>
+                        </div>
+                    </div>
+                </div>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
+            </div>
+            <!-- Nasdaq Gap Analysis Section -->
+            <div id="gap-analysis" class="tab-content">
+                <h2>Nasdaq Gap Analysis</h2>
+                <p>Uncover Nasdaq gap trading opportunities with chart analytics. Filter by gap size and direction to reveal intraday price action patterns missed by daily charts.</p>
+                <form id="gap-form">
+                    <label for="gap-size">Select Gap Size Bin:</label>
+                    <select id="gap-size" name="gap_size">
+                        <option value="">Select gap size</option>
+                        <option value="0.15-0.35%">0.15-0.35%</option>
+                        <option value="0.35-0.5%">0.35-0.5%</option>
+                        <option value="0.5-1%">0.5-1%</option>
+                        <option value="1-1.5%">1-1.5%</option>
+                        <option value="1.5%+">1.5%+</option>
+                    </select>
+                    <label for="day-of-week">Select Day of Week:</label>
+                    <select id="day-of-week" name="day">
+                        <option value="">Select day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                    <label for="gap-direction">Select Gap Direction:</label>
+                    <select id="gap-direction" name="gap_direction">
+                        <option value="">Select gap direction</option>
+                        <option value="up">Gap Up</option>
+                        <option value="down">Gap Down</option>
+                    </select>
+                    <button type="submit">Find Gap Dates</button>
+                </form>
+                <div id="gap-dates">
+                    <p>Select a gap size, day, and direction to view dates with gaps.</p>
+                    <ul id="gap-dates-list"></ul>
+                </div>
+                <form id="stock-form-gap">
+                    <label for="ticker-select-gap">Select Ticker:</label>
+                    <select id="ticker-select-gap" name="ticker">
+                        <option value="">Select a ticker</option>
+                    </select>
+                    <label for="date-gap">Select Date:</label>
+                    <input type="date" id="date-gap" name="date">
+                    <label for="timeframe-select-gap">Select Timeframe:</label>
+                    <select id="timeframe-select-gap" name="timeframe">
+                        <option value="1">1 Minute</option>
+                        <option value="2">2 Minutes</option>
+                        <option value="3">3 Minutes</option>
+                        <option value="5">5 Minutes</option>
+                        <option value="10">10 Minutes</option>
+                    </select>
+                    <button type="submit">Load Chart</button>
+                </form>
+                <div id="chart-container-gap">
+                    <div id="plotly-chart-gap"></div>
+                    <div id="replay-controls-gap" class="replay-controls" style="display: none;">
+                        <button id="play-replay-gap" disabled>Play Replay</button>
+                        <button id="pause-replay-gap" disabled>Pause</button>
+                        <button id="start-over-replay-gap" disabled>Start Over</button>
+                        <button id="prev-candle-gap" disabled>Previous Candle</button>
+                        <button id="next-candle-gap" disabled>Next Candle</button>
+                        <label for="replay-start-time-gap">Start Time (HH:MM):</label>
+                        <input type="text" id="replay-start-time-gap" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                        <label for="replay-speed-gap">Replay Speed:</label>
+                        <select id="replay-speed-gap">
+                            <option value="1">1x</option>
+                            <option value="2">2x</option>
+                            <option value="4">4x</option>
+                        </select>
+                        <span id="replay-timestamp-gap">Current Time: --:--:--</span>
+                    </div>
+                </div>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
+            </div>
+            <!-- Nasdaq Gap Insights Section -->
+            <div id="gap-insights" class="tab-content">
+                <h2>Nasdaq Gap Insights</h2>
+                <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
+                <form id="gap-insights-form">
+                    <label for="gap-size-insights">Select Gap Size Bin:</label>
+                    <select id="gap-size-insights" name="gap_size">
+                        <option value="">Select gap size</option>
+                        <option value="0.15-0.35%">0.15-0.35%</option>
+                        <option value="0.35-0.5%">0.35-0.5%</option>
+                        <option value="0.5-1%">0.5-1%</option>
+                        <option value="1-1.5%">1-1.5%</option>
+                        <option value="1.5%+">1.5%+</option>
+                    </select>
+                    <label for="day-of-week-insights">Select Day of Week:</label>
+                    <select id="day-of-week-insights" name="day">
+                        <option value="">Select day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                    <label for="gap-direction-insights">Select Gap Direction:</label>
+                    <select id="gap-direction-insights" name="gap_direction">
+                        <option value="">Select gap direction</option>
+                        <option value="up">Gap Up</option>
+                        <option value="down">Gap Down</option>
+                    </select>
+                    <button type="submit">Get Insights</button>
+                </form>
+                <div id="gap-insights-results">
+                    <p>Select a gap size, day, and direction to view Nasdaq gap insights and statistics.</p>
+                </div>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
+            </div>
+            <!-- News Event Analysis Section -->
+            <div id="events-analysis" class="tab-content">
+                <h2>News Event Analysis</h2>
+                <p>Master Nasdaq price action on key news days (CPI, PPI, FOMC, NFP) with chart analytics to seize intraday trading opportunities.</p>
+                <div class="filter-toggle">
+                    <label><input type="radio" name="filter-type" value="year" checked> Filter by Event Type and Year</label>
+                    <label><input type="radio" name="filter-type" value="bin"> Filter by Event Type and Economic Impact Range</label>
+                </div>
+                <form id="events-form">
+                    <div id="year-filter" class="filter-section active">
+                        <label for="event-type-select">Select Event Type:</label>
+                        <select id="event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                            <option value="FOMC">FOMC</option>
+                            <option value="NFP">NFP</option>
+                        </select>
+                        <label for="year-select">Select Year:</label>
+                        <select id="year-select" name="year">
+                            <option value="">Select year</option>
+                        </select>
+                    </div>
+                    <div id="bin-filter" class="filter-section">
+                        <label for="bin-event-type-select">Select Event Type:</label>
+                        <select id="bin-event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                            <option value="FOMC">FOMC</option>
+                            <option value="NFP">NFP</option>
+                        </select>
+                        <label for="bin-select">Select Economic Impact Range:</label>
+                        <select id="bin-select" name="bin">
+                            <option value="">Select range</option>
+                        </select>
+                    </div>
+                    <button type="submit">Find Event Dates</button>
+                </form>
+                <div id="event-dates">
+                    <p>Select filters to view dates with events.</p>
+                    <ul id="event-dates-list"></ul>
+                </div>
+                <form id="stock-form-events">
+                    <label for="ticker-select-events">Select Ticker:</label>
+                    <select id="ticker-select-events" name="ticker">
+                        <option value="">Select a ticker</option>
+                    </select>
+                    <label for="date-events">Select Date:</label>
+                    <input type="date" id="date-events" name="date">
+                    <label for="timeframe-select-events">Select Timeframe:</label>
+                    <select id="timeframe-select-events" name="timeframe">
+                        <option value="1">1 Minute</option>
+                        <option value="2">2 Minutes</option>
+                        <option value="3">3 Minutes</option>
+                        <option value="5">5 Minutes</option>
+                        <option value="10">10 Minutes</option>
+                    </select>
+                    <button type="submit">Load Chart</button>
+                </form>
+                <div id="chart-container-events">
+                    <div id="plotly-chart-events"></div>
+                    <div id="replay-controls-events" class="replay-controls" style="display: none;">
+                        <button id="play-replay-events" disabled>Play Replay</button>
+                        <button id="pause-replay-events" disabled>Pause</button>
+                        <button id="start-over-replay-events" disabled>Start Over</button>
+                        <button id="prev-candle-events" disabled>Previous Candle</button>
+                        <button id="next-candle-events" disabled>Next Candle</button>
+                        <label for="replay-start-time-events">Start Time (HH:MM):</label>
+                        <input type="text" id="replay-start-time-events" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                        <label for="replay-speed-events">Replay Speed:</label>
+                        <select id="replay-speed-events">
+                            <option value="1">1x</option>
+                            <option value="2">2x</option>
+                            <option value="4">4x</option>
+                        </select>
+                        <span id="replay-timestamp-events">Current Time: --:--:--</span>
+                    </div>
+                </div>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
+            </div>
+            <!-- Earnings Analysis Section -->
+            <div id="earnings-analysis" class="tab-content">
+                <h2>Earnings Analysis</h2>
+                <p>Analyze stock earnings reactions with chart analytics to pinpoint intraday price action patterns and build winning trading strategies.</p>
+                <div class="filter-toggle">
+                    <label><input type="radio" name="earnings-filter-type" value="ticker-outcome" checked> Filter by Ticker and Outcome</label>
+                    <label><input type="radio" name="earnings-filter-type" value="ticker-only"> Filter by Ticker Only</label>
+                </div>
+                <form id="earnings-form">
+                    <div id="ticker-outcome-filter" class="filter-section active">
+                        <label for="earnings-ticker-select">Select Ticker:</label>
+                        <select id="earnings-ticker-select" name="ticker">
+                            <option value="">Select a ticker</option>
+                        </select>
+                        <label for="earnings-bin-select">Select Earnings Outcome:</label>
+                        <select id="earnings-bin-select" name="bin">
+                            <option value="">Select outcome</option>
+                            <option value="Beat">Beat (>10%)</option>
+                            <option value="Slight Beat">Slight Beat (0% to 10%)</option>
+                            <option value="Slight Miss">Slight Miss (-10% to 0%)</option>
+                            <option value="Miss">Miss (<-10%)</option>
+                            <option value="Unknown">Unknown</option>
+                        </select>
+                    </div>
+                    <div id="ticker-only-filter" class="filter-section">
+                        <label for="earnings-ticker-only-select">Select Ticker:</label>
+                        <select id="earnings-ticker-only-select" name="ticker">
+                            <option value="">Select a ticker</option>
+                        </select>
+                    </div>
+                    <button type="submit">Find Earnings Dates</button>
+                </form>
+                <div id="earnings-dates">
+                    <p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>
+                    <ul id="earnings-dates-list"></ul>
+                </div>
+                <form id="stock-form-earnings">
+                    <label for="earnings-ticker-select">Select Ticker:</label>
+                    <select id="earnings-ticker-select" name="ticker">
+                        <option value="">Select a ticker</option>
+                    </select>
+                    <label for="date-earnings">Select Date:</label>
+                    <input type="date" id="date-earnings" name="date">
+                    <label for="timeframe-select-earnings">Select Timeframe:</label>
+                    <select id="timeframe-select-earnings" name="timeframe">
+                        <option value="1">1 Minute</option>
+                        <option value="2">2 Minutes</option>
+                        <option value="3">3 Minutes</option>
+                        <option value="5">5 Minutes</option>
+                        <option value="10">10 Minutes</option>
+                    </select>
+                    <button type="submit">Load Chart</button>
+                </form>
+                <div id="chart-container-earnings">
+                    <div id="plotly-chart-earnings"></div>
+                    <div id="replay-controls-earnings" class="replay-controls" style="display: none;">
+                        <button id="play-replay-earnings" disabled>Play Replay</button>
+                        <button id="pause-replay-earnings" disabled>Pause</button>
+                        <button id="start-over-replay-earnings" disabled>Start Over</button>
+                        <button id="prev-candle-earnings" disabled>Previous Candle</button>
+                        <button id="next-candle-earnings" disabled>Next Candle</button>
+                        <label for="replay-start-time-earnings">Start Time (HH:MM):</label>
+                        <input type="text" id="replay-start-time-earnings" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                        <label for="replay-speed-earnings">Replay Speed:</label>
+                        <select id="replay-speed-earnings">
+                            <option value="1">1x</option>
+                            <option value="2">2x</option>
+                            <option value="4">4x</option>
+                        </select>
+                        <span id="replay-timestamp-earnings">Current Time: --:--:--</span>
+                    </div>
+                </div>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
+            </div>
+            <!-- AdSense Ad Unit -->
+            <div class="ads-container">
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
+                <ins class="adsbygoogle"
+                    style="display:block"
+                    data-ad-client="ca-pub-9416785017460416"
+                    data-ad-slot="5487535867"
+                    data-ad-format="auto"
+                    data-full-width-responsive="true"></ins>
+                <script>
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+            </div>
+        </div>
+    </main>
+    <footer class="footer">
+        <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
+        <p>More coming soon</p>
+        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site, All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
+        <img src="/static/logo-new.png" alt="1MChart Footer Logo" class="footer-logo">
+    </footer>
     <script>
-        let chartData = null;
-        let replayInterval = null;
-        let currentReplayIndex = 0;
-        let isReplaying = false;
-        let isPaused = false;
-        let aggregatedCandles = [];
-        let timeframe = 1;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('chart-form').addEventListener('submit', loadChart);
-            document.getElementById('play-replay').addEventListener('click', startReplay);
-            document.getElementById('pause-replay').addEventListener('click', pauseReplay);
-            document.getElementById('start-over-replay').addEventListener('click', startOverReplay);
-            document.getElementById('prev-candle').addEventListener('click', prevCandle);
-            document.getElementById('next-candle').addEventListener('click', nextCandle);
-            document.getElementById('replay-speed').addEventListener('change', updateReplaySpeed);
+        // Disable right-click without alert
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
         });
-
-        async function loadChart(event) {
-            event.preventDefault();
-            timeframe = parseInt(document.getElementById('timeframe-select').value);
-            const chartContainer = document.getElementById('chart-container');
-            chartContainer.innerHTML = '<p>Loading chart...</p>';
-
-            try {
-                const response = await fetch('/api/chart');
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                const data = await response.json();
-                if (data.error) {
-                    chartContainer.innerHTML = `<p>${data.error}</p>`;
-                    return;
-                }
-
-                chartData = data.chart_data;
-                aggregatedCandles = aggregateCandles(chartData, timeframe);
-                currentReplayIndex = 0;
-                isReplaying = false;
-                isPaused = false;
-                if (replayInterval) clearInterval(replayInterval);
-
-                renderChart([]);
-                document.getElementById('replay-controls').style.display = 'block';
-                document.getElementById('play-replay').disabled = false;
-                document.getElementById('pause-replay').disabled = true;
-                document.getElementById('start-over-replay').disabled = true;
-                document.getElementById('prev-candle').disabled = true;
-                document.getElementById('next-candle').disabled = aggregatedCandles.length === 0;
-                document.getElementById('timestamp').textContent = 'Current Time: --:--:--';
-            } catch (error) {
-                chartContainer.innerHTML = `<p>Failed to load chart: ${error.message}</p>`;
-            }
-        }
-
-        function aggregateCandles(data, timeframe) {
-            if (timeframe === 1) {
-                return data.timestamp.map((_, i) => ({
-                    timestamp: data.timestamp[i],
-                    open: data.open[i],
-                    high: data.high[i],
-                    low: data.low[i],
-                    close: data.close[i],
-                    volume: data.volume[i]
-                }));
-            }
-
-            const candles = [];
-            let currentCandle = null;
-            let minuteCount = 0;
-
-            for (let i = 0; i < data.timestamp.length; i++) {
-                if (minuteCount === 0) {
-                    currentCandle = {
-                        timestamp: data.timestamp[i],
-                        open: data.open[i],
-                        high: data.high[i],
-                        low: data.low[i],
-                        close: data.close[i],
-                        volume: data.volume[i],
-                        minuteUpdates: []
-                    };
-                } else {
-                    currentCandle.high = Math.max(currentCandle.high, data.high[i]);
-                    currentCandle.low = Math.min(currentCandle.low, data.low[i]);
-                    currentCandle.close = data.close[i];
-                    currentCandle.volume += data.volume[i];
-                    currentCandle.minuteUpdates.push({
-                        timestamp: data.timestamp[i],
-                        high: currentCandle.high,
-                        low: currentCandle.low,
-                        close: currentCandle.close,
-                        volume: currentCandle.volume
-                    });
-                }
-
-                minuteCount++;
-                if (minuteCount === timeframe) {
-                    candles.push(currentCandle);
-                    minuteCount = 0;
-                }
-            }
-
-            return candles;
-        }
-
-        function renderChart(candles, minuteIndex = null) {
-            const candlestickTrace = {
-                x: candles.map(c => minuteIndex !== null ? c.minuteUpdates?.[minuteIndex]?.timestamp || c.timestamp : c.timestamp),
-                open: candles.map(c => c.open),
-                high: candles.map(c => minuteIndex !== null ? c.minuteUpdates?.[minuteIndex]?.high || c.high : c.high),
-                low: candles.map(c => minuteIndex !== null ? c.minuteUpdates?.[minuteIndex]?.low || c.low : c.low),
-                close: candles.map(c => minuteIndex !== null ? c.minuteUpdates?.[minuteIndex]?.close || c.close : c.close),
-                type: 'candlestick',
-                name: chartData.ticker,
-                increasing: { line: { color: '#00cc00' } },
-                decreasing: { line: { color: '#ff0000' } }
-            };
-            const volumeTrace = {
-                x: candles.map(c => minuteIndex !== null ? c.minuteUpdates?.[minuteIndex]?.timestamp || c.timestamp : c.timestamp),
-                y: candles.map(c => minuteIndex !== null ? c.minuteUpdates?.[minuteIndex]?.volume || c.volume : c.volume),
-                type: 'bar',
-                name: 'Volume',
-                yaxis: 'y2',
-                marker: { color: '#888888' }
-            };
-            const layout = {
-                title: `${chartData.ticker} ${timeframe}-Minute Candlestick Chart - ${chartData.date} (Replay)`,
-                xaxis: { title: 'Time', type: 'date', rangeslider: { visible: false }, tickformat: '%H:%M' },
-                yaxis: { title: 'Price', domain: [0.3, 1] },
-                yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
-                showlegend: true,
-                margin: { t: 50, b: 50, l: 50, r: 50 },
-                plot_bgcolor: '#ffffff',
-                paper_bgcolor: '#ffffff'
-            };
-            Plotly.newPlot('chart-container', [candlestickTrace, volumeTrace], layout, { responsive: true });
-        }
-
-        function startReplay() {
-            if (!chartData || isReplaying) return;
-            isReplaying = true;
-            isPaused = false;
-            const startTimeInput = document.getElementById('replay-start-time').value;
-            const replaySpeed = parseInt(document.getElementById('replay-speed').value);
-            const playButton = document.getElementById('play-replay');
-            const pauseButton = document.getElementById('pause-replay');
-            const startOverButton = document.getElementById('start-over-replay');
-            const prevButton = document.getElementById('prev-candle');
-            const nextButton = document.getElementById('next-candle');
-            const timestampDisplay = document.getElementById('timestamp');
-
-            // Determine start index
-            if (startTimeInput && startTimeInput.match(/^[0-2][0-9]:[0-5][0-9]$/)) {
-                const [hours, minutes] = startTimeInput.split(':').map(Number);
-                const targetTime = new Date(`${chartData.date}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
-                currentReplayIndex = chartData.timestamp.findIndex(ts => new Date(ts).getTime() >= targetTime.getTime());
-                if (currentReplayIndex === -1) {
-                    currentReplayIndex = 0;
-                    alert('Start time not found. Starting from first candle.');
-                }
-            } else {
-                currentReplayIndex = 0;
-            }
-
-            playButton.disabled = true;
-            pauseButton.disabled = false;
-            startOverButton.disabled = currentReplayIndex <= 0;
-            prevButton.disabled = currentReplayIndex <= 0;
-            nextButton.disabled = currentReplayIndex >= aggregatedCandles.length;
-
-            let minuteIndex = 0;
-            renderChart(aggregatedCandles.slice(0, Math.floor(currentReplayIndex / timeframe)), currentReplayIndex % timeframe);
-            timestampDisplay.textContent = currentReplayIndex > 0 
-                ? `Current Time: ${chartData.timestamp[currentReplayIndex].split(' ')[1]}`
-                : 'Current Time: --:--:--';
-
-            replayInterval = setInterval(() => {
-                if (currentReplayIndex >= chartData.count) {
-                    stopReplay();
-                    return;
-                }
-
-                const candleIndex = Math.floor(currentReplayIndex / timeframe);
-                minuteIndex = currentReplayIndex % timeframe;
-
-                if (minuteIndex === 0) {
-                    // Start of a new candle
-                    renderChart(aggregatedCandles.slice(0, candleIndex));
-                } else {
-                    // Update current candle
-                    renderChart(aggregatedCandles.slice(0, candleIndex + 1), minuteIndex - 1);
-                }
-
-                timestampDisplay.textContent = `Current Time: ${chartData.timestamp[currentReplayIndex].split(' ')[1]}`;
-                prevButton.disabled = currentReplayIndex <= 0;
-                nextButton.disabled = currentReplayIndex + 1 >= chartData.count;
-                startOverButton.disabled = currentReplayIndex <= 0;
-
-                currentReplayIndex++;
-                if (currentReplayIndex % timeframe === 0) {
-                    minuteIndex = 0;
-                }
-            }, replaySpeed);
-        }
-
-        function pauseReplay() {
-            if (!isReplaying) return;
-            isReplaying = false;
-            isPaused = true;
-            clearInterval(replayInterval);
-            document.getElementById('play-replay').textContent = 'Resume Replay';
-            document.getElementById('play-replay').disabled = false;
-            document.getElementById('pause-replay').disabled = true;
-        }
-
-        function startOverReplay() {
-            if (!chartData) return;
-            clearInterval(replayInterval);
-            isReplaying = false;
-            isPaused = false;
-            currentReplayIndex = 0;
-            renderChart([]);
-            document.getElementById('play-replay').textContent = 'Play Replay';
-            document.getElementById('play-replay').disabled = false;
-            document.getElementById('pause-replay').disabled = true;
-            document.getElementById('start-over-replay').disabled = true;
-            document.getElementById('prev-candle').disabled = true;
-            document.getElementById('next-candle').disabled = aggregatedCandles.length === 0;
-            document.getElementById('timestamp').textContent = 'Current Time: --:--:--';
-        }
-
-        function stopReplay() {
-            isReplaying = false;
-            isPaused = false;
-            clearInterval(replayInterval);
-            renderChart(aggregatedCandles);
-            document.getElementById('play-replay').textContent = 'Play Replay';
-            document.getElementById('play-replay').disabled = false;
-            document.getElementById('pause-replay').disabled = true;
-            document.getElementById('start-over-replay').disabled = true;
-            document.getElementById('prev-candle').disabled = true;
-            document.getElementById('next-candle').disabled = true;
-            document.getElementById('timestamp').textContent = 'Current Time: --:--:--';
-        }
-
-        function prevCandle() {
-            if (!chartData || isReplaying || currentReplayIndex <= 0) return;
-            currentReplayIndex--;
-            const candleIndex = Math.floor(currentReplayIndex / timeframe);
-            const minuteIndex = currentReplayIndex % timeframe;
-            renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), minuteIndex > 0 ? minuteIndex - 1 : null);
-            document.getElementById('timestamp').textContent = currentReplayIndex > 0 
-                ? `Current Time: ${chartData.timestamp[currentReplayIndex - 1].split(' ')[1]}`
-                : 'Current Time: --:--:--';
-            document.getElementById('prev-candle').disabled = currentReplayIndex <= 0;
-            document.getElementById('next-candle').disabled = currentReplayIndex >= chartData.count;
-            document.getElementById('start-over-replay').disabled = currentReplayIndex <= 0;
-        }
-
-        function nextCandle() {
-            if (!chartData || isReplaying || currentReplayIndex >= chartData.count) return;
-            currentReplayIndex++;
-            const candleIndex = Math.floor(currentReplayIndex / timeframe);
-            const minuteIndex = currentReplayIndex % timeframe;
-            renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), minuteIndex > 0 ? minuteIndex - 1 : null);
-            document.getElementById('timestamp').textContent = `Current Time: ${chartData.timestamp[currentReplayIndex - 1].split(' ')[1]}`;
-            document.getElementById('prev-candle').disabled = currentReplayIndex <= 0;
-            document.getElementById('next-candle').disabled = currentReplayIndex >= chartData.count;
-            document.getElementById('start-over-replay').disabled = currentReplayIndex <= 0;
-        }
-
-        function updateReplaySpeed() {
-            if (isReplaying) {
-                pauseReplay();
-                startReplay();
-            }
+        // Disable text selection
+        document.addEventListener('selectstart', function(e) {
+            e.preventDefault();
+        });
+        // Disable drag-and-drop
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+        });
+        // Tab switching function
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
     </script>
+    <script src="/static/script.js?v=24"></script>
 </body>
 </html>
