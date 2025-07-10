@@ -375,12 +375,14 @@ def get_chart():
             logging.debug(f"Loaded data shape for {ticker} on {date}: {df.shape}")
 
             # Filter to regular market hours (9:30 AM to 4:00 PM) if restrict_hours is True
+            df_1min = df.copy()  # Keep raw 1-minute data
             if restrict_hours:
                 df['time'] = df['timestamp'].dt.time
                 start_time = pd.to_datetime('09:30:00').time()
                 end_time = pd.to_datetime('16:00:00').time()
                 df = df[(df['time'] >= start_time) & (df['time'] <= end_time)]
-                df = df.drop(columns=['time'])  # Remove temporary time column
+                df_1min = df_1min[(df_1min['timestamp'].dt.time >= start_time) & (df_1min['timestamp'].dt.time <= end_time)]
+                df = df.drop(columns=['time'])
                 logging.debug(f"Filtered to regular hours, new shape: {df.shape}")
 
             # Resample to the requested timeframe if not 1 minute
@@ -396,28 +398,45 @@ def get_chart():
                 df.reset_index(inplace=True)
                 logging.debug(f"Resampled data to {timeframe}-minute timeframe, new shape: {df.shape}")
 
+            if df.empty:
+                return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
+            required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+            if not all(col in df.columns for col in required_columns):
+                return jsonify({'error': 'Invalid data format'}), 400
+
+            # Format timestamps for aggregated data
+            df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            # Format timestamps for 1-minute data
+            df_1min['timestamp'] = df_1min['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+            chart_data = {
+                'aggregated': {
+                    'timestamp': df['timestamp'].tolist(),
+                    'open': df['open'].tolist(),
+                    'high': df['high'].tolist(),
+                    'low': df['low'].tolist(),
+                    'close': df['close'].tolist(),
+                    'volume': df['volume'].tolist(),
+                    'ticker': ticker,
+                    'date': date,
+                    'count': len(df)
+                },
+                'raw_1min': {
+                    'timestamp': df_1min['timestamp'].tolist(),
+                    'open': df_1min['open'].tolist(),
+                    'high': df_1min['high'].tolist(),
+                    'low': df_1min['low'].tolist(),
+                    'close': df_1min['close'].tolist(),
+                    'volume': df_1min['volume'].tolist(),
+                    'ticker': ticker,
+                    'date': date,
+                    'count': len(df_1min)
+                }
+            }
+            return jsonify({'chart_data': chart_data})
         except Exception as e:
             logging.error(f"Error querying database for {ticker}: {str(e)}")
             return jsonify({'error': 'Database query failed'}), 500
-        if df.empty:
-            return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
-        required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
-        if not all(col in df.columns for col in required_columns):
-            return jsonify({'error': 'Invalid data format'}), 400
-
-        df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
-        chart_data = {
-            'timestamp': df['timestamp'].tolist(),
-            'open': df['open'].tolist(),
-            'high': df['high'].tolist(),
-            'low': df['low'].tolist(),
-            'close': df['close'].tolist(),
-            'volume': df['volume'].tolist(),
-            'ticker': ticker,
-            'date': date,
-            'count': len(df)  # Update count to reflect filtered/resampled data
-        }
-        return jsonify({'chart_data': chart_data})
     except Exception as e:
         logging.error(f"Unexpected error in get_chart: {str(e)}")
         return jsonify({'error': 'Server error'}), 500

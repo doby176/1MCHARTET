@@ -1186,3 +1186,8 @@ form#signup-form p a:hover, form#login-form p a:hover {
         font-size: 0.9em;
     }
 }
+
+/* styles.css */
+.plotly-chart {
+    transition: all 0.2s ease-in-out;
+}
