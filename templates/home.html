@@ -30,13 +30,13 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=46">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=48">
     <title>1MChart - Precision Trading Insights</title>
 </head>
 <body>
     <header class="landing-header">
         <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
-        <h1>Discover Powerful Nasdaq Gap Insights, Market Simulator, Market Replay, News Analysis, and Earnings Data with 1MChart</h1>
+        <h1>Discover Powerful Nasdaq Gap Insights, News Analysis, Market Replay and Earnings Data with 1MChart</h1>
     </header>
     <div class="header-cta">
         <div class="cta-buttons">
@@ -100,12 +100,12 @@
                     <h3>Market Simulator</h3>
                     <p>Practice trading by revisiting key historical events (CPI, FOMC, earnings) with 1-minute candlestick charts. Simulate trades and test strategies risk-free.</p>
                 </div>
+                <div class="feature-card">
+                    <img src="{{ url_for('static', filename='highmetric.png') }}" alt="High-Frequency 1-Minute Data" class="metric-icon">
+                    <h3>High-Frequency 1-Minute Data</h3>
+                    <p>Access 1-minute candle data from 2015 to 2025 for precise market analysis and replay. Available tickers include QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, and META, enabling detailed intraday trading strategies.</p>
+                </div>
             </div>
-        </section>
-        <section class="data-section">
-            <h2>High-Frequency 1-Minute Data</h2>
-            <p>Access 1-minute candle data from 2015 to 2025 for precise market analysis and replay. Available tickers include QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, and META, enabling detailed intraday trading strategies.</p>
-            <img src="{{ url_for('static', filename='metric1min.png') }}" alt="1-Minute Data" class="metric-icon-large">
         </section>
         <section class="cta-section">
             <h2>Ready to Elevate Your Trading?</h2>

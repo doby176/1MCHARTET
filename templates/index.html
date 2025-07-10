@@ -63,6 +63,14 @@
                     </select>
                     <label for="date">Select Date:</label>
                     <input type="date" id="date" name="date">
+                    <label for="timeframe-select">Select Timeframe:</label>
+                    <select id="timeframe-select" name="timeframe">
+                       <option value="1m">1 Minute</option>
+                       <option value="2m">2 Minutes</option>
+                       <option value="3m">3 Minutes</option>
+                       <option value="5m">5 Minutes</option>
+                       <option value="10m">10 Minutes</option>
+                    </select>
                     <button type="submit">Load Chart</button>
                 </form>
                 <div id="chart-container">
@@ -156,6 +164,14 @@
                     </select>
                     <label for="date-gap">Select Date:</label>
                     <input type="date" id="date-gap" name="date">
+                    <label for="timeframe-select-gap">Select Timeframe:</label>
+                    <select id="timeframe-select-gap" name="timeframe">
+                       <option value="1m">1 Minute</option>
+                       <option value="2m">2 Minutes</option>
+                       <option value="3m">3 Minutes</option>
+                       <option value="5m">5 Minutes</option>
+                       <option value="10m">10 Minutes</option>
+                    </select>
                     <button type="submit">Load Chart</button>
                 </form>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
@@ -294,6 +310,14 @@
                             <option value="">Select a ticker</option>
                         </select>
                     </div>
+                    <label for="timeframe-select-earnings">Select Timeframe:</label>
+                    <select id="timeframe-select-earnings" name="timeframe">
+                      <option value="1m">1 Minute</option>
+                      <option value="2m">2 Minutes</option>
+                      <option value="3m">3 Minutes</option>
+                      <option value="5m">5 Minutes</option>
+                      <option value="10m">10 Minutes</option>
+                    </select>
                     <button type="submit">Find Earnings Dates</button>
                 </form>
                 <div id="earnings-dates">

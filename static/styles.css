@@ -1,3 +1,4 @@
+/* Existing styles (unchanged, included for context) */
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
@@ -59,6 +60,13 @@ form label {
     font-weight: 500;
 }
 
+/* NEW: Specific styling for time frame labels to ensure clarity */
+form label.timeframe-label {
+    font-size: 1em;
+    color: #1a1b2f;
+    white-space: nowrap;
+}
+
 form select, form input {
     padding: 8px;
     margin-right: 10px;
@@ -67,6 +75,11 @@ form select, form input {
     border-radius: 4px;
     width: 100%;
     box-sizing: border-box;
+}
+
+/* MODIFIED: Adjust select width to prevent overlap with new timeframe dropdowns */
+form select {
+    max-width: 150px; /* Limit width for better form layout */
 }
 
 form button {
@@ -92,6 +105,16 @@ form button:hover {
     width: 100%;
     height: 600px;
     max-height: 800px;
+}
+
+/* NEW: Ensure chart titles are readable with added timeframe text */
+.plotly .gtitle {
+    font-size: 1.2em !important;
+    font-weight: 700 !important;
+    color: #1a1b2f !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 .ads-container {
@@ -237,7 +260,7 @@ footer p {
 }
 
 /* Replay Controls Styling */
-#replay-controls {
+.replay-controls {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -250,7 +273,7 @@ footer p {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-#replay-controls button {
+.replay-controls button {
     padding: 8px 16px;
     background-color: #153097;
     color: white;
@@ -261,28 +284,55 @@ footer p {
     font-weight: 500;
 }
 
-#replay-controls button:hover:not(:disabled) {
+.replay-controls button:hover:not(:disabled) {
     background-color: #112A7F;
 }
 
-#replay-controls button:disabled {
+.replay-controls button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
     opacity: 0.6;
 }
 
-#replay-controls select {
+.replay-controls select {
     padding: 8px;
     font-size: 1em;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
-#replay-timestamp {
+.replay-controls span {
     font-size: 1em;
     font-weight: 500;
     color: #1a1b2f;
     margin: 0 10px;
+}
+
+/* Mobile-specific styles for replay controls */
+@media (max-width: 600px) {
+    .replay-controls {
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .replay-controls button {
+        font-size: 0.875em;
+        padding: 6px 12px;
+        width: 100%;
+        max-width: 200px;
+    }
+
+    .replay-controls select {
+        font-size: 0.875em;
+        padding: 6px;
+        width: 100%;
+        max-width: 200px;
+    }
+
+    .replay-controls span {
+        font-size: 0.9em;
+    }
 }
 
 /* Trade Summary Styling */
@@ -381,11 +431,12 @@ footer p {
         gap: 12px;
     }
 
+    /* MODIFIED: Adjust select and input for mobile to accommodate timeframe dropdowns */
     form select, form input {
         font-size: 0.875em;
         padding: 6px;
         min-height: 36px;
-        max-width: 300px;
+        max-width: 100%; /* Full width on mobile for better usability */
         margin: 0 auto;
         -webkit-appearance: none;
         -moz-appearance: none;
@@ -493,6 +544,13 @@ footer p {
         max-width: 100%;
     }
 
+    /* NEW: Ensure chart titles are readable on mobile */
+    .plotly .gtitle {
+        font-size: 1em !important;
+        white-space: normal !important;
+        line-height: 1.2 !important;
+    }
+
     .ads-container {
         max-width: 280px;
         margin: 10px auto;
@@ -500,27 +558,27 @@ footer p {
     }
 
     /* Replay Controls Mobile Styling */
-    #replay-controls {
+    #replay-controls, #replay-controls-gap, #replay-controls-events, #replay-controls-earnings {
         flex-direction: column;
         gap: 8px;
         padding: 8px;
     }
 
-    #replay-controls button {
+    #replay-controls button, #replay-controls-gap button, #replay-controls-events button, #replay-controls-earnings button {
         font-size: 0.875em;
         padding: 6px 12px;
         width: 100%;
         max-width: 200px;
     }
 
-    #replay-controls select {
+    #replay-controls select, #replay-controls-gap select, #replay-controls-events select, #replay-controls-earnings select {
         font-size: 0.875em;
         padding: 6px;
         width: 100%;
         max-width: 200px;
     }
 
-    #replay-timestamp {
+    #replay-timestamp, #replay-timestamp-gap, #replay-timestamp-events, #replay-timestamp-earnings {
         font-size: 0.9em;
     }
 
@@ -950,14 +1008,26 @@ form#signup-form p a:hover, form#login-form p a:hover {
 .video-container {
     position: relative;
     width: 100%;
-    max-width: 560px;
+    max-width: 1200px;
     margin: 20px auto;
+    aspect-ratio: 16 / 9;
 }
 
 .video-container iframe {
     width: 100%;
-    height: 315px;
+    height: 100%;
     border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+    .video-container {
+        max-width: 100%;
+        margin: 10px auto;
+    }
+
+    .video-container iframe {
+        height: 100%;
+    }
 }
 
 .features {
@@ -1007,35 +1077,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
     object-fit: contain;
     margin: 0 auto 10px auto;
     display: block;
-}
-
-.metric-icon-large {
-    width: 1516px;
-    height: 746px;
-    max-width: 100%;
-    object-fit: contain;
-    margin: 20px auto;
-    display: block;
-}
-
-.data-section {
-    padding: 40px 20px;
-    text-align: center;
-}
-
-.data-section h2 {
-    font-size: 2em;
-    font-weight: 700;
-    color: #1a1b2f;
-    margin-bottom: 20px;
-}
-
-.data-section p {
-    font-size: 1em;
-    font-weight: 400;
-    color: #555;
-    max-width: 800px;
-    margin: 0 auto 20px;
 }
 
 .ad-container {
@@ -1131,25 +1172,6 @@ form#signup-form p a:hover, form#login-form p a:hover {
         width: 267px;
         height: 183px;
         max-width: 100%;
-    }
-
-    .data-section {
-        padding: 20px 10px;
-    }
-
-    .data-section h2 {
-        font-size: 1.5em;
-    }
-
-    .data-section p {
-        font-size: 0.9em;
-    }
-
-    .metric-icon-large {
-        width: 1516px;
-        height: 746px;
-        max-width: 100%;
-        margin: 10px auto;
     }
 
     .cta-section {

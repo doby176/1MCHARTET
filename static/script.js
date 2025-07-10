@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize ticker selects for both tabs
     document.getElementById('ticker-select').addEventListener('change', () => loadDates('ticker-select', 'date'));
     document.getElementById('ticker-select-gap').addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
+    document.getElementById('earnings-ticker-select').addEventListener('change', () => loadDates('earnings-ticker-select', 'date-gap'));
 });
 
 // Global variables for replay (Market Simulator)
@@ -187,10 +188,16 @@ function loadBinOptions() {
 async function loadTickers() {
     const tickerSelect = document.getElementById('ticker-select');
     const tickerSelectGap = document.getElementById('ticker-select-gap');
+    const earningsTickerSelect = document.getElementById('earnings-ticker-select');
+    const earningsTickerOnlySelect = document.getElementById('earnings-ticker-only-select');
     tickerSelect.disabled = true;
     tickerSelectGap.disabled = true;
+    earningsTickerSelect.disabled = true;
+    earningsTickerOnlySelect.disabled = true;
     tickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
     tickerSelectGap.innerHTML = '<option value="">Loading tickers...</option>';
+    earningsTickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
+    earningsTickerOnlySelect.innerHTML = '<option value="">Loading tickers...</option>';
     try {
         console.log('Fetching tickers from /api/tickers');
         const response = await fetch('/api/tickers', {
@@ -206,6 +213,8 @@ async function loadTickers() {
             console.error('Rate limit error:', data.error);
             tickerSelect.innerHTML = `<option value="">${data.error}</option>`;
             tickerSelectGap.innerHTML = `<option value="">${data.error}</option>`;
+            earningsTickerSelect.innerHTML = `<option value="">${data.error}</option>`;
+            earningsTickerOnlySelect.innerHTML = `<option value="">${data.error}</option>`;
             alert(data.error);
             return;
         }
@@ -220,74 +229,33 @@ async function loadTickers() {
         }
         tickerSelect.innerHTML = '<option value="">Select a ticker</option>';
         tickerSelectGap.innerHTML = '<option value="">Select a ticker</option>';
+        earningsTickerSelect.innerHTML = '<option value="">Select a ticker</option>';
+        earningsTickerOnlySelect.innerHTML = '<option value="">Select a ticker</option>';
         data.tickers.forEach(ticker => {
             const option = document.createElement('option');
             option.value = ticker;
             option.textContent = ticker;
             tickerSelect.appendChild(option.cloneNode(true));
-            tickerSelectGap.appendChild(option);
+            tickerSelectGap.appendChild(option.cloneNode(true));
+            earningsTickerSelect.appendChild(option.cloneNode(true));
+            earningsTickerOnlySelect.appendChild(option);
         });
         tickerSelect.disabled = false;
         tickerSelectGap.disabled = false;
+        earningsTickerSelect.disabled = false;
+        earningsTickerOnlySelect.disabled = false;
     } catch (error) {
         console.error('Error loading tickers:', error.message);
         tickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
         tickerSelectGap.innerHTML = '<option value="">Error loading tickers</option>';
+        earningsTickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
+        earningsTickerOnlySelect.innerHTML = '<option value="">Error loading tickers</option>';
         alert('Failed to load tickers: ' + error.message + '. Please refresh the page or try again later.');
     }
 }
 
 async function loadEarningsTickers() {
-    const tickerSelect = document.getElementById('earnings-ticker-select');
-    const tickerOnlySelect = document.getElementById('earnings-ticker-only-select');
-    tickerSelect.disabled = true;
-    tickerOnlySelect.disabled = true;
-    tickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
-    tickerOnlySelect.innerHTML = '<option value="">Loading tickers...</option>';
-    try {
-        console.log('Fetching earnings tickers from /api/tickers');
-        const response = await fetch('/api/tickers', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        });
-        console.log('Response status:', response.status);
-        if (response.status === 429) {
-            const data = await response.json();
-            console.error('Rate limit error:', data.error);
-            tickerSelect.innerHTML = `<option value="">${data.error}</option>`;
-            tickerOnlySelect.innerHTML = `<option value="">${data.error}</option>`;
-            alert(data.error);
-            return;
-        }
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
-        }
-        const data = await response.json();
-        console.log('Fetched tickers for earnings:', data.tickers);
-        if (!data.tickers || !Array.isArray(data.tickers)) {
-            throw new Error('Invalid response format: tickers array not found');
-        }
-        tickerSelect.innerHTML = '<option value="">Select a ticker</option>';
-        tickerOnlySelect.innerHTML = '<option value="">Select a ticker</option>';
-        data.tickers.forEach(ticker => {
-            const option = document.createElement('option');
-            option.value = ticker;
-            option.textContent = ticker;
-            tickerSelect.appendChild(option.cloneNode(true));
-            tickerOnlySelect.appendChild(option);
-        });
-        tickerSelect.disabled = false;
-        tickerOnlySelect.disabled = false;
-    } catch (error) {
-        console.error('Error loading earnings tickers:', error.message);
-        tickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
-        tickerOnlySelect.innerHTML = '<option value="">Error loading tickers</option>';
-        alert('Failed to load earnings tickers: ' + error.message + '. Please refresh the page or try again later.');
-    }
+    // This function is redundant since loadTickers handles all ticker selects
 }
 
 async function loadDates(tickerSelectId, dateInputId) {
@@ -346,6 +314,7 @@ async function loadChart(event, tabId) {
         'market-simulator': {
             tickerSelectId: 'ticker-select',
             dateInputId: 'date',
+            timeframeSelectId: 'timeframe-select',
             chartContainerId: 'plotly-chart',
             formId: 'stock-form',
             restrictHours: false,
@@ -355,6 +324,7 @@ async function loadChart(event, tabId) {
         'gap-analysis': {
             tickerSelectId: 'ticker-select-gap',
             dateInputId: 'date-gap',
+            timeframeSelectId: 'timeframe-select-gap',
             chartContainerId: 'plotly-chart-gap',
             formId: 'stock-form-gap',
             restrictHours: true,
@@ -364,17 +334,19 @@ async function loadChart(event, tabId) {
         'events-analysis': {
             tickerSelectId: 'ticker-select-gap',
             dateInputId: 'date-gap',
+            timeframeSelectId: 'timeframe-select-gap',
             chartContainerId: 'plotly-chart-events',
             formId: 'stock-form-gap',
-            restrictHours: false, // Include pre/post-market data
+            restrictHours: false,
             replayControlsId: 'replay-controls-events',
             replayPrefix: 'events'
         },
         'earnings-analysis': {
             tickerSelectId: 'earnings-ticker-select',
             dateInputId: 'date-gap',
+            timeframeSelectId: 'timeframe-select-earnings',
             chartContainerId: 'plotly-chart-earnings',
-            formId: 'stock-form-gap',
+            formId: 'earnings-form',
             restrictHours: true,
             replayControlsId: 'replay-controls-earnings',
             replayPrefix: 'earnings'
@@ -387,9 +359,10 @@ async function loadChart(event, tabId) {
         return;
     }
 
-    const { tickerSelectId, dateInputId, chartContainerId, formId, restrictHours, replayControlsId, replayPrefix } = config;
+    const { tickerSelectId, dateInputId, timeframeSelectId, chartContainerId, formId, restrictHours, replayControlsId, replayPrefix } = config;
     const ticker = document.getElementById(tickerSelectId).value;
     const date = document.getElementById(dateInputId).value;
+    const timeframe = document.getElementById(timeframeSelectId).value;
     const chartContainer = document.getElementById(chartContainerId);
     const form = document.getElementById(formId);
     const button = form.querySelector('button[type="submit"]');
@@ -415,14 +388,14 @@ async function loadChart(event, tabId) {
         return;
     }
 
-    if (!ticker || !date) {
-        chartContainer.innerHTML = '<p>Please select a ticker and date.</p>';
+    if (!ticker || !date || !timeframe) {
+        chartContainer.innerHTML = '<p>Please select a ticker, date, and timeframe.</p>';
         replayControls.style.display = 'none';
         return;
     }
 
-    console.log(`Loading chart for ticker=${ticker}, date=${date}, restrict_hours=${restrictHours}, tab=${tabId}`);
-    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}${restrictHours ? '&restrict_hours=true' : ''}`;
+    console.log(`Loading chart for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrict_hours=${restrictHours}, tab=${tabId}`);
+    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}${restrictHours ? '&restrict_hours=true' : ''}`;
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
@@ -448,7 +421,7 @@ async function loadChart(event, tabId) {
                 button.textContent = 'Load Chart';
                 inputs.forEach(input => input.disabled = false);
                 localStorage.removeItem(`chartRateLimitReset_${tabId}`);
-                chartContainer.innerHTML = '<p>Please select a ticker and date to generate a chart.</p>';
+                chartContainer.innerHTML = '<p>Please select a ticker, date, and timeframe to generate a chart.</p>';
             }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
@@ -497,6 +470,13 @@ async function loadChart(event, tabId) {
         }
 
         // Render chart
+        const timeframeText = {
+            '1m': '1 Minute',
+            '2m': '2 Minutes',
+            '3m': '3 Minutes',
+            '5m': '5 Minutes',
+            '10m': '10 Minutes'
+        }[data.chart_data.timeframe] || data.chart_data.timeframe;
         const candlestickTrace = {
             x: data.chart_data.timestamp,
             open: data.chart_data.open,
@@ -517,7 +497,7 @@ async function loadChart(event, tabId) {
             marker: { color: '#888888' }
         };
         const layout = {
-            title: `${data.chart_data.ticker} Candlestick Chart - ${data.chart_data.date}${restrictHours ? ' (Regular Hours)' : ''}`,
+            title: `${data.chart_data.ticker} Candlestick Chart - ${data.chart_data.date} (${timeframeText}${restrictHours ? ', Regular Hours' : ''})`,
             xaxis: {
                 title: 'Time',
                 type: 'date',
@@ -559,7 +539,7 @@ async function loadChart(event, tabId) {
 
         gtag('event', 'chart_load', {
             'event_category': 'Chart',
-            'event_label': `${ticker}_${date}${restrictHours ? '_regular_hours' : ''}`,
+            'event_label': `${ticker}_${date}_${timeframe}${restrictHours ? '_regular_hours' : ''}`,
             'tab': tabId
         });
     } catch (error) {
@@ -818,6 +798,13 @@ function startReplay(section) {
 
     // Initialize chart for replay
     Plotly.purge(chartContainer);
+    const timeframeText = {
+        '1m': '1 Minute',
+        '2m': '2 Minutes',
+        '3m': '3 Minutes',
+        '5m': '5 Minutes',
+        '10m': '10 Minutes'
+    }[chartData.timeframe] || chartData.timeframe;
     const candlestickTrace = {
         x: chartData.timestamp.slice(0, config.currentReplayIndex()),
         open: chartData.open.slice(0, config.currentReplayIndex()),
@@ -838,7 +825,7 @@ function startReplay(section) {
         marker: { color: '#888888' }
     };
     const layout = {
-        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
+        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (${timeframeText}, Replay)`,
         xaxis: {
             title: 'Time',
             type: 'date',
@@ -903,7 +890,7 @@ function startReplay(section) {
 
     gtag('event', 'replay_start', {
         'event_category': 'Chart',
-        'event_label': `${chartData.ticker}_${chartData.date}_${section || 'simulator'}`
+        'event_label': `${chartData.ticker}_${chartData.date}_${section || 'simulator'}_${chartData.timeframe}`
     });
 }
 
@@ -964,6 +951,13 @@ function startOverReplay(section) {
 
     // Update chart to show no candles (initial state)
     Plotly.purge(chartContainer);
+    const timeframeText = {
+        '1m': '1 Minute',
+        '2m': '2 Minutes',
+        '3m': '3 Minutes',
+        '5m': '5 Minutes',
+        '10m': '10 Minutes'
+    }[chartData.timeframe] || chartData.timeframe;
     const candlestickTrace = {
         x: [],
         open: [],
@@ -984,7 +978,7 @@ function startOverReplay(section) {
         marker: { color: '#888888' }
     };
     const layout = {
-        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
+        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (${timeframeText}, Replay)`,
         xaxis: {
             title: 'Time',
             type: 'date',
@@ -1025,7 +1019,7 @@ function startOverReplay(section) {
 
     gtag('event', 'replay_start_over', {
         'event_category': 'Chart',
-        'event_label': `${chartData.ticker}_${chartData.date}_${section || 'simulator'}`
+        'event_label': `${chartData.ticker}_${chartData.date}_${section || 'simulator'}_${chartData.timeframe}`
     });
 }
 
@@ -1083,6 +1077,13 @@ function stopReplay(section) {
     }
 
     // Restore full chart
+    const timeframeText = {
+        '1m': '1 Minute',
+        '2m': '2 Minutes',
+        '3m': '3 Minutes',
+        '5m': '5 Minutes',
+        '10m': '10 Minutes'
+    }[chartData.timeframe] || chartData.timeframe;
     const candlestickTrace = {
         x: chartData.timestamp,
         open: chartData.open,
@@ -1103,7 +1104,7 @@ function stopReplay(section) {
         marker: { color: '#888888' }
     };
     const layout = {
-        title: `${chartData.ticker} Candlestick Chart - ${chartData.date}`,
+        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (${timeframeText})`,
         xaxis: {
             title: 'Time',
             type: 'date',
@@ -1163,6 +1164,13 @@ function updateChartToIndex(section) {
 
     // Update chart to show candles up to currentReplayIndex
     Plotly.purge(chartContainer);
+    const timeframeText = {
+        '1m': '1 Minute',
+        '2m': '2 Minutes',
+        '3m': '3 Minutes',
+        '5m': '5 Minutes',
+        '10m': '10 Minutes'
+    }[chartData.timeframe] || chartData.timeframe;
     const candlestickTrace = {
         x: chartData.timestamp.slice(0, config.currentReplayIndex()),
         open: chartData.open.slice(0, config.currentReplayIndex()),
@@ -1183,7 +1191,7 @@ function updateChartToIndex(section) {
         marker: { color: '#888888' }
     };
     const layout = {
-        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
+        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (${timeframeText}, Replay)`,
         xaxis: {
             title: 'Time',
             type: 'date',
@@ -1382,10 +1390,14 @@ async function loadYears() {
 async function loadEventDates(event) {
     event.preventDefault();
     const filterType = document.querySelector('input[name="filter-type"]:checked').value;
+    const eventType = document.getElementById('event-type-select').value;
+    const year = document.getElementById('year-select').value;
+    const binEventType = document.getElementById('bin-event-type-select').value;
+    const bin = document.getElementById('bin-select').value;
     const eventDatesContainer = document.getElementById('event-dates');
     const form = document.getElementById('events-form');
     const button = form.querySelector('button[type="submit"]');
-    const selects = form.querySelectorAll('select');
+    const inputs = form.querySelectorAll('select, input[type="radio"]');
 
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('eventDatesRateLimitReset');
@@ -1393,34 +1405,26 @@ async function loadEventDates(event) {
         eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
         button.disabled = true;
         button.textContent = 'Rate Limit Exceeded';
-        selects.forEach(select => select.disabled = true);
+        inputs.forEach(input => input.disabled = true);
         return;
     }
 
     let url;
-    let eventType;
-    let year;
-    let bin;
-
     if (filterType === 'year') {
-        eventType = document.getElementById('event-type-select').value;
-        year = document.getElementById('year-select').value;
         if (!eventType || !year) {
             eventDatesContainer.innerHTML = '<p>Please select an event type and year.</p>';
             return;
         }
         url = `/api/events?event_type=${encodeURIComponent(eventType)}&year=${encodeURIComponent(year)}`;
     } else {
-        eventType = document.getElementById('bin-event-type-select').value;
-        bin = document.getElementById('bin-select').value;
-        if (!eventType || !bin) {
-            eventDatesContainer.innerHTML = '<p>Please select an event type and economic impact range.</p>';
+        if (!binEventType || !bin) {
+            eventDatesContainer.innerHTML = '<p>Please select an event type and range.</p>';
             return;
         }
-        url = `/api/economic_events?event_type=${encodeURIComponent(eventType)}&bin=${encodeURIComponent(bin)}`;
+        url = `/api/events?event_type=${encodeURIComponent(binEventType)}&bin=${encodeURIComponent(bin)}`;
     }
 
-    console.log(`Fetching events for filterType=${filterType}, event_type=${eventType}, year=${year}, bin=${bin}`);
+    console.log(`Fetching events for ${filterType === 'year' ? `event_type=${eventType}, year=${year}` : `event_type=${binEventType}, bin=${bin}`}`);
     console.log('Fetching URL:', url);
     eventDatesContainer.innerHTML = '<p>Loading event dates...</p>';
     try {
@@ -1438,16 +1442,16 @@ async function loadEventDates(event) {
             eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
             button.disabled = true;
             button.textContent = 'Rate Limit Exceeded';
-            selects.forEach(select => select.disabled = true);
+            inputs.forEach(input => input.disabled = true);
             const resetTime = Date.now() + 12 * 60 * 60 * 1000;
             localStorage.setItem('eventDatesRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
                 button.textContent = 'Find Event Dates';
-                selects.forEach(select => select.disabled = false);
+                inputs.forEach(input => input.disabled = false);
                 localStorage.removeItem('eventDatesRateLimitReset');
-                eventDatesContainer.innerHTML = '<p>Select filters to view dates with events.</p>';
-            }, 1000);
+                eventDatesContainer.innerHTML = '<p>Please select an event type and either a year or range to view event dates.</p>';
+            }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
         }
@@ -1483,8 +1487,8 @@ async function loadEventDates(event) {
                 document.getElementById('date-gap').value = date;
                 loadChart(new Event('submit'), 'events-analysis');
                 gtag('event', 'event_date_click', {
-                    'event_category': 'Event Analysis',
-                    'event_label': `QQQ_${date}_${eventType}${bin ? '_' + bin : ''}`
+                    'event_category': 'Events Analysis',
+                    'event_label': `QQQ_${date}_${filterType === 'year' ? eventType : binEventType}`
                 });
             });
             li.appendChild(link);
@@ -1503,10 +1507,13 @@ async function loadEventDates(event) {
 async function loadEarningsDates(event) {
     event.preventDefault();
     const filterType = document.querySelector('input[name="earnings-filter-type"]:checked').value;
+    const ticker = document.getElementById('earnings-ticker-select').value;
+    const bin = document.getElementById('earnings-bin-select').value;
+    const tickerOnly = document.getElementById('earnings-ticker-only-select').value;
     const earningsDatesContainer = document.getElementById('earnings-dates');
     const form = document.getElementById('earnings-form');
     const button = form.querySelector('button[type="submit"]');
-    const selects = form.querySelectorAll('select');
+    const inputs = form.querySelectorAll('select, input[type="radio"]');
 
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('earningsDatesRateLimitReset');
@@ -1514,32 +1521,26 @@ async function loadEarningsDates(event) {
         earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
         button.disabled = true;
         button.textContent = 'Rate Limit Exceeded';
-        selects.forEach(select => select.disabled = true);
+        inputs.forEach(input => input.disabled = true);
         return;
     }
 
     let url;
-    let ticker;
-    let bin;
-
     if (filterType === 'ticker-outcome') {
-        ticker = document.getElementById('earnings-ticker-select').value;
-        bin = document.getElementById('earnings-bin-select').value;
         if (!ticker || !bin) {
             earningsDatesContainer.innerHTML = '<p>Please select a ticker and earnings outcome.</p>';
             return;
         }
-        url = `/api/earnings_by_bin?ticker=${encodeURIComponent(ticker)}&bin=${encodeURIComponent(bin)}`;
+        url = `/api/earnings?ticker=${encodeURIComponent(ticker)}&bin=${encodeURIComponent(bin)}`;
     } else {
-        ticker = document.getElementById('earnings-ticker-only-select').value;
-        if (!ticker) {
+        if (!tickerOnly) {
             earningsDatesContainer.innerHTML = '<p>Please select a ticker.</p>';
             return;
         }
-        url = `/api/earnings?ticker=${encodeURIComponent(ticker)}`;
+        url = `/api/earnings?ticker=${encodeURIComponent(tickerOnly)}`;
     }
 
-    console.log(`Fetching earnings for filterType=${filterType}, ticker=${ticker}, bin=${bin}`);
+    console.log(`Fetching earnings for ${filterType === 'ticker-outcome' ? `ticker=${ticker}, bin=${bin}` : `ticker=${tickerOnly}`}`);
     console.log('Fetching URL:', url);
     earningsDatesContainer.innerHTML = '<p>Loading earnings dates...</p>';
     try {
@@ -1553,19 +1554,20 @@ async function loadEarningsDates(event) {
         console.log('Response status:', response.status);
         if (response.status === 429) {
             const data = await response.json();
+            console.error('Rate limit error:', data.error);
             earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
             button.disabled = true;
             button.textContent = 'Rate Limit Exceeded';
-            selects.forEach(select => select.disabled = true);
+            inputs.forEach(input => input.disabled = true);
             const resetTime = Date.now() + 12 * 60 * 60 * 1000;
             localStorage.setItem('earningsDatesRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
                 button.textContent = 'Find Earnings Dates';
-                selects.forEach(select => select.disabled = false);
+                inputs.forEach(input => input.disabled = false);
                 localStorage.removeItem('earningsDatesRateLimitReset');
-                earningsDatesContainer.innerHTML = '<p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>';
-            }, 1000);
+                earningsDatesContainer.innerHTML = '<p>Please select a ticker and optionally an earnings outcome to view earnings dates.</p>';
+            }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
         }
@@ -1576,13 +1578,13 @@ async function loadEarningsDates(event) {
         const data = await response.json();
         console.log('Earnings API response:', JSON.stringify(data, null, 2));
         if (data.error) {
-            console.error('Error from earnings data:', data.error);
+            console.error('Error from earnings API:', data.error);
             earningsDatesContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
         if (!data.dates || data.dates.length === 0) {
             console.log('No earnings dates found:', data.message || 'No dates returned');
-            earningsDatesContainer.innerHTML = `<p>${data.message || `No earnings found for ${ticker}${bin ? ' with outcome ' + bin : ''}`}</p>`;
+            earningsDatesContainer.innerHTML = `<p>${data.message || 'No earnings dates found for the selected criteria'}</p>`;
             return;
         }
         console.log(`Rendering ${data.dates.length} earnings dates:`, data.dates);
@@ -1597,12 +1599,13 @@ async function loadEarningsDates(event) {
                 e.preventDefault();
                 console.log(`Clicked earnings date: ${date}`);
                 openTab('earnings-analysis');
-                document.getElementById('earnings-ticker-select').value = ticker;
+                const selectedTicker = filterType === 'ticker-outcome' ? ticker : tickerOnly;
+                document.getElementById('earnings-ticker-select').value = selectedTicker;
                 document.getElementById('date-gap').value = date;
                 loadChart(new Event('submit'), 'earnings-analysis');
                 gtag('event', 'earnings_date_click', {
                     'event_category': 'Earnings Analysis',
-                    'event_label': `${ticker}_${date}${bin ? '_' + bin : ''}`
+                    'event_label': `${selectedTicker}_${date}_${filterType === 'ticker-outcome' ? bin : 'all'}`
                 });
             });
             li.appendChild(link);
@@ -1620,10 +1623,9 @@ async function loadEarningsDates(event) {
 
 async function loadGapInsights(event) {
     event.preventDefault();
-    const gapSize = document.getElementById('gap-insights-size-select').value;
-    const day = document.getElementById('gap-insights-day-select').value;
-    const gapDirection = document.getElementById('gap-insights-direction-select').value;
-    const insightsContainer = document.getElementById('gap-insights-results');
+    const gapSize = document.getElementById('gap-size-insights').value;
+    const gapDirection = document.getElementById('gap-direction-insights').value;
+    const insightsContainer = document.getElementById('gap-insights');
     const form = document.getElementById('gap-insights-form');
     const button = form.querySelector('button[type="submit"]');
     const selects = form.querySelectorAll('select');
@@ -1631,19 +1633,20 @@ async function loadGapInsights(event) {
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem('gapInsightsRateLimitReset');
     if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
-        insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 3 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
         button.disabled = true;
         button.textContent = 'Rate Limit Exceeded';
         selects.forEach(select => select.disabled = true);
         return;
     }
 
-    if (!gapSize || !day || !gapDirection) {
-        insightsContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction.</p>';
+    if (!gapSize || !gapDirection) {
+        insightsContainer.innerHTML = '<p>Please select a gap size and gap direction.</p>';
         return;
     }
-    console.log(`Fetching gap insights for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
-    const url = `/api/gap_insights?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
+
+    console.log(`Fetching gap insights for gap_size=${gapSize}, gap_direction=${gapDirection}`);
+    const url = `/api/gap_insights?gap_size=${encodeURIComponent(gapSize)}&gap_direction=${encodeURIComponent(gapDirection)}`;
     console.log('Fetching URL:', url);
     insightsContainer.innerHTML = '<p>Loading gap insights...</p>';
     try {
@@ -1657,6 +1660,7 @@ async function loadGapInsights(event) {
         console.log('Response status:', response.status);
         if (response.status === 429) {
             const data = await response.json();
+            console.error('Rate limit error:', data.error);
             insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
             button.disabled = true;
             button.textContent = 'Rate Limit Exceeded';
@@ -1665,11 +1669,11 @@ async function loadGapInsights(event) {
             localStorage.setItem('gapInsightsRateLimitReset', resetTime);
             setTimeout(() => {
                 button.disabled = false;
-                button.textContent = 'Get Insights';
+                button.textContent = 'Load Insights';
                 selects.forEach(select => select.disabled = false);
                 localStorage.removeItem('gapInsightsRateLimitReset');
-                insightsContainer.innerHTML = '<p>Select a gap size, day of the week, and gap direction to view gap insights.</p>';
-            }, 1000);
+                insightsContainer.innerHTML = '<p>Please select a gap size and gap direction to view insights.</p>';
+            }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
         }
@@ -1686,70 +1690,39 @@ async function loadGapInsights(event) {
         }
         if (!data.insights || Object.keys(data.insights).length === 0) {
             console.log('No gap insights found:', data.message || 'No insights returned');
-            insightsContainer.innerHTML = `<p>${data.message || 'No gap insights found for the selected criteria'}</p>`;
+            insightsContainer.innerHTML = `<p>${data.message || 'No insights found for the selected criteria'}</p>`;
             return;
         }
         console.log('Rendering gap insights:', data.insights);
-
-        const insights = data.insights;
-        const container = document.createElement('div');
-        container.className = 'insights-container';
-        container.innerHTML = `<h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>`;
-
-        // First row: 4 metrics
-        const row1 = document.createElement('div');
-        row1.className = 'insights-row four-metrics';
-        ['gap_fill_rate', 'median_move_before_fill', 'median_max_move_unfilled', 'median_time_to_fill'].forEach(key => {
-            const metric = document.createElement('div');
-            metric.className = 'insight-metric';
-            metric.innerHTML = `
-                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-description">${insights[key].description}</div>
-            `;
-            row1.appendChild(metric);
+        const table = document.createElement('table');
+        table.className = 'insights-table';
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+        const headerRow = document.createElement('tr');
+        ['Metric', 'Value'].forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headerRow.appendChild(th);
         });
-        container.appendChild(row1);
-
-        // Second row: 2 metrics
-        const row2 = document.createElement('div');
-        row2.className = 'insights-row two-metrics';
-        ['reversal_after_fill_rate', 'median_move_before_reversal'].forEach(key => {
-            const metric = document.createElement('div');
-            metric.className = 'insight-metric';
-            metric.innerHTML = `
-                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-description">${insights[key].description}</div>
-            `;
-            row2.appendChild(metric);
+        thead.appendChild(headerRow);
+        Object.entries(data.insights).forEach(([metric, value]) => {
+            const row = document.createElement('tr');
+            const metricCell = document.createElement('td');
+            metricCell.textContent = metric;
+            const valueCell = document.createElement('td');
+            valueCell.textContent = typeof value === 'number' ? value.toFixed(2) : value;
+            row.appendChild(metricCell);
+            row.appendChild(valueCell);
+            tbody.appendChild(row);
         });
-        container.appendChild(row2);
-
-        // Third row: 2 metrics
-        const row3 = document.createElement('div');
-        row3.className = 'insights-row two-metrics';
-        ['median_time_of_low', 'median_time_of_high'].forEach(key => {
-            const metric = document.createElement('div');
-            metric.className = 'insight-metric';
-            metric.innerHTML = `
-                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median">${insights[key].median}</div>
-                <div class="metric-description">${insights[key].description}</div>
-            `;
-            row3.appendChild(metric);
-        });
-        container.appendChild(row3);
-
+        table.appendChild(thead);
+        table.appendChild(tbody);
         insightsContainer.innerHTML = '';
-        insightsContainer.appendChild(container);
+        insightsContainer.appendChild(table);
         console.log('Gap insights rendered successfully');
-
         gtag('event', 'gap_insights_load', {
             'event_category': 'Gap Insights',
-            'event_label': `QQQ_${gapSize}_${day}_${gapDirection}`
+            'event_label': `${gapSize}_${gapDirection}`
         });
     } catch (error) {
         console.error('Error loading gap insights:', error.message);
@@ -1758,21 +1731,28 @@ async function loadGapInsights(event) {
     }
 }
 
-function openTab(tabName) {
-    console.log(`Opening tab: ${tabName}`);
+function openTab(tabId) {
+    console.log(`Opening tab: ${tabId}`);
     const tabs = document.getElementsByClassName('tab-content');
-    const buttons = document.getElementsByClassName('tab-button');
     for (let i = 0; i < tabs.length; i++) {
         tabs[i].style.display = 'none';
-        buttons[i].classList.remove('active');
     }
-    document.getElementById(tabName).style.display = 'block';
-    const activeButton = Array.from(buttons).find(button => button.getAttribute('onclick').includes(tabName));
+    const tabButtons = document.getElementsByClassName('tab-button');
+    for (let i = 0; i < tabButtons.length; i++) {
+        tabButtons[i].classList.remove('active');
+    }
+    document.getElementById(tabId).style.display = 'block';
+    const activeButton = Array.from(tabButtons).find(btn => btn.getAttribute('onclick').includes(`openTab('${tabId}'`));
     if (activeButton) {
         activeButton.classList.add('active');
     }
     gtag('event', 'tab_open', {
         'event_category': 'Navigation',
-        'event_label': tabName
+        'event_label': tabId
     });
 }
+
+// Ensure the initial tab is set correctly
+document.addEventListener('DOMContentLoaded', () => {
+    openTab('market-simulator');
+});
