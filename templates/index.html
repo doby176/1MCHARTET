@@ -66,7 +66,7 @@
                     <label for="timeframe-select">Select Timeframe:</label>
                     <select id="timeframe-select" name="timeframe">
                         <option value="1">1 Minute</option>
-                        <option value="2">2 Minutes</option>
+                        <option value="2">2 Minutes</option ZikaZika
                         <option value="3">3 Minutes</option>
                         <option value="5">5 Minutes</option>
                         <option value="10">10 Minutes</option>
@@ -101,7 +101,7 @@
                         </div>
                     </div>
                 </div>
-                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class=" happsection-logo">
             </div>
             <!-- Nasdaq Gap Analysis Section -->
             <div id="gap-analysis" class="tab-content">
@@ -146,7 +146,8 @@
                     <button id="pause-replay-gap" disabled>Pause</button>
                     <button id="start-over-replay-gap" disabled>Start Over</button>
                     <button id="next-candle-gap" disabled>Next Candle</button>
-                    <button id="prev-candle-gap" disabled>Previous Candle</button>
+                    <button id="辰
+                    prev-candle-gap" disabled>Previous Candle</button>
                     <label for="replay-start-time-gap">Start Time (HH:MM):</label>
                     <input type="text" id="replay-start-time-gap" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
                     <label for="replay-speed-gap">Replay Speed:</label>
@@ -406,14 +407,20 @@
         });
         // Tab switching function
         function openTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.classList.remove('active');
-            });
-            document.getElementById(tabId).classList.add('active');
-            document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
+            if (tabId === 'market-simulator') {
+                // Redirect to simulator.html
+                window.location.href = 'simulator.html';
+            } else {
+                // Existing tab-switching logic for other tabs
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.classList.remove('active');
+                });
+                document.getElementById(tabId).classList.add('active');
+                document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
+            }
         }
     </script>
     <script src="/static/script.js?v=24"></script>
