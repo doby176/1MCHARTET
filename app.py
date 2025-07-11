@@ -339,17 +339,20 @@ def get_chart():
         date = request.args.get('date')
         restrict_hours = request.args.get('restrict_hours', 'false').lower() == 'true'
         logging.debug(f"Processing chart request for ticker={ticker}, date={date}, restrict_hours={restrict_hours}")
+
         if not ticker or not date:
             return jsonify({'error': 'Missing ticker or date'}), 400
-        if ticker not in TICKERS:
+        if ticker not in TICKERS:  # Assuming TICKERS is defined in your app
             return jsonify({'error': 'Invalid ticker'}), 400
         try:
             target_date = pd.to_datetime(date).date()
         except ValueError:
             return jsonify({'error': 'Invalid date format'}), 400
-        db_paths = get_db_paths(ticker)
+
+        db_paths = get_db_paths(ticker)  # Assuming get_db_paths is defined
         if not db_paths:
             return jsonify({'error': f'No database available for {ticker}'}), 404
+
         try:
             df_list = []
             query = """
@@ -363,6 +366,7 @@ def get_chart():
                 df = pd.read_sql_query(query, conn, params=(ticker, str(target_date)), parse_dates=['timestamp'])
                 df_list.append(df)
                 conn.close()
+            
             df = pd.concat(df_list, ignore_index=True)
             df = df.sort_values('timestamp')
             logging.debug(f"Loaded data shape for {ticker} on {date}: {df.shape}")
@@ -373,31 +377,28 @@ def get_chart():
                 start_time = pd.to_datetime('09:30:00').time()
                 end_time = pd.to_datetime('16:00:00').time()
                 df = df[(df['time'] >= start_time) & (df['time'] <= end_time)]
-                df = df.drop(columns=['time'])  # Remove temporary time column
+                df = df.drop(columns=['time'])
                 logging.debug(f"Filtered to regular hours, new shape: {df.shape}")
 
-        except Exception as e:
-            logging.error(f"Error querying database for {ticker}: {str(e)}")
-            return jsonify({'error': 'Database query failed'}), 500
-        if df.empty:
-            return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
-        required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
-        if not all(col in df.columns for col in required_columns):
-            return jsonify({'error': 'Invalid data format'}), 400
+            if df.empty:
+                return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
 
-        df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
-        chart_data = {
-            'timestamp': df['timestamp'].tolist(),
-            'open': df['open'].tolist(),
-            'high': df['high'].tolist(),
-            'low': df['low'].tolist(),
-            'close': df['close'].tolist(),
-            'volume': df['volume'].tolist(),
-            'ticker': ticker,
-            'date': date,
-            'count': len(df)
-        }
-        return jsonify({'chart_data': chart_data})
+            df['timestamp'] = df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            chart_data = {
+                'timestamp': df['timestamp'].tolist(),
+                'open': df['open'].tolist(),
+                'high': df['high'].tolist(),
+                'low': df['low'].tolist(),
+                'close': df['close'].tolist(),
+                'volume': df['volume'].tolist(),
+                'ticker': ticker,
+                'date': date,
+                'count': len(df)
+            }
+            return jsonify({'chart_data': chart_data})
+        except Exception as e:
+            logging.error(f"Error fetching chart data: {str(e)}")
+            return jsonify({'error': 'Server error'}), 500
     except Exception as e:
         logging.error(f"Unexpected error in get_chart: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
