@@ -5,18 +5,38 @@ document.addEventListener('DOMContentLoaded', () => {
     loadEarningsTickers();
     loadBinOptions();
     populateEarningsOutcomes();
-
-    // Initialize forms for remaining tabs
+    
+    // Initialize stock forms for remaining tabs
     document.getElementById('stock-form-gap').addEventListener('submit', (e) => loadChart(e, 'gap-analysis'));
     document.getElementById('stock-form-events').addEventListener('submit', (e) => loadChart(e, 'events-analysis'));
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
     document.getElementById('events-form').addEventListener('submit', loadEventDates);
     document.getElementById('earnings-form').addEventListener('submit', loadEarningsDates);
     document.getElementById('gap-insights-form').addEventListener('submit', loadGapInsights);
+    
+    // Replay control listeners for Gap Analysis
+    document.getElementById('play-replay-gap').addEventListener('click', () => startReplay('gap'));
+    document.getElementById('pause-replay-gap').addEventListener('click', () => pauseReplay('gap'));
+    document.getElementById('start-over-replay-gap').addEventListener('click', () => startOverReplay('gap'));
+    document.getElementById('prev-candle-gap').addEventListener('click', () => prevCandle('gap'));
+    document.getElementById('next-candle-gap').addEventListener('click', () => nextCandle('gap'));
+    document.getElementById('replay-speed-gap').addEventListener('change', () => updateReplaySpeed('gap'));
 
-    // Initialize ticker selects for remaining tabs
-    document.getElementById('ticker-select-gap').addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
-    document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
+    // Replay control listeners for Events Analysis
+    document.getElementById('play-replay-events').addEventListener('click', () => startReplay('events'));
+    document.getElementById('pause-replay-events').addEventListener('click', () => pauseReplay('events'));
+    document.getElementById('start-over-replay-events').addEventListener('click', () => startOverReplay('events'));
+    document.getElementById('prev-candle-events').addEventListener('click', () => prevCandle('events'));
+    document.getElementById('next-candle-events').addEventListener('click', () => nextCandle('events'));
+    document.getElementById('replay-speed-events').addEventListener('change', () => updateReplaySpeed('events'));
+
+    // Replay control listeners for Earnings Analysis
+    document.getElementById('play-replay-earnings').addEventListener('click', () => startReplay('earnings'));
+    document.getElementById('pause-replay-earnings').addEventListener('click', () => pauseReplay('earnings'));
+    document.getElementById('start-over-replay-earnings').addEventListener('click', () => startOverReplay('earnings'));
+    document.getElementById('prev-candle-earnings').addEventListener('click', () => prevCandle('earnings'));
+    document.getElementById('next-candle-earnings').addEventListener('click', () => nextCandle('earnings'));
+    document.getElementById('replay-speed-earnings').addEventListener('change', () => updateReplaySpeed('earnings'));
 
     // Handle filter type toggle for events
     const filterRadios = document.querySelectorAll('input[name="filter-type"]');
@@ -30,11 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
         radio.addEventListener('change', toggleEarningsFilterSection);
     });
 
-    // Set default tab to Nasdaq Gap Insights
-    openTab('gap-insights');
+    // Initialize ticker selects for remaining tabs
+    document.getElementById('ticker-select-gap').addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
+    document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
 });
 
-// Global variables for replay (Gap Analysis, Events Analysis, Earnings Analysis)
+// Global variables for replay (Removed Market Simulator variables)
 let chartDataGap = null;
 let replayIntervalGap = null;
 let currentReplayIndexGap = 0;
@@ -53,7 +74,7 @@ let currentReplayIndexEarnings = 0;
 let isReplayingEarnings = false;
 let isPausedEarnings = false;
 
-// Bin options for each event type
+// Bin options for each event type (unchanged)
 const binOptions = {
     CPI: ['<0%', '0-1%', '1-2%', '2-3%', '3-5%', '>5%'],
     PPI: ['<0%', '0-2%', '2-4%', '4-8%', '>8%'],
@@ -61,7 +82,7 @@ const binOptions = {
     FOMC: ['0-1%', '1-2%', '2-3%', '3-4%', '>4%']
 };
 
-// Earnings outcome options with explanations
+// Earnings outcome options with explanations (unchanged)
 const earningsOutcomes = [
     { value: 'Beat', text: 'Beat (>10%)' },
     { value: 'Slight Beat', text: 'Slight Beat (0% to 10%)' },
@@ -70,6 +91,7 @@ const earningsOutcomes = [
     { value: 'Unknown', text: 'Unknown (data unavailable)' }
 ];
 
+// Remaining functions (unchanged except for getReplayConfig)
 function populateEarningsOutcomes() {
     const earningsBinSelect = document.getElementById('earnings-bin-select');
     earningsBinSelect.innerHTML = '<option value="">Select outcome</option>';
@@ -245,51 +267,6 @@ async function loadEarningsTickers() {
     }
 }
 
-async function loadYears() {
-    const yearSelect = document.getElementById('year-select');
-    yearSelect.disabled = true;
-    yearSelect.innerHTML = '<option value="">Loading years...</option>';
-    try {
-        console.log('Fetching years from /api/years');
-        const response = await fetch('/api/years', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        });
-        console.log('Response status:', response.status);
-        if (response.status === 429) {
-            const data = await response.json();
-            console.error('Rate limit error:', data.error);
-            yearSelect.innerHTML = `<option value="">${data.error}</option>`;
-            alert(data.error);
-            return;
-        }
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
-        }
-        const data = await response.json();
-        console.log('Fetched years:', data.years);
-        if (!data.years || !Array.isArray(data.years)) {
-            throw new Error('Invalid response format: years array not found');
-        }
-        yearSelect.innerHTML = '<option value="">Select year</option>';
-        data.years.forEach(year => {
-            const option = document.createElement('option');
-            option.value = year;
-            option.textContent = year;
-            yearSelect.appendChild(option);
-        });
-        yearSelect.disabled = false;
-    } catch (error) {
-        console.error('Error loading years:', error.message);
-        yearSelect.innerHTML = '<option value="">Error loading years</option>';
-        alert('Failed to load years: ' + error.message + '. Please refresh the page or try again later.');
-    }
-}
-
 async function loadDates(tickerSelectId, dateInputId) {
     const tickerSelect = document.getElementById(tickerSelectId);
     const dateInput = document.getElementById(dateInputId);
@@ -365,7 +342,7 @@ async function loadChart(event, tabId) {
         },
         'earnings-analysis': {
             tickerSelectId: 'earnings-ticker-select',
-            dateInputId: 'date-earnings',
+            dateInputId: 'date-gap',
             timeframeSelectId: 'timeframe-select-earnings',
             chartContainerId: 'plotly-chart-earnings',
             formId: 'earnings-form',
@@ -389,14 +366,6 @@ async function loadChart(event, tabId) {
     const form = document.getElementById(formId);
     const button = form.querySelector('button[type="submit"]');
     const inputs = form.querySelectorAll('select, input');
-
-    // Replay controls
-    const replayControls = document.getElementById(replayControlsId);
-    const playButton = document.getElementById(`play-replay${replayPrefix ? '-' + replayPrefix : ''}`);
-    const pauseButton = document.getElementById(`pause-replay${replayPrefix ? '-' + replayPrefix : ''}`);
-    const startOverButton = document.getElementById(`start-over-replay${replayPrefix ? '-' + replayPrefix : ''}`);
-    const prevButton = document.getElementById(`prev-candle${replayPrefix ? '-' + replayPrefix : ''}`);
-    const nextButton = document.getElementById(`next-candle${replayPrefix ? '-' + replayPrefix : ''}`);
 
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem(`chartRateLimitReset_${tabId}`);
@@ -527,6 +496,11 @@ async function loadChart(event, tabId) {
 
         // Handle replay controls
         replayControls.style.display = 'block';
+        const playButton = document.getElementById(`play-replay${replayPrefix ? '-' + replayPrefix : ''}`);
+        const pauseButton = document.getElementById(`pause-replay${replayPrefix ? '-' + replayPrefix : ''}`);
+        const startOverButton = document.getElementById(`start-over-replay${replayPrefix ? '-' + replayPrefix : ''}`);
+        const prevButton = document.getElementById(`prev-candle${replayPrefix ? '-' + replayPrefix : ''}`);
+        const nextButton = document.getElementById(`next-candle${replayPrefix ? '-' + replayPrefix : ''}`);
         playButton.textContent = 'Play Replay';
         playButton.disabled = false;
         pauseButton.disabled = true;
@@ -1002,11 +976,14 @@ function updateChartToIndex(section) {
     prevButton.disabled = config.currentReplayIndex() <= 0;
     nextButton.disabled = config.currentReplayIndex() >= chartData.count;
     startOverButton.disabled = config.currentReplayIndex() <= 0;
+}
 
-    gtag('event', 'replay_manual_step', {
-        'event_category': 'Chart',
-        'event_label': `${chartData.ticker}_${chartData.date}_${section}`
-    });
+function updateReplaySpeed(section) {
+    const config = getReplayConfig(section);
+    if (config.isReplaying()) {
+        pauseReplay(section);
+        startReplay(section);
+    }
 }
 
 async function loadGapDates(event) {
@@ -1014,19 +991,30 @@ async function loadGapDates(event) {
     const gapSize = document.getElementById('gap-size-select').value;
     const day = document.getElementById('day-select').value;
     const gapDirection = document.getElementById('gap-direction-select').value;
-    const gapDatesList = document.getElementById('gap-dates-list');
     const gapDatesContainer = document.getElementById('gap-dates');
+    const form = document.getElementById('gap-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
 
-    gapDatesList.innerHTML = '';
-    gapDatesContainer.innerHTML = '<p>Loading gap dates...</p>';
-
-    if (!gapSize || !day || !gapDirection) {
-        gapDatesContainer.innerHTML = '<p>Please select a gap size, day, and direction to view dates with gaps.</p>';
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('gapDatesRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        gapDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
         return;
     }
 
-    const url = `/api/gap_dates?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
-    console.log('Fetching gap dates URL:', url);
+    if (!gapSize || !day || !gapDirection) {
+        gapDatesContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction.</p>';
+        return;
+    }
+
+    console.log(`Fetching gaps for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
+    const url = `/api/gaps?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
+    console.log('Fetching URL:', url);
+    gapDatesContainer.innerHTML = '<p>Loading gap dates...</p>';
     try {
         const response = await fetch(url, {
             method: 'GET',
@@ -1040,6 +1028,18 @@ async function loadGapDates(event) {
             const data = await response.json();
             console.error('Rate limit error:', data.error);
             gapDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('gapDatesRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Find Gap Dates';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('gapDatesRateLimitReset');
+                gapDatesContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction to view gap dates.</p>';
+            }, 12 * 60 * 60 * 1000);
             alert(data.error);
             return;
         }
@@ -1048,27 +1048,43 @@ async function loadGapDates(event) {
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
         }
         const data = await response.json();
+        console.log('Gap API response:', JSON.stringify(data, null, 2));
         if (data.error) {
-            console.error('Gap dates error:', data.error);
+            console.error('Error from gap API:', data.error);
             gapDatesContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
-        console.log('Fetched gap dates:', data.dates);
-        gapDatesContainer.innerHTML = `<p>Found ${data.dates.length} gap dates for the selected criteria.</p>`;
-        if (data.dates.length === 0) {
-            gapDatesList.innerHTML = '<li>No dates found for the selected criteria.</li>';
-        } else {
-            data.dates.forEach(date => {
-                const li = document.createElement('li');
-                li.textContent = date;
-                gapDatesList.appendChild(li);
-            });
+        if (!data.dates || data.dates.length === 0) {
+            console.log('No gap dates found:', data.message || 'No dates returned');
+            gapDatesContainer.innerHTML = `<p>${data.message || 'No gaps found for the selected criteria'}</p>`;
+            return;
         }
-
-        gtag('event', 'gap_dates_load', {
-            'event_category': 'Data',
-            'event_label': `${gapSize}_${day}_${gapDirection}`
+        console.log(`Rendering ${data.dates.length} gap dates:`, data.dates);
+        const ul = document.createElement('ul');
+        ul.id = 'gap-dates-list';
+        data.dates.forEach(date => {
+            const li = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = date;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log(`Clicked gap date: ${date}`);
+                openTab('gap-analysis');
+                document.getElementById('ticker-select-gap').value = 'QQQ';
+                document.getElementById('date-gap').value = date;
+                loadChart(new Event('submit'), 'gap-analysis');
+                gtag('event', 'gap_date_click', {
+                    'event_category': 'Gap Analysis',
+                    'event_label': `QQQ_${date}_${gapDirection}`
+                });
+            });
+            li.appendChild(link);
+            ul.appendChild(li);
         });
+        gapDatesContainer.innerHTML = '';
+        gapDatesContainer.appendChild(ul);
+        console.log('Gap dates rendered successfully');
     } catch (error) {
         console.error('Error loading gap dates:', error.message);
         gapDatesContainer.innerHTML = '<p>Failed to load gap dates: ' + error.message + '. Please try again later.</p>';
@@ -1076,34 +1092,97 @@ async function loadGapDates(event) {
     }
 }
 
+
+async function loadYears() {
+    const yearSelect = document.getElementById('year-select');
+    yearSelect.disabled = true;
+    yearSelect.innerHTML = '<option value="">Loading years...</option>';
+    try {
+        console.log('Fetching years from /api/years');
+        const response = await fetch('/api/years', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Response status:', response.status);
+        if (response.status === 429) {
+            const data = await response.json();
+            console.error('Rate limit error:', data.error);
+            yearSelect.innerHTML = `<option value="">${data.error}</option>`;
+            alert(data.error);
+            return;
+        }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Fetched years:', data.years);
+        if (!data.years || !Array.isArray(data.years)) {
+            throw new Error('Invalid response format: years array not found');
+        }
+        yearSelect.innerHTML = '<option value="">Select year</option>';
+        data.years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        });
+        yearSelect.disabled = false;
+    } catch (error) {
+        console.error('Error loading years:', error.message);
+        yearSelect.innerHTML = '<option value="">Error loading years</option>';
+        alert('Failed to load years: ' + error.message + '. Please refresh the page or try again later.');
+    }
+}
+
+
 async function loadEventDates(event) {
     event.preventDefault();
     const filterType = document.querySelector('input[name="filter-type"]:checked').value;
-    let url;
-    if (filterType === 'year') {
-        const eventType = document.getElementById('event-type-select').value;
-        const year = document.getElementById('year-select').value;
-        if (!eventType || !year) {
-            document.getElementById('event-dates').innerHTML = '<p>Please select an event type and year to view dates with events.</p>';
-            return;
-        }
-        url = `/api/event_dates?event_type=${encodeURIComponent(eventType)}&year=${encodeURIComponent(year)}`;
-    } else {
-        const eventType = document.getElementById('bin-event-type-select').value;
-        const bin = document.getElementById('bin-select').value;
-        if (!eventType || !bin) {
-            document.getElementById('event-dates').innerHTML = '<p>Please select an event type and economic impact range to view dates with events.</p>';
-            return;
-        }
-        url = `/api/event_dates?event_type=${encodeURIComponent(eventType)}&bin=${encodeURIComponent(bin)}`;
+    const eventDatesContainer = document.getElementById('event-dates');
+    const form = document.getElementById('events-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
+
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('eventDatesRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
+        return;
     }
 
-    const eventDatesList = document.getElementById('event-dates-list');
-    const eventDatesContainer = document.getElementById('event-dates');
-    eventDatesList.innerHTML = '';
-    eventDatesContainer.innerHTML = '<p>Loading event dates...</p>';
+    let url;
+    let eventType;
+    let year;
+    let bin;
 
-    console.log('Fetching event dates URL:', url);
+    if (filterType === 'year') {
+        eventType = document.getElementById('event-type-select').value;
+        year = document.getElementById('year-select').value;
+        if (!eventType || !year) {
+            eventDatesContainer.innerHTML = '<p>Please select an event type and year.</p>';
+            return;
+        }
+        url = `/api/events?event_type=${encodeURIComponent(eventType)}&year=${encodeURIComponent(year)}`;
+    } else {
+        eventType = document.getElementById('bin-event-type-select').value;
+        bin = document.getElementById('bin-select').value;
+        if (!eventType || !bin) {
+            eventDatesContainer.innerHTML = '<p>Please select an event type and economic impact range.</p>';
+            return;
+        }
+        url = `/api/economic_events?event_type=${encodeURIComponent(eventType)}&bin=${encodeURIComponent(bin)}`;
+    }
+
+    console.log(`Fetching events for filterType=${filterType}, event_type=${eventType}, year=${year}, bin=${bin}`);
+    console.log('Fetching URL:', url);
+    eventDatesContainer.innerHTML = '<p>Loading event dates...</p>';
     try {
         const response = await fetch(url, {
             method: 'GET',
@@ -1117,6 +1196,18 @@ async function loadEventDates(event) {
             const data = await response.json();
             console.error('Rate limit error:', data.error);
             eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('eventDatesRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Find Event Dates';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('eventDatesRateLimitReset');
+                eventDatesContainer.innerHTML = '<p>Select filters to view dates with events.</p>';
+            }, 1000);
             alert(data.error);
             return;
         }
@@ -1125,27 +1216,43 @@ async function loadEventDates(event) {
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
         }
         const data = await response.json();
+        console.log('Event API response:', JSON.stringify(data, null, 2));
         if (data.error) {
-            console.error('Event dates error:', data.error);
+            console.error('Error from event API:', data.error);
             eventDatesContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
-        console.log('Fetched event dates:', data.dates);
-        eventDatesContainer.innerHTML = `<p>Found ${data.dates.length} event dates for the selected criteria.</p>`;
-        if (data.dates.length === 0) {
-            eventDatesList.innerHTML = '<li>No dates found for the selected criteria.</li>';
-        } else {
-            data.dates.forEach(date => {
-                const li = document.createElement('li');
-                li.textContent = date;
-                eventDatesList.appendChild(li);
-            });
+        if (!data.dates || data.dates.length === 0) {
+            console.log('No event dates found:', data.message || 'No dates returned');
+            eventDatesContainer.innerHTML = `<p>${data.message || 'No events found for the selected criteria'}</p>`;
+            return;
         }
-
-        gtag('event', 'event_dates_load', {
-            'event_category': 'Data',
-            'event_label': `${filterType}_${url.split('?')[1]}`
+        console.log(`Rendering ${data.dates.length} event dates:`, data.dates);
+        const ul = document.createElement('ul');
+        ul.id = 'event-dates-list';
+        data.dates.forEach(date => {
+            const li = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = date;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log(`Clicked event date: ${date}`);
+                openTab('events-analysis');
+                document.getElementById('ticker-select-events').value = 'QQQ'; // Updated
+                document.getElementById('date-events').value = date; // Updated
+                loadChart(new Event('submit'), 'events-analysis');
+                gtag('event', 'event_date_click', {
+                    'event_category': 'Event Analysis',
+                    'event_label': `QQQ_${date}_${eventType}${bin ? '_' + bin : ''}`
+                });
+            });
+            li.appendChild(link);
+            ul.appendChild(li);
         });
+        eventDatesContainer.innerHTML = '';
+        eventDatesContainer.appendChild(ul);
+        console.log('Event dates rendered successfully');
     } catch (error) {
         console.error('Error loading event dates:', error.message);
         eventDatesContainer.innerHTML = '<p>Failed to load event dates: ' + error.message + '. Please try again later.</p>';
@@ -1153,33 +1260,49 @@ async function loadEventDates(event) {
     }
 }
 
+
 async function loadEarningsDates(event) {
     event.preventDefault();
     const filterType = document.querySelector('input[name="earnings-filter-type"]:checked').value;
-    let url;
-    if (filterType === 'ticker-outcome') {
-        const ticker = document.getElementById('earnings-ticker-select').value;
-        const bin = document.getElementById('earnings-bin-select').value;
-        if (!ticker || !bin) {
-            document.getElementById('earnings-dates').innerHTML = '<p>Please select a ticker and earnings outcome to view earnings dates.</p>';
-            return;
-        }
-        url = `/api/earnings_dates?ticker=${encodeURIComponent(ticker)}&bin=${encodeURIComponent(bin)}`;
-    } else {
-        const ticker = document.getElementById('earnings-ticker-only-select').value;
-        if (!ticker) {
-            document.getElementById('earnings-dates').innerHTML = '<p>Please select a ticker to view earnings dates.</p>';
-            return;
-        }
-        url = `/api/earnings_dates?ticker=${encodeURIComponent(ticker)}`;
+    const earningsDatesContainer = document.getElementById('earnings-dates');
+    const form = document.getElementById('earnings-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
+
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('earningsDatesRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
+        return;
     }
 
-    const earningsDatesList = document.getElementById('earnings-dates-list');
-    const earningsDatesContainer = document.getElementById('earnings-dates');
-    earningsDatesList.innerHTML = '';
-    earningsDatesContainer.innerHTML = '<p>Loading earnings dates...</p>';
+    let url;
+    let ticker;
+    let bin;
 
-    console.log('Fetching earnings dates URL:', url);
+    if (filterType === 'ticker-outcome') {
+        ticker = document.getElementById('earnings-ticker-select').value;
+        bin = document.getElementById('earnings-bin-select').value;
+        if (!ticker || !bin) {
+            earningsDatesContainer.innerHTML = '<p>Please select a ticker and earnings outcome.</p>';
+            return;
+        }
+        url = `/api/earnings_by_bin?ticker=${encodeURIComponent(ticker)}&bin=${encodeURIComponent(bin)}`;
+    } else {
+        ticker = document.getElementById('earnings-ticker-only-select').value;
+        if (!ticker) {
+            earningsDatesContainer.innerHTML = '<p>Please select a ticker.</p>';
+            return;
+        }
+        url = `/api/earnings?ticker=${encodeURIComponent(ticker)}`;
+    }
+
+    console.log(`Fetching earnings for filterType=${filterType}, ticker=${ticker}, bin=${bin}`);
+    console.log('Fetching URL:', url);
+    earningsDatesContainer.innerHTML = '<p>Loading earnings dates...</p>';
     try {
         const response = await fetch(url, {
             method: 'GET',
@@ -1191,8 +1314,19 @@ async function loadEarningsDates(event) {
         console.log('Response status:', response.status);
         if (response.status === 429) {
             const data = await response.json();
-            console.error('Rate limit error:', data.error);
             earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('earningsDatesRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Find Earnings Dates';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('earningsDatesRateLimitReset');
+                earningsDatesContainer.innerHTML = '<p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>';
+            }, 1000);
             alert(data.error);
             return;
         }
@@ -1201,27 +1335,43 @@ async function loadEarningsDates(event) {
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
         }
         const data = await response.json();
+        console.log('Earnings API response:', JSON.stringify(data, null, 2));
         if (data.error) {
-            console.error('Earnings dates error:', data.error);
+            console.error('Error from earnings data:', data.error);
             earningsDatesContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
-        console.log('Fetched earnings dates:', data.dates);
-        earningsDatesContainer.innerHTML = `<p>Found ${data.dates.length} earnings dates for the selected criteria.</p>`;
-        if (data.dates.length === 0) {
-            earningsDatesList.innerHTML = '<li>No dates found for the selected criteria.</li>';
-        } else {
-            data.dates.forEach(date => {
-                const li = document.createElement('li');
-                li.textContent = date;
-                earningsDatesList.appendChild(li);
-            });
+        if (!data.dates || data.dates.length === 0) {
+            console.log('No earnings dates found:', data.message || 'No dates returned');
+            earningsDatesContainer.innerHTML = `<p>${data.message || `No earnings found for ${ticker}${bin ? ' with outcome ' + bin : ''}`}</p>`;
+            return;
         }
-
-        gtag('event', 'earnings_dates_load', {
-            'event_category': 'Data',
-            'event_label': `${filterType}_${url.split('?')[1]}`
+        console.log(`Rendering ${data.dates.length} earnings dates:`, data.dates);
+        const ul = document.createElement('ul');
+        ul.id = 'earnings-dates-list';
+        data.dates.forEach(date => {
+            const li = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = date;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log(`Clicked earnings date: ${date}`);
+                openTab('earnings-analysis');
+                document.getElementById('earnings-ticker-select').value = ticker;
+                document.getElementById('date-gap').value = date;
+                loadChart(new Event('submit'), 'earnings-analysis');
+                gtag('event', 'earnings_date_click', {
+                    'event_category': 'Earnings Analysis',
+                    'event_label': `${ticker}_${date}${bin ? '_' + bin : ''}`
+                });
+            });
+            li.appendChild(link);
+            ul.appendChild(li);
         });
+        earningsDatesContainer.innerHTML = '';
+        earningsDatesContainer.appendChild(ul);
+        console.log('Earnings dates rendered successfully');
     } catch (error) {
         console.error('Error loading earnings dates:', error.message);
         earningsDatesContainer.innerHTML = '<p>Failed to load earnings dates: ' + error.message + '. Please try again later.</p>';
@@ -1229,21 +1379,35 @@ async function loadEarningsDates(event) {
     }
 }
 
+
 async function loadGapInsights(event) {
     event.preventDefault();
     const gapSize = document.getElementById('gap-insights-size-select').value;
     const day = document.getElementById('gap-insights-day-select').value;
     const gapDirection = document.getElementById('gap-insights-direction-select').value;
-    const resultsContainer = document.getElementById('gap-insights-results');
+    const insightsContainer = document.getElementById('gap-insights-results');
+    const form = document.getElementById('gap-insights-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
 
-    if (!gapSize || !day || !gapDirection) {
-        resultsContainer.innerHTML = '<p>Please select a gap size, day, and direction to view Nasdaq gap insights and statistics.</p>';
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('gapInsightsRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 3 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
         return;
     }
 
+    if (!gapSize || !day || !gapDirection) {
+        insightsContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction.</p>';
+        return;
+    }
+    console.log(`Fetching gap insights for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
     const url = `/api/gap_insights?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
-    console.log('Fetching gap insights URL:', url);
-    resultsContainer.innerHTML = '<p>Loading insights...</p>';
+    console.log('Fetching URL:', url);
+    insightsContainer.innerHTML = '<p>Loading gap insights...</p>';
     try {
         const response = await fetch(url, {
             method: 'GET',
@@ -1255,8 +1419,19 @@ async function loadGapInsights(event) {
         console.log('Response status:', response.status);
         if (response.status === 429) {
             const data = await response.json();
-            console.error('Rate limit error:', data.error);
-            resultsContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('gapInsightsRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Get Insights';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('gapInsightsRateLimitReset');
+                insightsContainer.innerHTML = '<p>Select a gap size, day of the week, and gap direction to view gap insights.</p>';
+            }, 1000);
             alert(data.error);
             return;
         }
@@ -1265,74 +1440,102 @@ async function loadGapInsights(event) {
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
         }
         const data = await response.json();
+        console.log('Gap insights API response:', JSON.stringify(data, null, 2));
         if (data.error) {
-            console.error('Gap insights error:', data.error);
-            resultsContainer.innerHTML = `<p>${data.error}</p>`;
+            console.error('Error from gap insights API:', data.error);
+            insightsContainer.innerHTML = `<p>${data.error}</p>`;
             return;
         }
-        console.log('Fetched gap insights:', data);
-        resultsContainer.innerHTML = `
-            <h3>Gap Insights: ${gapSize} ${gapDirection} on ${day}</h3>
-            <p><strong>Gap Fill Rate:</strong> ${data.fill_rate ? (data.fill_rate * 100).toFixed(2) + '%' : 'N/A'}</p>
-            <p><strong>Median Move Before Fill:</strong> ${data.median_move_before_fill ? data.median_move_before_fill.toFixed(2) + '%' : 'N/A'}</p>
-            <p><strong>Max Move for Unfilled Gaps:</strong> ${data.max_move_unfilled ? data.max_move_unfilled.toFixed(2) + '%' : 'N/A'}</p>
-            <p><strong>Total Gaps Analyzed:</strong> ${data.total_gaps || 'N/A'}</p>
-        `;
+        if (!data.insights || Object.keys(data.insights).length === 0) {
+            console.log('No gap insights found:', data.message || 'No insights returned');
+            insightsContainer.innerHTML = `<p>${data.message || 'No gap insights found for the selected criteria'}</p>`;
+            return;
+        }
+        console.log('Rendering gap insights:', data.insights);
+
+        const insights = data.insights;
+        const container = document.createElement('div');
+        container.className = 'insights-container';
+        container.innerHTML = `<h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>`;
+
+        // First row: 4 metrics
+        const row1 = document.createElement('div');
+        row1.className = 'insights-row four-metrics';
+        ['gap_fill_rate', 'median_move_before_fill', 'median_max_move_unfilled', 'median_time_to_fill'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row1.appendChild(metric);
+        });
+        container.appendChild(row1);
+
+        // Second row: 2 metrics
+        const row2 = document.createElement('div');
+        row2.className = 'insights-row two-metrics';
+        ['reversal_after_fill_rate', 'median_move_before_reversal'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row2.appendChild(metric);
+        });
+        container.appendChild(row2);
+
+        // Third row: 2 metrics
+        const row3 = document.createElement('div');
+        row3.className = 'insights-row two-metrics';
+        ['median_time_of_low', 'median_time_of_high'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median">${insights[key].median}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row3.appendChild(metric);
+        });
+        container.appendChild(row3);
+
+        insightsContainer.innerHTML = '';
+        insightsContainer.appendChild(container);
+        console.log('Gap insights rendered successfully');
 
         gtag('event', 'gap_insights_load', {
-            'event_category': 'Data',
-            'event_label': `${gapSize}_${day}_${gapDirection}`
+            'event_category': 'Gap Insights',
+            'event_label': `QQQ_${gapSize}_${day}_${gapDirection}`
         });
     } catch (error) {
         console.error('Error loading gap insights:', error.message);
-        resultsContainer.innerHTML = '<p>Failed to load gap insights: ' + error.message + '. Please try again later.</p>';
+        insightsContainer.innerHTML = '<p>Failed to load gap insights: ' + error.message + '. Please try again later.</p>';
         alert('Failed to load gap insights: ' + error.message);
     }
 }
 
-// Add event listeners for replay controls
-document.getElementById('play-replay-gap').addEventListener('click', () => startReplay('gap'));
-document.getElementById('pause-replay-gap').addEventListener('click', () => pauseReplay('gap'));
-document.getElementById('start-over-replay-gap').addEventListener('click', () => startOverReplay('gap'));
-document.getElementById('prev-candle-gap').addEventListener('click', () => prevCandle('gap'));
-document.getElementById('next-candle-gap').addEventListener('click', () => nextCandle('gap'));
 
-document.getElementById('play-replay-events').addEventListener('click', () => startReplay('events'));
-document.getElementById('pause-replay-events').addEventListener('click', () => pauseReplay('events'));
-document.getElementById('start-over-replay-events').addEventListener('click', () => startOverReplay('events'));
-document.getElementById('prev-candle-events').addEventListener('click', () => prevCandle('events'));
-document.getElementById('next-candle-events').addEventListener('click', () => nextCandle('events'));
-
-document.getElementById('play-replay-earnings').addEventListener('click', () => startReplay('earnings'));
-document.getElementById('pause-replay-earnings').addEventListener('click', () => pauseReplay('earnings'));
-document.getElementById('start-over-replay-earnings').addEventListener('click', () => startOverReplay('earnings'));
-document.getElementById('prev-candle-earnings').addEventListener('click', () => prevCandle('earnings'));
-document.getElementById('next-candle-earnings').addEventListener('click', () => nextCandle('earnings'));
-
-// Tab switching function (already included in index.html, but ensure it’s called correctly)
-function openTab(tabId) {
-    console.log(`Opening tab: ${tabId}`);
-    const tabs = document.querySelectorAll('.tab-content');
-    tabs.forEach(tab => {
-        tab.classList.remove('active');
-        tab.style.display = 'none';
-    });
-    const targetTab = document.getElementById(tabId);
-    if (targetTab) {
-        targetTab.classList.add('active');
-        targetTab.style.display = 'block';
-    } else {
-        console.error(`Tab not found: ${tabId}`);
+function openTab(tabName) {
+    console.log(`Opening tab: ${tabName}`);
+    const tabs = document.getElementsByClassName('tab-content');
+    const buttons = document.getElementsByClassName('tab-button');
+    for (let i = 0; i < tabs.length; i++) {
+        tabs[i].style.display = 'none';
+        buttons[i].classList.remove('active');
     }
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.classList.remove('active');
-    });
-    const activeButton = document.querySelector(`button[onclick="openTab('${tabId}')"]`);
+    document.getElementById(tabName).style.display = 'block';
+    const activeButton = Array.from(buttons).find(button => button.getAttribute('onclick').includes(tabName));
     if (activeButton) {
         activeButton.classList.add('active');
     }
     gtag('event', 'tab_open', {
         'event_category': 'Navigation',
-        'event_label': tabId
+        'event_label': tabName
     });
 }
