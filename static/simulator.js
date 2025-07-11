@@ -138,21 +138,51 @@ function aggregateCandles(data, timeframe) {
     return candles;
 }
 
-function renderChart(candles, minuteIndex = null) {
+function renderChart(candles, currentCandleIndex = -1, minuteIndex = null) {
     const candlestickTrace = {
-        x: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].timestamp : c.timestamp),
+        x: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].timestamp;
+            }
+            return c.timestamp;
+        }),
         open: candles.map(c => c.open),
-        high: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].high : c.high),
-        low: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].low : c.low),
-        close: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].close : c.close),
+        high: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].high;
+            }
+            return c.high;
+        }),
+        low: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].low;
+            }
+            return c.low;
+        }),
+        close: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].close;
+            }
+            return c.close;
+        }),
         type: 'candlestick',
         name: chartData.ticker,
         increasing: { line: { color: '#00cc00' } },
         decreasing: { line: { color: '#ff0000' } }
     };
     const volumeTrace = {
-        x: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].timestamp : c.timestamp),
-        y: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].volume : c.volume),
+        x: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].timestamp;
+            }
+            return c.timestamp;
+        }),
+        y: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].volume;
+            }
+            return c.volume;
+        }),
         type: 'bar',
         name: 'Volume',
         yaxis: 'y2',
@@ -203,11 +233,17 @@ function startReplay() {
     prevButton.disabled = currentReplayIndex <= 0;
     nextButton.disabled = currentReplayIndex >= chartData.count;
 
-    let minuteIndex = 0;
-    renderChart(aggregatedCandles.slice(0, Math.floor(currentReplayIndex / timeframe)), currentReplayIndex % timeframe);
-    timestampDisplay.textContent = currentReplayIndex > 0 
-        ? `Current Time: ${chartData.timestamp[currentReplayIndex].split(' ')[1]}`
-        : 'Current Time: --:--:--';
+    let minuteIndex = currentReplayIndex % timeframe;
+    let candleIndex = Math.floor(currentReplayIndex / timeframe);
+
+    // Initial render
+    if (candleIndex > 0 || minuteIndex > 0) {
+        renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
+        timestampDisplay.textContent = `Current Time: ${chartData.timestamp[currentReplayIndex].split(' ')[1]}`;
+    } else {
+        renderChart([]);
+        timestampDisplay.textContent = 'Current Time: --:--:--';
+    }
 
     replayInterval = setInterval(() => {
         if (currentReplayIndex >= chartData.count) {
@@ -215,16 +251,13 @@ function startReplay() {
             return;
         }
 
-        const candleIndex = Math.floor(currentReplayIndex / timeframe);
+        candleIndex = Math.floor(currentReplayIndex / timeframe);
         minuteIndex = currentReplayIndex % timeframe;
 
-        if (minuteIndex === 0) {
-            renderChart(aggregatedCandles.slice(0, candleIndex));
-        } else {
-            renderChart(aggregatedCandles.slice(0, candleIndex + 1), minuteIndex - 1);
-        }
-
+        // Render only up to the current candle, with minute-by-minute updates for the current candle only
+        renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
         timestampDisplay.textContent = `Current Time: ${chartData.timestamp[currentReplayIndex].split(' ')[1]}`;
+
         prevButton.disabled = currentReplayIndex <= 0;
         nextButton.disabled = currentReplayIndex + 1 >= chartData.count;
         startOverButton.disabled = currentReplayIndex <= 0;
@@ -281,7 +314,7 @@ function prevCandle() {
     currentReplayIndex--;
     const candleIndex = Math.floor(currentReplayIndex / timeframe);
     const minuteIndex = currentReplayIndex % timeframe;
-    renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), minuteIndex > 0 ? minuteIndex - 1 : null);
+    renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
     document.getElementById('timestamp').textContent = currentReplayIndex > 0 
         ? `Current Time: ${chartData.timestamp[currentReplayIndex - 1].split(' ')[1]}`
         : 'Current Time: --:--:--';
@@ -295,7 +328,7 @@ function nextCandle() {
     currentReplayIndex++;
     const candleIndex = Math.floor(currentReplayIndex / timeframe);
     const minuteIndex = currentReplayIndex % timeframe;
-    renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), minuteIndex > 0 ? minuteIndex - 1 : null);
+    renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
     document.getElementById('timestamp').textContent = currentReplayIndex > 0 
         ? `Current Time: ${chartData.timestamp[currentReplayIndex - 1].split(' ')[1]}`
         : 'Current Time: --:--:--';
