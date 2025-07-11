@@ -301,10 +301,13 @@ async function loadEarningsTickers() {
 }
 
 async function fetchChartData(ticker, date, timeframe, restrictHours) {
-    const url = `/api/stock/chart?ticker=${ticker}&date=${date}&timeframe=${timeframe}&restrict_hours=${restrictHours}&replay_mode=${timeframe > 1}`;
+    const replayMode = parseInt(timeframe) > 1 ? 'true' : 'false';
+    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&restrict_hours=${restrictHours}&replay_mode=${replayMode}`;
+    console.log(`Fetching chart data: ${url}`);
     const response = await fetch(url);
     const data = await response.json();
     if (data.error) {
+        console.error(`Chart data fetch error: ${data.error}`);
         throw new Error(data.error);
     }
     return data.chart_data;
@@ -690,105 +693,59 @@ function updateTradeSummary() {
     }
 }
 
-function getReplayConfig(section) {
-    const configs = {
-        '': { // Market Simulator
-            chartData: () => chartData,
-            setChartData: (data) => { chartData = data; },
-            replayInterval: () => replayInterval,
-            setReplayInterval: (interval) => { replayInterval = interval; },
-            currentReplayIndex: () => currentReplayIndex,
-            setCurrentReplayIndex: (index) => { currentReplayIndex = index; },
-            isReplaying: () => isReplaying,
-            setIsReplaying: (state) => { isReplaying = state; },
-            isPaused: () => isPaused,
-            setIsPaused: (state) => { isPaused = state; },
+function getReplayConfig(tabId) {
+    const tabConfig = {
+        'market-simulator': {
+            tickerSelectId: 'ticker-select',
+            dateInputId: 'date',
+            timeframeSelectId: 'timeframe-select',
             chartContainerId: 'plotly-chart',
-            playButtonId: 'play-replay',
-            pauseButtonId: 'pause-replay',
-            startOverButtonId: 'start-over-replay',
-            prevButtonId: 'prev-candle',
-            nextButtonId: 'next-candle',
-            startTimeInputId: 'replay-start-time',
-            replaySpeedId: 'replay-speed',
-            timestampDisplayId: 'replay-timestamp',
-            hasTradeSimulator: true
+            formId: 'stock-form',
+            restrictHours: false,
+            replayControlsId: 'replay-controls',
+            replayPrefix: ''
         },
-        'gap': {
-            chartData: () => chartDataGap,
-            setChartData: (data) => { chartDataGap = data; },
-            replayInterval: () => replayIntervalGap,
-            setReplayInterval: (interval) => { replayIntervalGap = interval; },
-            currentReplayIndex: () => currentReplayIndexGap,
-            setCurrentReplayIndex: (index) => { currentReplayIndexGap = index; },
-            isReplaying: () => isReplayingGap,
-            setIsReplaying: (state) => { isReplayingGap = state; },
-            isPaused: () => isPausedGap,
-            setIsPaused: (state) => { isPausedGap = state; },
-            chartContainerId: 'plotly-chart-gap',
-            playButtonId: 'play-replay-gap',
-            pauseButtonId: 'pause-replay-gap',
-            startOverButtonId: 'start-over-replay-gap',
-            prevButtonId: 'prev-candle-gap',
-            nextButtonId: 'next-candle-gap',
-            startTimeInputId: 'replay-start-time-gap',
-            replaySpeedId: 'replay-speed-gap',
-            timestampDisplayId: 'replay-timestamp-gap',
-            hasTradeSimulator: false
+        'gap-analysis': {
+            tickerSelectId: 'gap-ticker-select',
+            dateInputId: 'gap-date',
+            timeframeSelectId: 'gap-timeframe-select',
+            chartContainerId: 'gap-plotly-chart',
+            formId: 'gap-form',
+            restrictHours: true,
+            replayControlsId: 'gap-replay-controls',
+            replayPrefix: 'gap-'
         },
-        'events': {
-            chartData: () => chartDataEvents,
-            setChartData: (data) => { chartDataEvents = data; },
-            replayInterval: () => replayIntervalEvents,
-            setReplayInterval: (interval) => { replayIntervalEvents = interval; },
-            currentReplayIndex: () => currentReplayIndexEvents,
-            setCurrentReplayIndex: (index) => { currentReplayIndexEvents = index; },
-            isReplaying: () => isReplayingEvents,
-            setIsReplaying: (state) => { isReplayingEvents = state; },
-            isPaused: () => isPausedEvents,
-            setIsPaused: (state) => { isPausedEvents = state; },
-            chartContainerId: 'plotly-chart-events',
-            playButtonId: 'play-replay-events',
-            pauseButtonId: 'pause-replay-events',
-            startOverButtonId: 'start-over-replay-events',
-            prevButtonId: 'prev-candle-events',
-            nextButtonId: 'next-candle-events',
-            startTimeInputId: 'replay-start-time-events',
-            replaySpeedId: 'replay-speed-events',
-            timestampDisplayId: 'replay-timestamp-events',
-            hasTradeSimulator: false
-        },
-        'earnings': {
-            chartData: () => chartDataEarnings,
-            setChartData: (data) => { chartDataEarnings = data; },
-            replayInterval: () => replayIntervalEarnings,
-            setReplayInterval: (interval) => { replayIntervalEarnings = interval; },
-            currentReplayIndex: () => currentReplayIndexEarnings,
-            setCurrentReplayIndex: (index) => { currentReplayIndexEarnings = index; },
-            isReplaying: () => isReplayingEarnings,
-            setIsReplaying: (state) => { isReplayingEarnings = state; },
-            isPaused: () => isPausedEarnings,
-            setIsPaused: (state) => { isPausedEarnings = state; },
-            chartContainerId: 'plotly-chart-earnings',
-            playButtonId: 'play-replay-earnings',
-            pauseButtonId: 'pause-replay-earnings',
-            startOverButtonId: 'start-over-replay-earnings',
-            prevButtonId: 'prev-candle-earnings',
-            nextButtonId: 'next-candle-earnings',
-            startTimeInputId: 'replay-start-time-earnings',
-            replaySpeedId: 'replay-speed-earnings',
-            timestampDisplayId: 'replay-timestamp-earnings',
-            hasTradeSimulator: false
-        }
+        // Add other tab configs as needed
     };
-    return configs[section];
+    return tabConfig[tabId];
 }
-
-async function startReplay(ticker, date, timeframe, restrictHours) {
+async function startReplay(event, tabId) {
+    event.preventDefault(); // Prevent default form submission
     try {
+        const tabConfig = getReplayConfig(tabId);
+        if (!tabConfig) {
+            throw new Error(`Invalid tabId: ${tabId}`);
+        }
+
+        const { tickerSelectId, dateInputId, timeframeSelectId, restrictHours } = tabConfig;
+
+        // Retrieve values from form inputs
+        const ticker = document.getElementById(tickerSelectId)?.value;
+        const date = document.getElementById(dateInputId)?.value;
+        const timeframe = document.getElementById(timeframeSelectId)?.value;
+
+        // Validate inputs
+        if (!ticker || !date || !timeframe) {
+            console.error(`Missing inputs: ticker=${ticker}, date=${date}, timeframe=${timeframe}`);
+            throw new Error('Please select a ticker, date, and timeframe before starting replay.');
+        }
+
+        console.log(`Starting replay for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrictHours=${restrictHours}`);
+
+        // Fetch chart data with replay_mode=true for timeframes > 1
         const chartData = await fetchChartData(ticker, date, timeframe, restrictHours);
-        const replayConfig = getReplayConfig();
-        const chartElement = document.getElementById(replayConfig.chartElementId);
+        
+        const chartElement = document.getElementById(tabConfig.chartContainerId);
         let currentIndex = 0;
         let currentCandle = null;
         let candleStartTime = null;
@@ -801,6 +758,7 @@ async function startReplay(ticker, date, timeframe, restrictHours) {
         const replayInterval = setInterval(() => {
             if (currentIndex >= chartData.timestamp.length) {
                 clearInterval(replayInterval);
+                console.log('Replay completed');
                 return;
             }
 
@@ -854,10 +812,11 @@ async function startReplay(ticker, date, timeframe, restrictHours) {
             }
         }, 1000); // Update every second for simulation
     } catch (error) {
-        console.error('Replay error:', error);
+        console.error('Replay error:', error.message);
         alert('Error during replay: ' + error.message);
     }
 }
+
 
 function getLayout() {
     return {
