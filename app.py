@@ -339,7 +339,8 @@ def get_chart():
         date = request.args.get('date')
         timeframe = request.args.get('timeframe', '1')  # Default to 1 minute
         restrict_hours = request.args.get('restrict_hours', 'false').lower() == 'true'
-        logging.debug(f"Processing chart request for ticker={ticker}, date={date}, timeframe={timeframe}, restrict_hours={restrict_hours}")
+        replay_mode = request.args.get('replay_mode', 'false').lower() == 'true'
+        logging.debug(f"Processing chart request for ticker={ticker}, date={date}, timeframe={timeframe}, restrict_hours={restrict_hours}, replay_mode={replay_mode}")
         if not ticker or not date or not timeframe:
             return jsonify({'error': 'Missing ticker, date, or timeframe'}), 400
         if ticker not in TICKERS:
@@ -383,8 +384,9 @@ def get_chart():
                 df = df.drop(columns=['time'])  # Remove temporary time column
                 logging.debug(f"Filtered to regular hours, new shape: {df.shape}")
 
-            # Resample to the requested timeframe if not 1 minute
-            if timeframe > 1:
+            # For replay mode, always return 1-minute data for client-side aggregation
+            # For non-replay mode, resample to the requested timeframe if not 1 minute
+            if not replay_mode and timeframe > 1:
                 df.set_index('timestamp', inplace=True)
                 df = df.resample(f'{timeframe}T').agg({
                     'open': 'first',
