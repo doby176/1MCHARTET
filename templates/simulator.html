@@ -12,59 +12,55 @@
         gtag('config', 'G-BFDR405H06');
     </script>
     <meta name="google-adsense-account" content="ca-pub-9416785017460416">
-    <title>Market Simulator - 1MChart</title>
+    <title>1MChart - Market Simulator</title>
     <meta name="description" content="Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls on 1MChart.">
-    <meta name="keywords" content="1-minute stock charts, Nasdaq trading simulator, QQQ trading, intraday trading, historical stock data, trading tools, technical analysis, stock market analysis">
+    <meta name="keywords" content="1-minute stock charts, Nasdaq trading simulator, candlestick charts, day trading, price action analysis, historical stock data, trading tools, technical analysis">
     <meta name="author" content="1MChart Team">
     <meta name="robots" content="index, follow">
     <!-- Open Graph for social media -->
-    <meta property="og:title" content="Market Simulator - 1MChart">
+    <meta property="og:title" content="1MChart - Market Simulator">
     <meta property="og:description" content="Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls on 1MChart.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://onemchart.onrender.com/simulator">
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Market Simulator - 1MChart">
+    <meta name="twitter:title" content="1MChart - Market Simulator">
     <meta name="twitter:description" content="Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls on 1MChart.">
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css?v=42">
+    <link rel="stylesheet" href="/static/styles.css?v=41">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <header>
         <img src="/static/logo-new.png?v=2" alt="1MChart Logo" class="logo">
         <div class="seo-description">
-            <p>Advanced Nasdaq gap insights, News events, Earnings analysis and 1-minute charts (2015–2025).</p>
+            <p>Simulate trading with historical Nasdaq data (2015–2025).</p>
             <p><strong>The Edge Lies In The Data.</strong></p>
         </div>
         <div class="user-info">
-            <p>Welcome, <span id="username">{{ session.username | default('Guest') }}</span> | <a href="/logout">Log Out</a> | <a href="/dashboard">Back to Dashboard</a></p>
+            <p>Welcome, <span id="username">{{ session.username | default('Guest') }}</span> | <a href="/logout">Log Out</a></p>
+        </div>
+        <div class="back-link">
+            <a href="/">Back to Main Dashboard</a>
         </div>
     </header>
     <main>
         <div class="card">
-            <div class="tabs">
-                <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
-                <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
-                <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
-                <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
-                <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
-            </div>
-            <div id="market-simulator" class="tab-content active">
-                <h2>Market Simulator</h2>
-                <p>Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls.</p>
-                <div class="form-container">
-                    <form id="chart-form">
+            <div class="tabs-container">
+                <div id="market-simulator" class="tab-content active">
+                    <h2>Market Simulator</h2>
+                    <p>Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls.</p>
+                    <form id="stock-form">
                         <label for="ticker-select">Select Ticker:</label>
-                        <select id="ticker-select">
-                            <option value="">Select Ticker</option>
+                        <select id="ticker-select" name="ticker">
+                            <option value="">Select a ticker</option>
                         </select>
                         <label for="date">Select Date:</label>
-                        <input type="date" id="date">
-                        <label for="timeframe-select">Select Timeframe (minutes):</label>
-                        <select id="timeframe-select">
+                        <input type="date" id="date" name="date">
+                        <label for="timeframe-select">Select Timeframe:</label>
+                        <select id="timeframe-select" name="timeframe">
                             <option value="1">1 Minute</option>
                             <option value="2">2 Minutes</option>
                             <option value="3">3 Minutes</option>
@@ -73,48 +69,56 @@
                         </select>
                         <button type="submit">Load Chart</button>
                     </form>
-                    <p id="error-message" class="error-message"></p>
+                    <div id="chart-container">
+                        <div id="plotly-chart"></div>
+                        <div id="replay-controls" class="replay-controls">
+                            <button id="play-replay" disabled>Play Replay</button>
+                            <button id="pause-replay" disabled>Pause</button>
+                            <button id="start-over-replay" disabled>Start Over</button>
+                            <button id="restart-replay" disabled>Restart Replay</button>
+                            <button id="next-candle" disabled>Next Candle</button>
+                            <button id="prev-candle" disabled>Previous Candle</button>
+                            <label for="replay-start-time">Start Time (HH:MM):</label>
+                            <input type="text" id="replay-start-time" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                            <label for="replay-speed">Replay Speed:</label>
+                            <select id="replay-speed">
+                                <option value="1000">1x (1 sec/bar)</option>
+                                <option value="500">2x (0.5 sec/bar)</option>
+                                <option value="250">4x (0.25 sec/bar)</option>
+                            </select>
+                            <span id="replay-timestamp">Current Time: --:--:--</span>
+                            <button id="buy-trade" disabled>Buy</button>
+                            <button id="sell-trade" disabled>Sell</button>
+                            <div id="trade-summary">
+                                <h4>Trade Simulator</h4>
+                                <p id="position-status">No open position</p>
+                                <p id="trade-pnl">P/L: $0.00</p>
+                                <p id="trade-history">Trade History: None</p>
+                            </div>
+                        </div>
+                    </div>
+                    <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
                 </div>
-                <div class="chart-wrapper">
-                    <div id="chart-container" class="plotly-chart"></div>
-                </div>
-                <div id="replay-controls" class="replay-controls" style="display: none;">
-                    <button id="play-replay">Play Replay</button>
-                    <button id="pause-replay" disabled>Pause Replay</button>
-                    <button id="start-over-replay" disabled>Start Over</button>
-                    <button id="prev-candle" disabled>Previous</button>
-                    <button id="next-candle" disabled>Next</button>
-                    <label for="replay-start-time">Start Time (HH:MM):</label>
-                    <input type="text" id="replay-start-time" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
-                    <label for="replay-speed">Speed (ms):</label>
-                    <select id="replay-speed">
-                        <option value="1000">1x (1 sec/bar)</option>
-                        <option value="500">2x (0.5 sec/bar)</option>
-                        <option value="250">4x (0.25 sec/bar)</option>
-                    </select>
-                    <span id="timestamp">Current Time: --:--:--</span>
-                </div>
-                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
-                <!-- AdSense Ad Unit -->
-                <div class="ads-container">
-                    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
-                    <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-client="ca-pub-9416785017460416"
-                         data-ad-slot="5487535867"
-                         data-ad-format="auto"
-                         data-full-width-responsive="true"></ins>
-                    <script>
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                    </script>
-                </div>
+            </div>
+            <!-- AdSense Ad Unit -->
+            <div class="ads-container">
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
+                <ins class="adsbygoogle"
+                    style="display:block"
+                    data-ad-client="ca-pub-9416785017460416"
+                    data-ad-slot="5487535867"
+                    data-ad-format="auto"
+                    data-full-width-responsive="true"></ins>
+                <script>
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
             </div>
         </div>
     </main>
     <footer class="footer">
         <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
         <p>More coming soon</p>
-        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
+        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site, All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
         <img src="/static/logo-new.png" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
     <script>
@@ -130,14 +134,7 @@
         document.addEventListener('dragstart', function(e) {
             e.preventDefault();
         });
-        // Tab switching function
-        function openTab(tabId) {
-            if (tabId !== 'market-simulator') {
-                window.location.href = '/dashboard';
-                return;
-            }
-        }
     </script>
-    <script src="/static/simulator.js?v=5"></script>
+    <script src="/static/simulator.js?v=1"></script>
 </body>
 </html>
