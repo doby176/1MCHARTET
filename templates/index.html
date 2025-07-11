@@ -97,7 +97,24 @@
                         <h4>Trade Simulator</h4>
                         <p id="position-status">No open position</p>
                         <p id="trade-pnl">P/L: $0.00</p>
-                        <p id="trade-history">Trade History: None</p>
+                        <div id="trade-history-container">
+                            <h5>Trade History</h5>
+                            <table id="trade-history-table" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Entry</th>
+                                        <th>Exit</th>
+                                        <th>Shares</th>
+                                        <th>Time</th>
+                                        <th>P/L</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trade-history-tbody">
+                                </tbody>
+                            </table>
+                            <p id="trade-history-empty">No trades yet</p>
+                        </div>
                     </div>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
