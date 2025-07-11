@@ -642,8 +642,12 @@ async function loadChart(event, tabId) {
             if (replayIntervalEarnings) clearInterval(replayIntervalEarnings);
         }
 
-        // Render initial chart
-        renderChart(replayPrefix, [], -1, null);
+        // Render initial chart - show complete chart for initial view
+        const aggregatedCandlesVar = replayPrefix === '' ? aggregatedCandles : 
+                                   replayPrefix === 'gap' ? aggregatedCandlesGap :
+                                   replayPrefix === 'events' ? aggregatedCandlesEvents :
+                                   aggregatedCandlesEarnings;
+        renderChart(replayPrefix, aggregatedCandlesVar);
 
         // Handle replay controls
         replayControls.style.display = 'block';
@@ -901,18 +905,27 @@ function startReplay(section) {
 
     // Determine start index based on user input
     if (!config.isPaused()) {
-        if (startTimeInput && startTimeInput.match(/^[0-2][0-9]:[0-5][0-9]$/)) {
+        if (startTimeInput && startTimeInput.match(/^[0-9]{1,2}:[0-5][0-9]$/)) {
             const [hours, minutes] = startTimeInput.split(':').map(Number);
-            const targetTime = new Date(`${chartData.date}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
-            let currentReplayIndex = chartData.timestamp.findIndex(ts => {
-                const candleTime = new Date(ts);
-                return candleTime.getTime() >= targetTime.getTime();
-            });
-            if (currentReplayIndex === -1) {
-                currentReplayIndex = 0;
-                alert('Start time not found in chart data. Starting from first candle.');
+            // Validate time ranges
+            if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+                const targetTime = new Date(`${chartData.date}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
+                let currentReplayIndex = chartData.timestamp.findIndex(ts => {
+                    const candleTime = new Date(ts);
+                    return candleTime.getTime() >= targetTime.getTime();
+                });
+                if (currentReplayIndex === -1) {
+                    currentReplayIndex = 0;
+                    alert('Start time not found in chart data. Starting from first candle.');
+                }
+                config.setCurrentReplayIndex(currentReplayIndex);
+            } else {
+                config.setCurrentReplayIndex(0);
+                alert('Invalid time format. Please enter time in HH:MM format (e.g., 9:30 or 09:30).');
             }
-            config.setCurrentReplayIndex(currentReplayIndex);
+        } else if (startTimeInput && startTimeInput.trim() !== '') {
+            config.setCurrentReplayIndex(0);
+            alert('Invalid time format. Please enter time in HH:MM format (e.g., 9:30 or 09:30).');
         } else {
             config.setCurrentReplayIndex(0);
         }

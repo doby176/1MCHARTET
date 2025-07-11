@@ -297,15 +297,57 @@ footer p {
 .replay-controls select {
     padding: 8px;
     font-size: 1em;
-    border: 1px solid #ddd;
+    border: 2px solid #153097;
     border-radius: 4px;
+    margin: 0 5px;
+    background-color: #ffffff;
+    color: #1a1b2f;
+    font-weight: 500;
+}
+
+.replay-controls select:focus {
+    border-color: #112A7F;
+    outline: none;
+    box-shadow: 0 0 5px rgba(21, 48, 151, 0.3);
 }
 
 .replay-controls span {
     font-size: 1em;
     font-weight: 500;
+    color: #ffffff;
+    background-color: #153097;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 0 5px;
+    display: inline-block;
+}
+
+.replay-controls label {
+    font-size: 1em;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: #153097;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 0 5px;
+    display: inline-block;
+}
+
+.replay-controls input[type="text"] {
+    padding: 8px;
+    font-size: 1em;
+    border: 2px solid #153097;
+    border-radius: 4px;
+    margin: 0 5px;
+    background-color: #ffffff;
     color: #1a1b2f;
-    margin: 0 10px;
+    font-weight: 500;
+}
+
+.replay-controls input[type="text"]:focus {
+    border-color: #112A7F;
+    outline: none;
+    box-shadow: 0 0 5px rgba(21, 48, 151, 0.3);
 }
 
 /* Mobile-specific styles for replay controls */
@@ -326,12 +368,29 @@ footer p {
     .replay-controls select {
         font-size: 0.875em;
         padding: 6px;
+        margin: 2px;
         width: 100%;
         max-width: 200px;
     }
 
     .replay-controls span {
         font-size: 0.9em;
+        padding: 6px 10px;
+        margin: 2px;
+    }
+
+    .replay-controls label {
+        font-size: 0.9em;
+        padding: 6px 10px;
+        margin: 2px;
+    }
+
+    .replay-controls input[type="text"] {
+        font-size: 0.875em;
+        padding: 6px;
+        margin: 2px;
+        width: 100%;
+        max-width: 120px;
     }
 }
 
@@ -580,6 +639,8 @@ footer p {
 
     #replay-timestamp, #replay-timestamp-gap, #replay-timestamp-events, #replay-timestamp-earnings {
         font-size: 0.9em;
+        padding: 6px 10px;
+        margin: 2px;
     }
 
     /* Trade Summary Mobile Styling */
