@@ -68,50 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events')); // New
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Parse query parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const gapSize = urlParams.get('gap_size');
-    const day = urlParams.get('day');
-    const gapDirection = urlParams.get('gap_direction');
-
-    // Populate Gap Insights form if parameters exist
-    if (gapSize || day || gapDirection) {
-        const gapSizeSelect = document.getElementById('gap-insights-size-select');
-        const daySelect = document.getElementById('gap-insights-day-select');
-        const directionSelect = document.getElementById('gap-insights-direction-select');
-
-        if (gapSize) gapSizeSelect.value = decodeURIComponent(gapSize);
-        if (day) daySelect.value = day;
-        if (gapDirection) directionSelect.value = gapDirection;
-
-        // Trigger form submission to fetch insights
-        if (gapSize && day && gapDirection) {
-            fetchGapInsights(gapSize, day, gapDirection);
-        }
-    }
-
-    // Handle Gap Insights form submission
-    const gapInsightsForm = document.getElementById('gap-insights-form');
-    if (gapInsightsForm) {
-        gapInsightsForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const gapSize = gapInsightsForm.querySelector('#gap-insights-size-select').value;
-            const day = gapInsightsForm.querySelector('#gap-insights-day-select').value;
-            const gapDirection = gapInsightsForm.querySelector('#gap-insights-direction-select').value;
-
-            if (gapSize && day && gapDirection) {
-                // Update URL with query parameters
-                const newUrl = `/dashboard?gap_size=${encodeURIComponent(gapSize)}&day=${day}&gap_direction=${gapDirection}`;
-                window.history.pushState({}, '', newUrl);
-                fetchGapInsights(gapSize, day, gapDirection);
-            } else {
-                document.getElementById('gap-insights-results').innerHTML = '<p>Please select all filters to view insights.</p>';
-            }
-        });
-    }
-});
-
 // Global variables for replay (Market Simulator)
 let chartData = null;
 let replayInterval = null;
@@ -170,29 +126,6 @@ function populateEarningsOutcomes() {
         option.textContent = outcome.text;
         earningsBinSelect.appendChild(option);
     });
-}
-
-// Function to fetch Gap Insights data
-function fetchGapInsights(gapSize, day, gapDirection) {
-    fetch(`/api/gap-insights?gap_size=${encodeURIComponent(gapSize)}&day=${day}&gap_direction=${gapDirection}`)
-        .then(response => response.json())
-        .then(data => {
-            const resultsDiv = document.getElementById('gap-insights-results');
-            if (data.error) {
-                resultsDiv.innerHTML = `<p>Error: ${data.error}</p>`;
-            } else {
-                // Customize this based on your data structure
-                resultsDiv.innerHTML = `
-                    <p>Gap Fill Rate: ${data.fill_rate || 'N/A'}%</p>
-                    <p>Median Move Before Fill: ${data.median_move || 'N/A'}</p>
-                    <p>Max Move for Unfilled Gaps: ${data.max_move || 'N/A'}</p>
-                `;
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching gap insights:', error);
-            document.getElementById('gap-insights-results').innerHTML = '<p>Error loading insights. Please try again.</p>';
-        });
 }
 
 function toggleFilterSection() {

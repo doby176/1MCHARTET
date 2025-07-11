@@ -36,29 +36,62 @@
     <header>
         <img src="/static/logo-new.png?v=2" alt="1MChart Logo" class="logo">
         <div class="seo-description">
-            <p>Advanced Nasdaq gap insights, News events, Earnings analysis and 1-minute charts  (2015–2025).</p>
+            <p>Advanced Nasdaq gap insights, News events, Earnings analysis and 1-minute charts (2015–2025).</p>
             <p><strong>The Edge Lies In The Data.</strong></p>
         </div>
         <div class="user-info">
             <p>Welcome, <span id="username">{{ session.username | default('Guest') }}</span> | <a href="/logout">Log Out</a></p>
         </div>
+        <!-- Simulator Link -->
+        <div class="simulator-link">
+            <a href="/simulator" class="simulator-button">Market Simulator</a>
+        </div>
     </header>
     <main>
         <div class="card">
             <div class="tabs">
-                <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
-                <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
+                <button class="tab-button active" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
                 <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
                 <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
                 <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
             </div>
-            <!-- Market Simulator Section (Placeholder) -->
-            <div id="market-simulator" class="tab-content active">
-                <h2>Market Simulator</h2>
-                <p>Access the Market Simulator to simulate trading with historical Nasdaq data.</p>
-                <a href="/simulator" class="simulator-button">Go to Market Simulator</a>
+            <!-- Nasdaq Gap Insights Section -->
+            <div id="gap-insights" class="tab-content active">
+                <h2>Nasdaq Gap Insights</h2>
+                <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
+                <form id="gap-insights-form">
+                    <label for="gap-insights-size-select">Select Gap Size Bin:</label>
+                    <select id="gap-insights-size-select" name="gap_size">
+                        <option value="">Select gap size</option>
+                        <option value="0.15-0.35%">0.15-0.35%</option>
+                        <option value="0.35-0.5%">0.35-0.5%</option>
+                        <option value="0.5-1%">0.5-1%</option>
+                        <option value="1-1.5%">1-1.5%</option>
+                        <option value="1.5%+">1.5%+</option>
+                    </select>
+                    <label for="gap-insights-day-select">Select Day of Week:</label>
+                    <select id="gap-insights-day-select" name="day">
+                        <option value="">Select day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                    <label for="gap-insights-direction-select">Select Gap Direction:</label>
+                    <select id="gap-insights-direction-select" name="gap_direction">
+                        <option value="">Select gap direction</option>
+                        <option value="up">Gap Up</option>
+                        <option value="down">Gap Down</option>
+                    </select>
+                    <button type="submit">Get Insights</button>
+                </form>
+                <div id="gap-insights-results">
+                    <p>Select a gap size, day, and direction to view Nasdaq gap insights and statistics.</p>
+                </div>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- Nasdaq Gap Analysis Section (Unchanged) -->
+            <!-- Nasdaq Gap Analysis Section -->
             <div id="gap-analysis" class="tab-content">
                 <h2>Nasdaq Gap Analysis</h2>
                 <p>Uncover Nasdaq gap trading opportunities with chart analytics. Filter by gap size and direction to reveal intraday price action patterns missed by daily charts.</p>
@@ -131,43 +164,7 @@
                 </form>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- Nasdaq Gap Insights Section (Unchanged) -->
-            <div id="gap-insights" class="tab-content">
-                <h2>Nasdaq Gap Insights</h2>
-                <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
-                <form id="gap-insights-form">
-                    <label for="gap-insights-size-select">Select Gap Size Bin:</label>
-                    <select id="gap-insights-size-select" name="gap_size">
-                        <option value="">Select gap size</option>
-                        <option value="0.15-0.35%">0.15-0.35%</option>
-                        <option value="0.35-0.5%">0.35-0.5%</option>
-                        <option value="0.5-1%">0.5-1%</option>
-                        <option value="1-1.5%">1-1.5%</option>
-                        <option value="1.5%+">1.5%+</option>
-                    </select>
-                    <label for="gap-insights-day-select">Select Day of Week:</label>
-                    <select id="gap-insights-day-select" name="day">
-                        <option value="">Select day</option>
-                        <option value="Monday">Monday</option>
-                        <option value="Tuesday">Tuesday</option>
-                        <option value="Wednesday">Wednesday</option>
-                        <option value="Thursday">Thursday</option>
-                        <option value="Friday">Friday</option>
-                    </select>
-                    <label for="gap-insights-direction-select">Select Gap Direction:</label>
-                    <select id="gap-insights-direction-select" name="gap_direction">
-                        <option value="">Select gap direction</option>
-                        <option value="up">Gap Up</option>
-                        <option value="down">Gap Down</option>
-                    </select>
-                    <button type="submit">Get Insights</button>
-                </form>
-                <div id="gap-insights-results">
-                    <p>Select a gap size, day, and direction to view Nasdaq gap insights and statistics.</p>
-                </div>
-                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
-            </div>
-            <!-- News Event Analysis Section (Unchanged) -->
+            <!-- News Event Analysis Section -->
             <div id="events-analysis" class="tab-content">
                 <h2>News Event Analysis</h2>
                 <p>Master Nasdaq price action on key news days (CPI, PPI, FOMC, NFP) with chart analytics to seize intraday trading opportunities.</p>
@@ -251,7 +248,7 @@
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- Earnings Analysis Section (Unchanged) -->
+            <!-- Earnings Analysis Section -->
             <div id="earnings-analysis" class="tab-content">
                 <h2>Earnings Analysis</h2>
                 <p>Analyze stock earnings reactions with chart analytics to pinpoint intraday price action patterns and build winning trading strategies.</p>
@@ -325,7 +322,7 @@
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- AdSense Ad Unit (Unchanged) -->
+            <!-- AdSense Ad Unit -->
             <div class="ads-container">
                 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
                 <ins class="adsbygoogle"
@@ -346,57 +343,53 @@
         <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site, All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
         <img src="/static/logo-new.png" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
-<script>
-    // Disable right-click without alert
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    });
-    // Disable text selection
-    document.addEventListener('selectstart', function(e) {
-        e.preventDefault();
-    });
-    // Disable drag-and-drop
-    document.addEventListener('dragstart', function(e) {
-        e.preventDefault();
-    });
-    // Tab switching function
-    function openTab(tabId) {
-        if (tabId === 'market-simulator') {
-            window.location.href = '/simulator';
-            return;
-        }
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.style.display = 'none';
+    <script>
+        // Disable right-click without alert
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
         });
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.classList.remove('active');
+        // Disable text selection
+        document.addEventListener('selectstart', function(e) {
+            e.preventDefault();
         });
-        document.getElementById(tabId).style.display = 'block';
-        document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
-        gtag('event', 'tab_open', {
-            'event_category': 'Navigation',
-            'event_label': tabId
+        // Disable drag-and-drop
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
         });
-    }
-
-    // Initialize tab based on query parameters
-    document.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        let tabId = 'market-simulator'; // Default tab
-
-        if (urlParams.has('gap_size') || urlParams.has('day') || urlParams.has('gap_direction')) {
-            tabId = 'gap-insights';
-        } else if (urlParams.has('event_type') || urlParams.has('year') || urlParams.has('bin')) {
-            tabId = 'events-analysis';
-        } else if (urlParams.has('ticker') || urlParams.has('earnings_bin')) {
-            tabId = 'earnings-analysis';
-        } else if (urlParams.has('gap_date') || urlParams.has('gap_ticker')) {
-            tabId = 'gap-analysis';
+        // Tab switching function
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(tabId).style.display = 'block';
+            document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
+            gtag('event', 'tab_open', {
+                'event_category': 'Navigation',
+                'event_label': tabId
+            });
         }
 
-        openTab(tabId);
-    });
-</script>
-<script src="/static/script.js?v=25"></script>
+        // Initialize tab based on query parameters
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let tabId = 'gap-insights'; // Default to Gap Insights
+
+            if (urlParams.has('gap_size') || urlParams.has('day') || urlParams.has('gap_direction')) {
+                tabId = 'gap-insights';
+            } else if (urlParams.has('event_type') || urlParams.has('year') || urlParams.has('bin')) {
+                tabId = 'events-analysis';
+            } else if (urlParams.has('ticker') || urlParams.has('earnings_bin')) {
+                tabId = 'earnings-analysis';
+            } else if (urlParams.has('gap_date') || urlParams.has('gap_ticker')) {
+                tabId = 'gap-analysis';
+            }
+
+            openTab(tabId);
+        });
+    </script>
+    <script src="/static/script.js?v=24"></script>
 </body>
 </html>
