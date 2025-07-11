@@ -347,8 +347,8 @@ def get_chart():
             return jsonify({'error': 'Invalid ticker'}), 400
         try:
             timeframe = int(timeframe)
-            if timeframe not in [1, 2, 3, 5, 10]:
-                return jsonify({'error': 'Invalid timeframe. Must be 1, 2, 3, 5, or 10 minutes.'}), 400
+            if timeframe not in [1, 2, 3, 5, 10, 15, 30, 60, 240]:
+                return jsonify({'error': 'Invalid timeframe. Must be 1, 2, 3, 5, 10, 15, 30, 60 or 240 minutes.'}), 400
         except ValueError:
             return jsonify({'error': 'Invalid timeframe format'}), 400
         try:
