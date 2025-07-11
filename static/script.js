@@ -75,7 +75,7 @@ let currentReplayIndex = 0;
 let isReplaying = false;
 let isPaused = false;
 let aggregatedCandles = [];
-let timeframe = 1;
+let timeframeMarket = 1;
 // Trade simulator globals (Market Simulator only)
 let openPosition = null;
 let tradeHistory = [];
@@ -607,6 +607,7 @@ async function loadChart(event, tabId) {
         // Store chart data and reset replay state
         if (replayPrefix === '') { // Market Simulator
             chartData = data.chart_data;
+            timeframeMarket = timeframe; // Set global timeframe for market simulator
             aggregatedCandles = aggregateCandles(chartData, timeframe);
             currentReplayIndex = 0;
             isReplaying = false;
@@ -642,8 +643,8 @@ async function loadChart(event, tabId) {
             if (replayIntervalEarnings) clearInterval(replayIntervalEarnings);
         }
 
-        // Render initial chart
-        renderChart(replayPrefix, [], -1, null);
+        // Render initial chart with full data
+        renderChart(replayPrefix, config.aggregatedCandles(), -1, null);
 
         // Handle replay controls
         replayControls.style.display = 'block';
@@ -785,8 +786,8 @@ function getReplayConfig(section) {
             setIsPaused: (state) => { isPaused = state; },
             aggregatedCandles: () => aggregatedCandles,
             setAggregatedCandles: (candles) => { aggregatedCandles = candles; },
-            timeframe: () => timeframe,
-            setTimeframe: (tf) => { timeframe = tf; },
+            timeframe: () => timeframeMarket,
+            setTimeframe: (tf) => { timeframeMarket = tf; },
             chartContainerId: 'plotly-chart',
             playButtonId: 'play-replay',
             pauseButtonId: 'pause-replay',
@@ -901,18 +902,33 @@ function startReplay(section) {
 
     // Determine start index based on user input
     if (!config.isPaused()) {
-        if (startTimeInput && startTimeInput.match(/^[0-2][0-9]:[0-5][0-9]$/)) {
-            const [hours, minutes] = startTimeInput.split(':').map(Number);
-            const targetTime = new Date(`${chartData.date}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
-            let currentReplayIndex = chartData.timestamp.findIndex(ts => {
-                const candleTime = new Date(ts);
-                return candleTime.getTime() >= targetTime.getTime();
-            });
-            if (currentReplayIndex === -1) {
-                currentReplayIndex = 0;
-                alert('Start time not found in chart data. Starting from first candle.');
+        if (startTimeInput && startTimeInput.trim() !== '') {
+            // More flexible time parsing: accepts 9:30, 09:30, 9:5, 09:05, etc.
+            const timeMatch = startTimeInput.trim().match(/^(\d{1,2}):(\d{1,2})$/);
+            if (timeMatch) {
+                const hours = parseInt(timeMatch[1]);
+                const minutes = parseInt(timeMatch[2]);
+                
+                // Validate time ranges
+                if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+                    const targetTime = new Date(`${chartData.date}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
+                    let currentReplayIndex = chartData.timestamp.findIndex(ts => {
+                        const candleTime = new Date(ts);
+                        return candleTime.getTime() >= targetTime.getTime();
+                    });
+                    if (currentReplayIndex === -1) {
+                        currentReplayIndex = 0;
+                        alert(`Start time ${hours}:${minutes.toString().padStart(2, '0')} not found in chart data. Starting from first candle.`);
+                    }
+                    config.setCurrentReplayIndex(currentReplayIndex);
+                } else {
+                    alert('Invalid time format. Please use valid hours (0-23) and minutes (0-59).');
+                    config.setCurrentReplayIndex(0);
+                }
+            } else {
+                alert('Invalid time format. Please use HH:MM format (e.g., 9:30 or 09:30).');
+                config.setCurrentReplayIndex(0);
             }
-            config.setCurrentReplayIndex(currentReplayIndex);
         } else {
             config.setCurrentReplayIndex(0);
         }
@@ -1034,8 +1050,8 @@ function startOverReplay(section) {
     // Reset to the beginning
     config.setCurrentReplayIndex(0);
 
-    // Update chart to show no candles (initial state)
-    renderChart(section, []);
+    // Update chart to show full chart (not empty)
+    renderChart(section, config.aggregatedCandles());
 
     // Update button states
     playButton.textContent = 'Play Replay';
