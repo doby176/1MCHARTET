@@ -1224,3 +1224,31 @@ form#signup-form p a:hover, form#login-form p a:hover {
     position: relative;
     z-index: 1;
 }
+
+.tabs-container {
+    position: relative;
+    z-index: 1;
+}
+.tab-content {
+    display: none;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1;
+}
+.tab-content.active {
+    display: block;
+    z-index: 2; /* Ensure active tab is on top */
+}
+/* Fix potential mobile overlap */
+@media (max-width: 600px) {
+    #trade-summary {
+        z-index: 5;
+    }
+    .chart-wrapper, #plotly-chart {
+        z-index: 6;
+        min-height: 300px;
+    }
+}
