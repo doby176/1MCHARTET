@@ -541,9 +541,6 @@ def get_gaps():
 
 @app.route('/simulator')
 def simulator():
-    if not session.get('authenticated'):
-        return redirect(url_for('login'))
-    logging.debug("Rendering simulator.html")
     return render_template('simulator.html')
 
 @app.route('/api/gap_insights', methods=['GET'])

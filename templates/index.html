@@ -31,122 +31,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css?v=41">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <style>
-        /* Existing styles from original index.html */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #f8f9fa;
-        }
-        .logo {
-            height: 50px;
-        }
-        .seo-description {
-            text-align: center;
-        }
-        .user-info a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        .user-info a:hover {
-            text-decoration: underline;
-        }
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .tab-button {
-            padding: 10px 20px;
-            border: none;
-            background-color: #f1f1f1;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .tab-button.active {
-            background-color: #007bff;
-            color: white;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin: 20px auto;
-            max-width: 1200px;
-        }
-        .form-container {
-            margin-bottom: 20px;
-        }
-        .error-message {
-            color: red;
-        }
-        .section-logo {
-            display: block;
-            margin: 20px auto;
-            max-width: 100px;
-        }
-        .replay-controls {
-            margin: 10px 0;
-        }
-        .replay-controls button,
-        .replay-controls select,
-        .replay-controls input {
-            margin-right: 10px;
-        }
-        #replay-timestamp,
-        #replay-timestamp-gap,
-        #replay-timestamp-events,
-        #replay-timestamp-earnings {
-            font-weight: bold;
-        }
-        .filter-toggle {
-            margin-bottom: 10px;
-        }
-        .filter-section {
-            display: none;
-        }
-        .filter-section.active {
-            display: block;
-        }
-        .ads-container {
-            margin: 20px 0;
-            text-align: center;
-        }
-        .earnings-outcome-note {
-            font-size: 0.9em;
-            color: #555;
-            margin-top: 10px;
-        }
-        /* New style for simulator button */
-        .simulator-button {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: 500;
-        }
-        .simulator-button:hover {
-            background-color: #0056b3;
-            text-decoration: none;
-        }
-    </style>
 </head>
 <body>
     <header>
         <img src="/static/logo-new.png?v=2" alt="1MChart Logo" class="logo">
         <div class="seo-description">
-            <p>Advanced Nasdaq gap insights, News events, Earnings analysis and 1-minute charts (2015–2025).</p>
+            <p>Advanced Nasdaq gap insights, News events, Earnings analysis and 1-minute charts  (2015–2025).</p>
             <p><strong>The Edge Lies In The Data.</strong></p>
         </div>
         <div class="user-info">
@@ -162,15 +52,13 @@
                 <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
                 <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
             </div>
-            <!-- Market Simulator Section (Modified) -->
+            <!-- Market Simulator Section (Placeholder) -->
             <div id="market-simulator" class="tab-content active">
                 <h2>Market Simulator</h2>
-                <p>Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls.</p>
-                <p>Click the button below to access the Market Simulator.</p>
-                <a href="/static/simulator.html" class="simulator-button">Go to Market Simulator</a>
-                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
+                <p>Access the Market Simulator to simulate trading with historical Nasdaq data.</p>
+                <a href="/simulator" class="simulator-button">Go to Market Simulator</a>
             </div>
-            <!-- Nasdaq Gap Analysis Section -->
+            <!-- Nasdaq Gap Analysis Section (Unchanged) -->
             <div id="gap-analysis" class="tab-content">
                 <h2>Nasdaq Gap Analysis</h2>
                 <p>Uncover Nasdaq gap trading opportunities with chart analytics. Filter by gap size and direction to reveal intraday price action patterns missed by daily charts.</p>
@@ -243,7 +131,7 @@
                 </form>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- Nasdaq Gap Insights Section -->
+            <!-- Nasdaq Gap Insights Section (Unchanged) -->
             <div id="gap-insights" class="tab-content">
                 <h2>Nasdaq Gap Insights</h2>
                 <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
@@ -279,7 +167,7 @@
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- News Event Analysis Section -->
+            <!-- News Event Analysis Section (Unchanged) -->
             <div id="events-analysis" class="tab-content">
                 <h2>News Event Analysis</h2>
                 <p>Master Nasdaq price action on key news days (CPI, PPI, FOMC, NFP) with chart analytics to seize intraday trading opportunities.</p>
@@ -363,7 +251,7 @@
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- Earnings Analysis Section -->
+            <!-- Earnings Analysis Section (Unchanged) -->
             <div id="earnings-analysis" class="tab-content">
                 <h2>Earnings Analysis</h2>
                 <p>Analyze stock earnings reactions with chart analytics to pinpoint intraday price action patterns and build winning trading strategies.</p>
@@ -437,7 +325,7 @@
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- AdSense Ad Unit -->
+            <!-- AdSense Ad Unit (Unchanged) -->
             <div class="ads-container">
                 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
                 <ins class="adsbygoogle"
@@ -471,25 +359,19 @@
         document.addEventListener('dragstart', function(e) {
             e.preventDefault();
         });
-        // Modified tab switching function
+        // Tab switching function
         function openTab(tabId) {
             if (tabId === 'market-simulator') {
-                // Redirect to simulator.html for Market Simulator
-                window.location.href = '/static/simulator.html';
-                gtag('event', 'tab_open', {
-                    'event_category': 'Navigation',
-                    'event_label': tabId
-                });
+                window.location.href = '/simulator';
                 return;
             }
-            // Logic for other tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
+                tab.style.display = 'none';
             });
             document.querySelectorAll('.tab-button').forEach(button => {
                 button.classList.remove('active');
             });
-            document.getElementById(tabId).classList.add('active');
+            document.getElementById(tabId).style.display = 'block';
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
             gtag('event', 'tab_open', {
                 'event_category': 'Navigation',
@@ -497,6 +379,6 @@
             });
         }
     </script>
-    <script src="/static/script.js?v=25"></script>
+    <script src="/static/script.js?v=24"></script>
 </body>
 </html>
