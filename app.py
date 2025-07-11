@@ -672,7 +672,7 @@ def get_economic_events():
         logging.error(f"Error processing economic events: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
-@app.route('/simulator')
+@app.route('/simulator.html')
 def simulator():
     return render_template('simulator.html', session=session)
 
