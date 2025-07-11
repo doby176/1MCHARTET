@@ -36,15 +36,11 @@
     <header>
         <img src="/static/logo-new.png?v=2" alt="1MChart Logo" class="logo">
         <div class="seo-description">
-            <p>Advanced Nasdaq gap insights, News events, Earnings analysis and 1-minute charts (2015–2025).</p>
+            <p>Advanced Nasdaq gap insights, News events, Earnings analysis and 1-minute charts  (2015–2025).</p>
             <p><strong>The Edge Lies In The Data.</strong></p>
         </div>
         <div class="user-info">
             <p>Welcome, <span id="username">{{ session.username | default('Guest') }}</span> | <a href="/logout">Log Out</a></p>
-        </div>
-        <!-- Simulator Link -->
-        <div class="simulator-link">
-            <a href="/simulator" class="simulator-button">Market Simulator</a>
         </div>
     </header>
     <main>
@@ -359,36 +355,14 @@
         // Tab switching function
         function openTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.style.display = 'none';
+                tab.classList.remove('active');
             });
             document.querySelectorAll('.tab-button').forEach(button => {
                 button.classList.remove('active');
             });
-            document.getElementById(tabId).style.display = 'block';
+            document.getElementById(tabId).classList.add('active');
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
-            gtag('event', 'tab_open', {
-                'event_category': 'Navigation',
-                'event_label': tabId
-            });
         }
-
-        // Initialize tab based on query parameters
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let tabId = 'gap-insights'; // Default to Gap Insights
-
-            if (urlParams.has('gap_size') || urlParams.has('day') || urlParams.has('gap_direction')) {
-                tabId = 'gap-insights';
-            } else if (urlParams.has('event_type') || urlParams.has('year') || urlParams.has('bin')) {
-                tabId = 'events-analysis';
-            } else if (urlParams.has('ticker') || urlParams.has('earnings_bin')) {
-                tabId = 'earnings-analysis';
-            } else if (urlParams.has('gap_date') || urlParams.has('gap_ticker')) {
-                tabId = 'gap-analysis';
-            }
-
-            openTab(tabId);
-        });
     </script>
     <script src="/static/script.js?v=24"></script>
 </body>

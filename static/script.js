@@ -6,26 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBinOptions();
     populateEarningsOutcomes();
     
-    // Initialize stock forms for all tabs
-    document.getElementById('stock-form').addEventListener('submit', (e) => loadChart(e, 'market-simulator'));
+    // Initialize stock forms for remaining tabs
     document.getElementById('stock-form-gap').addEventListener('submit', (e) => loadChart(e, 'gap-analysis'));
-    document.getElementById('stock-form-events').addEventListener('submit', (e) => loadChart(e, 'events-analysis')); // New form handler
+    document.getElementById('stock-form-events').addEventListener('submit', (e) => loadChart(e, 'events-analysis'));
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
     document.getElementById('events-form').addEventListener('submit', loadEventDates);
     document.getElementById('earnings-form').addEventListener('submit', loadEarningsDates);
     document.getElementById('gap-insights-form').addEventListener('submit', loadGapInsights);
     
-    // Replay control listeners (Market Simulator)
-    document.getElementById('play-replay').addEventListener('click', () => startReplay(''));
-    document.getElementById('pause-replay').addEventListener('click', () => pauseReplay(''));
-    document.getElementById('start-over-replay').addEventListener('click', () => startOverReplay(''));
-    document.getElementById('prev-candle').addEventListener('click', () => prevCandle(''));
-    document.getElementById('next-candle').addEventListener('click', () => nextCandle(''));
-    document.getElementById('replay-speed').addEventListener('change', () => updateReplaySpeed(''));
-    // Trade simulator listeners (exclusive to Market Simulator)
-    document.getElementById('buy-trade').addEventListener('click', placeBuyTrade);
-    document.getElementById('sell-trade').addEventListener('click', placeSellTrade);
-
     // Replay control listeners for Gap Analysis
     document.getElementById('play-replay-gap').addEventListener('click', () => startReplay('gap'));
     document.getElementById('pause-replay-gap').addEventListener('click', () => pauseReplay('gap'));
@@ -62,22 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
         radio.addEventListener('change', toggleEarningsFilterSection);
     });
 
-    // Initialize ticker selects for all tabs
-    document.getElementById('ticker-select').addEventListener('change', () => loadDates('ticker-select', 'date'));
+    // Initialize ticker selects for remaining tabs
     document.getElementById('ticker-select-gap').addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
-    document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events')); // New
+    document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
 });
-
-// Global variables for replay (Market Simulator)
-let chartData = null;
-let replayInterval = null;
-let currentReplayIndex = 0;
-let isReplaying = false;
-let isPaused = false;
-// Trade simulator globals (Market Simulator only)
-let openPosition = null;
-let tradeHistory = [];
-const POSITION_SIZE = 100;
 
 // Replay globals for Gap Analysis
 let chartDataGap = null;
@@ -187,13 +163,10 @@ function loadBinOptions() {
 }
 
 async function loadTickers() {
-    const tickerSelect = document.getElementById('ticker-select');
     const tickerSelectGap = document.getElementById('ticker-select-gap');
-    const tickerSelectEvents = document.getElementById('ticker-select-events'); // New
-    tickerSelect.disabled = true;
+    const tickerSelectEvents = document.getElementById('ticker-select-events');
     tickerSelectGap.disabled = true;
     tickerSelectEvents.disabled = true;
-    tickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
     tickerSelectGap.innerHTML = '<option value="">Loading tickers...</option>';
     tickerSelectEvents.innerHTML = '<option value="">Loading tickers...</option>';
     try {
@@ -209,7 +182,6 @@ async function loadTickers() {
         if (response.status === 429) {
             const data = await response.json();
             console.error('Rate limit error:', data.error);
-            tickerSelect.innerHTML = `<option value="">${data.error}</option>`;
             tickerSelectGap.innerHTML = `<option value="">${data.error}</option>`;
             tickerSelectEvents.innerHTML = `<option value="">${data.error}</option>`;
             alert(data.error);
@@ -224,23 +196,19 @@ async function loadTickers() {
         if (!data.tickers || !Array.isArray(data.tickers)) {
             throw new Error('Invalid response format: tickers array not found');
         }
-        tickerSelect.innerHTML = '<option value="">Select a ticker</option>';
         tickerSelectGap.innerHTML = '<option value="">Select a ticker</option>';
         tickerSelectEvents.innerHTML = '<option value="">Select a ticker</option>';
         data.tickers.forEach(ticker => {
             const option = document.createElement('option');
             option.value = ticker;
             option.textContent = ticker;
-            tickerSelect.appendChild(option.cloneNode(true));
             tickerSelectGap.appendChild(option.cloneNode(true));
-            tickerSelectEvents.appendChild(option); // New
+            tickerSelectEvents.appendChild(option);
         });
-        tickerSelect.disabled = false;
         tickerSelectGap.disabled = false;
         tickerSelectEvents.disabled = false;
     } catch (error) {
         console.error('Error loading tickers:', error.message);
-        tickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
         tickerSelectGap.innerHTML = '<option value="">Error loading tickers</option>';
         tickerSelectEvents.innerHTML = '<option value="">Error loading tickers</option>';
         alert('Failed to load tickers: ' + error.message + '. Please refresh the page or try again later.');
@@ -353,20 +321,10 @@ async function loadChart(event, tabId) {
     event.preventDefault();
     // Map tabId to configuration
     const tabConfig = {
-        'market-simulator': {
-            tickerSelectId: 'ticker-select',
-            dateInputId: 'date',
-            timeframeSelectId: 'timeframe-select', // New
-            chartContainerId: 'plotly-chart',
-            formId: 'stock-form',
-            restrictHours: false,
-            replayControlsId: 'replay-controls',
-            replayPrefix: ''
-        },
         'gap-analysis': {
             tickerSelectId: 'ticker-select-gap',
             dateInputId: 'date-gap',
-            timeframeSelectId: 'timeframe-select-gap', // New
+            timeframeSelectId: 'timeframe-select-gap',
             chartContainerId: 'plotly-chart-gap',
             formId: 'stock-form-gap',
             restrictHours: true,
@@ -374,21 +332,21 @@ async function loadChart(event, tabId) {
             replayPrefix: 'gap'
         },
         'events-analysis': {
-            tickerSelectId: 'ticker-select-events', // Updated
-            dateInputId: 'date-events', // Updated
-            timeframeSelectId: 'timeframe-select-events', // New
+            tickerSelectId: 'ticker-select-events',
+            dateInputId: 'date-events',
+            timeframeSelectId: 'timeframe-select-events',
             chartContainerId: 'plotly-chart-events',
-            formId: 'stock-form-events', // Updated
-            restrictHours: false, // Include pre/post-market data
+            formId: 'stock-form-events',
+            restrictHours: false,
             replayControlsId: 'replay-controls-events',
             replayPrefix: 'events'
         },
         'earnings-analysis': {
             tickerSelectId: 'earnings-ticker-select',
             dateInputId: 'date-gap',
-            timeframeSelectId: 'timeframe-select-earnings', // New
+            timeframeSelectId: 'timeframe-select-earnings',
             chartContainerId: 'plotly-chart-earnings',
-            formId: 'earnings-form', // Updated to use earnings-form
+            formId: 'earnings-form',
             restrictHours: true,
             replayControlsId: 'replay-controls-earnings',
             replayPrefix: 'earnings'
@@ -404,7 +362,7 @@ async function loadChart(event, tabId) {
     const { tickerSelectId, dateInputId, timeframeSelectId, chartContainerId, formId, restrictHours, replayControlsId, replayPrefix } = config;
     const ticker = document.getElementById(tickerSelectId).value;
     const date = document.getElementById(dateInputId).value;
-    const timeframe = document.getElementById(timeframeSelectId).value; // New
+    const timeframe = document.getElementById(timeframeSelectId).value;
     const chartContainer = document.getElementById(chartContainerId);
     const form = document.getElementById(formId);
     const button = form.querySelector('button[type="submit"]');
@@ -417,8 +375,6 @@ async function loadChart(event, tabId) {
     const startOverButton = document.getElementById(`start-over-replay${replayPrefix ? '-' + replayPrefix : ''}`);
     const prevButton = document.getElementById(`prev-candle${replayPrefix ? '-' + replayPrefix : ''}`);
     const nextButton = document.getElementById(`next-candle${replayPrefix ? '-' + replayPrefix : ''}`);
-    const buyButton = document.getElementById('buy-trade');
-    const sellButton = document.getElementById('sell-trade');
 
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem(`chartRateLimitReset_${tabId}`);
@@ -481,17 +437,7 @@ async function loadChart(event, tabId) {
         }
 
         // Store chart data and reset replay state
-        if (replayPrefix === '') { // Market Simulator
-            chartData = data.chart_data;
-            currentReplayIndex = 0;
-            isReplaying = false;
-            isPaused = false;
-            if (replayInterval) clearInterval(replayInterval);
-            // Reset trade simulator state
-            openPosition = null;
-            tradeHistory = [];
-            updateTradeSummary();
-        } else if (replayPrefix === 'gap') {
+        if (replayPrefix === 'gap') {
             chartDataGap = data.chart_data;
             currentReplayIndexGap = 0;
             isReplayingGap = false;
@@ -565,10 +511,6 @@ async function loadChart(event, tabId) {
         startOverButton.disabled = true;
         prevButton.disabled = true;
         nextButton.disabled = true;
-        if (replayPrefix === '') { // Market Simulator
-            buyButton.disabled = true;
-            sellButton.disabled = true;
-        }
         document.getElementById(`replay-start-time${replayPrefix ? '-' + replayPrefix : ''}`).value = '';
         document.getElementById(`replay-timestamp${replayPrefix ? '-' + replayPrefix : ''}`).textContent = 'Current Time: --:--:--';
 
@@ -585,125 +527,8 @@ async function loadChart(event, tabId) {
     }
 }
 
-function placeBuyTrade() {
-    if (!isReplaying || !chartData || currentReplayIndex <= 0 || currentReplayIndex > chartData.count) return;
-    if (openPosition) {
-        alert('Close the current position before opening a new one.');
-        return;
-    }
-    openPosition = {
-        type: 'buy',
-        price: chartData.close[currentReplayIndex - 1],
-        shares: POSITION_SIZE,
-        timestamp: chartData.timestamp[currentReplayIndex - 1]
-    };
-    console.log(`Placed buy trade: ${JSON.stringify(openPosition)}`);
-    updateTradeSummary();
-    gtag('event', 'trade_placed', {
-        'event_category': 'Trade Simulator',
-        'event_label': `Buy_${chartData.ticker}_${chartData.date}_${openPosition.timestamp}`
-    });
-}
-
-function placeSellTrade() {
-    if (!isReplaying || !chartData || currentReplayIndex <= 0 || currentReplayIndex > chartData.count) return;
-    if (openPosition) {
-        // Close existing position
-        const exitPrice = chartData.close[currentReplayIndex - 1];
-        const pnl = openPosition.type === 'buy'
-            ? (exitPrice - openPosition.price) * openPosition.shares
-            : (openPosition.price - exitPrice) * openPosition.shares;
-        tradeHistory.push({
-            type: openPosition.type,
-            entryPrice: openPosition.price,
-            exitPrice: exitPrice,
-            shares: openPosition.shares,
-            timestamp: chartData.timestamp[currentReplayIndex - 1],
-            pnl: parseFloat(pnl.toFixed(2))
-        });
-        openPosition = null;
-        console.log(`Closed position with P/L: $${pnl.toFixed(2)}`);
-        updateTradeSummary();
-        gtag('event', 'trade_closed', {
-            'event_category': 'Trade Simulator',
-            'event_label': `${tradeHistory[tradeHistory.length - 1].type}_${chartData.ticker}_${chartData.date}_${tradeHistory[tradeHistory.length - 1].timestamp}`
-        });
-    } else {
-        // Open new sell position
-        openPosition = {
-            type: 'sell',
-            price: chartData.close[currentReplayIndex - 1],
-            shares: POSITION_SIZE,
-            timestamp: chartData.timestamp[currentReplayIndex - 1]
-        };
-        console.log(`Placed sell trade: ${JSON.stringify(openPosition)}`);
-        updateTradeSummary();
-        gtag('event', 'trade_placed', {
-            'event_category': 'Trade Simulator',
-            'event_label': `Sell_${chartData.ticker}_${chartData.date}_${openPosition.timestamp}`
-        });
-    }
-}
-
-function updateTradeSummary() {
-    const positionStatus = document.getElementById('position-status');
-    const tradePnl = document.getElementById('trade-pnl');
-    const tradeHistoryEl = document.getElementById('trade-history');
-    const buyButton = document.getElementById('buy-trade');
-    const sellButton = document.getElementById('sell-trade');
-
-    // Update button states
-    buyButton.disabled = !isReplaying || currentReplayIndex <= 0 || currentReplayIndex > chartData.count || openPosition?.type === 'sell';
-    sellButton.disabled = !isReplaying || currentReplayIndex <= 0 || currentReplayIndex > chartData.count;
-
-    // Update position status
-    if (openPosition) {
-        const currentPrice = currentReplayIndex > 0 ? chartData.close[currentReplayIndex - 1] : openPosition.price;
-        const unrealizedPnl = openPosition.type === 'buy'
-            ? (currentPrice - openPosition.price) * openPosition.shares
-            : (openPosition.price - currentPrice) * openPosition.shares;
-        positionStatus.textContent = `Open ${openPosition.type.toUpperCase()} Position: ${openPosition.shares} shares @ $${openPosition.price.toFixed(2)}`;
-        tradePnl.textContent = `Unrealized P/L: $${unrealizedPnl.toFixed(2)}`;
-    } else {
-        positionStatus.textContent = 'No open position';
-        tradePnl.textContent = `Realized P/L: $${tradeHistory.reduce((sum, trade) => sum + trade.pnl, 0).toFixed(2)}`;
-    }
-
-    // Update trade history
-    if (tradeHistory.length === 0) {
-        tradeHistoryEl.textContent = 'Trade History: None';
-    } else {
-        const historyText = tradeHistory.map(trade => 
-            `${trade.type.toUpperCase()} ${trade.shares} shares @ $${trade.entryPrice.toFixed(2)} -> $${trade.exitPrice.toFixed(2)} at ${trade.timestamp.split(' ')[1]} (P/L: $${trade.pnl.toFixed(2)})`
-        ).join('; ');
-        tradeHistoryEl.textContent = `Trade History: ${historyText}`;
-    }
-}
-
 function getReplayConfig(section) {
     const configs = {
-        '': { // Market Simulator
-            chartData: () => chartData,
-            setChartData: (data) => { chartData = data; },
-            replayInterval: () => replayInterval,
-            setReplayInterval: (interval) => { replayInterval = interval; },
-            currentReplayIndex: () => currentReplayIndex,
-            setCurrentReplayIndex: (index) => { currentReplayIndex = index; },
-            isReplaying: () => isReplaying,
-            setIsReplaying: (state) => { isReplaying = state; },
-            isPaused: () => isPaused,
-            setIsPaused: (state) => { isPaused = state; },
-            chartContainerId: 'plotly-chart',
-            playButtonId: 'play-replay',
-            pauseButtonId: 'pause-replay',
-            startOverButtonId: 'start-over-replay',
-            prevButtonId: 'prev-candle',
-            nextButtonId: 'next-candle',
-            startTimeInputId: 'replay-start-time',
-            replaySpeedId: 'replay-speed',
-            timestampDisplayId: 'replay-timestamp',
-            hasTradeSimulator: true
-        },
         'gap': {
             chartData: () => chartDataGap,
             setChartData: (data) => { chartDataGap = data; },
@@ -788,11 +613,6 @@ function startReplay(section) {
     const startTimeInput = document.getElementById(config.startTimeInputId).value;
     const replaySpeed = parseInt(document.getElementById(config.replaySpeedId).value);
     const chartContainer = document.getElementById(config.chartContainerId);
-    let buyButton, sellButton;
-    if (config.hasTradeSimulator) {
-        buyButton = document.getElementById('buy-trade');
-        sellButton = document.getElementById('sell-trade');
-    }
 
     // If not paused, determine start index based on user input
     if (!config.isPaused()) {
@@ -825,11 +645,6 @@ function startReplay(section) {
     startOverButton.disabled = config.currentReplayIndex() <= 0;
     prevButton.disabled = config.currentReplayIndex() <= 0;
     nextButton.disabled = config.currentReplayIndex() >= chartData.count;
-    if (config.hasTradeSimulator) {
-        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
-        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
-        updateTradeSummary();
-    }
 
     // Initialize chart for replay
     Plotly.purge(chartContainer);
@@ -880,7 +695,6 @@ function startReplay(section) {
     timestampDisplay.textContent = config.currentReplayIndex() > 0 
         ? `Current Time: ${chartData.timestamp[config.currentReplayIndex() - 1].split(' ')[1]}`
         : 'Current Time: --:--:--';
-    if (config.hasTradeSimulator) updateTradeSummary();
 
     // Replay loop
     config.setReplayInterval(setInterval(() => {
@@ -907,18 +721,13 @@ function startReplay(section) {
         prevButton.disabled = config.currentReplayIndex() <= 0;
         nextButton.disabled = config.currentReplayIndex() + 1 >= chartData.count;
         startOverButton.disabled = config.currentReplayIndex() <= 0;
-        if (config.hasTradeSimulator) {
-            buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count || openPosition?.type === 'sell';
-            sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
-            updateTradeSummary();
-        }
 
         config.setCurrentReplayIndex(config.currentReplayIndex() + 1);
     }, replaySpeed));
 
     gtag('event', 'replay_start', {
         'event_category': 'Chart',
-        'event_label': `${chartData.ticker}_${chartData.date}_${section || 'simulator'}`
+        'event_label': `${chartData.ticker}_${chartData.date}_${section}`
     });
 }
 
@@ -932,21 +741,11 @@ function pauseReplay(section) {
     const playButton = document.getElementById(config.playButtonId);
     const pauseButton = document.getElementById(config.pauseButtonId);
     const startOverButton = document.getElementById(config.startOverButtonId);
-    let buyButton, sellButton;
-    if (config.hasTradeSimulator) {
-        buyButton = document.getElementById('buy-trade');
-        sellButton = document.getElementById('sell-trade');
-        updateTradeSummary();
-    }
 
     playButton.textContent = 'Resume Replay';
     playButton.disabled = false;
     pauseButton.disabled = true;
     startOverButton.disabled = config.currentReplayIndex() <= 0;
-    if (config.hasTradeSimulator) {
-        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > config.chartData().count || openPosition?.type === 'sell';
-        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > config.chartData().count;
-    }
 }
 
 function startOverReplay(section) {
@@ -961,11 +760,6 @@ function startOverReplay(section) {
     const nextButton = document.getElementById(config.nextButtonId);
     const timestampDisplay = document.getElementById(config.timestampDisplayId);
     const chartContainer = document.getElementById(config.chartContainerId);
-    let buyButton, sellButton;
-    if (config.hasTradeSimulator) {
-        buyButton = document.getElementById('buy-trade');
-        sellButton = document.getElementById('sell-trade');
-    }
 
     // Stop any ongoing replay
     if (config.isReplaying() || config.isPaused()) {
@@ -1029,18 +823,13 @@ function startOverReplay(section) {
     startOverButton.disabled = true;
     prevButton.disabled = true;
     nextButton.disabled = chartData.count === 0;
-    if (config.hasTradeSimulator) {
-        buyButton.disabled = true;
-        sellButton.disabled = true;
-        updateTradeSummary();
-    }
 
     // Reset timestamp
     timestampDisplay.textContent = 'Current Time: --:--:--';
 
     gtag('event', 'replay_start_over', {
         'event_category': 'Chart',
-        'event_label': `${chartData.ticker}_${chartData.date}_${section || 'simulator'}`
+        'event_label': `${chartData.ticker}_${chartData.date}_${section}`
     });
 }
 
@@ -1057,33 +846,6 @@ function stopReplay(section) {
     const prevButton = document.getElementById(config.prevButtonId);
     const nextButton = document.getElementById(config.nextButtonId);
     const chartData = config.chartData();
-    let buyButton, sellButton;
-    if (config.hasTradeSimulator) {
-        buyButton = document.getElementById('buy-trade');
-        sellButton = document.getElementById('sell-trade');
-    }
-
-    // Close open position if any (only for Market Simulator)
-    if (config.hasTradeSimulator && openPosition && config.currentReplayIndex() > 0 && config.currentReplayIndex() <= chartData.count) {
-        const exitPrice = chartData.close[config.currentReplayIndex() - 1];
-        const pnl = openPosition.type === 'buy'
-            ? (exitPrice - openPosition.price) * openPosition.shares
-            : (openPosition.price - exitPrice) * openPosition.shares;
-        tradeHistory.push({
-            type: openPosition.type,
-            entryPrice: openPosition.price,
-            exitPrice: exitPrice,
-            shares: openPosition.shares,
-            timestamp: chartData.timestamp[config.currentReplayIndex() - 1],
-            pnl: parseFloat(pnl.toFixed(2))
-        });
-        openPosition = null;
-        console.log(`Closed position at replay end with P/L: $${pnl.toFixed(2)}`);
-        gtag('event', 'trade_closed', {
-            'event_category': 'Trade Simulator',
-            'event_label': `${tradeHistory[tradeHistory.length - 1].type}_${chartData.ticker}_${chartData.date}_${tradeHistory[tradeHistory.length - 1].timestamp}`
-        });
-    }
 
     playButton.textContent = 'Play Replay';
     playButton.disabled = false;
@@ -1091,11 +853,6 @@ function stopReplay(section) {
     startOverButton.disabled = true;
     prevButton.disabled = true;
     nextButton.disabled = true;
-    if (config.hasTradeSimulator) {
-        buyButton.disabled = true;
-        sellButton.disabled = true;
-        updateTradeSummary();
-    }
 
     // Restore full chart
     const candlestickTrace = {
@@ -1170,11 +927,6 @@ function updateChartToIndex(section) {
     const prevButton = document.getElementById(config.prevButtonId);
     const nextButton = document.getElementById(config.nextButtonId);
     const startOverButton = document.getElementById(config.startOverButtonId);
-    let buyButton, sellButton;
-    if (config.hasTradeSimulator) {
-        buyButton = document.getElementById('buy-trade');
-        sellButton = document.getElementById('sell-trade');
-    }
 
     // Update chart to show candles up to currentReplayIndex
     Plotly.purge(chartContainer);
@@ -1228,11 +980,6 @@ function updateChartToIndex(section) {
     prevButton.disabled = config.currentReplayIndex() <= 0;
     nextButton.disabled = config.currentReplayIndex() >= chartData.count;
     startOverButton.disabled = config.currentReplayIndex() <= 0;
-    if (config.hasTradeSimulator) {
-        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count || openPosition?.type === 'sell';
-        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
-        updateTradeSummary();
-    }
 }
 
 function updateReplaySpeed(section) {
@@ -1494,8 +1241,8 @@ async function loadEventDates(event) {
                 e.preventDefault();
                 console.log(`Clicked event date: ${date}`);
                 openTab('events-analysis');
-                document.getElementById('ticker-select-events').value = 'QQQ'; // Updated
-                document.getElementById('date-events').value = date; // Updated
+                document.getElementById('ticker-select-events').value = 'QQQ';
+                document.getElementById('date-events').value = date;
                 loadChart(new Event('submit'), 'events-analysis');
                 gtag('event', 'event_date_click', {
                     'event_category': 'Event Analysis',
