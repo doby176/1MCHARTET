@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize stock forms for all tabs
     document.getElementById('stock-form').addEventListener('submit', (e) => loadChart(e, 'market-simulator'));
     document.getElementById('stock-form-gap').addEventListener('submit', (e) => loadChart(e, 'gap-analysis'));
-    document.getElementById('stock-form-events').addEventListener('submit', (e) => loadChart(e, 'events-analysis')); // New form handler
+    document.getElementById('stock-form-events').addEventListener('submit', (e) => loadChart(e, 'events-analysis'));
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
     document.getElementById('events-form').addEventListener('submit', loadEventDates);
     document.getElementById('earnings-form').addEventListener('submit', loadEarningsDates);
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize ticker selects for all tabs
     document.getElementById('ticker-select').addEventListener('change', () => loadDates('ticker-select', 'date'));
     document.getElementById('ticker-select-gap').addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
-    document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events')); // New
+    document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
 });
 
 // Global variables for replay (Market Simulator)
@@ -74,6 +74,8 @@ let replayInterval = null;
 let currentReplayIndex = 0;
 let isReplaying = false;
 let isPaused = false;
+let aggregatedCandles = [];
+let timeframe = 1;
 // Trade simulator globals (Market Simulator only)
 let openPosition = null;
 let tradeHistory = [];
@@ -85,6 +87,8 @@ let replayIntervalGap = null;
 let currentReplayIndexGap = 0;
 let isReplayingGap = false;
 let isPausedGap = false;
+let aggregatedCandlesGap = [];
+let timeframeGap = 1;
 
 // Replay globals for Events Analysis
 let chartDataEvents = null;
@@ -92,6 +96,8 @@ let replayIntervalEvents = null;
 let currentReplayIndexEvents = 0;
 let isReplayingEvents = false;
 let isPausedEvents = false;
+let aggregatedCandlesEvents = [];
+let timeframeEvents = 1;
 
 // Replay globals for Earnings Analysis
 let chartDataEarnings = null;
@@ -99,6 +105,8 @@ let replayIntervalEarnings = null;
 let currentReplayIndexEarnings = 0;
 let isReplayingEarnings = false;
 let isPausedEarnings = false;
+let aggregatedCandlesEarnings = [];
+let timeframeEarnings = 1;
 
 // Bin options for each event type
 const binOptions = {
@@ -116,6 +124,122 @@ const earningsOutcomes = [
     { value: 'Slight Miss', text: 'Slight Miss (-10% to 0%)' },
     { value: 'Unknown', text: 'Unknown (data unavailable)' }
 ];
+
+function aggregateCandles(data, timeframe) {
+    if (timeframe === 1) {
+        return data.timestamp.map((_, i) => ({
+            timestamp: data.timestamp[i],
+            open: data.open[i],
+            high: data.high[i],
+            low: data.low[i],
+            close: data.close[i],
+            volume: data.volume[i],
+            minuteUpdates: []
+        }));
+    }
+
+    const candles = [];
+    let currentCandle = null;
+    let minuteCount = 0;
+
+    for (let i = 0; i < data.timestamp.length; i++) {
+        if (minuteCount === 0) {
+            currentCandle = {
+                timestamp: data.timestamp[i],
+                open: data.open[i],
+                high: data.high[i],
+                low: data.low[i],
+                close: data.close[i],
+                volume: data.volume[i],
+                minuteUpdates: []
+            };
+        } else {
+            currentCandle.high = Math.max(currentCandle.high, data.high[i]);
+            currentCandle.low = Math.min(currentCandle.low, data.low[i]);
+            currentCandle.close = data.close[i];
+            currentCandle.volume += data.volume[i];
+            currentCandle.minuteUpdates.push({
+                timestamp: data.timestamp[i],
+                high: currentCandle.high,
+                low: currentCandle.low,
+                close: currentCandle.close,
+                volume: currentCandle.volume
+            });
+        }
+
+        minuteCount++;
+        if (minuteCount === timeframe) {
+            candles.push(currentCandle);
+            minuteCount = 0;
+        }
+    }
+
+    if (currentCandle && minuteCount > 0) {
+        candles.push(currentCandle);
+    }
+
+    return candles;
+}
+
+function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = null) {
+    const config = getReplayConfig(section);
+    const chartData = config.chartData();
+    
+    if (!chartData) return;
+    
+    const candlestickTrace = {
+        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
+        open: candles.map(c => c.open),
+        high: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].high;
+            }
+            return c.high;
+        }),
+        low: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].low;
+            }
+            return c.low;
+        }),
+        close: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].close;
+            }
+            return c.close;
+        }),
+        type: 'candlestick',
+        name: chartData.ticker,
+        increasing: { line: { color: '#00cc00' } },
+        decreasing: { line: { color: '#ff0000' } }
+    };
+    const volumeTrace = {
+        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
+        y: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].volume;
+            }
+            return c.volume;
+        }),
+        type: 'bar',
+        name: 'Volume',
+        yaxis: 'y2',
+        marker: { color: '#888888' }
+    };
+    
+    const tf = config.timeframe();
+    const layout = {
+        title: `${chartData.ticker} ${tf}-Minute Candlestick Chart - ${chartData.date} (Replay)`,
+        xaxis: { title: 'Time', type: 'date', rangeslider: { visible: false }, tickformat: '%H:%M' },
+        yaxis: { title: 'Price', domain: [0.3, 1] },
+        yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
+        showlegend: true,
+        margin: { t: 50, b: 50, l: 50, r: 50 },
+        plot_bgcolor: '#ffffff',
+        paper_bgcolor: '#ffffff'
+    };
+    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
+}
 
 function populateEarningsOutcomes() {
     const earningsBinSelect = document.getElementById('earnings-bin-select');
@@ -189,7 +313,7 @@ function loadBinOptions() {
 async function loadTickers() {
     const tickerSelect = document.getElementById('ticker-select');
     const tickerSelectGap = document.getElementById('ticker-select-gap');
-    const tickerSelectEvents = document.getElementById('ticker-select-events'); // New
+    const tickerSelectEvents = document.getElementById('ticker-select-events');
     tickerSelect.disabled = true;
     tickerSelectGap.disabled = true;
     tickerSelectEvents.disabled = true;
@@ -233,7 +357,7 @@ async function loadTickers() {
             option.textContent = ticker;
             tickerSelect.appendChild(option.cloneNode(true));
             tickerSelectGap.appendChild(option.cloneNode(true));
-            tickerSelectEvents.appendChild(option); // New
+            tickerSelectEvents.appendChild(option);
         });
         tickerSelect.disabled = false;
         tickerSelectGap.disabled = false;
@@ -356,7 +480,7 @@ async function loadChart(event, tabId) {
         'market-simulator': {
             tickerSelectId: 'ticker-select',
             dateInputId: 'date',
-            timeframeSelectId: 'timeframe-select', // New
+            timeframeSelectId: 'timeframe-select',
             chartContainerId: 'plotly-chart',
             formId: 'stock-form',
             restrictHours: false,
@@ -366,7 +490,7 @@ async function loadChart(event, tabId) {
         'gap-analysis': {
             tickerSelectId: 'ticker-select-gap',
             dateInputId: 'date-gap',
-            timeframeSelectId: 'timeframe-select-gap', // New
+            timeframeSelectId: 'timeframe-select-gap',
             chartContainerId: 'plotly-chart-gap',
             formId: 'stock-form-gap',
             restrictHours: true,
@@ -374,21 +498,21 @@ async function loadChart(event, tabId) {
             replayPrefix: 'gap'
         },
         'events-analysis': {
-            tickerSelectId: 'ticker-select-events', // Updated
-            dateInputId: 'date-events', // Updated
-            timeframeSelectId: 'timeframe-select-events', // New
+            tickerSelectId: 'ticker-select-events',
+            dateInputId: 'date-events',
+            timeframeSelectId: 'timeframe-select-events',
             chartContainerId: 'plotly-chart-events',
-            formId: 'stock-form-events', // Updated
-            restrictHours: false, // Include pre/post-market data
+            formId: 'stock-form-events',
+            restrictHours: false,
             replayControlsId: 'replay-controls-events',
             replayPrefix: 'events'
         },
         'earnings-analysis': {
             tickerSelectId: 'earnings-ticker-select',
             dateInputId: 'date-gap',
-            timeframeSelectId: 'timeframe-select-earnings', // New
+            timeframeSelectId: 'timeframe-select-earnings',
             chartContainerId: 'plotly-chart-earnings',
-            formId: 'earnings-form', // Updated to use earnings-form
+            formId: 'earnings-form',
             restrictHours: true,
             replayControlsId: 'replay-controls-earnings',
             replayPrefix: 'earnings'
@@ -404,7 +528,7 @@ async function loadChart(event, tabId) {
     const { tickerSelectId, dateInputId, timeframeSelectId, chartContainerId, formId, restrictHours, replayControlsId, replayPrefix } = config;
     const ticker = document.getElementById(tickerSelectId).value;
     const date = document.getElementById(dateInputId).value;
-    const timeframe = document.getElementById(timeframeSelectId).value; // New
+    const timeframe = parseInt(document.getElementById(timeframeSelectId).value);
     const chartContainer = document.getElementById(chartContainerId);
     const form = document.getElementById(formId);
     const button = form.querySelector('button[type="submit"]');
@@ -437,7 +561,7 @@ async function loadChart(event, tabId) {
     }
 
     console.log(`Loading chart for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrict_hours=${restrictHours}, tab=${tabId}`);
-    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}${restrictHours ? '&restrict_hours=true' : ''}`;
+    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=${timeframe > 1}${restrictHours ? '&restrict_hours=true' : ''}`;
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
@@ -483,6 +607,7 @@ async function loadChart(event, tabId) {
         // Store chart data and reset replay state
         if (replayPrefix === '') { // Market Simulator
             chartData = data.chart_data;
+            aggregatedCandles = aggregateCandles(chartData, timeframe);
             currentReplayIndex = 0;
             isReplaying = false;
             isPaused = false;
@@ -493,69 +618,32 @@ async function loadChart(event, tabId) {
             updateTradeSummary();
         } else if (replayPrefix === 'gap') {
             chartDataGap = data.chart_data;
+            timeframeGap = timeframe;
+            aggregatedCandlesGap = aggregateCandles(chartDataGap, timeframe);
             currentReplayIndexGap = 0;
             isReplayingGap = false;
             isPausedGap = false;
             if (replayIntervalGap) clearInterval(replayIntervalGap);
         } else if (replayPrefix === 'events') {
             chartDataEvents = data.chart_data;
+            timeframeEvents = timeframe;
+            aggregatedCandlesEvents = aggregateCandles(chartDataEvents, timeframe);
             currentReplayIndexEvents = 0;
             isReplayingEvents = false;
             isPausedEvents = false;
             if (replayIntervalEvents) clearInterval(replayIntervalEvents);
         } else if (replayPrefix === 'earnings') {
             chartDataEarnings = data.chart_data;
+            timeframeEarnings = timeframe;
+            aggregatedCandlesEarnings = aggregateCandles(chartDataEarnings, timeframe);
             currentReplayIndexEarnings = 0;
             isReplayingEarnings = false;
             isPausedEarnings = false;
             if (replayIntervalEarnings) clearInterval(replayIntervalEarnings);
         }
 
-        // Render chart
-        const candlestickTrace = {
-            x: data.chart_data.timestamp,
-            open: data.chart_data.open,
-            high: data.chart_data.high,
-            low: data.chart_data.low,
-            close: data.chart_data.close,
-            type: 'candlestick',
-            name: data.chart_data.ticker,
-            increasing: { line: { color: '#00cc00' } },
-            decreasing: { line: { color: '#ff0000' } }
-        };
-        const volumeTrace = {
-            x: data.chart_data.timestamp,
-            y: data.chart_data.volume,
-            type: 'bar',
-            name: 'Volume',
-            yaxis: 'y2',
-            marker: { color: '#888888' }
-        };
-        const layout = {
-            title: `${data.chart_data.ticker} ${timeframe}-Minute Candlestick Chart - ${data.chart_data.date}${restrictHours ? ' (Regular Hours)' : ''}`,
-            xaxis: {
-                title: 'Time',
-                type: 'date',
-                rangeslider: { visible: false },
-                tickformat: '%H:%M'
-            },
-            yaxis: {
-                title: 'Price',
-                domain: [0.3, 1]
-            },
-            yaxis2: {
-                title: 'Volume',
-                domain: [0, 0.25],
-                anchor: 'x'
-            },
-            showlegend: true,
-            margin: { t: 50, b: 50, l: 50, r: 50 },
-            plot_bgcolor: '#ffffff',
-            paper_bgcolor: '#ffffff'
-        };
-        Plotly.newPlot(chartContainerId, [candlestickTrace, volumeTrace], layout, {
-            responsive: true
-        });
+        // Render initial chart
+        renderChart(replayPrefix, [], -1, null);
 
         // Handle replay controls
         replayControls.style.display = 'block';
@@ -566,8 +654,8 @@ async function loadChart(event, tabId) {
         prevButton.disabled = true;
         nextButton.disabled = true;
         if (replayPrefix === '') { // Market Simulator
-            buyButton.disabled = true;
-            sellButton.disabled = true;
+            if (buyButton) buyButton.disabled = true;
+            if (sellButton) sellButton.disabled = true;
         }
         document.getElementById(`replay-start-time${replayPrefix ? '-' + replayPrefix : ''}`).value = '';
         document.getElementById(`replay-timestamp${replayPrefix ? '-' + replayPrefix : ''}`).textContent = 'Current Time: --:--:--';
@@ -652,6 +740,8 @@ function updateTradeSummary() {
     const buyButton = document.getElementById('buy-trade');
     const sellButton = document.getElementById('sell-trade');
 
+    if (!positionStatus || !tradePnl || !tradeHistoryEl || !buyButton || !sellButton) return;
+
     // Update button states
     buyButton.disabled = !isReplaying || currentReplayIndex <= 0 || currentReplayIndex > chartData.count || openPosition?.type === 'sell';
     sellButton.disabled = !isReplaying || currentReplayIndex <= 0 || currentReplayIndex > chartData.count;
@@ -693,6 +783,10 @@ function getReplayConfig(section) {
             setIsReplaying: (state) => { isReplaying = state; },
             isPaused: () => isPaused,
             setIsPaused: (state) => { isPaused = state; },
+            aggregatedCandles: () => aggregatedCandles,
+            setAggregatedCandles: (candles) => { aggregatedCandles = candles; },
+            timeframe: () => timeframe,
+            setTimeframe: (tf) => { timeframe = tf; },
             chartContainerId: 'plotly-chart',
             playButtonId: 'play-replay',
             pauseButtonId: 'pause-replay',
@@ -715,6 +809,10 @@ function getReplayConfig(section) {
             setIsReplaying: (state) => { isReplayingGap = state; },
             isPaused: () => isPausedGap,
             setIsPaused: (state) => { isPausedGap = state; },
+            aggregatedCandles: () => aggregatedCandlesGap,
+            setAggregatedCandles: (candles) => { aggregatedCandlesGap = candles; },
+            timeframe: () => timeframeGap,
+            setTimeframe: (tf) => { timeframeGap = tf; },
             chartContainerId: 'plotly-chart-gap',
             playButtonId: 'play-replay-gap',
             pauseButtonId: 'pause-replay-gap',
@@ -737,6 +835,10 @@ function getReplayConfig(section) {
             setIsReplaying: (state) => { isReplayingEvents = state; },
             isPaused: () => isPausedEvents,
             setIsPaused: (state) => { isPausedEvents = state; },
+            aggregatedCandles: () => aggregatedCandlesEvents,
+            setAggregatedCandles: (candles) => { aggregatedCandlesEvents = candles; },
+            timeframe: () => timeframeEvents,
+            setTimeframe: (tf) => { timeframeEvents = tf; },
             chartContainerId: 'plotly-chart-events',
             playButtonId: 'play-replay-events',
             pauseButtonId: 'pause-replay-events',
@@ -759,6 +861,10 @@ function getReplayConfig(section) {
             setIsReplaying: (state) => { isReplayingEarnings = state; },
             isPaused: () => isPausedEarnings,
             setIsPaused: (state) => { isPausedEarnings = state; },
+            aggregatedCandles: () => aggregatedCandlesEarnings,
+            setAggregatedCandles: (candles) => { aggregatedCandlesEarnings = candles; },
+            timeframe: () => timeframeEarnings,
+            setTimeframe: (tf) => { timeframeEarnings = tf; },
             chartContainerId: 'plotly-chart-earnings',
             playButtonId: 'play-replay-earnings',
             pauseButtonId: 'pause-replay-earnings',
@@ -787,19 +893,17 @@ function startReplay(section) {
     const timestampDisplay = document.getElementById(config.timestampDisplayId);
     const startTimeInput = document.getElementById(config.startTimeInputId).value;
     const replaySpeed = parseInt(document.getElementById(config.replaySpeedId).value);
-    const chartContainer = document.getElementById(config.chartContainerId);
     let buyButton, sellButton;
     if (config.hasTradeSimulator) {
         buyButton = document.getElementById('buy-trade');
         sellButton = document.getElementById('sell-trade');
     }
 
-    // If not paused, determine start index based on user input
+    // Determine start index based on user input
     if (!config.isPaused()) {
         if (startTimeInput && startTimeInput.match(/^[0-2][0-9]:[0-5][0-9]$/)) {
             const [hours, minutes] = startTimeInput.split(':').map(Number);
-            const dateStr = chartData.date;
-            const targetTime = new Date(`${dateStr}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
+            const targetTime = new Date(`${chartData.date}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
             let currentReplayIndex = chartData.timestamp.findIndex(ts => {
                 const candleTime = new Date(ts);
                 return candleTime.getTime() >= targetTime.getTime();
@@ -813,9 +917,6 @@ function startReplay(section) {
             config.setCurrentReplayIndex(0);
         }
     }
-
-    // Prevent starting if already replaying
-    if (config.isReplaying() && !config.isPaused()) return;
 
     config.setIsReplaying(true);
     config.setIsPaused(false);
@@ -831,79 +932,33 @@ function startReplay(section) {
         updateTradeSummary();
     }
 
-    // Initialize chart for replay
-    Plotly.purge(chartContainer);
-    const candlestickTrace = {
-        x: chartData.timestamp.slice(0, config.currentReplayIndex()),
-        open: chartData.open.slice(0, config.currentReplayIndex()),
-        high: chartData.high.slice(0, config.currentReplayIndex()),
-        low: chartData.low.slice(0, config.currentReplayIndex()),
-        close: chartData.close.slice(0, config.currentReplayIndex()),
-        type: 'candlestick',
-        name: chartData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: chartData.timestamp.slice(0, config.currentReplayIndex()),
-        y: chartData.volume.slice(0, config.currentReplayIndex()),
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    const layout = {
-        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
-        xaxis: {
-            title: 'Time',
-            type: 'date',
-            rangeslider: { visible: false },
-            tickformat: '%H:%M'
-        },
-        yaxis: {
-            title: 'Price',
-            domain: [0.3, 1]
-        },
-        yaxis2: {
-            title: 'Volume',
-            domain: [0, 0.25],
-            anchor: 'x'
-        },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
+    // Initial render
+    let minuteIndex = config.currentReplayIndex() % config.timeframe();
+    let candleIndex = Math.floor(config.currentReplayIndex() / config.timeframe());
 
-    // Update timestamp display
-    timestampDisplay.textContent = config.currentReplayIndex() > 0 
-        ? `Current Time: ${chartData.timestamp[config.currentReplayIndex() - 1].split(' ')[1]}`
-        : 'Current Time: --:--:--';
-    if (config.hasTradeSimulator) updateTradeSummary();
+    if (candleIndex > 0 || minuteIndex > 0) {
+        renderChart(section, config.aggregatedCandles().slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
+        timestampDisplay.textContent = config.currentReplayIndex() > 0 
+            ? `Current Time: ${chartData.timestamp[config.currentReplayIndex() - 1].split(' ')[1]}`
+            : 'Current Time: --:--:--';
+    } else {
+        renderChart(section, []);
+        timestampDisplay.textContent = 'Current Time: --:--:--';
+    }
 
-    // Replay loop
     config.setReplayInterval(setInterval(() => {
         if (config.currentReplayIndex() >= chartData.count) {
             stopReplay(section);
             return;
         }
 
-        // Add next candle
-        Plotly.extendTraces(config.chartContainerId, {
-            x: [[chartData.timestamp[config.currentReplayIndex()]]],
-            open: [[chartData.open[config.currentReplayIndex()]]],
-            high: [[chartData.high[config.currentReplayIndex()]]],
-            low: [[chartData.low[config.currentReplayIndex()]]],
-            close: [[chartData.close[config.currentReplayIndex()]]]
-        }, [0]);
-        Plotly.extendTraces(config.chartContainerId, {
-            x: [[chartData.timestamp[config.currentReplayIndex()]]],
-            y: [[chartData.volume[config.currentReplayIndex()]]]
-        }, [1]);
+        candleIndex = Math.floor(config.currentReplayIndex() / config.timeframe());
+        minuteIndex = config.currentReplayIndex() % config.timeframe();
 
-        // Update timestamp display and button states
+        // Render only up to the current candle, with minute-by-minute updates for the current candle only
+        renderChart(section, config.aggregatedCandles().slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
         timestampDisplay.textContent = `Current Time: ${chartData.timestamp[config.currentReplayIndex()].split(' ')[1]}`;
+
         prevButton.disabled = config.currentReplayIndex() <= 0;
         nextButton.disabled = config.currentReplayIndex() + 1 >= chartData.count;
         startOverButton.disabled = config.currentReplayIndex() <= 0;
@@ -914,6 +969,9 @@ function startReplay(section) {
         }
 
         config.setCurrentReplayIndex(config.currentReplayIndex() + 1);
+        if (config.currentReplayIndex() % config.timeframe() === 0) {
+            minuteIndex = 0;
+        }
     }, replaySpeed));
 
     gtag('event', 'replay_start', {
@@ -960,7 +1018,6 @@ function startOverReplay(section) {
     const prevButton = document.getElementById(config.prevButtonId);
     const nextButton = document.getElementById(config.nextButtonId);
     const timestampDisplay = document.getElementById(config.timestampDisplayId);
-    const chartContainer = document.getElementById(config.chartContainerId);
     let buyButton, sellButton;
     if (config.hasTradeSimulator) {
         buyButton = document.getElementById('buy-trade');
@@ -978,49 +1035,7 @@ function startOverReplay(section) {
     config.setCurrentReplayIndex(0);
 
     // Update chart to show no candles (initial state)
-    Plotly.purge(chartContainer);
-    const candlestickTrace = {
-        x: [],
-        open: [],
-        high: [],
-        low: [],
-        close: [],
-        type: 'candlestick',
-        name: chartData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: [],
-        y: [],
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    const layout = {
-        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
-        xaxis: {
-            title: 'Time',
-            type: 'date',
-            rangeslider: { visible: false },
-            tickformat: '%H:%M'
-        },
-        yaxis: {
-            title: 'Price',
-            domain: [0.3, 1]
-        },
-        yaxis2: {
-            title: 'Volume',
-            domain: [0, 0.25],
-            anchor: 'x'
-        },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
+    renderChart(section, []);
 
     // Update button states
     playButton.textContent = 'Play Replay';
@@ -1028,7 +1043,7 @@ function startOverReplay(section) {
     pauseButton.disabled = true;
     startOverButton.disabled = true;
     prevButton.disabled = true;
-    nextButton.disabled = chartData.count === 0;
+    nextButton.disabled = config.aggregatedCandles().length === 0;
     if (config.hasTradeSimulator) {
         buyButton.disabled = true;
         sellButton.disabled = true;
@@ -1098,48 +1113,7 @@ function stopReplay(section) {
     }
 
     // Restore full chart
-    const candlestickTrace = {
-        x: chartData.timestamp,
-        open: chartData.open,
-        high: chartData.high,
-        low: chartData.low,
-        close: chartData.close,
-        type: 'candlestick',
-        name: chartData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: chartData.timestamp,
-        y: chartData.volume,
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    const layout = {
-        title: `${chartData.ticker} Candlestick Chart - ${chartData.date}`,
-        xaxis: {
-            title: 'Time',
-            type: 'date',
-            rangeslider: { visible: false },
-            tickformat: '%H:%M'
-        },
-        yaxis: {
-            title: 'Price',
-            domain: [0.3, 1]
-        },
-        yaxis2: {
-            title: 'Volume',
-            domain: [0, 0.25],
-            anchor: 'x'
-        },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
+    renderChart(section, config.aggregatedCandles());
 
     document.getElementById(config.timestampDisplayId).textContent = 'Current Time: --:--:--';
 }
@@ -1165,7 +1139,6 @@ function nextCandle(section) {
 function updateChartToIndex(section) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
-    const chartContainer = document.getElementById(config.chartContainerId);
     const timestampDisplay = document.getElementById(config.timestampDisplayId);
     const prevButton = document.getElementById(config.prevButtonId);
     const nextButton = document.getElementById(config.nextButtonId);
@@ -1176,50 +1149,9 @@ function updateChartToIndex(section) {
         sellButton = document.getElementById('sell-trade');
     }
 
-    // Update chart to show candles up to currentReplayIndex
-    Plotly.purge(chartContainer);
-    const candlestickTrace = {
-        x: chartData.timestamp.slice(0, config.currentReplayIndex()),
-        open: chartData.open.slice(0, config.currentReplayIndex()),
-        high: chartData.high.slice(0, config.currentReplayIndex()),
-        low: chartData.low.slice(0, config.currentReplayIndex()),
-        close: chartData.close.slice(0, config.currentReplayIndex()),
-        type: 'candlestick',
-        name: chartData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: chartData.timestamp.slice(0, config.currentReplayIndex()),
-        y: chartData.volume.slice(0, config.currentReplayIndex()),
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    const layout = {
-        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
-        xaxis: {
-            title: 'Time',
-            type: 'date',
-            rangeslider: { visible: false },
-            tickformat: '%H:%M'
-        },
-        yaxis: {
-            title: 'Price',
-            domain: [0.3, 1]
-        },
-        yaxis2: {
-            title: 'Volume',
-            domain: [0, 0.25],
-            anchor: 'x'
-        },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
+    const candleIndex = Math.floor(config.currentReplayIndex() / config.timeframe());
+    const minuteIndex = config.currentReplayIndex() % config.timeframe();
+    renderChart(section, config.aggregatedCandles().slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
 
     // Update timestamp and button states
     timestampDisplay.textContent = config.currentReplayIndex() > 0 
@@ -1494,8 +1426,8 @@ async function loadEventDates(event) {
                 e.preventDefault();
                 console.log(`Clicked event date: ${date}`);
                 openTab('events-analysis');
-                document.getElementById('ticker-select-events').value = 'QQQ'; // Updated
-                document.getElementById('date-events').value = date; // Updated
+                document.getElementById('ticker-select-events').value = 'QQQ';
+                document.getElementById('date-events').value = date;
                 loadChart(new Event('submit'), 'events-analysis');
                 gtag('event', 'event_date_click', {
                     'event_category': 'Event Analysis',
