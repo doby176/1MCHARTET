@@ -3,207 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Analyze historical Nasdaq stock data with interactive candlestick charts, trade simulation, gap analysis, and event-driven insights.">
-    <meta name="keywords" content="stock market, Nasdaq, candlestick charts, trade simulator, gap analysis, earnings analysis, event analysis">
-    <meta name="author" content="1MChart">
-    <title>1MChart - Nasdaq Stock Analysis</title>
-    <link rel="stylesheet" href="/static/styles.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-        header {
-            background-color: #333;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-        }
-        header nav a {
-            color: white;
-            margin: 0 15px;
-            text-decoration: none;
-        }
-        header nav a:hover {
-            text-decoration: underline;
-        }
-        main {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 0 20px;
-        }
-        .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid #ccc;
-            margin-bottom: 20px;
-        }
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .tab.active {
-            background-color: #007bff;
-            color: white;
-            border-radius: 4px 4px 0 0;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        label {
-            font-weight: bold;
-        }
-        select, input, button {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        button:hover:not(:disabled) {
-            background-color: #0056b3;
-        }
-        .filter-section {
-            display: none;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .filter-section.active {
-            display: flex;
-        }
-        .filter-radio {
-            margin: 10px 0;
-        }
-        .filter-radio label {
-            margin-right: 20px;
-        }
-        #plotly-chart, #plotly-chart-gap, #plotly-chart-events, #plotly-chart-earnings {
-            width: 100%;
-            height: 500px;
-            margin-top: 20px;
-        }
-        .gap-insights, #earnings-dates, #events-dates, #gap-dates {
-            margin-top: 20px;
-        }
-        .gap-insights ul, #earnings-dates ul, #events-dates ul, #gap-dates ul {
-            list-style: none;
-            padding: 0;
-        }
-        .gap-insights li, #earnings-dates li, #events-dates li, #gap-dates li {
-            padding: 5px 0;
-        }
-        .section-logo {
-            display: block;
-            margin: 20px auto;
-            max-width: 100px;
-        }
-        footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #333;
-            color: white;
-        }
-        .replay-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-            align-items: center;
-        }
-        .replay-controls button {
-            padding: 8px 12px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .replay-controls button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .replay-controls button:hover:not(:disabled) {
-            background-color: #0056b3;
-        }
-        .replay-controls label {
-            margin-left: 10px;
-            font-weight: 500;
-        }
-        .replay-controls input, .replay-controls select {
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .replay-controls span {
-            margin-left: 10px;
-            font-weight: 500;
-        }
-        .trade-summary {
-            margin-top: 10px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f9f9f9;
-        }
-        .earnings-outcome-note {
-            font-size: 0.9em;
-            color: #555;
-            margin-top: 5px;
-        }
-    </style>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-123456789-1"></script>
+    <!-- Google Analytics Tag -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BFDR405H06"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', 'UA-123456789-1');
+        gtag('config', 'G-BFDR405H06');
     </script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456" crossorigin="anonymous"></script>
+    <meta name="google-adsense-account" content="ca-pub-9416785017460416">
+    <title>1MChart - Precision Nasdaq Gap & Earnings Insights</title>
+    <meta name="description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, and reversal patterns. Analyze earnings outcomes (Beat, Miss...) and key news events (CPI, FOMC...) with high-frequency 1-minute interactive charts data for strategic day trading (2015-2025).">
+    <meta name="keywords" content="1-minute stock charts, Nasdaq gap insights, QQQ gap fill rate, QQQ gap trading, intraday gap analysis, QQQ price action patterns, day trading, price action analysis, Nasdaq gap statistics, earnings price action, CPI, PPI, FOMC, NFP, QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META, intraday trading, historical stock data, trading tools, technical analysis, stock market analysis, QQQ gap trading strategies, stock gap analytics">
+    <meta name="author" content="1MChart Team">
+    <meta name="robots" content="index, follow">
+    <!-- Open Graph for social media -->
+    <meta property="og:title" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025)">
+    <meta property="og:description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, adverse moves, and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025).">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://onemchart.onrender.com">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="1MChart - Precision Nasdaq Gap & Earnings Insights">
+    <meta name="twitter:description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, adverse moves, and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025).">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css?v=41">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <header>
-        <h1>1MChart</h1>
-        <nav>
-            <a href="/profile">Profile</a>
-            <a href="/logout">Logout</a>
-        </nav>
+        <img src="/static/logo-new.png?v=2" alt="1MChart Logo" class="logo">
+        <div class="seo-description">
+            <p>Advanced Nasdaq gap insights, News events, Earnings analysis and 1-minute charts  (2015–2025).</p>
+            <p><strong>The Edge Lies In The Data.</strong></p>
+        </div>
+        <div class="user-info">
+            <p>Welcome, <span id="username">{{ session.username | default('Guest') }}</span> | <a href="/logout">Log Out</a></p>
+        </div>
     </header>
     <main>
         <div class="card">
             <div class="tabs">
-                <div class="tab active" data-tab="market-simulator">Market Simulator</div>
-                <div class="tab" data-tab="gap-analysis">Gap Analysis</div>
-                <div class="tab" data-tab="events-analysis">Events Analysis</div>
-                <div class="tab" data-tab="earnings-analysis">Earnings Analysis</div>
-                <div class="tab" data-tab="gap-insights">Gap Insights</div>
+                <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
+                <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
+                <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
+                <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
+                <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
             </div>
+            <!-- Market Simulator Section -->
             <div id="market-simulator" class="tab-content active">
                 <h2>Market Simulator</h2>
                 <p>Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls.</p>
@@ -227,12 +76,12 @@
                 <div id="chart-container">
                     <div id="plotly-chart"></div>
                     <div id="replay-controls" class="replay-controls">
-                        <button id="play-replay">Play</button>
+                        <button id="play-replay" disabled>Play Replay</button>
                         <button id="pause-replay" disabled>Pause</button>
                         <button id="start-over-replay" disabled>Start Over</button>
-                        <button id="restart-replay" disabled>Restart</button>
-                        <button id="prev-candle" disabled>Previous</button>
-                        <button id="next-candle" disabled>Next</button>
+                        <button id="restart-replay" disabled>Restart Replay</button>
+                        <button id="next-candle" disabled>Next Candle</button>
+                        <button id="prev-candle" disabled>Previous Candle</button>
                         <label for="replay-start-time">Start Time (HH:MM):</label>
                         <input type="text" id="replay-start-time" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
                         <label for="replay-speed">Replay Speed:</label>
@@ -244,7 +93,7 @@
                         <span id="replay-timestamp">Current Time: --:--:--</span>
                         <button id="buy-trade" disabled>Buy</button>
                         <button id="sell-trade" disabled>Sell</button>
-                        <div id="trade-summary" class="trade-summary">
+                        <div id="trade-summary">
                             <h4>Trade Simulator</h4>
                             <p id="position-status">No open position</p>
                             <p id="trade-pnl">P/L: $0.00</p>
@@ -254,9 +103,60 @@
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
+            <!-- Nasdaq Gap Analysis Section -->
             <div id="gap-analysis" class="tab-content">
-                <h2>Gap Analysis</h2>
-                <p>Analyze price gaps in Nasdaq stocks with candlestick charts for selected tickers and dates (Regular Trading Hours: 9:30 AM - 4:00 PM).</p>
+                <h2>Nasdaq Gap Analysis</h2>
+                <p>Uncover Nasdaq gap trading opportunities with chart analytics. Filter by gap size and direction to reveal intraday price action patterns missed by daily charts.</p>
+                <form id="gap-form">
+                    <label for="gap-size-select">Select Gap Size Bin:</label>
+                    <select id="gap-size-select" name="gap_size">
+                        <option value="">Select gap size</option>
+                        <option value="0.15-0.35%">0.15-0.35%</option>
+                        <option value="0.35-0.5%">0.35-0.5%</option>
+                        <option value="0.5-1%">0.5-1%</option>
+                        <option value="1-1.5%">1-1.5%</option>
+                        <option value="1.5%+">1.5%+</option>
+                    </select>
+                    <label for="day-select">Select Day of Week:</label>
+                    <select id="day-select" name="day">
+                        <option value="">Select day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                    <label for="gap-direction-select">Select Gap Direction:</label>
+                    <select id="gap-direction-select" name="gap_direction">
+                        <option value="">Select gap direction</option>
+                        <option value="up">Gap Up</option>
+                        <option value="down">Gap Down</option>
+                    </select>
+                    <button type="submit">Find Gap Dates</button>
+                </form>
+                <div id="gap-dates">
+                    <p>Select a gap size, day, and direction to view dates with gaps.</p>
+                    <ul id="gap-dates-list"></ul>
+                </div>
+                <div id="chart-container-gap">
+                    <div id="plotly-chart-gap"></div>
+                </div>
+                <div id="replay-controls-gap" class="replay-controls" style="display: none;">
+                    <button id="play-replay-gap" disabled>Play Replay</button>
+                    <button id="pause-replay-gap" disabled>Pause</button>
+                    <button id="start-over-replay-gap" disabled>Start Over</button>
+                    <button id="next-candle-gap" disabled>Next Candle</button>
+                    <button id="prev-candle-gap" disabled>Previous Candle</button>
+                    <label for="replay-start-time-gap">Start Time (HH:MM):</label>
+                    <input type="text" id="replay-start-time-gap" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                    <label for="replay-speed-gap">Replay Speed:</label>
+                    <select id="replay-speed-gap">
+                        <option value="1000">1x (1 sec/bar)</option>
+                        <option value="500">2x (0.5 sec/bar)</option>
+                        <option value="250">4x (0.25 sec/bar)</option>
+                    </select>
+                    <span id="replay-timestamp-gap">Current Time: --:--:--</span>
+                </div>
                 <form id="stock-form-gap">
                     <label for="ticker-select-gap">Select Ticker:</label>
                     <select id="ticker-select-gap" name="ticker">
@@ -274,53 +174,89 @@
                     </select>
                     <button type="submit">Load Chart</button>
                 </form>
-                <div id="chart-container-gap">
-                    <div id="plotly-chart-gap"></div>
-                    <div id="replay-controls-gap" class="replay-controls">
-                        <button id="play-replay-gap">Play</button>
-                        <button id="pause-replay-gap" disabled>Pause</button>
-                        <button id="start-over-replay-gap" disabled>Start Over</button>
-                        <button id="restart-replay-gap" disabled>Restart</button>
-                        <button id="prev-candle-gap" disabled>Previous</button>
-                        <button id="next-candle-gap" disabled>Next</button>
-                        <label for="replay-start-time-gap">Start Time (HH:MM):</label>
-                        <input type="text" id="replay-start-time-gap" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
-                        <label for="replay-speed-gap">Replay Speed:</label>
-                        <select id="replay-speed-gap">
-                            <option value="1000">1x (1 sec/bar)</option>
-                            <option value="500">2x (0.5 sec/bar)</option>
-                            <option value="250">4x (0.25 sec/bar)</option>
-                        </select>
-                        <span id="replay-timestamp-gap">Current Time: --:--:--</span>
-                    </div>
-                </div>
-                <form id="gap-form">
-                    <label for="ticker-select-gap-dates">Select Ticker:</label>
-                    <select id="ticker-select-gap-dates" name="ticker">
-                        <option value="">Select a ticker</option>
+                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
+            </div>
+            <!-- Nasdaq Gap Insights Section -->
+            <div id="gap-insights" class="tab-content">
+                <h2>Nasdaq Gap Insights</h2>
+                <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
+                <form id="gap-insights-form">
+                    <label for="gap-insights-size-select">Select Gap Size Bin:</label>
+                    <select id="gap-insights-size-select" name="gap_size">
+                        <option value="">Select gap size</option>
+                        <option value="0.15-0.35%">0.15-0.35%</option>
+                        <option value="0.35-0.5%">0.35-0.5%</option>
+                        <option value="0.5-1%">0.5-1%</option>
+                        <option value="1-1.5%">1-1.5%</option>
+                        <option value="1.5%+">1.5%+</option>
                     </select>
-                    <label for="gap-type">Select Gap Type:</label>
-                    <select id="gap-type" name="gap_type">
-                        <option value="">Select gap type</option>
-                        <option value="up">Up Gap</option>
-                        <option value="down">Down Gap</option>
+                    <label for="gap-insights-day-select">Select Day of Week:</label>
+                    <select id="gap-insights-day-select" name="day">
+                        <option value="">Select day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
                     </select>
-                    <button type="submit">Find Gap Dates</button>
+                    <label for="gap-insights-direction-select">Select Gap Direction:</label>
+                    <select id="gap-insights-direction-select" name="gap_direction">
+                        <option value="">Select gap direction</option>
+                        <option value="up">Gap Up</option>
+                        <option value="down">Gap Down</option>
+                    </select>
+                    <button type="submit">Get Insights</button>
                 </form>
-                <div id="gap-dates">
-                    <p>Select a ticker and gap type to view gap dates.</p>
-                    <ul id="gap-dates-list"></ul>
+                <div id="gap-insights-results">
+                    <p>Select a gap size, day, and direction to view Nasdaq gap insights and statistics.</p>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
+            <!-- News Event Analysis Section -->
             <div id="events-analysis" class="tab-content">
-                <h2>Events Analysis</h2>
-                <p>Analyze Nasdaq stock performance during significant macroeconomic events like CPI, PPI, NFP, and FOMC announcements.</p>
-                <div class="filter-radio">
-                    <input type="radio" id="event-type-filter" name="filter-type" value="event-type" checked>
-                    <label for="event-type-filter">Filter by Event Type</label>
-                    <input type="radio" id="ticker-only-filter-events" name="filter-type" value="ticker-only">
-                    <label for="ticker-only-filter-events">Filter by Ticker Only</label>
+                <h2>News Event Analysis</h2>
+                <p>Master Nasdaq price action on key news days (CPI, PPI, FOMC, NFP) with chart analytics to seize intraday trading opportunities.</p>
+                <div class="filter-toggle">
+                    <label><input type="radio" name="filter-type" value="year" checked> Filter by Event Type and Year</label>
+                    <label><input type="radio" name="filter-type" value="bin"> Filter by Event Type and Economic Impact Range</label>
+                </div>
+                <form id="events-form">
+                    <div id="year-filter" class="filter-section active">
+                        <label for="event-type-select">Select Event Type:</label>
+                        <select id="event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                            <option value="FOMC">FOMC</option>
+                            <option value="NFP">NFP</option>
+                        </select>
+                        <label for="year-select">Select Year:</label>
+                        <select id="year-select" name="year">
+                            <option value="">Select year</option>
+                        </select>
+                    </div>
+                    <div id="bin-filter" class="filter-section">
+                        <label for="bin-event-type-select">Select Event Type:</label>
+                        <select id="bin-event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                            <option value="FOMC">FOMC</option>
+                            <option value="NFP">NFP</option>
+                        </select>
+                        <label for="bin-select">Select Economic Impact Range:</label>
+                        <select id="bin-select" name="bin">
+                            <option value="">Select range</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <button type="submit">Find Event Dates</button>
+                </form>
+                <div id="event-dates">
+                    <p>Select filters to view dates with events.</p>
+                    <ul id="event-dates-list"></ul>
                 </div>
                 <form id="stock-form-events">
                     <label for="ticker-select-events">Select Ticker:</label>
@@ -341,102 +277,32 @@
                 </form>
                 <div id="chart-container-events">
                     <div id="plotly-chart-events"></div>
-                    <div id="replay-controls-events" class="replay-controls">
-                        <button id="play-replay-events">Play</button>
-                        <button id="pause-replay-events" disabled>Pause</button>
-                        <button id="start-over-replay-events" disabled>Start Over</button>
-                        <button id="restart-replay-events" disabled>Restart</button>
-                        <button id="prev-candle-events" disabled>Previous</button>
-                        <button id="next-candle-events" disabled>Next</button>
-                        <label for="replay-start-time-events">Start Time (HH:MM):</label>
-                        <input type="text" id="replay-start-time-events" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
-                        <label for="replay-speed-events">Replay Speed:</label>
-                        <select id="replay-speed-events">
-                            <option value="1000">1x (1 sec/bar)</option>
-                            <option value="500">2x (0.5 sec/bar)</option>
-                            <option value="250">4x (0.25 sec/bar)</option>
-                        </select>
-                        <span id="replay-timestamp-events">Current Time: --:--:--</span>
-                    </div>
                 </div>
-                <form id="events-form">
-                    <div id="event-type-filter" class="filter-section active">
-                        <label for="event-type">Select Event Type:</label>
-                        <select id="event-type" name="event_type">
-                            <option value="">Select event type</option>
-                            <option value="CPI">CPI</option>
-                            <option value="PPI">PPI</option>
-                            <option value="NFP">NFP</option>
-                            <option value="FOMC">FOMC</option>
-                        </select>
-                        <label for="event-bin">Select Event Outcome:</label>
-                        <select id="event-bin" name="event_bin">
-                            <option value="">Select outcome</option>
-                        </select>
-                        <label for="ticker-select-event-dates">Select Ticker:</label>
-                        <select id="ticker-select-event-dates" name="ticker">
-                            <option value="">Select a ticker</option>
-                        </select>
-                    </div>
-                    <div id="ticker-only-filter-events" class="filter-section">
-                        <label for="ticker-select-event-dates-only">Select Ticker:</label>
-                        <select id="ticker-select-event-dates-only" name="ticker">
-                            <option value="">Select a ticker</option>
-                        </select>
-                    </div>
-                    <button type="submit">Find Event Dates</button>
-                </form>
-                <div id="events-dates">
-                    <p>Select an event type or ticker to view event dates.</p>
-                    <ul id="events-dates-list"></ul>
+                <div id="replay-controls-events" class="replay-controls" style="display: none;">
+                    <button id="play-replay-events" disabled>Play Replay</button>
+                    <button id="pause-replay-events" disabled>Pause</button>
+                    <button id="start-over-replay-events" disabled>Start Over</button>
+                    <button id="next-candle-events" disabled>Next Candle</button>
+                    <button id="prev-candle-events" disabled>Previous Candle</button>
+                    <label for="replay-start-time-events">Start Time (HH:MM):</label>
+                    <input type="text" id="replay-start-time-events" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                    <label for="replay-speed-events">Replay Speed:</label>
+                    <select id="replay-speed-events">
+                        <option value="1000">1x (1 sec/bar)</option>
+                        <option value="500">2x (0.5 sec/bar)</option>
+                        <option value="250">4x (0.25 sec/bar)</option>
+                    </select>
+                    <span id="replay-timestamp-events">Current Time: --:--:--</span>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
+            <!-- Earnings Analysis Section -->
             <div id="earnings-analysis" class="tab-content">
                 <h2>Earnings Analysis</h2>
-                <p>Explore how Nasdaq stocks react to earnings announcements, filtered by ticker or earnings outcome.</p>
-                <div class="filter-radio">
-                    <input type="radio" id="ticker-outcome-filter" name="earnings-filter-type" value="ticker-outcome" checked>
-                    <label for="ticker-outcome-filter">Filter by Ticker and Outcome</label>
-                    <input type="radio" id="ticker-only-filter-earnings" name="earnings-filter-type" value="ticker-only">
-                    <label for="ticker-only-filter-earnings">Filter by Ticker Only</label>
-                </div>
-                <form id="stock-form-earnings">
-                    <label for="earnings-ticker-select">Select Ticker:</label>
-                    <select id="earnings-ticker-select" name="ticker">
-                        <option value="">Select a ticker</option>
-                    </select>
-                    <label for="date-earnings">Select Date:</label>
-                    <input type="date" id="date-earnings" name="date">
-                    <label for="timeframe-select-earnings">Select Timeframe:</label>
-                    <select id="timeframe-select-earnings" name="timeframe">
-                        <option value="1">1 Minute</option>
-                        <option value="2">2 Minutes</option>
-                        <option value="3">3 Minutes</option>
-                        <option value="5">5 Minutes</option>
-                        <option value="10">10 Minutes</option>
-                    </select>
-                    <button type="submit">Load Chart</button>
-                </form>
-                <div id="chart-container-earnings">
-                    <div id="plotly-chart-earnings"></div>
-                    <div id="replay-controls-earnings" class="replay-controls">
-                        <button id="play-replay-earnings">Play</button>
-                        <button id="pause-replay-earnings" disabled>Pause</button>
-                        <button id="start-over-replay-earnings" disabled>Start Over</button>
-                        <button id="restart-replay-earnings" disabled>Restart</button>
-                        <button id="prev-candle-earnings" disabled>Previous</button>
-                        <button id="next-candle-earnings" disabled>Next</button>
-                        <label for="replay-start-time-earnings">Start Time (HH:MM):</label>
-                        <input type="text" id="replay-start-time-earnings" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
-                        <label for="replay-speed-earnings">Replay Speed:</label>
-                        <select id="replay-speed-earnings">
-                            <option value="1000">1x (1 sec/bar)</option>
-                            <option value="500">2x (0.5 sec/bar)</option>
-                            <option value="250">4x (0.25 sec/bar)</option>
-                        </select>
-                        <span id="replay-timestamp-earnings">Current Time: --:--:--</span>
-                    </div>
+                <p>Analyze stock earnings reactions with chart analytics to pinpoint intraday price action patterns and build winning trading strategies.</p>
+                <div class="filter-toggle">
+                    <label><input type="radio" name="earnings-filter-type" value="ticker-outcome" checked> Filter by Ticker and Outcome</label>
+                    <label><input type="radio" name="earnings-filter-type" value="ticker-only"> Filter by Ticker Only</label>
                 </div>
                 <form id="earnings-form">
                     <div id="ticker-outcome-filter" class="filter-section active">
@@ -453,11 +319,28 @@
                             <option value="beat">Beat (>10%)</option>
                             <option value="unknown">Unknown</option>
                         </select>
+                        <label for="timeframe-select-earnings">Select Timeframe:</label>
+                        <select id="timeframe-select-earnings" name="timeframe">
+                            <option value="1">1 Minute</option>
+                            <option value="2">2 Minutes</option>
+                            <option value="3">3 Minutes</option>
+                            <option value="5">5 Minutes</option>
+                            <option value="10">10 Minutes</option>
+                        </select>
+                        <p class="earnings-outcome-note">Earnings outcomes reflect stock price movement: Miss (<-10%), Slight Miss (-10% to 0%), Slight Beat (0% to 10%), Beat (>10%), Unknown (data unavailable).</p>
                     </div>
                     <div id="ticker-only-filter" class="filter-section">
                         <label for="earnings-ticker-only-select">Select Ticker:</label>
                         <select id="earnings-ticker-only-select" name="ticker">
                             <option value="">Select a ticker</option>
+                        </select>
+                        <label for="timeframe-select-earnings">Select Timeframe:</label>
+                        <select id="timeframe-select-earnings" name="timeframe">
+                            <option value="1">1 Minute</option>
+                            <option value="2">2 Minutes</option>
+                            <option value="3">3 Minutes</option>
+                            <option value="5">5 Minutes</option>
+                            <option value="10">10 Minutes</option>
                         </select>
                     </div>
                     <button type="submit">Find Earnings Dates</button>
@@ -466,36 +349,73 @@
                     <p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>
                     <ul id="earnings-dates-list"></ul>
                 </div>
-                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
-            </div>
-            <div id="gap-insights" class="tab-content">
-                <h2>Gap Insights</h2>
-                <p>Discover statistical insights about price gaps for Nasdaq stocks by year and gap type.</p>
-                <form id="gap-insights-form">
-                    <label for="year-select">Select Year:</label>
-                    <select id="year-select" name="year">
-                        <option value="">Select a year</option>
+                <div id="chart-container-earnings">
+                    <div id="plotly-chart-earnings"></div>
+                </div>
+                <div id="replay-controls-earnings" class="replay-controls" style="display: none;">
+                    <button id="play-replay-earnings" disabled>Play Replay</button>
+                    <button id="pause-replay-earnings" disabled>Pause</button>
+                    <button id="start-over-replay-earnings" disabled>Start Over</button>
+                    <button id="next-candle-earnings" disabled>Next Candle</button>
+                    <button id="prev-candle-earnings" disabled>Previous Candle</button>
+                    <label for="replay-start-time-earnings">Start Time (HH:MM):</label>
+                    <input type="text" id="replay-start-time-earnings" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                    <label for="replay-speed-earnings">Replay Speed:</label>
+                    <select id="replay-speed-earnings">
+                        <option value="1000">1x (1 sec/bar)</option>
+                        <option value="500">2x (0.5 sec/bar)</option>
+                        <option value="250">4x (0.25 sec/bar)</option>
                     </select>
-                    <label for="gap-type-insights">Select Gap Type:</label>
-                    <select id="gap-type-insights" name="gap_type">
-                        <option value="">Select gap type</option>
-                        <option value="up">Up Gap</option>
-                        <option value="down">Down Gap</option>
-                    </select>
-                    <button type="submit">Load Insights</button>
-                </form>
-                <div class="gap-insights">
-                    <p>Select a year and gap type to view insights.</p>
-                    <ul id="gap-insights-list"></ul>
+                    <span id="replay-timestamp-earnings">Current Time: --:--:--</span>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
+            <!-- AdSense Ad Unit -->
+            <div class="ads-container">
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
+                <ins class="adsbygoogle"
+                    style="display:block"
+                    data-ad-client="ca-pub-9416785017460416"
+                    data-ad-slot="5487535867"
+                    data-ad-format="auto"
+                    data-full-width-responsive="true"></ins>
+                <script>
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+            </div>
         </div>
     </main>
-    <footer>
-        <p>&copy; 2025 1MChart. All rights reserved.</p>
+    <footer class="footer">
+        <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
+        <p>More coming soon</p>
+        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site, All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
+        <img src="/static/logo-new.png" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="/static/script.js"></script>
+    <script>
+        // Disable right-click without alert
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        // Disable text selection
+        document.addEventListener('selectstart', function(e) {
+            e.preventDefault();
+        });
+        // Disable drag-and-drop
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+        });
+        // Tab switching function
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
+        }
+    </script>
+    <script src="/static/script.js?v=25"></script>
 </body>
 </html>

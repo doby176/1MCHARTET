@@ -9,8 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize stock forms for all tabs
     document.getElementById('stock-form').addEventListener('submit', (e) => loadChart(e, 'market-simulator'));
     document.getElementById('stock-form-gap').addEventListener('submit', (e) => loadChart(e, 'gap-analysis'));
-    document.getElementById('stock-form-events').addEventListener('submit', (e) => loadChart(e, 'events-analysis'));
-    document.getElementById('stock-form-earnings').addEventListener('submit', (e) => loadChart(e, 'earnings-analysis'));
+    document.getElementById('stock-form-events').addEventListener('submit', (e) => loadChart(e, 'events-analysis')); // New form handler
     document.getElementById('gap-form').addEventListener('submit', loadGapDates);
     document.getElementById('events-form').addEventListener('submit', loadEventDates);
     document.getElementById('earnings-form').addEventListener('submit', loadEarningsDates);
@@ -20,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('play-replay').addEventListener('click', () => startReplay(''));
     document.getElementById('pause-replay').addEventListener('click', () => pauseReplay(''));
     document.getElementById('start-over-replay').addEventListener('click', () => startOverReplay(''));
-    document.getElementById('restart-replay').addEventListener('click', () => restartReplay(''));
     document.getElementById('prev-candle').addEventListener('click', () => prevCandle(''));
     document.getElementById('next-candle').addEventListener('click', () => nextCandle(''));
     document.getElementById('replay-speed').addEventListener('change', () => updateReplaySpeed(''));
@@ -32,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('play-replay-gap').addEventListener('click', () => startReplay('gap'));
     document.getElementById('pause-replay-gap').addEventListener('click', () => pauseReplay('gap'));
     document.getElementById('start-over-replay-gap').addEventListener('click', () => startOverReplay('gap'));
-    document.getElementById('restart-replay-gap').addEventListener('click', () => restartReplay('gap'));
     document.getElementById('prev-candle-gap').addEventListener('click', () => prevCandle('gap'));
     document.getElementById('next-candle-gap').addEventListener('click', () => nextCandle('gap'));
     document.getElementById('replay-speed-gap').addEventListener('change', () => updateReplaySpeed('gap'));
@@ -41,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('play-replay-events').addEventListener('click', () => startReplay('events'));
     document.getElementById('pause-replay-events').addEventListener('click', () => pauseReplay('events'));
     document.getElementById('start-over-replay-events').addEventListener('click', () => startOverReplay('events'));
-    document.getElementById('restart-replay-events').addEventListener('click', () => restartReplay('events'));
     document.getElementById('prev-candle-events').addEventListener('click', () => prevCandle('events'));
     document.getElementById('next-candle-events').addEventListener('click', () => nextCandle('events'));
     document.getElementById('replay-speed-events').addEventListener('change', () => updateReplaySpeed('events'));
@@ -50,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('play-replay-earnings').addEventListener('click', () => startReplay('earnings'));
     document.getElementById('pause-replay-earnings').addEventListener('click', () => pauseReplay('earnings'));
     document.getElementById('start-over-replay-earnings').addEventListener('click', () => startOverReplay('earnings'));
-    document.getElementById('restart-replay-earnings').addEventListener('click', () => restartReplay('earnings'));
     document.getElementById('prev-candle-earnings').addEventListener('click', () => prevCandle('earnings'));
     document.getElementById('next-candle-earnings').addEventListener('click', () => nextCandle('earnings'));
     document.getElementById('replay-speed-earnings').addEventListener('change', () => updateReplaySpeed('earnings'));
@@ -67,25 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
         radio.addEventListener('change', toggleEarningsFilterSection);
     });
 
-    // Initialize ticker selects for date loading
+    // Initialize ticker selects for all tabs
     document.getElementById('ticker-select').addEventListener('change', () => loadDates('ticker-select', 'date'));
     document.getElementById('ticker-select-gap').addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
-    document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
-    document.getElementById('earnings-ticker-select').addEventListener('change', () => loadDates('earnings-ticker-select', 'date-earnings'));
-
-    // Tab navigation
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            tab.classList.add('active');
-            document.getElementById(tab.dataset.tab).classList.add('active');
-            gtag('event', 'tab_switch', {
-                'event_category': 'Navigation',
-                'event_label': tab.dataset.tab
-            });
-        });
-    });
+    document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events')); // New
 });
 
 // Global variables for replay (Market Simulator)
@@ -94,8 +74,6 @@ let replayInterval = null;
 let currentReplayIndex = 0;
 let isReplaying = false;
 let isPaused = false;
-let aggregatedData = null;
-let currentMinuteIndex = 0;
 // Trade simulator globals (Market Simulator only)
 let openPosition = null;
 let tradeHistory = [];
@@ -107,8 +85,6 @@ let replayIntervalGap = null;
 let currentReplayIndexGap = 0;
 let isReplayingGap = false;
 let isPausedGap = false;
-let aggregatedDataGap = null;
-let currentMinuteIndexGap = 0;
 
 // Replay globals for Events Analysis
 let chartDataEvents = null;
@@ -116,8 +92,6 @@ let replayIntervalEvents = null;
 let currentReplayIndexEvents = 0;
 let isReplayingEvents = false;
 let isPausedEvents = false;
-let aggregatedDataEvents = null;
-let currentMinuteIndexEvents = 0;
 
 // Replay globals for Earnings Analysis
 let chartDataEarnings = null;
@@ -125,8 +99,50 @@ let replayIntervalEarnings = null;
 let currentReplayIndexEarnings = 0;
 let isReplayingEarnings = false;
 let isPausedEarnings = false;
-let aggregatedDataEarnings = null;
-let currentMinuteIndexEarnings = 0;
+
+// State variables for each section
+let marketSimulatorChartData = null;
+let gapChartData = null;
+let eventsChartData = null;
+let earningsChartData = null;
+
+let marketSimulatorAggregatedCandles = [];
+let gapAggregatedCandles = [];
+let eventsAggregatedCandles = [];
+let earningsAggregatedCandles = [];
+
+let marketSimulatorReplayInterval = null;
+let gapReplayInterval = null;
+let eventsReplayInterval = null;
+let earningsReplayInterval = null;
+
+let marketSimulatorCurrentReplayIndex = 0;
+let gapCurrentReplayIndex = 0;
+let eventsCurrentReplayIndex = 0;
+let earningsCurrentReplayIndex = 0;
+
+let marketSimulatorIsReplaying = false;
+let gapIsReplaying = false;
+let eventsIsReplaying = false;
+let earningsIsReplaying = false;
+
+let marketSimulatorIsPaused = false;
+let gapIsPaused = false;
+let eventsIsPaused = false;
+let earningsIsPaused = false;
+
+let marketSimulatorMinuteIndex = 0;
+let gapMinuteIndex = 0;
+let eventsMinuteIndex = 0;
+let earningsMinuteIndex = 0;
+
+// Trade simulator state
+let position = null;
+let trades = [];
+let startingBalance = 10000;
+let balance = startingBalance;
+
+
 
 // Bin options for each event type
 const binOptions = {
@@ -136,7 +152,7 @@ const binOptions = {
     FOMC: ['0-1%', '1-2%', '2-3%', '3-4%', '>4%']
 };
 
-// Earnings outcome options
+// Earnings outcome options with explanations
 const earningsOutcomes = [
     { value: 'Beat', text: 'Beat (>10%)' },
     { value: 'Slight Beat', text: 'Slight Beat (0% to 10%)' },
@@ -150,421 +166,231 @@ function populateEarningsOutcomes() {
     earningsBinSelect.innerHTML = '<option value="">Select outcome</option>';
     earningsOutcomes.forEach(outcome => {
         const option = document.createElement('option');
-        option.value = outcome.value.toLowerCase().replace(' ', '-');
+        option.value = outcome.value;
         option.textContent = outcome.text;
         earningsBinSelect.appendChild(option);
     });
 }
 
 function toggleFilterSection() {
-    const eventTypeFilter = document.getElementById('event-type-filter');
-    const tickerOnlyFilter = document.getElementById('ticker-only-filter-events');
-    const eventTypeSection = document.getElementById('event-type-filter');
-    const tickerOnlySection = document.getElementById('ticker-only-filter-events');
-    if (eventTypeFilter.checked) {
-        eventTypeSection.classList.add('active');
-        tickerOnlySection.classList.remove('active');
+    const yearFilter = document.getElementById('year-filter');
+    const binFilter = document.getElementById('bin-filter');
+    const filterType = document.querySelector('input[name="filter-type"]:checked').value;
+
+    yearFilter.classList.remove('active');
+    binFilter.classList.remove('active');
+
+    if (filterType === 'year') {
+        yearFilter.classList.add('active');
+        document.getElementById('bin-event-type-select').value = '';
+        document.getElementById('bin-select').value = '';
     } else {
-        eventTypeSection.classList.remove('active');
-        tickerOnlySection.classList.add('active');
+        binFilter.classList.add('active');
+        document.getElementById('event-type-select').value = '';
+        document.getElementById('year-select').value = '';
     }
 }
 
 function toggleEarningsFilterSection() {
     const tickerOutcomeFilter = document.getElementById('ticker-outcome-filter');
-    const tickerOnlyFilter = document.getElementById('ticker-only-filter-earnings');
-    const tickerOutcomeSection = document.getElementById('ticker-outcome-filter');
-    const tickerOnlySection = document.getElementById('ticker-only-filter');
-    if (tickerOutcomeFilter.checked) {
-        tickerOutcomeSection.classList.add('active');
-        tickerOnlySection.classList.remove('active');
+    const tickerOnlyFilter = document.getElementById('ticker-only-filter');
+    const filterType = document.querySelector('input[name="earnings-filter-type"]:checked').value;
+
+    tickerOutcomeFilter.classList.remove('active');
+    tickerOnlyFilter.classList.remove('active');
+
+    if (filterType === 'ticker-outcome') {
+        tickerOutcomeFilter.classList.add('active');
+        document.getElementById('earnings-ticker-only-select').value = '';
     } else {
-        tickerOutcomeSection.classList.remove('active');
-        tickerOnlySection.classList.add('active');
+        tickerOnlyFilter.classList.add('active');
+        document.getElementById('earnings-ticker-select').value = '';
+        document.getElementById('earnings-bin-select').value = '';
     }
 }
 
-async function loadBinOptions() {
-    const eventTypeSelect = document.getElementById('event-type');
-    eventTypeSelect.addEventListener('change', async () => {
-        const eventType = eventTypeSelect.value;
-        const eventBinSelect = document.getElementById('event-bin');
-        eventBinSelect.innerHTML = '<option value="">Select outcome</option>';
+function loadBinOptions() {
+    const binEventTypeSelect = document.getElementById('bin-event-type-select');
+    const binSelect = document.getElementById('bin-select');
+
+    binEventTypeSelect.addEventListener('change', () => {
+        const eventType = binEventTypeSelect.value;
+        binSelect.innerHTML = '<option value="">Select range</option>';
         if (eventType && binOptions[eventType]) {
             binOptions[eventType].forEach(bin => {
                 const option = document.createElement('option');
                 option.value = bin;
                 option.textContent = bin;
-                eventBinSelect.appendChild(option);
+                binSelect.appendChild(option);
             });
+            binSelect.disabled = false;
+        } else {
+            binSelect.disabled = true;
         }
     });
 }
 
 async function loadTickers() {
+    const tickerSelect = document.getElementById('ticker-select');
+    const tickerSelectGap = document.getElementById('ticker-select-gap');
+    const tickerSelectEvents = document.getElementById('ticker-select-events'); // New
+    tickerSelect.disabled = true;
+    tickerSelectGap.disabled = true;
+    tickerSelectEvents.disabled = true;
+    tickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
+    tickerSelectGap.innerHTML = '<option value="">Loading tickers...</option>';
+    tickerSelectEvents.innerHTML = '<option value="">Loading tickers...</option>';
     try {
-        const response = await fetch('/api/tickers');
-        const data = await response.json();
-        if (data.error) {
-            console.error('Error loading tickers:', data.error);
-            alert('Failed to load tickers: ' + data.error);
+        console.log('Fetching tickers from /api/tickers');
+        const response = await fetch('/api/tickers', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Response status:', response.status);
+        if (response.status === 429) {
+            const data = await response.json();
+            console.error('Rate limit error:', data.error);
+            tickerSelect.innerHTML = `<option value="">${data.error}</option>`;
+            tickerSelectGap.innerHTML = `<option value="">${data.error}</option>`;
+            tickerSelectEvents.innerHTML = `<option value="">${data.error}</option>`;
+            alert(data.error);
             return;
         }
-        const tickerSelects = [
-            'ticker-select',
-            'ticker-select-gap',
-            'ticker-select-gap-dates',
-            'ticker-select-events',
-            'ticker-select-event-dates',
-            'ticker-select-event-dates-only',
-            'earnings-ticker-select',
-            'earnings-ticker-only-select'
-        ];
-        tickerSelects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            select.innerHTML = '<option value="">Select a ticker</option>';
-            data.tickers.forEach(ticker => {
-                const option = document.createElement('option');
-                option.value = ticker;
-                option.textContent = ticker;
-                select.appendChild(option);
-            });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Fetched tickers:', data.tickers);
+        if (!data.tickers || !Array.isArray(data.tickers)) {
+            throw new Error('Invalid response format: tickers array not found');
+        }
+        tickerSelect.innerHTML = '<option value="">Select a ticker</option>';
+        tickerSelectGap.innerHTML = '<option value="">Select a ticker</option>';
+        tickerSelectEvents.innerHTML = '<option value="">Select a ticker</option>';
+        data.tickers.forEach(ticker => {
+            const option = document.createElement('option');
+            option.value = ticker;
+            option.textContent = ticker;
+            tickerSelect.appendChild(option.cloneNode(true));
+            tickerSelectGap.appendChild(option.cloneNode(true));
+            tickerSelectEvents.appendChild(option); // New
         });
+        tickerSelect.disabled = false;
+        tickerSelectGap.disabled = false;
+        tickerSelectEvents.disabled = false;
     } catch (error) {
-        console.error('Error loading tickers:', error);
-        alert('Failed to load tickers. Please try again later.');
+        console.error('Error loading tickers:', error.message);
+        tickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
+        tickerSelectGap.innerHTML = '<option value="">Error loading tickers</option>';
+        tickerSelectEvents.innerHTML = '<option value="">Error loading tickers</option>';
+        alert('Failed to load tickers: ' + error.message + '. Please refresh the page or try again later.');
     }
 }
 
 async function loadEarningsTickers() {
+    const tickerSelect = document.getElementById('earnings-ticker-select');
+    const tickerOnlySelect = document.getElementById('earnings-ticker-only-select');
+    tickerSelect.disabled = true;
+    tickerOnlySelect.disabled = true;
+    tickerSelect.innerHTML = '<option value="">Loading tickers...</option>';
+    tickerOnlySelect.innerHTML = '<option value="">Loading tickers...</option>';
     try {
-        const response = await fetch('/api/earnings/tickers');
-        const data = await response.json();
-        if (data.error) {
-            console.error('Error loading earnings tickers:', data.error);
-            alert('Failed to load earnings tickers: ' + data.error);
+        console.log('Fetching earnings tickers from /api/tickers');
+        const response = await fetch('/api/tickers', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Response status:', response.status);
+        if (response.status === 429) {
+            const data = await response.json();
+            console.error('Rate limit error:', data.error);
+            tickerSelect.innerHTML = `<option value="">${data.error}</option>`;
+            tickerOnlySelect.innerHTML = `<option value="">${data.error}</option>`;
+            alert(data.error);
             return;
         }
-        const earningsTickerSelects = ['earnings-ticker-select', 'earnings-ticker-only-select'];
-        earningsTickerSelects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            select.innerHTML = '<option value="">Select a ticker</option>';
-            data.tickers.forEach(ticker => {
-                const option = document.createElement('option');
-                option.value = ticker;
-                option.textContent = ticker;
-                select.appendChild(option);
-            });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Fetched tickers for earnings:', data.tickers);
+        if (!data.tickers || !Array.isArray(data.tickers)) {
+            throw new Error('Invalid response format: tickers array not found');
+        }
+        tickerSelect.innerHTML = '<option value="">Select a ticker</option>';
+        tickerOnlySelect.innerHTML = '<option value="">Select a ticker</option>';
+        data.tickers.forEach(ticker => {
+            const option = document.createElement('option');
+            option.value = ticker;
+            option.textContent = ticker;
+            tickerSelect.appendChild(option.cloneNode(true));
+            tickerOnlySelect.appendChild(option);
         });
+        tickerSelect.disabled = false;
+        tickerOnlySelect.disabled = false;
     } catch (error) {
-        console.error('Error loading earnings tickers:', error);
-        alert('Failed to load earnings tickers. Please try again later.');
+        console.error('Error loading earnings tickers:', error.message);
+        tickerSelect.innerHTML = '<option value="">Error loading tickers</option>';
+        tickerOnlySelect.innerHTML = '<option value="">Error loading tickers</option>';
+        alert('Failed to load earnings tickers: ' + error.message + '. Please refresh the page or try again later.');
     }
 }
 
 async function loadDates(tickerSelectId, dateInputId) {
-    const ticker = document.getElementById(tickerSelectId).value;
+    const tickerSelect = document.getElementById(tickerSelectId);
     const dateInput = document.getElementById(dateInputId);
-    dateInput.value = '';
     dateInput.disabled = true;
-    if (!ticker) return;
-    try {
-        const response = await fetch(`/api/valid_dates?ticker=${encodeURIComponent(ticker)}`);
-        const data = await response.json();
-        if (data.error) {
-            console.error('Error loading dates:', data.error);
-            alert('Failed to load dates: ' + data.error);
-            return;
-        }
-        dateInput.disabled = false;
-        dateInput.setAttribute('min', data.dates[0] || '');
-        dateInput.setAttribute('max', data.dates[data.dates.length - 1] || '');
-    } catch (error) {
-        console.error('Error loading dates:', error);
-        alert('Failed to load dates. Please try again later.');
-    }
-}
-
-async function loadGapDates(event) {
-    event.preventDefault();
-    const ticker = document.getElementById('ticker-select-gap-dates').value;
-    const gapType = document.getElementById('gap-type').value;
-    const gapDatesList = document.getElementById('gap-dates-list');
-    gapDatesList.innerHTML = '';
-    document.getElementById('gap-dates').innerHTML = '<p>Loading gap dates...</p>';
-    if (!ticker || !gapType) {
-        document.getElementById('gap-dates').innerHTML = '<p>Please select a ticker and gap type.</p>';
-        return;
-    }
-    try {
-        const response = await fetch(`/api/gaps?ticker=${encodeURIComponent(ticker)}&gap_type=${encodeURIComponent(gapType)}`);
-        const data = await response.json();
-        if (data.error) {
-            console.error('Error loading gap dates:', data.error);
-            document.getElementById('gap-dates').innerHTML = `<p>${data.error}</p>`;
-            return;
-        }
-        document.getElementById('gap-dates').innerHTML = '';
-        if (data.dates.length === 0) {
-            gapDatesList.innerHTML = '<li>No gap dates found.</li>';
-            return;
-        }
-        data.dates.forEach(date => {
-            const li = document.createElement('li');
-            li.textContent = date;
-            li.style.cursor = 'pointer';
-            li.addEventListener('click', () => {
-                document.getElementById('ticker-select-gap').value = ticker;
-                document.getElementById('date-gap').value = date;
-                document.getElementById('stock-form-gap').dispatchEvent(new Event('submit'));
-            });
-            gapDatesList.appendChild(li);
-        });
-        gtag('event', 'gap_dates_load', {
-            'event_category': 'Gap Analysis',
-            'event_label': `${ticker}_${gapType}`
-        });
-    } catch (error) {
-        console.error('Error loading gap dates:', error);
-        document.getElementById('gap-dates').innerHTML = '<p>Failed to load gap dates. Please try again later.</p>';
-        alert('Failed to load gap dates: ' + error.message);
-    }
-}
-
-async function loadYears() {
-    try {
-        const response = await fetch('/api/years');
-        const data = await response.json();
-        if (data.error) {
-            console.error('Error loading years:', data.error);
-            alert('Failed to load years: ' + data.error);
-            return;
-        }
-        const yearSelect = document.getElementById('year-select');
-        yearSelect.innerHTML = '<option value="">Select a year</option>';
-        data.years.forEach(year => {
-            const option = document.createElement('option');
-            option.value = year;
-            option.textContent = year;
-            yearSelect.appendChild(option);
-        });
-    } catch (error) {
-        console.error('Error loading years:', error);
-        alert('Failed to load years. Please try again later.');
-    }
-}
-
-async function loadEventDates(event) {
-    event.preventDefault();
-    const eventTypeFilter = document.getElementById('event-type-filter').checked;
-    const ticker = eventTypeFilter
-        ? document.getElementById('ticker-select-event-dates').value
-        : document.getElementById('ticker-select-event-dates-only').value;
-    const eventType = eventTypeFilter ? document.getElementById('event-type').value : '';
-    const eventBin = eventTypeFilter ? document.getElementById('event-bin').value : '';
-    const eventsDatesList = document.getElementById('events-dates-list');
-    eventsDatesList.innerHTML = '';
-    document.getElementById('events-dates').innerHTML = '<p>Loading event dates...</p>';
-    if (!ticker || (eventTypeFilter && (!eventType || !eventBin))) {
-        document.getElementById('events-dates').innerHTML = '<p>Please select a ticker and, if filtering by event type, an event type and outcome.</p>';
-        return;
-    }
-    try {
-        const url = eventTypeFilter
-            ? `/api/events?ticker=${encodeURIComponent(ticker)}&event_type=${encodeURIComponent(eventType)}&event_bin=${encodeURIComponent(eventBin)}`
-            : `/api/events?ticker=${encodeURIComponent(ticker)}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        if (data.error) {
-            console.error('Error loading event dates:', data.error);
-            document.getElementById('events-dates').innerHTML = `<p>${data.error}</p>`;
-            return;
-        }
-        document.getElementById('events-dates').innerHTML = '';
-        if (data.dates.length === 0) {
-            eventsDatesList.innerHTML = '<li>No event dates found.</li>';
-            return;
-        }
-        data.dates.forEach(date => {
-            const li = document.createElement('li');
-            li.textContent = date;
-            li.style.cursor = 'pointer';
-            li.addEventListener('click', () => {
-                document.getElementById('ticker-select-events').value = ticker;
-                document.getElementById('date-events').value = date;
-                document.getElementById('stock-form-events').dispatchEvent(new Event('submit'));
-            });
-            eventsDatesList.appendChild(li);
-        });
-        gtag('event', 'event_dates_load', {
-            'event_category': 'Events Analysis',
-            'event_label': `${ticker}_${eventType || 'all'}_${eventBin || 'all'}`
-        });
-    } catch (error) {
-        console.error('Error loading event dates:', error);
-        document.getElementById('events-dates').innerHTML = '<p>Failed to load event dates. Please try again later.</p>';
-        alert('Failed to load event dates: ' + error.message);
-    }
-}
-
-async function loadEarningsDates(event) {
-    event.preventDefault();
-    const tickerOutcomeFilter = document.getElementById('ticker-outcome-filter').checked;
-    const ticker = tickerOutcomeFilter
-        ? document.getElementById('earnings-ticker-select').value
-        : document.getElementById('earnings-ticker-only-select').value;
-    const bin = tickerOutcomeFilter ? document.getElementById('earnings-bin-select').value : '';
-    const earningsDatesList = document.getElementById('earnings-dates-list');
-    earningsDatesList.innerHTML = '';
-    document.getElementById('earnings-dates').innerHTML = '<p>Loading earnings dates...</p>';
+    dateInput.value = '';
+    const ticker = tickerSelect.value;
     if (!ticker) {
-        document.getElementById('earnings-dates').innerHTML = '<p>Please select a ticker.</p>';
+        dateInput.disabled = true;
         return;
     }
+    console.log(`Fetching dates for ticker: ${ticker}`);
     try {
-        const url = tickerOutcomeFilter
-            ? `/api/earnings?ticker=${encodeURIComponent(ticker)}&bin=${encodeURIComponent(bin)}`
-            : `/api/earnings?ticker=${encodeURIComponent(ticker)}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        if (data.error) {
-            console.error('Error loading earnings dates:', data.error);
-            document.getElementById('earnings-dates').innerHTML = `<p>${data.error}</p>`;
-            return;
-        }
-        document.getElementById('earnings-dates').innerHTML = '';
-        if (data.dates.length === 0) {
-            earningsDatesList.innerHTML = '<li>No earnings dates found.</li>';
-            return;
-        }
-        data.dates.forEach(date => {
-            const li = document.createElement('li');
-            li.textContent = date;
-            li.style.cursor = 'pointer';
-            li.addEventListener('click', () => {
-                document.getElementById('earnings-ticker-select').value = ticker;
-                document.getElementById('date-earnings').value = date;
-                document.getElementById('stock-form-earnings').dispatchEvent(new Event('submit'));
-            });
-            earningsDatesList.appendChild(li);
-        });
-        gtag('event', 'earnings_dates_load', {
-            'event_category': 'Earnings Analysis',
-            'event_label': `${ticker}_${bin || 'all'}`
-        });
-    } catch (error) {
-        console.error('Error loading earnings dates:', error);
-        document.getElementById('earnings-dates').innerHTML = '<p>Failed to load earnings dates. Please try again later.</p>';
-        alert('Failed to load earnings dates: ' + error.message);
-    }
-}
-
-async function loadGapInsights(event) {
-    event.preventDefault();
-    const year = document.getElementById('year-select').value;
-    const gapType = document.getElementById('gap-type-insights').value;
-    const gapInsightsList = document.getElementById('gap-insights-list');
-    gapInsightsList.innerHTML = '';
-    document.getElementById('gap-insights').innerHTML = '<p>Loading gap insights...</p>';
-    if (!year || !gapType) {
-        document.getElementById('gap-insights').innerHTML = '<p>Please select a year and gap type.</p>';
-        return;
-    }
-    try {
-        const response = await fetch(`/api/gap_insights?year=${encodeURIComponent(year)}&gap_type=${encodeURIComponent(gapType)}`);
-        const data = await response.json();
-        if (data.error) {
-            console.error('Error loading gap insights:', data.error);
-            document.getElementById('gap-insights').innerHTML = `<p>${data.error}</p>`;
-            return;
-        }
-        document.getElementById('gap-insights').innerHTML = '';
-        if (data.insights.length === 0) {
-            gapInsightsList.innerHTML = '<li>No insights available for the selected year and gap type.</li>';
-            return;
-        }
-        data.insights.forEach(insight => {
-            const li = document.createElement('li');
-            li.textContent = insight;
-            gapInsightsList.appendChild(li);
-        });
-        gtag('event', 'gap_insights_load', {
-            'event_category': 'Gap Insights',
-            'event_label': `${year}_${gapType}`
-        });
-    } catch (error) {
-        console.error('Error loading gap insights:', error);
-        document.getElementById('gap-insights').innerHTML = '<p>Failed to load gap insights. Please try again later.</p>';
-        alert('Failed to load gap insights: ' + error.message);
-    }
-}
-
-// Function to aggregate 1-minute data into specified timeframe (1m, 2m, 3m, 5m, 10m)
-function aggregateCandles(data, timeframe) {
-    if (timeframe === 1) {
-        return {
-            timestamp: data.timestamp,
-            open: data.open,
-            high: data.high,
-            low: data.low,
-            close: data.close,
-            volume: data.volume,
-            count: data.count,
-            minuteIndices: data.timestamp.map((_, i) => [i]),
-            ticker: data.ticker,
-            date: data.date
-        };
-    }
-
-    const aggregated = {
-        timestamp: [],
-        open: [],
-        high: [],
-        low: [],
-        close: [],
-        volume: [],
-        minuteIndices: [],
-        ticker: data.ticker,
-        date: data.date
-    };
-
-    const startDate = new Date(data.date + 'T09:30:00');
-    const endDate = new Date(data.date + 'T16:00:00');
-    let currentTime = new Date(startDate);
-    let currentIndices = [];
-
-    while (currentTime <= endDate) {
-        const windowEnd = new Date(currentTime.getTime() + timeframe * 60 * 1000);
-        const windowData = data.timestamp.reduce((acc, ts, i) => {
-            const candleTime = new Date(ts);
-            if (candleTime >= currentTime && candleTime < windowEnd) {
-                acc.indices.push(i);
-                acc.candles.push({
-                    open: data.open[i],
-                    high: data.high[i],
-                    low: data.low[i],
-                    close: data.close[i],
-                    volume: data.volume[i]
-                });
+        const url = `/api/valid_dates?ticker=${encodeURIComponent(ticker)}`;
+        console.log('Fetching URL:', url);
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
             }
-            return acc;
-        }, { indices: [], candles: [] });
-
-        if (windowData.candles.length > 0) {
-            aggregated.timestamp.push(currentTime.toISOString().replace('T', ' ').substring(0, 19));
-            aggregated.open.push(windowData.candles[0].open);
-            aggregated.high.push(Math.max(...windowData.candles.map(c => c.high)));
-            aggregated.low.push(Math.min(...windowData.candles.map(c => c.low)));
-            aggregated.close.push(windowData.candles[windowData.candles.length - 1].close);
-            aggregated.volume.push(windowData.candles.reduce((sum, c) => sum + c.volume, 0));
-            aggregated.minuteIndices.push(windowData.indices);
+        });
+        console.log('Response status:', response.status);
+        if (response.status === 429) {
+            const data = await response.json();
+            console.error('Rate limit error:', data.error);
+            alert(data.error);
+            dateInput.disabled = true;
+            return;
         }
-
-        currentTime = windowEnd;
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        const data = await response.json();
+        if (data.error) {
+            console.error('Error fetching dates:', data.error);
+            alert(data.error);
+            dateInput.disabled = true;
+            return;
+        }
+        console.log(`Fetched ${data.dates.length} dates for ${ticker}`);
+        dateInput.disabled = false;
+    } catch (error) {
+        console.error('Error loading dates:', error.message);
+        alert('Failed to load dates: ' + error.message);
+        dateInput.disabled = true;
     }
-
-    aggregated.count = aggregated.timestamp.length;
-    return aggregated;
 }
 
 async function loadChart(event, tabId) {
@@ -574,7 +400,7 @@ async function loadChart(event, tabId) {
         'market-simulator': {
             tickerSelectId: 'ticker-select',
             dateInputId: 'date',
-            timeframeSelectId: 'timeframe-select',
+            timeframeSelectId: 'timeframe-select', // New
             chartContainerId: 'plotly-chart',
             formId: 'stock-form',
             restrictHours: false,
@@ -584,7 +410,7 @@ async function loadChart(event, tabId) {
         'gap-analysis': {
             tickerSelectId: 'ticker-select-gap',
             dateInputId: 'date-gap',
-            timeframeSelectId: 'timeframe-select-gap',
+            timeframeSelectId: 'timeframe-select-gap', // New
             chartContainerId: 'plotly-chart-gap',
             formId: 'stock-form-gap',
             restrictHours: true,
@@ -592,21 +418,21 @@ async function loadChart(event, tabId) {
             replayPrefix: 'gap'
         },
         'events-analysis': {
-            tickerSelectId: 'ticker-select-events',
-            dateInputId: 'date-events',
-            timeframeSelectId: 'timeframe-select-events',
+            tickerSelectId: 'ticker-select-events', // Updated
+            dateInputId: 'date-events', // Updated
+            timeframeSelectId: 'timeframe-select-events', // New
             chartContainerId: 'plotly-chart-events',
-            formId: 'stock-form-events',
-            restrictHours: false,
+            formId: 'stock-form-events', // Updated
+            restrictHours: false, // Include pre/post-market data
             replayControlsId: 'replay-controls-events',
             replayPrefix: 'events'
         },
         'earnings-analysis': {
             tickerSelectId: 'earnings-ticker-select',
-            dateInputId: 'date-earnings',
-            timeframeSelectId: 'timeframe-select-earnings',
+            dateInputId: 'date-gap',
+            timeframeSelectId: 'timeframe-select-earnings', // New
             chartContainerId: 'plotly-chart-earnings',
-            formId: 'stock-form-earnings',
+            formId: 'earnings-form', // Updated to use earnings-form
             restrictHours: true,
             replayControlsId: 'replay-controls-earnings',
             replayPrefix: 'earnings'
@@ -622,7 +448,7 @@ async function loadChart(event, tabId) {
     const { tickerSelectId, dateInputId, timeframeSelectId, chartContainerId, formId, restrictHours, replayControlsId, replayPrefix } = config;
     const ticker = document.getElementById(tickerSelectId).value;
     const date = document.getElementById(dateInputId).value;
-    const timeframe = parseInt(document.getElementById(timeframeSelectId).value);
+    const timeframe = document.getElementById(timeframeSelectId).value; // New
     const chartContainer = document.getElementById(chartContainerId);
     const form = document.getElementById(formId);
     const button = form.querySelector('button[type="submit"]');
@@ -633,7 +459,6 @@ async function loadChart(event, tabId) {
     const playButton = document.getElementById(`play-replay${replayPrefix ? '-' + replayPrefix : ''}`);
     const pauseButton = document.getElementById(`pause-replay${replayPrefix ? '-' + replayPrefix : ''}`);
     const startOverButton = document.getElementById(`start-over-replay${replayPrefix ? '-' + replayPrefix : ''}`);
-    const restartButton = document.getElementById(`restart-replay${replayPrefix ? '-' + replayPrefix : ''}`);
     const prevButton = document.getElementById(`prev-candle${replayPrefix ? '-' + replayPrefix : ''}`);
     const nextButton = document.getElementById(`next-candle${replayPrefix ? '-' + replayPrefix : ''}`);
     const buyButton = document.getElementById('buy-trade');
@@ -656,7 +481,7 @@ async function loadChart(event, tabId) {
     }
 
     console.log(`Loading chart for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrict_hours=${restrictHours}, tab=${tabId}`);
-    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}${restrictHours ? '&restrict_hours=true' : ''}`;
+    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}${restrictHours ? '&restrict_hours=true' : ''}`;
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
@@ -699,15 +524,10 @@ async function loadChart(event, tabId) {
             return;
         }
 
-        // Aggregate data for the selected timeframe
-        const aggregatedChartData = aggregateCandles(data.chart_data, timeframe);
-
         // Store chart data and reset replay state
-        if (replayPrefix === '') {
+        if (replayPrefix === '') { // Market Simulator
             chartData = data.chart_data;
-            aggregatedData = aggregatedChartData;
             currentReplayIndex = 0;
-            currentMinuteIndex = 0;
             isReplaying = false;
             isPaused = false;
             if (replayInterval) clearInterval(replayInterval);
@@ -717,52 +537,79 @@ async function loadChart(event, tabId) {
             updateTradeSummary();
         } else if (replayPrefix === 'gap') {
             chartDataGap = data.chart_data;
-            aggregatedDataGap = aggregatedChartData;
             currentReplayIndexGap = 0;
-            currentMinuteIndexGap = 0;
             isReplayingGap = false;
             isPausedGap = false;
             if (replayIntervalGap) clearInterval(replayIntervalGap);
         } else if (replayPrefix === 'events') {
             chartDataEvents = data.chart_data;
-            aggregatedDataEvents = aggregatedChartData;
             currentReplayIndexEvents = 0;
-            currentMinuteIndexEvents = 0;
             isReplayingEvents = false;
             isPausedEvents = false;
             if (replayIntervalEvents) clearInterval(replayIntervalEvents);
         } else if (replayPrefix === 'earnings') {
             chartDataEarnings = data.chart_data;
-            aggregatedDataEarnings = aggregatedChartData;
             currentReplayIndexEarnings = 0;
-            currentMinuteIndexEarnings = 0;
             isReplayingEarnings = false;
             isPausedEarnings = false;
             if (replayIntervalEarnings) clearInterval(replayIntervalEarnings);
         }
 
-        // Render initial chart (no candles until replay starts)
-        Plotly.newPlot(chartContainerId, [], {
+        // Render chart
+        const candlestickTrace = {
+            x: data.chart_data.timestamp,
+            open: data.chart_data.open,
+            high: data.chart_data.high,
+            low: data.chart_data.low,
+            close: data.chart_data.close,
+            type: 'candlestick',
+            name: data.chart_data.ticker,
+            increasing: { line: { color: '#00cc00' } },
+            decreasing: { line: { color: '#ff0000' } }
+        };
+        const volumeTrace = {
+            x: data.chart_data.timestamp,
+            y: data.chart_data.volume,
+            type: 'bar',
+            name: 'Volume',
+            yaxis: 'y2',
+            marker: { color: '#888888' }
+        };
+        const layout = {
             title: `${data.chart_data.ticker} ${timeframe}-Minute Candlestick Chart - ${data.chart_data.date}${restrictHours ? ' (Regular Hours)' : ''}`,
-            xaxis: { title: 'Time', type: 'date', tickformat: '%H:%M', rangeslider: { visible: false } },
-            yaxis: { title: 'Price', domain: [0.3, 1] },
-            yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
+            xaxis: {
+                title: 'Time',
+                type: 'date',
+                rangeslider: { visible: false },
+                tickformat: '%H:%M'
+            },
+            yaxis: {
+                title: 'Price',
+                domain: [0.3, 1]
+            },
+            yaxis2: {
+                title: 'Volume',
+                domain: [0, 0.25],
+                anchor: 'x'
+            },
             showlegend: true,
             margin: { t: 50, b: 50, l: 50, r: 50 },
             plot_bgcolor: '#ffffff',
             paper_bgcolor: '#ffffff'
-        }, { responsive: true });
+        };
+        Plotly.newPlot(chartContainerId, [candlestickTrace, volumeTrace], layout, {
+            responsive: true
+        });
 
         // Handle replay controls
         replayControls.style.display = 'block';
-        playButton.textContent = 'Play';
+        playButton.textContent = 'Play Replay';
         playButton.disabled = false;
         pauseButton.disabled = true;
         startOverButton.disabled = true;
-        restartButton.disabled = true;
         prevButton.disabled = true;
-        nextButton.disabled = aggregatedChartData.count === 0;
-        if (replayPrefix === '') {
+        nextButton.disabled = true;
+        if (replayPrefix === '') { // Market Simulator
             buyButton.disabled = true;
             sellButton.disabled = true;
         }
@@ -783,29 +630,30 @@ async function loadChart(event, tabId) {
 }
 
 function placeBuyTrade() {
-    if (!isReplaying || !aggregatedData || currentReplayIndex <= 0 || currentReplayIndex > aggregatedData.count) return;
+    if (!isReplaying || !chartData || currentReplayIndex <= 0 || currentReplayIndex > chartData.count) return;
     if (openPosition) {
         alert('Close the current position before opening a new one.');
         return;
     }
     openPosition = {
         type: 'buy',
-        price: aggregatedData.close[currentReplayIndex - 1],
+        price: chartData.close[currentReplayIndex - 1],
         shares: POSITION_SIZE,
-        timestamp: aggregatedData.timestamp[currentReplayIndex - 1]
+        timestamp: chartData.timestamp[currentReplayIndex - 1]
     };
     console.log(`Placed buy trade: ${JSON.stringify(openPosition)}`);
     updateTradeSummary();
     gtag('event', 'trade_placed', {
         'event_category': 'Trade Simulator',
-        'event_label': `Buy_${aggregatedData.ticker}_${aggregatedData.date}_${openPosition.timestamp}`
+        'event_label': `Buy_${chartData.ticker}_${chartData.date}_${openPosition.timestamp}`
     });
 }
 
 function placeSellTrade() {
-    if (!isReplaying || !aggregatedData || currentReplayIndex <= 0 || currentReplayIndex > aggregatedData.count) return;
+    if (!isReplaying || !chartData || currentReplayIndex <= 0 || currentReplayIndex > chartData.count) return;
     if (openPosition) {
-        const exitPrice = aggregatedData.close[currentReplayIndex - 1];
+        // Close existing position
+        const exitPrice = chartData.close[currentReplayIndex - 1];
         const pnl = openPosition.type === 'buy'
             ? (exitPrice - openPosition.price) * openPosition.shares
             : (openPosition.price - exitPrice) * openPosition.shares;
@@ -814,7 +662,7 @@ function placeSellTrade() {
             entryPrice: openPosition.price,
             exitPrice: exitPrice,
             shares: openPosition.shares,
-            timestamp: aggregatedData.timestamp[currentReplayIndex - 1],
+            timestamp: chartData.timestamp[currentReplayIndex - 1],
             pnl: parseFloat(pnl.toFixed(2))
         });
         openPosition = null;
@@ -822,20 +670,21 @@ function placeSellTrade() {
         updateTradeSummary();
         gtag('event', 'trade_closed', {
             'event_category': 'Trade Simulator',
-            'event_label': `${tradeHistory[tradeHistory.length - 1].type}_${aggregatedData.ticker}_${aggregatedData.date}_${tradeHistory[tradeHistory.length - 1].timestamp}`
+            'event_label': `${tradeHistory[tradeHistory.length - 1].type}_${chartData.ticker}_${chartData.date}_${tradeHistory[tradeHistory.length - 1].timestamp}`
         });
     } else {
+        // Open new sell position
         openPosition = {
             type: 'sell',
-            price: aggregatedData.close[currentReplayIndex - 1],
+            price: chartData.close[currentReplayIndex - 1],
             shares: POSITION_SIZE,
-            timestamp: aggregatedData.timestamp[currentReplayIndex - 1]
+            timestamp: chartData.timestamp[currentReplayIndex - 1]
         };
         console.log(`Placed sell trade: ${JSON.stringify(openPosition)}`);
         updateTradeSummary();
         gtag('event', 'trade_placed', {
             'event_category': 'Trade Simulator',
-            'event_label': `Sell_${aggregatedData.ticker}_${aggregatedData.date}_${openPosition.timestamp}`
+            'event_label': `Sell_${chartData.ticker}_${chartData.date}_${openPosition.timestamp}`
         });
     }
 }
@@ -847,11 +696,13 @@ function updateTradeSummary() {
     const buyButton = document.getElementById('buy-trade');
     const sellButton = document.getElementById('sell-trade');
 
-    buyButton.disabled = !isReplaying || currentReplayIndex <= 0 || currentReplayIndex > aggregatedData.count || openPosition?.type === 'sell';
-    sellButton.disabled = !isReplaying || currentReplayIndex <= 0 || currentReplayIndex > aggregatedData.count;
+    // Update button states
+    buyButton.disabled = !isReplaying || currentReplayIndex <= 0 || currentReplayIndex > chartData.count || openPosition?.type === 'sell';
+    sellButton.disabled = !isReplaying || currentReplayIndex <= 0 || currentReplayIndex > chartData.count;
 
+    // Update position status
     if (openPosition) {
-        const currentPrice = currentReplayIndex > 0 ? aggregatedData.close[currentReplayIndex - 1] : openPosition.price;
+        const currentPrice = currentReplayIndex > 0 ? chartData.close[currentReplayIndex - 1] : openPosition.price;
         const unrealizedPnl = openPosition.type === 'buy'
             ? (currentPrice - openPosition.price) * openPosition.shares
             : (openPosition.price - currentPrice) * openPosition.shares;
@@ -862,6 +713,7 @@ function updateTradeSummary() {
         tradePnl.textContent = `Realized P/L: $${tradeHistory.reduce((sum, trade) => sum + trade.pnl, 0).toFixed(2)}`;
     }
 
+    // Update trade history
     if (tradeHistory.length === 0) {
         tradeHistoryEl.textContent = 'Trade History: None';
     } else {
@@ -874,205 +726,182 @@ function updateTradeSummary() {
 
 function getReplayConfig(section) {
     const configs = {
-        '': {
-            chartData: () => chartData,
-            aggregatedData: () => aggregatedData,
-            setChartData: (data) => { chartData = data; },
-            setAggregatedData: (data) => { aggregatedData = data; },
-            replayInterval: () => replayInterval,
-            setReplayInterval: (interval) => { replayInterval = interval; },
-            currentReplayIndex: () => currentReplayIndex,
-            setCurrentReplayIndex: (index) => { currentReplayIndex = index; },
-            currentMinuteIndex: () => currentMinuteIndex,
-            setCurrentMinuteIndex: (index) => { currentMinuteIndex = index; },
-            isReplaying: () => isReplaying,
-            setIsReplaying: (state) => { isReplaying = state; },
-            isPaused: () => isPaused,
-            setIsPaused: (state) => { isPaused = state; },
-            chartContainerId: 'plotly-chart',
+        'market-simulator': {
+            chartData: marketSimulatorChartData,
+            aggregatedCandles: marketSimulatorAggregatedCandles,
+            replayInterval: marketSimulatorReplayInterval,
+            currentReplayIndex: marketSimulatorCurrentReplayIndex,
+            isReplaying: marketSimulatorIsReplaying,
+            isPaused: marketSimulatorIsPaused,
+            minuteIndex: marketSimulatorMinuteIndex,
+            chartId: 'plotly-chart',
             playButtonId: 'play-replay',
             pauseButtonId: 'pause-replay',
             startOverButtonId: 'start-over-replay',
             restartButtonId: 'restart-replay',
-            prevButtonId: 'prev-candle',
-            nextButtonId: 'next-candle',
-            startTimeInputId: 'replay-start-time',
+            nextCandleButtonId: 'next-candle',
+            prevCandleButtonId: 'prev-candle',
+            replayStartTimeId: 'replay-start-time',
             replaySpeedId: 'replay-speed',
-            timestampDisplayId: 'replay-timestamp',
-            timeframeSelectId: 'timeframe-select',
-            hasTradeSimulator: true
+            timestampId: 'replay-timestamp',
+            buyButtonId: 'buy-trade',
+            sellButtonId: 'sell-trade',
+            positionStatusId: 'position-status',
+            tradePnlId: 'trade-pnl',
+            tradeHistoryId: 'trade-history',
+            replayControlsId: 'replay-controls',
+            timeframeSelectId: 'timeframe-select'
         },
-        'gap': {
-            chartData: () => chartDataGap,
-            aggregatedData: () => aggregatedDataGap,
-            setChartData: (data) => { chartDataGap = data; },
-            setAggregatedData: (data) => { aggregatedDataGap = data; },
-            replayInterval: () => replayIntervalGap,
-            setReplayInterval: (interval) => { replayIntervalGap = interval; },
-            currentReplayIndex: () => currentReplayIndexGap,
-            setCurrentReplayIndex: (index) => { currentReplayIndexGap = index; },
-            currentMinuteIndex: () => currentMinuteIndexGap,
-            setCurrentMinuteIndex: (index) => { currentMinuteIndexGap = index; },
-            isReplaying: () => isReplayingGap,
-            setIsReplaying: (state) => { isReplayingGap = state; },
-            isPaused: () => isPausedGap,
-            setIsPaused: (state) => { isPausedGap = state; },
-            chartContainerId: 'plotly-chart-gap',
+        'gap-analysis': {
+            chartData: gapChartData,
+            aggregatedCandles: gapAggregatedCandles,
+            replayInterval: gapReplayInterval,
+            currentReplayIndex: gapCurrentReplayIndex,
+            isReplaying: gapIsReplaying,
+            isPaused: gapIsPaused,
+            minuteIndex: gapMinuteIndex,
+            chartId: 'plotly-chart-gap',
             playButtonId: 'play-replay-gap',
             pauseButtonId: 'pause-replay-gap',
             startOverButtonId: 'start-over-replay-gap',
-            restartButtonId: 'restart-replay-gap',
-            prevButtonId: 'prev-candle-gap',
-            nextButtonId: 'next-candle-gap',
-            startTimeInputId: 'replay-start-time-gap',
+            nextCandleButtonId: 'next-candle-gap',
+            prevCandleButtonId: 'prev-candle-gap',
+            replayStartTimeId: 'replay-start-time-gap',
             replaySpeedId: 'replay-speed-gap',
-            timestampDisplayId: 'replay-timestamp-gap',
-            timeframeSelectId: 'timeframe-select-gap',
-            hasTradeSimulator: false
+            timestampId: 'replay-timestamp-gap',
+            replayControlsId: 'replay-controls-gap',
+            timeframeSelectId: 'timeframe-select-gap'
         },
-        'events': {
-            chartData: () => chartDataEvents,
-            aggregatedData: () => aggregatedDataEvents,
-            setChartData: (data) => { chartDataEvents = data; },
-            setAggregatedData: (data) => { aggregatedDataEvents = data; },
-            replayInterval: () => replayIntervalEvents,
-            setReplayInterval: (interval) => { replayIntervalEvents = interval; },
-            currentReplayIndex: () => currentReplayIndexEvents,
-            setCurrentReplayIndex: (index) => { currentReplayIndexEvents = index; },
-            currentMinuteIndex: () => currentMinuteIndexEvents,
-            setCurrentMinuteIndex: (index) => { currentMinuteIndexEvents = index; },
-            isReplaying: () => isReplayingEvents,
-            setIsReplaying: (state) => { isReplayingEvents = state; },
-            isPaused: () => isPausedEvents,
-            setIsPaused: (state) => { isPausedEvents = state; },
-            chartContainerId: 'plotly-chart-events',
+        'events-analysis': {
+            chartData: eventsChartData,
+            aggregatedCandles: eventsAggregatedCandles,
+            replayInterval: eventsReplayInterval,
+            currentReplayIndex: eventsCurrentReplayIndex,
+            isReplaying: eventsIsReplaying,
+            isPaused: eventsIsPaused,
+            minuteIndex: eventsMinuteIndex,
+            chartId: 'plotly-chart-events',
             playButtonId: 'play-replay-events',
             pauseButtonId: 'pause-replay-events',
             startOverButtonId: 'start-over-replay-events',
-            restartButtonId: 'restart-replay-events',
-            prevButtonId: 'prev-candle-events',
-            nextButtonId: 'next-candle-events',
-            startTimeInputId: 'replay-start-time-events',
+            nextCandleButtonId: 'next-candle-events',
+            prevCandleButtonId: 'prev-candle-events',
+            replayStartTimeId: 'replay-start-time-events',
             replaySpeedId: 'replay-speed-events',
-            timestampDisplayId: 'replay-timestamp-events',
-            timeframeSelectId: 'timeframe-select-events',
-            hasTradeSimulator: false
+            timestampId: 'replay-timestamp-events',
+            replayControlsId: 'replay-controls-events',
+            timeframeSelectId: 'timeframe-select-events'
         },
-        'earnings': {
-            chartData: () => chartDataEarnings,
-            aggregatedData: () => aggregatedDataEarnings,
-            setChartData: (data) => { chartDataEarnings = data; },
-            setAggregatedData: (data) => { aggregatedDataEarnings = data; },
-            replayInterval: () => replayIntervalEarnings,
-            setReplayInterval: (interval) => { replayIntervalEarnings = interval; },
-            currentReplayIndex: () => currentReplayIndexEarnings,
-            setCurrentReplayIndex: (index) => { currentReplayIndexEarnings = index; },
-            currentMinuteIndex: () => currentMinuteIndexEarnings,
-            setCurrentMinuteIndex: (index) => { currentMinuteIndexEarnings = index; },
-            isReplaying: () => isReplayingEarnings,
-            setIsReplaying: (state) => { isReplayingEarnings = state; },
-            isPaused: () => isPausedEarnings,
-            setIsPaused: (state) => { isPausedEarnings = state; },
-            chartContainerId: 'plotly-chart-earnings',
+        'earnings-analysis': {
+            chartData: earningsChartData,
+            aggregatedCandles: earningsAggregatedCandles,
+            replayInterval: earningsReplayInterval,
+            currentReplayIndex: earningsCurrentReplayIndex,
+            isReplaying: earningsIsReplaying,
+            isPaused: earningsIsPaused,
+            minuteIndex: earningsMinuteIndex,
+            chartId: 'plotly-chart-earnings',
             playButtonId: 'play-replay-earnings',
             pauseButtonId: 'pause-replay-earnings',
             startOverButtonId: 'start-over-replay-earnings',
-            restartButtonId: 'restart-replay-earnings',
-            prevButtonId: 'prev-candle-earnings',
-            nextButtonId: 'next-candle-earnings',
-            startTimeInputId: 'replay-start-time-earnings',
+            nextCandleButtonId: 'next-candle-earnings',
+            prevCandleButtonId: 'prev-candle-earnings',
+            replayStartTimeId: 'replay-start-time-earnings',
             replaySpeedId: 'replay-speed-earnings',
-            timestampDisplayId: 'replay-timestamp-earnings',
-            timeframeSelectId: 'timeframe-select-earnings',
-            hasTradeSimulator: false
+            timestampId: 'replay-timestamp-earnings',
+            replayControlsId: 'replay-controls-earnings',
+            timeframeSelectId: 'timeframe-select-earnings'
         }
     };
-    return configs[section];
+    return configs[section] || {};
 }
 
-function startReplay(section) {
-    const config = getReplayConfig(section);
-    const chartData = config.chartData();
-    const aggregatedData = config.aggregatedData();
-    if (!chartData || !aggregatedData) return;
-
-    const playButton = document.getElementById(config.playButtonId);
-    const pauseButton = document.getElementById(config.pauseButtonId);
-    const startOverButton = document.getElementById(config.startOverButtonId);
-    const restartButton = document.getElementById(config.restartButtonId);
-    const prevButton = document.getElementById(config.prevButtonId);
-    const nextButton = document.getElementById(config.nextButtonId);
-    const timestampDisplay = document.getElementById(config.timestampDisplayId);
-    const startTimeInput = document.getElementById(config.startTimeInputId).value;
-    const replaySpeed = parseInt(document.getElementById(config.replaySpeedId).value);
-    const chartContainer = document.getElementById(config.chartContainerId);
-    let buyButton, sellButton;
-    if (config.hasTradeSimulator) {
-        buyButton = document.getElementById('buy-trade');
-        sellButton = document.getElementById('sell-trade');
+function aggregateCandles(data, timeframe) {
+    if (!data || !data.timestamp || timeframe === 1) {
+        return data && data.timestamp ? data.timestamp.map((_, i) => ({
+            timestamp: data.timestamp[i],
+            open: data.open[i],
+            high: data.high[i],
+            low: data.low[i],
+            close: data.close[i],
+            volume: data.volume[i],
+            minuteUpdates: []
+        })) : [];
     }
 
-    // If not paused, determine start index based on user input
-    if (!config.isPaused()) {
-        let startIndex = 0;
-        if (startTimeInput && startTimeInput.match(/^[0-2][0-9]:[0-5][0-9]$/)) {
-            const [hours, minutes] = startTimeInput.split(':').map(Number);
-            const dateStr = aggregatedData.date;
-            const targetTime = new Date(`${dateStr}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
-            startIndex = aggregatedData.timestamp.findIndex(ts => {
-                const candleTime = new Date(ts);
-                return candleTime.getTime() >= targetTime.getTime();
+    const candles = [];
+    let currentCandle = null;
+    let minuteCount = 0;
+
+    for (let i = 0; i < data.timestamp.length; i++) {
+        if (minuteCount === 0) {
+            currentCandle = {
+                timestamp: data.timestamp[i],
+                open: data.open[i],
+                high: data.high[i],
+                low: data.low[i],
+                close: data.close[i],
+                volume: data.volume[i],
+                minuteUpdates: []
+            };
+        } else {
+            currentCandle.high = Math.max(currentCandle.high, data.high[i]);
+            currentCandle.low = Math.min(currentCandle.low, data.low[i]);
+            currentCandle.close = data.close[i];
+            currentCandle.volume += data.volume[i];
+            currentCandle.minuteUpdates.push({
+                timestamp: data.timestamp[i],
+                high: currentCandle.high,
+                low: currentCandle.low,
+                close: currentCandle.close,
+                volume: currentCandle.volume
             });
-            if (startIndex === -1) {
-                startIndex = 0;
-                alert('Start time not found in chart data. Starting from first candle.');
-            }
         }
-        config.setCurrentReplayIndex(startIndex);
-        config.setCurrentMinuteIndex(startIndex > 0 ? aggregatedData.minuteIndices[startIndex][0] : 0);
+
+        minuteCount++;
+        if (minuteCount === timeframe) {
+            candles.push(currentCandle);
+            minuteCount = 0;
+        }
     }
 
-    if (config.isReplaying() && !config.isPaused()) return;
-
-    config.setIsReplaying(true);
-    config.setIsPaused(false);
-    playButton.textContent = 'Play';
-    playButton.disabled = true;
-    pauseButton.disabled = false;
-    startOverButton.disabled = config.currentReplayIndex() <= 0;
-    restartButton.disabled = config.currentReplayIndex() <= 0;
-    prevButton.disabled = config.currentReplayIndex() <= 0;
-    nextButton.disabled = config.currentReplayIndex() >= aggregatedData.count;
-    if (config.hasTradeSimulator) {
-        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > aggregatedData.count;
-        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > aggregatedData.count;
-        updateTradeSummary();
+    // Handle partial candle at the end
+    if (minuteCount > 0 && currentCandle) {
+        candles.push(currentCandle);
     }
 
-    // Initialize chart
-    Plotly.purge(chartContainer);
+    return candles;
+}
+
+function renderChart(section, candles, minuteIndex = null) {
+    const config = getReplayConfig(section);
+    if (!config.chartData) return;
+
     const candlestickTrace = {
-        x: aggregatedData.timestamp.slice(0, config.currentReplayIndex()),
-        open: aggregatedData.open.slice(0, config.currentReplayIndex()),
-        high: aggregatedData.high.slice(0, config.currentReplayIndex()),
-        low: aggregatedData.low.slice(0, config.currentReplayIndex()),
-        close: aggregatedData.close.slice(0, config.currentReplayIndex()),
+        x: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].timestamp : c.timestamp),
+        open: candles.map(c => c.open),
+        high: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].high : c.high),
+        low: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].low : c.low),
+        close: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].close : c.close),
         type: 'candlestick',
-        name: aggregatedData.ticker,
+        name: config.chartData.ticker,
         increasing: { line: { color: '#00cc00' } },
         decreasing: { line: { color: '#ff0000' } }
     };
+
     const volumeTrace = {
-        x: aggregatedData.timestamp.slice(0, config.currentReplayIndex()),
-        y: aggregatedData.volume.slice(0, config.currentReplayIndex()),
+        x: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].timestamp : c.timestamp),
+        y: candles.map(c => minuteIndex !== null && c.minuteUpdates[minuteIndex] ? c.minuteUpdates[minuteIndex].volume : c.volume),
         type: 'bar',
         name: 'Volume',
         yaxis: 'y2',
         marker: { color: '#888888' }
     };
+
+    const timeframe = parseInt(document.getElementById(config.timeframeSelectId).value);
     const layout = {
-        title: `${aggregatedData.ticker} ${document.getElementById(config.timeframeSelectId).value}-Minute Candlestick Chart - ${aggregatedData.date} (Replay)`,
-        xaxis: { title: 'Time', type: 'date', tickformat: '%H:%M', rangeslider: { visible: false } },
+        title: `${config.chartData.ticker} ${timeframe}-Minute Candlestick Chart - ${config.chartData.date} (Replay)`,
+        xaxis: { title: 'Time', type: 'date', rangeslider: { visible: false }, tickformat: '%H:%M' },
         yaxis: { title: 'Price', domain: [0.3, 1] },
         yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
         showlegend: true,
@@ -1080,87 +909,86 @@ function startReplay(section) {
         plot_bgcolor: '#ffffff',
         paper_bgcolor: '#ffffff'
     };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
 
-    // Update timestamp
-    timestampDisplay.textContent = config.currentReplayIndex() > 0 
-        ? `Current Time: ${aggregatedData.timestamp[config.currentReplayIndex() - 1].split(' ')[1]}`
+    Plotly.newPlot(config.chartId, [candlestickTrace, volumeTrace], layout, { responsive: true });
+}
+
+
+function startReplay(section) {
+    const config = getReplayConfig(section);
+    if (!config.chartData || config.isReplaying) return;
+
+    const timeframe = parseInt(document.getElementById(config.timeframeSelectId).value);
+    config.isReplaying = true;
+    config.isPaused = false;
+    const startTimeInput = document.getElementById(config.replayStartTimeId).value;
+    const replaySpeed = parseInt(document.getElementById(config.replaySpeedId).value);
+    const playButton = document.getElementById(config.playButtonId);
+    const pauseButton = document.getElementById(config.pauseButtonId);
+    const startOverButton = document.getElementById(config.startOverButtonId);
+    const prevButton = document.getElementById(config.prevCandleButtonId);
+    const nextButton = document.getElementById(config.nextCandleButtonId);
+    const timestampDisplay = document.getElementById(config.timestampId);
+
+    // Determine start index
+    if (startTimeInput && startTimeInput.match(/^[0-2][0-9]:[0-5][0-9]$/)) {
+        const [hours, minutes] = startTimeInput.split(':').map(Number);
+        const targetTime = new Date(`${config.chartData.date}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
+        config.currentReplayIndex = config.chartData.timestamp.findIndex(ts => new Date(ts).getTime() >= targetTime.getTime());
+        if (config.currentReplayIndex === -1) {
+            config.currentReplayIndex = 0;
+            alert('Start time not found. Starting from first candle.');
+        }
+    } else {
+        config.currentReplayIndex = 0;
+    }
+
+    config.minuteIndex = 0;
+    playButton.disabled = true;
+    pauseButton.disabled = false;
+    startOverButton.disabled = config.currentReplayIndex <= 0;
+    prevButton.disabled = config.currentReplayIndex <= 0;
+    nextButton.disabled = config.currentReplayIndex >= config.chartData.count;
+
+    renderChart(section, config.aggregatedCandles.slice(0, Math.floor(config.currentReplayIndex / timeframe)), config.currentReplayIndex % timeframe);
+    timestampDisplay.textContent = config.currentReplayIndex > 0 
+        ? `Current Time: ${config.chartData.timestamp[config.currentReplayIndex].split(' ')[1]}`
         : 'Current Time: --:--:--';
-    if (config.hasTradeSimulator) updateTradeSummary();
 
-    // Replay loop (incremental minute-by-minute updates)
-    config.setReplayInterval(setInterval(() => {
-        if (config.currentMinuteIndex() >= chartData.count) {
-            pauseReplay(section);
+    config.replayInterval = setInterval(() => {
+        if (config.currentReplayIndex >= config.chartData.count) {
+            stopReplay(section);
             return;
         }
 
-        const timeframe = parseInt(document.getElementById(config.timeframeSelectId).value);
-        const currentCandleIndex = aggregatedData.minuteIndices.findIndex(indices => indices.includes(config.currentMinuteIndex()));
-        let nextCandleData;
+        const candleIndex = Math.floor(config.currentReplayIndex / timeframe);
+        config.minuteIndex = config.currentReplayIndex % timeframe;
 
-        if (currentCandleIndex >= 0 && currentCandleIndex < aggregatedData.count) {
-            const indices = aggregatedData.minuteIndices[currentCandleIndex];
-            const currentIndexInCandle = indices.indexOf(config.currentMinuteIndex());
-            if (currentIndexInCandle >= 0 && currentIndexInCandle < indices.length - 1) {
-                // Update within the current aggregated candle
-                const candleIndices = indices.slice(0, currentIndexInCandle + 1);
-                nextCandleData = {
-                    x: [aggregatedData.timestamp[currentCandleIndex]],
-                    open: [aggregatedData.open[currentCandleIndex]],
-                    high: [Math.max(...candleIndices.map(i => chartData.high[i]))],
-                    low: [Math.min(...candleIndices.map(i => chartData.low[i]))],
-                    close: [chartData.close[candleIndices[candleIndices.length - 1]]],
-                    volume: [candleIndices.reduce((sum, i) => sum + chartData.volume[i], 0)]
-                };
-            } else if (currentCandleIndex === config.currentReplayIndex()) {
-                // Move to next aggregated candle
-                config.setCurrentReplayIndex(config.currentReplayIndex() + 1);
-                nextCandleData = {
-                    x: [aggregatedData.timestamp[currentCandleIndex]],
-                    open: [aggregatedData.open[currentCandleIndex]],
-                    high: [aggregatedData.high[currentCandleIndex]],
-                    low: [aggregatedData.low[currentCandleIndex]],
-                    close: [aggregatedData.close[currentCandleIndex]],
-                    volume: [aggregatedData.volume[currentCandleIndex]]
-                };
-            }
+        if (config.minuteIndex === 0) {
+            renderChart(section, config.aggregatedCandles.slice(0, candleIndex));
+        } else {
+            renderChart(section, config.aggregatedCandles.slice(0, candleIndex + 1), config.minuteIndex - 1);
         }
 
-        if (nextCandleData) {
-            if (config.currentReplayIndex() <= currentCandleIndex + 1) {
-                Plotly.extendTraces(config.chartContainerId, {
-                    x: [nextCandleData.x],
-                    open: [nextCandleData.open],
-                    high: [nextCandleData.high],
-                    low: [nextCandleData.low],
-                    close: [nextCandleData.close]
-                }, [0]);
-                Plotly.extendTraces(config.chartContainerId, {
-                    x: [nextCandleData.x],
-                    y: [nextCandleData.volume]
-                }, [1]);
-            }
-            timestampDisplay.textContent = `Current Time: ${chartData.timestamp[config.currentMinuteIndex()].split(' ')[1]}`;
+        timestampDisplay.textContent = `Current Time: ${config.chartData.timestamp[config.currentReplayIndex].split(' ')[1]}`;
+        prevButton.disabled = config.currentReplayIndex <= 0;
+        nextButton.disabled = config.currentReplayIndex + 1 >= config.chartData.count;
+        startOverButton.disabled = config.currentReplayIndex <= 0;
+
+        config.currentReplayIndex++;
+        if (config.currentReplayIndex % timeframe === 0) {
+            config.minuteIndex = 0;
         }
 
-        prevButton.disabled = config.currentReplayIndex() <= 0;
-        nextButton.disabled = config.currentReplayIndex() >= aggregatedData.count;
-        startOverButton.disabled = config.currentReplayIndex() <= 0;
-        restartButton.disabled = config.currentReplayIndex() <= 0;
-        if (config.hasTradeSimulator) {
-            buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > aggregatedData.count || openPosition?.type === 'sell';
-            sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > aggregatedData.count;
-            updateTradeSummary();
-        }
-
-        config.setCurrentMinuteIndex(config.currentMinuteIndex() + 1);
-    }, replaySpeed));
-
-    gtag('event', 'replay_start', {
-        'event_category': 'Chart',
-        'event_label': `${aggregatedData.ticker}_${aggregatedData.date}_${section || 'simulator'}`
-    });
+        // Update global state
+        updateState(section, { 
+            replayInterval: config.replayInterval,
+            currentReplayIndex: config.currentReplayIndex,
+            isReplaying: config.isReplaying,
+            isPaused: config.isPaused,
+            minuteIndex: config.minuteIndex
+        });
+    }, replaySpeed);
 }
 
 function pauseReplay(section) {
@@ -1173,7 +1001,6 @@ function pauseReplay(section) {
     const playButton = document.getElementById(config.playButtonId);
     const pauseButton = document.getElementById(config.pauseButtonId);
     const startOverButton = document.getElementById(config.startOverButtonId);
-    const restartButton = document.getElementById(config.restartButtonId);
     let buyButton, sellButton;
     if (config.hasTradeSimulator) {
         buyButton = document.getElementById('buy-trade');
@@ -1181,443 +1008,17 @@ function pauseReplay(section) {
         updateTradeSummary();
     }
 
-    playButton.textContent = 'Resume';
+    playButton.textContent = 'Resume Replay';
     playButton.disabled = false;
     pauseButton.disabled = true;
     startOverButton.disabled = config.currentReplayIndex() <= 0;
-    restartButton.disabled = config.currentReplayIndex() <= 0;
     if (config.hasTradeSimulator) {
-        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > config.aggregatedData().count || openPosition?.type === 'sell';
-        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > config.aggregatedData().count;
+        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > config.chartData().count || openPosition?.type === 'sell';
+        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > config.chartData().count;
     }
 }
 
 function startOverReplay(section) {
-    const config = getReplayConfig(section);
-    const aggregatedData = config.aggregatedData();
-    if (!aggregatedData) return;
-
-    const playButton = document.getElementById(config.playButtonId);
-    const pauseButton = document.getElementById(config.pauseButtonId);
-    const startOverButton = document.getElementById(config.startOverButtonId);
-    const restartButton = document.getElementById(config.restartButtonId);
-    const prevButton = document.getElementById(config.prevButtonId);
-    const nextButton = document.getElementById(config.nextButtonId);
-    const timestampDisplay = document.getElementById(config.timestampDisplayId);
-    const chartContainer = document.getElementById(config.chartContainerId);
-    let buyButton, sellButton;
-    if (config.hasTradeSimulator) {
-        buyButton = document.getElementById('buy-trade');
-        sellButton = document.getElementById('sell-trade');
-    }
-
-    if (config.isReplaying() || config.isPaused()) {
-        clearInterval(config.replayInterval());
-        config.setIsReplaying(false);
-        config.setIsPaused(false);
-    }
-
-    config.setCurrentReplayIndex(0);
-    config.setCurrentMinuteIndex(0);
-
-    Plotly.purge(chartContainer);
-    const candlestickTrace = {
-        x: [],
-        open: [],
-        high: [],
-        low: [],
-        close: [],
-        type: 'candlestick',
-        name: aggregatedData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: [],
-        y: [],
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    const layout = {
-        title: `${aggregatedData.ticker} ${document.getElementById(config.timeframeSelectId).value}-Minute Candlestick Chart - ${aggregatedData.date} (Replay)`,
-        xaxis: { title: 'Time', type: 'date', tickformat: '%H:%M', rangeslider: { visible: false } },
-        yaxis: { title: 'Price', domain: [0.3, 1] },
-        yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
-
-    playButton.textContent = 'Play';
-    playButton.disabled = false;
-    pauseButton.disabled = true;
-    startOverButton.disabled = true;
-    restartButton.disabled = true;
-    prevButton.disabled = true;
-    nextButton.disabled = aggregatedData.count === 0;
-    if (config.hasTradeSimulator) {
-        buyButton.disabled = true;
-        sellButton.disabled = true;
-        updateTradeSummary();
-    }
-
-    timestampDisplay.textContent = 'Current Time: --:--:--';
-
-    gtag('event', 'replay_start_over', {
-        'event_category': 'Chart',
-        'event_label': `${aggregatedData.ticker}_${aggregatedData.date}_${section || 'simulator'}`
-    });
-}
-
-function restartReplay(section) {
-    const config = getReplayConfig(section);
-    const aggregatedData = config.aggregatedData();
-    if (!aggregatedData) return;
-
-    const playButton = document.getElementById(config.playButtonId);
-    const pauseButton = document.getElementById(config.pauseButtonId);
-    const startOverButton = document.getElementById(config.startOverButtonId);
-    const restartButton = document.getElementById(config.restartButtonId);
-    const prevButton = document.getElementById(config.prevButtonId);
-    const nextButton = document.getElementById(config.nextButtonId);
-    const timestampDisplay = document.getElementById(config.timestampDisplayId);
-    const chartContainer = document.getElementById(config.chartContainerId);
-    let buyButton, sellButton;
-    if (config.hasTradeSimulator) {
-        buyButton = document.getElementById('buy-trade');
-        sellButton = document.getElementById('sell-trade');
-        openPosition = null;
-        tradeHistory = [];
-        updateTradeSummary();
-    }
-
-    if (config.isReplaying() || config.isPaused()) {
-        clearInterval(config.replayInterval());
-        config.setIsReplaying(false);
-        config.setIsPaused(false);
-    }
-
-    config.setCurrentReplayIndex(0);
-    config.setCurrentMinuteIndex(0);
-
-    Plotly.purge(chartContainer);
-    const candlestickTrace = {
-        x: [],
-        open: [],
-        high: [],
-        low: [],
-        close: [],
-        type: 'candlestick',
-        name: aggregatedData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: [],
-        y: [],
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    const layout = {
-        title: `${aggregatedData.ticker} ${document.getElementById(config.timeframeSelectId).value}-Minute Candlestick Chart - ${aggregatedData.date} (Replay)`,
-        xaxis: { title: 'Time', type: 'date', tickformat: '%H:%M', rangeslider: { visible: false } },
-        yaxis: { title: 'Price', domain: [0.3, 1] },
-        yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
-
-    playButton.textContent = 'Play';
-    playButton.disabled = false;
-    pauseButton.disabled = true;
-    startOverButton.disabled = true;
-    restartButton.disabled = true;
-    prevButton.disabled = true;
-    nextButton.disabled = aggregatedData.count === 0;
-    if (config.hasTradeSimulator) {
-        buyButton.disabled = true;
-        sellButton.disabled = true;
-        updateTradeSummary();
-    }
-
-    timestampDisplay.textContent = 'Current Time: --:--:--';
-
-    gtag('event', 'replay_restart', {
-        'event_category': 'Chart',
-        'event_label': `${aggregatedData.ticker}_${aggregatedData.date}_${section || 'simulator'}`
-    });
-}
-
-function prevCandle(section) {
-    const config = getReplayConfig(section);
-    const aggregatedData = config.aggregatedData();
-    if (!aggregatedData || config.currentReplayIndex() <= 0) return;
-
-    const playButton = document.getElementById(config.playButtonId);
-    const pauseButton = document.getElementById(config.pauseButtonId);
-    const startOverButton = document.getElementById(config.startOverButtonId);
-    const restartButton = document.getElementById(config.restartButtonId);
-    const prevButton = document.getElementById(config.prevButtonId);
-    const nextButton = document.getElementById(config.nextButtonId);
-    const timestampDisplay = document.getElementById(config.timestampDisplayId);
-    const chartContainer = document.getElementById(config.chartContainerId);
-    let buyButton, sellButton;
-    if (config.hasTradeSimulator) {
-        buyButton = document.getElementById('buy-trade');
-        sellButton = document.getElementById('sell-trade');
-    }
-
-    if (config.isReplaying() || config.isPaused()) {
-        clearInterval(config.replayInterval());
-        config.setIsReplaying(false);
-        config.setIsPaused(false);
-    }
-
-    config.setCurrentReplayIndex(config.currentReplayIndex() - 1);
-    config.setCurrentMinuteIndex(config.currentReplayIndex() > 0 ? aggregatedData.minuteIndices[config.currentReplayIndex() - 1][0] : 0);
-
-    Plotly.purge(chartContainer);
-    const candlestickTrace = {
-        x: aggregatedData.timestamp.slice(0, config.currentReplayIndex()),
-        open: aggregatedData.open.slice(0, config.currentReplayIndex()),
-        high: aggregatedData.high.slice(0, config.currentReplayIndex()),
-        low: aggregatedData.low.slice(0, config.currentReplayIndex()),
-        close: aggregatedData.close.slice(0, config.currentReplayIndex()),
-        type: 'candlestick',
-        name: aggregatedData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: aggregatedData.timestamp.slice(0, config.currentReplayIndex()),
-        y: aggregatedData.volume.slice(0, config.currentReplayIndex()),
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    const layout = {
-        title: `${aggregatedData.ticker} ${document.getElementById(config.timeframeSelectId).value}-Minute Candlestick Chart - ${aggregatedData.date} (Replay)`,
-        xaxis: { title: 'Time', type: 'date', tickformat: '%H:%M', rangeslider: { visible: false } },
-        yaxis: { title: 'Price', domain: [0.3, 1] },
-        yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
-
-    playButton.textContent = 'Play';
-    playButton.disabled = false;
-    pauseButton.disabled = true;
-    startOverButton.disabled = config.currentReplayIndex() <= 0;
-    restartButton.disabled = config.currentReplayIndex() <= 0;
-    prevButton.disabled = config.currentReplayIndex() <= 0;
-    nextButton.disabled = config.currentReplayIndex() >= aggregatedData.count;
-    if (config.hasTradeSimulator) {
-        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > aggregatedData.count || openPosition?.type === 'sell';
-        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > aggregatedData.count;
-        updateTradeSummary();
-    }
-
-    timestampDisplay.textContent = config.currentReplayIndex() > 0 
-        ? `Current Time: ${aggregatedData.timestamp[config.currentReplayIndex() - 1].split(' ')[1]}`
-        : 'Current Time: --:--:--';
-
-    gtag('event', 'replay_prev_candle', {
-        'event_category': 'Chart',
-        'event_label': `${aggregatedData.ticker}_${aggregatedData.date}_${section || 'simulator'}`
-    });
-}
-
-function nextCandle(section) {
-    const config = getReplayConfig(section);
-    const aggregatedData = config.aggregatedData();
-    if (!aggregatedData || config.currentReplayIndex() >= aggregatedData.count) return;
-
-    const playButton = document.getElementById(config.playButtonId);
-    const pauseButton = document.getElementById(config.pauseButtonId);
-    const startOverButton = document.getElementById(config.startOverButtonId);
-    const restartButton = document.getElementById(config.restartButtonId);
-    const prevButton = document.getElementById(config.prevButtonId);
-    const nextButton = document.getElementById(config.nextButtonId);
-    const timestampDisplay = document.getElementById(config.timestampDisplayId);
-    const chartContainer = document.getElementById(config.chartContainerId);
-    let buyButton, sellButton;
-    if (config.hasTradeSimulator) {
-        buyButton = document.getElementById('buy-trade');
-        sellButton = document.getElementById('sell-trade');
-    }
-
-    if (config.isReplaying() || config.isPaused()) {
-        clearInterval(config.replayInterval());
-        config.setIsReplaying(false);
-        config.setIsPaused(false);
-    }
-
-    config.setCurrentReplayIndex(config.currentReplayIndex() + 1);
-    config.setCurrentMinuteIndex(config.currentReplayIndex() > 0 ? aggregatedData.minuteIndices[config.currentReplayIndex() - 1][0] : 0);
-
-    Plotly.purge(chartContainer);
-    const candlestickTrace = {
-        x: aggregatedData.timestamp.slice(0, config.currentReplayIndex()),
-        open: aggregatedData.open.slice(0, config.currentReplayIndex()),
-        high: aggregatedData.high.slice(0, config.currentReplayIndex()),
-        low: aggregatedData.low.slice(0, config.currentReplayIndex()),
-        close: aggregatedData.close.slice(0, config.currentReplayIndex()),
-        type: 'candlestick',
-        name: aggregatedData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: aggregatedData.timestamp.slice(0, config.currentReplayIndex()),
-        y: aggregatedData.volume.slice(0, config.currentReplayIndex()),
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    const layout = {
-        title: `${aggregatedData.ticker} ${document.getElementById(config.timeframeSelectId).value}-Minute Candlestick Chart - ${aggregatedData.date} (Replay)`,
-        xaxis: { title: 'Time', type: 'date', tickformat: '%H:%M', rangeslider: { visible: false } },
-        yaxis: { title: 'Price', domain: [0.3, 1] },
-        yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
-
-    playButton.textContent = 'Play';
-    playButton.disabled = false;
-    pauseButton.disabled = true;
-    startOverButton.disabled = config.currentReplayIndex() <= 0;
-    restartButton.disabled = config.currentReplayIndex() <= 0;
-    prevButton.disabled = config.currentReplayIndex() <= 0;
-    nextButton.disabled = config.currentReplayIndex() >= aggregatedData.count;
-    if (config.hasTradeSimulator) {
-        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > aggregatedData.count || openPosition?.type === 'sell';
-        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > aggregatedData.count;
-        updateTradeSummary();
-    }
-
-    timestampDisplay.textContent = config.currentReplayIndex() > 0 
-        ? `Current Time: ${aggregatedData.timestamp[config.currentReplayIndex() - 1].split(' ')[1]}`
-        : 'Current Time: --:--:--';
-
-    gtag('event', 'replay_next_candle', {
-        'event_category': 'Chart',
-        'event_label': `${aggregatedData.ticker}_${aggregatedData.date}_${section || 'simulator'}`
-    });
-}
-
-function updateReplaySpeed(section) {
-    const config = getReplayConfig(section);
-    if (config.isReplaying()) {
-        clearInterval(config.replayInterval());
-        const replaySpeed = parseInt(document.getElementById(config.replaySpeedId).value);
-        config.setReplayInterval(setInterval(() => {
-            if (config.currentMinuteIndex() >= config.chartData().count) {
-                pauseReplay(section);
-                return;
-            }
-
-            const aggregatedData = config.aggregatedData();
-            const timeframe = parseInt(document.getElementById(config.timeframeSelectId).value);
-            const currentCandleIndex = aggregatedData.minuteIndices.findIndex(indices => indices.includes(config.currentMinuteIndex()));
-            let nextCandleData;
-
-            if (currentCandleIndex >= 0 && currentCandleIndex < aggregatedData.count) {
-                const indices = aggregatedData.minuteIndices[currentCandleIndex];
-                const currentIndexInCandle = indices.indexOf(config.currentMinuteIndex());
-                                if (currentIndexInCandle >= 0 && currentIndexInCandle < indices.length - 1) {
-                    // Update within the current aggregated candle
-                    const candleIndices = indices.slice(0, currentIndexInCandle + 1);
-                    nextCandleData = {
-                        x: [aggregatedData.timestamp[currentCandleIndex]],
-                        open: [aggregatedData.open[currentCandleIndex]],
-                        high: [Math.max(...candleIndices.map(i => config.chartData().high[i]))],
-                        low: [Math.min(...candleIndices.map(i => config.chartData().low[i]))],
-                        close: [config.chartData().close[candleIndices[candleIndices.length - 1]]],
-                        volume: [candleIndices.reduce((sum, i) => sum + config.chartData().volume[i], 0)]
-                    };
-                } else {
-                    // Move to next aggregated candle
-                    config.setCurrentReplayIndex(currentCandleIndex + 1);
-                    if (config.currentReplayIndex() < aggregatedData.count) {
-                        nextCandleData = {
-                            x: [aggregatedData.timestamp[config.currentReplayIndex()]],
-                            open: [aggregatedData.open[config.currentReplayIndex()]],
-                            high: [aggregatedData.high[config.currentReplayIndex()]],
-                            low: [aggregatedData.low[config.currentReplayIndex()]],
-                            close: [aggregatedData.close[config.currentReplayIndex()]],
-                            volume: [aggregatedData.volume[config.currentReplayIndex()]]
-                        };
-                    }
-                }
-            }
-
-            if (nextCandleData) {
-                if (config.currentReplayIndex() <= currentCandleIndex + 1) {
-                    Plotly.extendTraces(config.chartContainerId, {
-                        x: [nextCandleData.x],
-                        open: [nextCandleData.open],
-                        high: [nextCandleData.high],
-                        low: [nextCandleData.low],
-                        close: [nextCandleData.close]
-                    }, [0]);
-                    Plotly.extendTraces(config.chartContainerId, {
-                        x: [nextCandleData.x],
-                        y: [nextCandleData.volume]
-                    }, [1]);
-                }
-                document.getElementById(config.timestampDisplayId).textContent = 
-                    `Current Time: ${config.chartData().timestamp[config.currentMinuteIndex()].split(' ')[1]}`;
-            }
-
-            const prevButton = document.getElementById(config.prevButtonId);
-            const nextButton = document.getElementById(config.nextButtonId);
-            const startOverButton = document.getElementById(config.startOverButtonId);
-            const restartButton = document.getElementById(`restart-replay${config.replayPrefix ? '-' + config.replayPrefix : ''}`);
-            let buyButton, sellButton;
-            if (config.hasTradeSimulator) {
-                buyButton = document.getElementById('buy-trade');
-                sellButton = document.getElementById('sell-trade');
-                updateTradeSummary();
-            }
-
-            prevButton.disabled = config.currentReplayIndex() <= 0;
-            nextButton.disabled = config.currentReplayIndex() >= aggregatedData.count;
-            startOverButton.disabled = config.currentReplayIndex() <= 0;
-            restartButton.disabled = config.currentReplayIndex() <= 0;
-            if (config.hasTradeSimulator) {
-                buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() >= aggregatedData.count || openPosition?.type === 'sell';
-                sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() >= aggregatedData.count;
-            }
-
-            config.setCurrentMinuteIndex(config.currentMinuteIndex() + 1);
-        }, replaySpeed));
-    }
-
-    gtag('event', 'replay_speed_change', {
-        'event_category': 'Chart',
-        'event_label': `${config.aggregatedData().ticker}_${config.aggregatedData().date}_${section || 'simulator'}_${replaySpeed}`
-    });
-}
-
-function restartReplay(section) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
     if (!chartData) return;
@@ -1625,7 +1026,6 @@ function restartReplay(section) {
     const playButton = document.getElementById(config.playButtonId);
     const pauseButton = document.getElementById(config.pauseButtonId);
     const startOverButton = document.getElementById(config.startOverButtonId);
-    const restartButton = document.getElementById(`restart-replay${config.replayPrefix ? '-' + config.replayPrefix : ''}`);
     const prevButton = document.getElementById(config.prevButtonId);
     const nextButton = document.getElementById(config.nextButtonId);
     const timestampDisplay = document.getElementById(config.timestampDisplayId);
@@ -1634,9 +1034,6 @@ function restartReplay(section) {
     if (config.hasTradeSimulator) {
         buyButton = document.getElementById('buy-trade');
         sellButton = document.getElementById('sell-trade');
-        // Reset trade simulator state
-        openPosition = null;
-        tradeHistory = [];
     }
 
     // Stop any ongoing replay
@@ -1646,14 +1043,10 @@ function restartReplay(section) {
         config.setIsPaused(false);
     }
 
-    // Reset indices
+    // Reset to the beginning
     config.setCurrentReplayIndex(0);
-    config.setCurrentMinuteIndex(0);
 
-    // Reset aggregated data
-    config.setAggregatedData(null);
-
-    // Clear chart
+    // Update chart to show no candles (initial state)
     Plotly.purge(chartContainer);
     const candlestickTrace = {
         x: [],
@@ -1703,7 +1096,6 @@ function restartReplay(section) {
     playButton.disabled = false;
     pauseButton.disabled = true;
     startOverButton.disabled = true;
-    restartButton.disabled = true;
     prevButton.disabled = true;
     nextButton.disabled = chartData.count === 0;
     if (config.hasTradeSimulator) {
@@ -1715,10 +1107,759 @@ function restartReplay(section) {
     // Reset timestamp
     timestampDisplay.textContent = 'Current Time: --:--:--';
 
-    gtag('event', 'replay_restart', {
+    gtag('event', 'replay_start_over', {
         'event_category': 'Chart',
         'event_label': `${chartData.ticker}_${chartData.date}_${section || 'simulator'}`
     });
+}
+
+function stopReplay(section) {
+    const config = getReplayConfig(section);
+    if (!config.isReplaying() && !config.isPaused()) return;
+
+    config.setIsReplaying(false);
+    config.setIsPaused(false);
+    clearInterval(config.replayInterval());
+    const playButton = document.getElementById(config.playButtonId);
+    const pauseButton = document.getElementById(config.pauseButtonId);
+    const startOverButton = document.getElementById(config.startOverButtonId);
+    const prevButton = document.getElementById(config.prevButtonId);
+    const nextButton = document.getElementById(config.nextButtonId);
+    const chartData = config.chartData();
+    let buyButton, sellButton;
+    if (config.hasTradeSimulator) {
+        buyButton = document.getElementById('buy-trade');
+        sellButton = document.getElementById('sell-trade');
+    }
+
+    // Close open position if any (only for Market Simulator)
+    if (config.hasTradeSimulator && openPosition && config.currentReplayIndex() > 0 && config.currentReplayIndex() <= chartData.count) {
+        const exitPrice = chartData.close[config.currentReplayIndex() - 1];
+        const pnl = openPosition.type === 'buy'
+            ? (exitPrice - openPosition.price) * openPosition.shares
+            : (openPosition.price - exitPrice) * openPosition.shares;
+        tradeHistory.push({
+            type: openPosition.type,
+            entryPrice: openPosition.price,
+            exitPrice: exitPrice,
+            shares: openPosition.shares,
+            timestamp: chartData.timestamp[config.currentReplayIndex() - 1],
+            pnl: parseFloat(pnl.toFixed(2))
+        });
+        openPosition = null;
+        console.log(`Closed position at replay end with P/L: $${pnl.toFixed(2)}`);
+        gtag('event', 'trade_closed', {
+            'event_category': 'Trade Simulator',
+            'event_label': `${tradeHistory[tradeHistory.length - 1].type}_${chartData.ticker}_${chartData.date}_${tradeHistory[tradeHistory.length - 1].timestamp}`
+        });
+    }
+
+    playButton.textContent = 'Play Replay';
+    playButton.disabled = false;
+    pauseButton.disabled = true;
+    startOverButton.disabled = true;
+    prevButton.disabled = true;
+    nextButton.disabled = true;
+    if (config.hasTradeSimulator) {
+        buyButton.disabled = true;
+        sellButton.disabled = true;
+        updateTradeSummary();
+    }
+
+    // Restore full chart
+    const candlestickTrace = {
+        x: chartData.timestamp,
+        open: chartData.open,
+        high: chartData.high,
+        low: chartData.low,
+        close: chartData.close,
+        type: 'candlestick',
+        name: chartData.ticker,
+        increasing: { line: { color: '#00cc00' } },
+        decreasing: { line: { color: '#ff0000' } }
+    };
+    const volumeTrace = {
+        x: chartData.timestamp,
+        y: chartData.volume,
+        type: 'bar',
+        name: 'Volume',
+        yaxis: 'y2',
+        marker: { color: '#888888' }
+    };
+    const layout = {
+        title: `${chartData.ticker} Candlestick Chart - ${chartData.date}`,
+        xaxis: {
+            title: 'Time',
+            type: 'date',
+            rangeslider: { visible: false },
+            tickformat: '%H:%M'
+        },
+        yaxis: {
+            title: 'Price',
+            domain: [0.3, 1]
+        },
+        yaxis2: {
+            title: 'Volume',
+            domain: [0, 0.25],
+            anchor: 'x'
+        },
+        showlegend: true,
+        margin: { t: 50, b: 50, l: 50, r: 50 },
+        plot_bgcolor: '#ffffff',
+        paper_bgcolor: '#ffffff'
+    };
+    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
+
+    document.getElementById(config.timestampDisplayId).textContent = 'Current Time: --:--:--';
+}
+
+function prevCandle(section) {
+    const config = getReplayConfig(section);
+    if (!config.chartData || config.isReplaying || config.currentReplayIndex <= 0) return;
+    const timeframe = parseInt(document.getElementById(config.timeframeSelectId).value);
+    config.currentReplayIndex--;
+    const candleIndex = Math.floor(config.currentReplayIndex / timeframe);
+    config.minuteIndex = config.currentReplayIndex % timeframe;
+    renderChart(section, config.aggregatedCandles.slice(0, candleIndex + (config.minuteIndex > 0 ? 1 : 0)), config.minuteIndex > 0 ? config.minuteIndex - 1 : null);
+    document.getElementById(config.timestampId).textContent = config.currentReplayIndex > 0 
+        ? `Current Time: ${config.chartData.timestamp[config.currentReplayIndex - 1].split(' ')[1]}`
+        : 'Current Time: --:--:--';
+    document.getElementById(config.prevCandleButtonId).disabled = config.currentReplayIndex <= 0;
+    document.getElementById(config.nextCandleButtonId).disabled = config.currentReplayIndex >= config.chartData.count;
+    document.getElementById(config.startOverButtonId).disabled = config.currentReplayIndex <= 0;
+    updateState(section, { 
+        currentReplayIndex: config.currentReplayIndex,
+        minuteIndex: config.minuteIndex
+    });
+}
+
+function nextCandle(section) {
+    const config = getReplayConfig(section);
+    if (!config.chartData || config.isReplaying || config.currentReplayIndex >= config.chartData.count) return;
+    const timeframe = parseInt(document.getElementById(config.timeframeSelectId).value);
+    config.currentReplayIndex++;
+    const candleIndex = Math.floor(config.currentReplayIndex / timeframe);
+    config.minuteIndex = config.currentReplayIndex % timeframe;
+    renderChart(section, config.aggregatedCandles.slice(0, candleIndex + (config.minuteIndex > 0 ? 1 : 0)), config.minuteIndex > 0 ? config.minuteIndex - 1 : null);
+    document.getElementById(config.timestampId).textContent = `Current Time: ${config.chartData.timestamp[config.currentReplayIndex - 1].split(' ')[1]}`;
+    document.getElementById(config.prevCandleButtonId).disabled = config.currentReplayIndex <= 0;
+    document.getElementById(config.nextCandleButtonId).disabled = config.currentReplayIndex >= config.chartData.count;
+    document.getElementById(config.startOverButtonId).disabled = config.currentReplayIndex <= 0;
+    updateState(section, { 
+        currentReplayIndex: config.currentReplayIndex,
+        minuteIndex: config.minuteIndex
+    });
+}
+
+function updateChartToIndex(section) {
+    const config = getReplayConfig(section);
+    const chartData = config.chartData();
+    const chartContainer = document.getElementById(config.chartContainerId);
+    const timestampDisplay = document.getElementById(config.timestampDisplayId);
+    const prevButton = document.getElementById(config.prevButtonId);
+    const nextButton = document.getElementById(config.nextButtonId);
+    const startOverButton = document.getElementById(config.startOverButtonId);
+    let buyButton, sellButton;
+    if (config.hasTradeSimulator) {
+        buyButton = document.getElementById('buy-trade');
+        sellButton = document.getElementById('sell-trade');
+    }
+
+    // Update chart to show candles up to currentReplayIndex
+    Plotly.purge(chartContainer);
+    const candlestickTrace = {
+        x: chartData.timestamp.slice(0, config.currentReplayIndex()),
+        open: chartData.open.slice(0, config.currentReplayIndex()),
+        high: chartData.high.slice(0, config.currentReplayIndex()),
+        low: chartData.low.slice(0, config.currentReplayIndex()),
+        close: chartData.close.slice(0, config.currentReplayIndex()),
+        type: 'candlestick',
+        name: chartData.ticker,
+        increasing: { line: { color: '#00cc00' } },
+        decreasing: { line: { color: '#ff0000' } }
+    };
+    const volumeTrace = {
+        x: chartData.timestamp.slice(0, config.currentReplayIndex()),
+        y: chartData.volume.slice(0, config.currentReplayIndex()),
+        type: 'bar',
+        name: 'Volume',
+        yaxis: 'y2',
+        marker: { color: '#888888' }
+    };
+    const layout = {
+        title: `${chartData.ticker} Candlestick Chart - ${chartData.date} (Replay)`,
+        xaxis: {
+            title: 'Time',
+            type: 'date',
+            rangeslider: { visible: false },
+            tickformat: '%H:%M'
+        },
+        yaxis: {
+            title: 'Price',
+            domain: [0.3, 1]
+        },
+        yaxis2: {
+            title: 'Volume',
+            domain: [0, 0.25],
+            anchor: 'x'
+        },
+        showlegend: true,
+        margin: { t: 50, b: 50, l: 50, r: 50 },
+        plot_bgcolor: '#ffffff',
+        paper_bgcolor: '#ffffff'
+    };
+    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
+
+    // Update timestamp and button states
+    timestampDisplay.textContent = config.currentReplayIndex() > 0 
+        ? `Current Time: ${chartData.timestamp[config.currentReplayIndex() - 1].split(' ')[1]}`
+        : 'Current Time: --:--:--';
+    prevButton.disabled = config.currentReplayIndex() <= 0;
+    nextButton.disabled = config.currentReplayIndex() >= chartData.count;
+    startOverButton.disabled = config.currentReplayIndex() <= 0;
+    if (config.hasTradeSimulator) {
+        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count || openPosition?.type === 'sell';
+        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
+        updateTradeSummary();
+    }
+}
+
+function updateReplaySpeed(section) {
+    const config = getReplayConfig(section);
+    if (config.isReplaying()) {
+        pauseReplay(section);
+        startReplay(section);
+    }
+}
+
+async function loadGapDates(event) {
+    event.preventDefault();
+    const gapSize = document.getElementById('gap-size-select').value;
+    const day = document.getElementById('day-select').value;
+    const gapDirection = document.getElementById('gap-direction-select').value;
+    const gapDatesContainer = document.getElementById('gap-dates');
+    const form = document.getElementById('gap-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
+
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('gapDatesRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        gapDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
+        return;
+    }
+
+    if (!gapSize || !day || !gapDirection) {
+        gapDatesContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction.</p>';
+        return;
+    }
+
+    console.log(`Fetching gaps for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
+    const url = `/api/gaps?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
+    console.log('Fetching URL:', url);
+    gapDatesContainer.innerHTML = '<p>Loading gap dates...</p>';
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Response status:', response.status);
+        if (response.status === 429) {
+            const data = await response.json();
+            console.error('Rate limit error:', data.error);
+            gapDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('gapDatesRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Find Gap Dates';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('gapDatesRateLimitReset');
+                gapDatesContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction to view gap dates.</p>';
+            }, 12 * 60 * 60 * 1000);
+            alert(data.error);
+            return;
+        }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Gap API response:', JSON.stringify(data, null, 2));
+        if (data.error) {
+            console.error('Error from gap API:', data.error);
+            gapDatesContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
+        if (!data.dates || data.dates.length === 0) {
+            console.log('No gap dates found:', data.message || 'No dates returned');
+            gapDatesContainer.innerHTML = `<p>${data.message || 'No gaps found for the selected criteria'}</p>`;
+            return;
+        }
+        console.log(`Rendering ${data.dates.length} gap dates:`, data.dates);
+        const ul = document.createElement('ul');
+        ul.id = 'gap-dates-list';
+        data.dates.forEach(date => {
+            const li = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = date;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log(`Clicked gap date: ${date}`);
+                openTab('gap-analysis');
+                document.getElementById('ticker-select-gap').value = 'QQQ';
+                document.getElementById('date-gap').value = date;
+                loadChart(new Event('submit'), 'gap-analysis');
+                gtag('event', 'gap_date_click', {
+                    'event_category': 'Gap Analysis',
+                    'event_label': `QQQ_${date}_${gapDirection}`
+                });
+            });
+            li.appendChild(link);
+            ul.appendChild(li);
+        });
+        gapDatesContainer.innerHTML = '';
+        gapDatesContainer.appendChild(ul);
+        console.log('Gap dates rendered successfully');
+    } catch (error) {
+        console.error('Error loading gap dates:', error.message);
+        gapDatesContainer.innerHTML = '<p>Failed to load gap dates: ' + error.message + '. Please try again later.</p>';
+        alert('Failed to load gap dates: ' + error.message);
+    }
+}
+
+async function loadYears() {
+    const yearSelect = document.getElementById('year-select');
+    yearSelect.disabled = true;
+    yearSelect.innerHTML = '<option value="">Loading years...</option>';
+    try {
+        console.log('Fetching years from /api/years');
+        const response = await fetch('/api/years', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Response status:', response.status);
+        if (response.status === 429) {
+            const data = await response.json();
+            console.error('Rate limit error:', data.error);
+            yearSelect.innerHTML = `<option value="">${data.error}</option>`;
+            alert(data.error);
+            return;
+        }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Fetched years:', data.years);
+        if (!data.years || !Array.isArray(data.years)) {
+            throw new Error('Invalid response format: years array not found');
+        }
+        yearSelect.innerHTML = '<option value="">Select year</option>';
+        data.years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        });
+        yearSelect.disabled = false;
+    } catch (error) {
+        console.error('Error loading years:', error.message);
+        yearSelect.innerHTML = '<option value="">Error loading years</option>';
+        alert('Failed to load years: ' + error.message + '. Please refresh the page or try again later.');
+    }
+}
+
+async function loadEventDates(event) {
+    event.preventDefault();
+    const filterType = document.querySelector('input[name="filter-type"]:checked').value;
+    const eventDatesContainer = document.getElementById('event-dates');
+    const form = document.getElementById('events-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
+
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('eventDatesRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
+        return;
+    }
+
+    let url;
+    let eventType;
+    let year;
+    let bin;
+
+    if (filterType === 'year') {
+        eventType = document.getElementById('event-type-select').value;
+        year = document.getElementById('year-select').value;
+        if (!eventType || !year) {
+            eventDatesContainer.innerHTML = '<p>Please select an event type and year.</p>';
+            return;
+        }
+        url = `/api/events?event_type=${encodeURIComponent(eventType)}&year=${encodeURIComponent(year)}`;
+    } else {
+        eventType = document.getElementById('bin-event-type-select').value;
+        bin = document.getElementById('bin-select').value;
+        if (!eventType || !bin) {
+            eventDatesContainer.innerHTML = '<p>Please select an event type and economic impact range.</p>';
+            return;
+        }
+        url = `/api/economic_events?event_type=${encodeURIComponent(eventType)}&bin=${encodeURIComponent(bin)}`;
+    }
+
+    console.log(`Fetching events for filterType=${filterType}, event_type=${eventType}, year=${year}, bin=${bin}`);
+    console.log('Fetching URL:', url);
+    eventDatesContainer.innerHTML = '<p>Loading event dates...</p>';
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Response status:', response.status);
+        if (response.status === 429) {
+            const data = await response.json();
+            console.error('Rate limit error:', data.error);
+            eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('eventDatesRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Find Event Dates';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('eventDatesRateLimitReset');
+                eventDatesContainer.innerHTML = '<p>Select filters to view dates with events.</p>';
+            }, 1000);
+            alert(data.error);
+            return;
+        }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Event API response:', JSON.stringify(data, null, 2));
+        if (data.error) {
+            console.error('Error from event API:', data.error);
+            eventDatesContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
+        if (!data.dates || data.dates.length === 0) {
+            console.log('No event dates found:', data.message || 'No dates returned');
+            eventDatesContainer.innerHTML = `<p>${data.message || 'No events found for the selected criteria'}</p>`;
+            return;
+        }
+        console.log(`Rendering ${data.dates.length} event dates:`, data.dates);
+        const ul = document.createElement('ul');
+        ul.id = 'event-dates-list';
+        data.dates.forEach(date => {
+            const li = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = date;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log(`Clicked event date: ${date}`);
+                openTab('events-analysis');
+                document.getElementById('ticker-select-events').value = 'QQQ'; // Updated
+                document.getElementById('date-events').value = date; // Updated
+                loadChart(new Event('submit'), 'events-analysis');
+                gtag('event', 'event_date_click', {
+                    'event_category': 'Event Analysis',
+                    'event_label': `QQQ_${date}_${eventType}${bin ? '_' + bin : ''}`
+                });
+            });
+            li.appendChild(link);
+            ul.appendChild(li);
+        });
+        eventDatesContainer.innerHTML = '';
+        eventDatesContainer.appendChild(ul);
+        console.log('Event dates rendered successfully');
+    } catch (error) {
+        console.error('Error loading event dates:', error.message);
+        eventDatesContainer.innerHTML = '<p>Failed to load event dates: ' + error.message + '. Please try again later.</p>';
+        alert('Failed to load event dates: ' + error.message);
+    }
+}
+
+async function loadEarningsDates(event) {
+    event.preventDefault();
+    const filterType = document.querySelector('input[name="earnings-filter-type"]:checked').value;
+    const earningsDatesContainer = document.getElementById('earnings-dates');
+    const form = document.getElementById('earnings-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
+
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('earningsDatesRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
+        return;
+    }
+
+    let url;
+    let ticker;
+    let bin;
+
+    if (filterType === 'ticker-outcome') {
+        ticker = document.getElementById('earnings-ticker-select').value;
+        bin = document.getElementById('earnings-bin-select').value;
+        if (!ticker || !bin) {
+            earningsDatesContainer.innerHTML = '<p>Please select a ticker and earnings outcome.</p>';
+            return;
+        }
+        url = `/api/earnings_by_bin?ticker=${encodeURIComponent(ticker)}&bin=${encodeURIComponent(bin)}`;
+    } else {
+        ticker = document.getElementById('earnings-ticker-only-select').value;
+        if (!ticker) {
+            earningsDatesContainer.innerHTML = '<p>Please select a ticker.</p>';
+            return;
+        }
+        url = `/api/earnings?ticker=${encodeURIComponent(ticker)}`;
+    }
+
+    console.log(`Fetching earnings for filterType=${filterType}, ticker=${ticker}, bin=${bin}`);
+    console.log('Fetching URL:', url);
+    earningsDatesContainer.innerHTML = '<p>Loading earnings dates...</p>';
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Response status:', response.status);
+        if (response.status === 429) {
+            const data = await response.json();
+            earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('earningsDatesRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Find Earnings Dates';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('earningsDatesRateLimitReset');
+                earningsDatesContainer.innerHTML = '<p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>';
+            }, 1000);
+            alert(data.error);
+            return;
+        }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Earnings API response:', JSON.stringify(data, null, 2));
+        if (data.error) {
+            console.error('Error from earnings data:', data.error);
+            earningsDatesContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
+        if (!data.dates || data.dates.length === 0) {
+            console.log('No earnings dates found:', data.message || 'No dates returned');
+            earningsDatesContainer.innerHTML = `<p>${data.message || `No earnings found for ${ticker}${bin ? ' with outcome ' + bin : ''}`}</p>`;
+            return;
+        }
+        console.log(`Rendering ${data.dates.length} earnings dates:`, data.dates);
+        const ul = document.createElement('ul');
+        ul.id = 'earnings-dates-list';
+        data.dates.forEach(date => {
+            const li = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = date;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log(`Clicked earnings date: ${date}`);
+                openTab('earnings-analysis');
+                document.getElementById('earnings-ticker-select').value = ticker;
+                document.getElementById('date-gap').value = date;
+                loadChart(new Event('submit'), 'earnings-analysis');
+                gtag('event', 'earnings_date_click', {
+                    'event_category': 'Earnings Analysis',
+                    'event_label': `${ticker}_${date}${bin ? '_' + bin : ''}`
+                });
+            });
+            li.appendChild(link);
+            ul.appendChild(li);
+        });
+        earningsDatesContainer.innerHTML = '';
+        earningsDatesContainer.appendChild(ul);
+        console.log('Earnings dates rendered successfully');
+    } catch (error) {
+        console.error('Error loading earnings dates:', error.message);
+        earningsDatesContainer.innerHTML = '<p>Failed to load earnings dates: ' + error.message + '. Please try again later.</p>';
+        alert('Failed to load earnings dates: ' + error.message);
+    }
+}
+
+async function loadGapInsights(event) {
+    event.preventDefault();
+    const gapSize = document.getElementById('gap-insights-size-select').value;
+    const day = document.getElementById('gap-insights-day-select').value;
+    const gapDirection = document.getElementById('gap-insights-direction-select').value;
+    const insightsContainer = document.getElementById('gap-insights-results');
+    const form = document.getElementById('gap-insights-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
+
+    // Check rate limit state
+    const rateLimitResetTime = localStorage.getItem('gapInsightsRateLimitReset');
+    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
+        insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 3 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        button.disabled = true;
+        button.textContent = 'Rate Limit Exceeded';
+        selects.forEach(select => select.disabled = true);
+        return;
+    }
+
+    if (!gapSize || !day || !gapDirection) {
+        insightsContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction.</p>';
+        return;
+    }
+    console.log(`Fetching gap insights for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
+    const url = `/api/gap_insights?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
+    console.log('Fetching URL:', url);
+    insightsContainer.innerHTML = '<p>Loading gap insights...</p>';
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log('Response status:', response.status);
+        if (response.status === 429) {
+            const data = await response.json();
+            insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+            button.disabled = true;
+            button.textContent = 'Rate Limit Exceeded';
+            selects.forEach(select => select.disabled = true);
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('gapInsightsRateLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Get Insights';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('gapInsightsRateLimitReset');
+                insightsContainer.innerHTML = '<p>Select a gap size, day of the week, and gap direction to view gap insights.</p>';
+            }, 1000);
+            alert(data.error);
+            return;
+        }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Gap insights API response:', JSON.stringify(data, null, 2));
+        if (data.error) {
+            console.error('Error from gap insights API:', data.error);
+            insightsContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
+        if (!data.insights || Object.keys(data.insights).length === 0) {
+            console.log('No gap insights found:', data.message || 'No insights returned');
+            insightsContainer.innerHTML = `<p>${data.message || 'No gap insights found for the selected criteria'}</p>`;
+            return;
+        }
+        console.log('Rendering gap insights:', data.insights);
+
+        const insights = data.insights;
+        const container = document.createElement('div');
+        container.className = 'insights-container';
+        container.innerHTML = `<h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>`;
+
+        // First row: 4 metrics
+        const row1 = document.createElement('div');
+        row1.className = 'insights-row four-metrics';
+        ['gap_fill_rate', 'median_move_before_fill', 'median_max_move_unfilled', 'median_time_to_fill'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row1.appendChild(metric);
+        });
+        container.appendChild(row1);
+
+        // Second row: 2 metrics
+        const row2 = document.createElement('div');
+        row2.className = 'insights-row two-metrics';
+        ['reversal_after_fill_rate', 'median_move_before_reversal'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row2.appendChild(metric);
+        });
+        container.appendChild(row2);
+
+        // Third row: 2 metrics
+        const row3 = document.createElement('div');
+        row3.className = 'insights-row two-metrics';
+        ['median_time_of_low', 'median_time_of_high'].forEach(key => {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                <div class="metric-median">${insights[key].median}</div>
+                <div class="metric-description">${insights[key].description}</div>
+            `;
+            row3.appendChild(metric);
+        });
+        container.appendChild(row3);
+
+        insightsContainer.innerHTML = '';
+        insightsContainer.appendChild(container);
+        console.log('Gap insights rendered successfully');
+
+        gtag('event', 'gap_insights_load', {
+            'event_category': 'Gap Insights',
+            'event_label': `QQQ_${gapSize}_${day}_${gapDirection}`
+        });
+    } catch (error) {
+        console.error('Error loading gap insights:', error.message);
+        insightsContainer.innerHTML = '<p>Failed to load gap insights: ' + error.message + '. Please try again later.</p>';
+        alert('Failed to load gap insights: ' + error.message);
+    }
 }
 
 function openTab(tabName) {
