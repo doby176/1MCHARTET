@@ -539,6 +539,13 @@ def get_gaps():
         logging.error(f"Error processing gaps: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
+@app.route('/simulator')
+def simulator():
+    if not session.get('authenticated'):
+        return redirect(url_for('login'))
+    logging.debug("Rendering simulator.html")
+    return render_template('simulator.html')
+
 @app.route('/api/gap_insights', methods=['GET'])
 @limiter.limit("3 per 12 hours")
 def get_gap_insights():

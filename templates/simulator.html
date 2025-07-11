@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Simulator</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        #chart-container { width: 100%; height: 600px; }
+        #replay-controls { margin: 10px 0; }
+        #replay-controls button, #replay-controls select, #replay-controls input { margin-right: 10px; }
+        #timestamp { font-weight: bold; }
+        .form-container { margin-bottom: 20px; }
+        .error-message { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Market Simulator</h1>
+    <a href="/dashboard">Back to Dashboard</a>
+    <div class="form-container">
+        <form id="chart-form">
+            <label for="ticker-select">Ticker:</label>
+            <select id="ticker-select">
+                <option value="">Select Ticker</option>
+                <!-- Populated dynamically -->
+            </select>
+            <label for="date">Date:</label>
+            <input type="date" id="date">
+            <label for="timeframe-select">Timeframe (minutes):</label>
+            <select id="timeframe-select">
+                <option value="1">1 Minute</option>
+                <option value="2">2 Minutes</option>
+                <option value="3">3 Minutes</option>
+                <option value="5">5 Minutes</option>
+                <option value="10">10 Minutes</option>
+            </select>
+            <button type="submit">Load Chart</button>
+        </form>
+        <p id="error-message" class="error-message"></p>
+    </div>
+    <div id="chart-container"></div>
+    <div id="replay-controls" style="display: none;">
+        <button id="play-replay">Play Replay</button>
+        <button id="pause-replay" disabled>Pause Replay</button>
+        <button id="start-over-replay" disabled>Start Over</button>
+        <button id="prev-candle" disabled>Previous</button>
+        <button id="next-candle" disabled>Next</button>
+        <label for="replay-speed">Speed (ms):</label>
+        <select id="replay-speed">
+            <option value="1000">1s</option>
+            <option value="500">0.5s</option>
+            <option value="250">0.25s</option>
+        </select>
+        <label for="replay-start-time">Start Time (HH:MM):</label>
+        <input type="text" id="replay-start-time" placeholder="09:30">
+        <span id="timestamp">Current Time: --:--:--</span>
+    </div>
+
+    <script src="/static/simulator.js"></script>
+</body>
+</html>
