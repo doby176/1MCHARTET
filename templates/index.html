@@ -346,39 +346,57 @@
         <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site, All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
         <img src="/static/logo-new.png" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
-    <script>
-        // Disable right-click without alert
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-        });
-        // Disable text selection
-        document.addEventListener('selectstart', function(e) {
-            e.preventDefault();
-        });
-        // Disable drag-and-drop
-        document.addEventListener('dragstart', function(e) {
-            e.preventDefault();
-        });
-        // Tab switching function
-        function openTab(tabId) {
-            if (tabId === 'market-simulator') {
-                window.location.href = '/simulator';
-                return;
-            }
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.style.display = 'none';
-            });
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.classList.remove('active');
-            });
-            document.getElementById(tabId).style.display = 'block';
-            document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
-            gtag('event', 'tab_open', {
-                'event_category': 'Navigation',
-                'event_label': tabId
-            });
+<script>
+    // Disable right-click without alert
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+    // Disable text selection
+    document.addEventListener('selectstart', function(e) {
+        e.preventDefault();
+    });
+    // Disable drag-and-drop
+    document.addEventListener('dragstart', function(e) {
+        e.preventDefault();
+    });
+    // Tab switching function
+    function openTab(tabId) {
+        if (tabId === 'market-simulator') {
+            window.location.href = '/simulator';
+            return;
         }
-    </script>
-    <script src="/static/script.js?v=24"></script>
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.style.display = 'none';
+        });
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+        document.getElementById(tabId).style.display = 'block';
+        document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
+        gtag('event', 'tab_open', {
+            'event_category': 'Navigation',
+            'event_label': tabId
+        });
+    }
+
+    // Initialize tab based on query parameters
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let tabId = 'market-simulator'; // Default tab
+
+        if (urlParams.has('gap_size') || urlParams.has('day') || urlParams.has('gap_direction')) {
+            tabId = 'gap-insights';
+        } else if (urlParams.has('event_type') || urlParams.has('year') || urlParams.has('bin')) {
+            tabId = 'events-analysis';
+        } else if (urlParams.has('ticker') || urlParams.has('earnings_bin')) {
+            tabId = 'earnings-analysis';
+        } else if (urlParams.has('gap_date') || urlParams.has('gap_ticker')) {
+            tabId = 'gap-analysis';
+        }
+
+        openTab(tabId);
+    });
+</script>
+<script src="/static/script.js?v=25"></script>
 </body>
 </html>
