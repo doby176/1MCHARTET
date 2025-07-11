@@ -140,12 +140,7 @@ function aggregateCandles(data, timeframe) {
 
 function renderChart(candles, currentCandleIndex = -1, minuteIndex = null) {
     const candlestickTrace = {
-        x: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].timestamp;
-            }
-            return c.timestamp;
-        }),
+        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
         open: candles.map(c => c.open),
         high: candles.map((c, i) => {
             if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
@@ -171,12 +166,7 @@ function renderChart(candles, currentCandleIndex = -1, minuteIndex = null) {
         decreasing: { line: { color: '#ff0000' } }
     };
     const volumeTrace = {
-        x: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].timestamp;
-            }
-            return c.timestamp;
-        }),
+        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
         y: candles.map((c, i) => {
             if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
                 return c.minuteUpdates[minuteIndex].volume;
