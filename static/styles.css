@@ -1186,3 +1186,225 @@ form#signup-form p a:hover, form#login-form p a:hover {
         font-size: 0.9em;
     }
 }
+
+/* Trading Controls Styling */
+.trading-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.trading-controls button {
+    padding: 12px 24px;
+    font-size: 1.1em;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.long-btn {
+    background-color: #28a745;
+    color: white;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.long-btn:hover:not(:disabled) {
+    background-color: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+}
+
+.short-btn {
+    background-color: #dc3545;
+    color: white;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.short-btn:hover:not(:disabled) {
+    background-color: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+}
+
+.close-btn {
+    background-color: #ffc107;
+    color: #212529;
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+}
+
+.close-btn:hover:not(:disabled) {
+    background-color: #e0a800;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.4);
+}
+
+.trading-controls button:disabled {
+    background-color: #6c757d;
+    color: #fff;
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Trade Summary Market Styling */
+#trade-summary-market {
+    width: 100%;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+}
+
+#trade-summary-market h4 {
+    font-size: 1.3em;
+    font-weight: 700;
+    color: #1a1b2f;
+    margin: 0 0 15px;
+    text-align: center;
+    border-bottom: 2px solid #153097;
+    padding-bottom: 10px;
+}
+
+#trade-summary-market h5 {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #495057;
+    margin: 15px 0 10px;
+    text-align: center;
+}
+
+#position-status-market,
+#current-pnl-market {
+    font-size: 1.1em;
+    font-weight: 500;
+    text-align: center;
+    margin: 10px 0;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+#position-status-market {
+    background-color: #f8f9fa;
+    border-left: 4px solid #6c757d;
+}
+
+#current-pnl-market {
+    font-weight: 600;
+    font-size: 1.2em;
+}
+
+#current-pnl-market.positive {
+    color: #28a745;
+    background-color: #d4edda;
+    border-left: 4px solid #28a745;
+}
+
+#current-pnl-market.negative {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+}
+
+/* Trade History Styling */
+#trade-history-market {
+    margin-top: 20px;
+}
+
+#trade-history-content {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+
+.trade-item {
+    padding: 12px;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+.trade-item:last-child {
+    border-bottom: none;
+}
+
+.trade-item.profit {
+    background-color: #d4edda;
+    border-left: 4px solid #28a745;
+}
+
+.trade-item.loss {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+}
+
+.trade-header {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 4px;
+}
+
+.trade-details {
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.trade-pnl {
+    font-weight: 700;
+    font-size: 1.05em;
+}
+
+.trade-pnl.profit {
+    color: #28a745;
+}
+
+.trade-pnl.loss {
+    color: #dc3545;
+}
+
+/* Mobile adjustments for trading controls */
+@media (max-width: 600px) {
+    .trading-controls {
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .trading-controls button {
+        width: 100%;
+        max-width: 200px;
+        font-size: 1em;
+        padding: 10px 20px;
+    }
+    
+    #trade-summary-market {
+        margin: 15px auto;
+        padding: 15px;
+    }
+    
+    #trade-summary-market h4 {
+        font-size: 1.2em;
+    }
+    
+    #position-status-market,
+    #current-pnl-market {
+        font-size: 1em;
+    }
+    
+    .trade-item {
+        padding: 10px;
+        font-size: 0.9em;
+    }
+}

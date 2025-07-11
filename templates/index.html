@@ -56,15 +56,15 @@
             <div id="market-simulator" class="tab-content active">
                 <h2>Market Simulator</h2>
                 <p>Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls.</p>
-                <form id="stock-form">
-                    <label for="ticker-select">Select Ticker:</label>
-                    <select id="ticker-select" name="ticker">
+                <form id="stock-form-market">
+                    <label for="ticker-select-market">Select Ticker:</label>
+                    <select id="ticker-select-market" name="ticker">
                         <option value="">Select a ticker</option>
                     </select>
-                    <label for="date">Select Date:</label>
-                    <input type="date" id="date" name="date">
-                    <label for="timeframe-select">Select Timeframe:</label>
-                    <select id="timeframe-select" name="timeframe">
+                    <label for="date-market">Select Date:</label>
+                    <input type="date" id="date-market" name="date">
+                    <label for="timeframe-select-market">Select Timeframe:</label>
+                    <select id="timeframe-select-market" name="timeframe">
                         <option value="1">1 Minute</option>
                         <option value="2">2 Minutes</option>
                         <option value="3">3 Minutes</option>
@@ -73,31 +73,36 @@
                     </select>
                     <button type="submit">Load Chart</button>
                 </form>
-                <div id="chart-container">
-                    <div id="plotly-chart"></div>
-                    <div id="replay-controls" class="replay-controls">
-                        <button id="play-replay" disabled>Play Replay</button>
-                        <button id="pause-replay" disabled>Pause</button>
-                        <button id="start-over-replay" disabled>Start Over</button>
-                        <button id="restart-replay" disabled>Restart Replay</button>
-                        <button id="next-candle" disabled>Next Candle</button>
-                        <button id="prev-candle" disabled>Previous Candle</button>
-                        <label for="replay-start-time">Start Time (HH:MM):</label>
-                        <input type="text" id="replay-start-time" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
-                        <label for="replay-speed">Replay Speed:</label>
-                        <select id="replay-speed">
-                            <option value="1000">1x (1 sec/bar)</option>
-                            <option value="500">2x (0.5 sec/bar)</option>
-                            <option value="250">4x (0.25 sec/bar)</option>
-                        </select>
-                        <span id="replay-timestamp">Current Time: --:--:--</span>
-                        <button id="buy-trade" disabled>Buy</button>
-                        <button id="sell-trade" disabled>Sell</button>
-                        <div id="trade-summary">
-                            <h4>Trade Simulator</h4>
-                            <p id="position-status">No open position</p>
-                            <p id="trade-pnl">P/L: $0.00</p>
-                            <p id="trade-history">Trade History: None</p>
+                <div id="chart-container-market">
+                    <div id="plotly-chart-market"></div>
+                </div>
+                <div id="replay-controls-market" class="replay-controls" style="display: none;">
+                    <button id="play-replay-market" disabled>Play Replay</button>
+                    <button id="pause-replay-market" disabled>Pause</button>
+                    <button id="start-over-replay-market" disabled>Start Over</button>
+                    <button id="next-candle-market" disabled>Next Candle</button>
+                    <button id="prev-candle-market" disabled>Previous Candle</button>
+                    <label for="replay-start-time-market">Start Time (HH:MM):</label>
+                    <input type="text" id="replay-start-time-market" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
+                    <label for="replay-speed-market">Replay Speed:</label>
+                    <select id="replay-speed-market">
+                        <option value="1000">1x (1 sec/bar)</option>
+                        <option value="500">2x (0.5 sec/bar)</option>
+                        <option value="250">4x (0.25 sec/bar)</option>
+                    </select>
+                    <span id="replay-timestamp-market">Current Time: --:--:--</span>
+                    <div class="trading-controls">
+                        <button id="long-trade" disabled class="long-btn">LONG</button>
+                        <button id="short-trade" disabled class="short-btn">SHORT</button>
+                        <button id="close-position" disabled class="close-btn">CLOSE POSITION</button>
+                    </div>
+                    <div id="trade-summary-market">
+                        <h4>Trading Simulator</h4>
+                        <p id="position-status-market">No open position</p>
+                        <p id="current-pnl-market">Current P/L: $0.00</p>
+                        <div id="trade-history-market">
+                            <h5>Trade History</h5>
+                            <div id="trade-history-content">No trades yet</div>
                         </div>
                     </div>
                 </div>
