@@ -1191,3 +1191,22 @@ form#signup-form p a:hover, form#login-form p a:hover {
 .plotly-chart {
     transition: all 0.2s ease-in-out;
 }
+
+/* NEW: Specific styles for simulator.html form container to match index.html */
+.form-container {
+    margin-bottom: 20px;
+}
+
+.form-container p.error-message {
+    color: red;
+    text-align: center;
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+@media (max-width: 600px) {
+    .form-container p.error-message {
+        font-size: 0.8em;
+        margin-top: 8px;
+    }
+}

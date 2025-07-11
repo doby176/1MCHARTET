@@ -140,7 +140,7 @@ function aggregateCandles(data, timeframe) {
 
 function renderChart(candles, currentCandleIndex = -1, minuteIndex = null) {
     const candlestickTrace = {
-        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
+        x: candles.map(c => c.timestamp),
         open: candles.map(c => c.open),
         high: candles.map((c, i) => {
             if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
@@ -166,7 +166,7 @@ function renderChart(candles, currentCandleIndex = -1, minuteIndex = null) {
         decreasing: { line: { color: '#ff0000' } }
     };
     const volumeTrace = {
-        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
+        x: candles.map(c => c.timestamp),
         y: candles.map((c, i) => {
             if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
                 return c.minuteUpdates[minuteIndex].volume;
@@ -235,16 +235,46 @@ function startReplay() {
         timestampDisplay.textContent = 'Current Time: --:--:--';
     }
 
+    startReplayInterval(replaySpeed);
+}
+
+function resumeReplay() {
+    if (!chartData || isReplaying || !isPaused) return;
+    isReplaying = true;
+    isPaused = false;
+    const replaySpeed = parseInt(document.getElementById('replay-speed').value);
+    const playButton = document.getElementById('play-replay');
+    const pauseButton = document.getElementById('pause-replay');
+    const startOverButton = document.getElementById('start-over-replay');
+    const prevButton = document.getElementById('prev-candle');
+    const nextButton = document.getElementById('next-candle');
+
+    playButton.disabled = true;
+    pauseButton.disabled = false;
+    startOverButton.disabled = currentReplayIndex <= 0;
+    prevButton.disabled = currentReplayIndex <= 0;
+    nextButton.disabled = currentReplayIndex >= chartData.count;
+
+    startReplayInterval(replaySpeed);
+}
+
+function startReplayInterval(replaySpeed) {
+    const timestampDisplay = document.getElementById('timestamp');
+    const playButton = document.getElementById('play-replay');
+    const pauseButton = document.getElementById('pause-replay');
+    const startOverButton = document.getElementById('start-over-replay');
+    const prevButton = document.getElementById('prev-candle');
+    const nextButton = document.getElementById('next-candle');
+
     replayInterval = setInterval(() => {
         if (currentReplayIndex >= chartData.count) {
             stopReplay();
             return;
         }
 
-        candleIndex = Math.floor(currentReplayIndex / timeframe);
-        minuteIndex = currentReplayIndex % timeframe;
+        const candleIndex = Math.floor(currentReplayIndex / timeframe);
+        const minuteIndex = currentReplayIndex % timeframe;
 
-        // Render only up to the current candle, with minute-by-minute updates for the current candle only
         renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
         timestampDisplay.textContent = `Current Time: ${chartData.timestamp[currentReplayIndex].split(' ')[1]}`;
 
@@ -264,8 +294,11 @@ function pauseReplay() {
     isReplaying = false;
     isPaused = true;
     clearInterval(replayInterval);
-    document.getElementById('play-replay').textContent = 'Resume Replay';
-    document.getElementById('play-replay').disabled = false;
+    const playButton = document.getElementById('play-replay');
+    playButton.textContent = 'Resume Replay';
+    playButton.disabled = false;
+    playButton.removeEventListener('click', startReplay);
+    playButton.addEventListener('click', resumeReplay);
     document.getElementById('pause-replay').disabled = true;
 }
 
@@ -276,8 +309,11 @@ function startOverReplay() {
     isPaused = false;
     currentReplayIndex = 0;
     renderChart([]);
-    document.getElementById('play-replay').textContent = 'Play Replay';
-    document.getElementById('play-replay').disabled = false;
+    const playButton = document.getElementById('play-replay');
+    playButton.textContent = 'Play Replay';
+    playButton.disabled = false;
+    playButton.removeEventListener('click', resumeReplay);
+    playButton.addEventListener('click', startReplay);
     document.getElementById('pause-replay').disabled = true;
     document.getElementById('start-over-replay').disabled = true;
     document.getElementById('prev-candle').disabled = true;
@@ -290,8 +326,11 @@ function stopReplay() {
     isPaused = false;
     clearInterval(replayInterval);
     renderChart(aggregatedCandles);
-    document.getElementById('play-replay').textContent = 'Play Replay';
-    document.getElementById('play-replay').disabled = false;
+    const playButton = document.getElementById('play-replay');
+    playButton.textContent = 'Play Replay';
+    playButton.disabled = false;
+    playButton.removeEventListener('click', resumeReplay);
+    playButton.addEventListener('click', startReplay);
     document.getElementById('pause-replay').disabled = true;
     document.getElementById('start-over-replay').disabled = true;
     document.getElementById('prev-candle').disabled = true;
@@ -330,6 +369,6 @@ function nextCandle() {
 function updateReplaySpeed() {
     if (isReplaying) {
         pauseReplay();
-        startReplay();
+        resumeReplay();
     }
 }
