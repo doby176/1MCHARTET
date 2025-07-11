@@ -339,30 +339,24 @@ def get_chart():
         date = request.args.get('date')
         timeframe = request.args.get('timeframe', '1')  # Default to 1 minute
         restrict_hours = request.args.get('restrict_hours', 'false').lower() == 'true'
-        replay_mode = request.args.get('replay_mode', 'false').lower() == 'true'  # New parameter
-        logging.debug(f"Processing chart request for ticker={ticker}, date={date}, timeframe={timeframe}, restrict_hours={restrict_hours}, replay_mode={replay_mode}")
-        
+        logging.debug(f"Processing chart request for ticker={ticker}, date={date}, timeframe={timeframe}, restrict_hours={restrict_hours}")
         if not ticker or not date or not timeframe:
             return jsonify({'error': 'Missing ticker, date, or timeframe'}), 400
         if ticker not in TICKERS:
             return jsonify({'error': 'Invalid ticker'}), 400
-        
         try:
             timeframe = int(timeframe)
             if timeframe not in [1, 2, 3, 5, 10]:
                 return jsonify({'error': 'Invalid timeframe. Must be 1, 2, 3, 5, or 10 minutes.'}), 400
         except ValueError:
             return jsonify({'error': 'Invalid timeframe format'}), 400
-        
         try:
             target_date = pd.to_datetime(date).date()
         except ValueError:
             return jsonify({'error': 'Invalid date format'}), 400
-        
         db_paths = get_db_paths(ticker)
         if not db_paths:
             return jsonify({'error': f'No database available for {ticker}'}), 404
-        
         try:
             df_list = []
             query = """
@@ -386,28 +380,11 @@ def get_chart():
                 start_time = pd.to_datetime('09:30:00').time()
                 end_time = pd.to_datetime('16:00:00').time()
                 df = df[(df['time'] >= start_time) & (df['time'] <= end_time)]
-                df = df.drop(columns=['time'])
+                df = df.drop(columns=['time'])  # Remove temporary time column
                 logging.debug(f"Filtered to regular hours, new shape: {df.shape}")
 
-            # For replay_mode, return 1-minute data if available, otherwise interpolate
-            if replay_mode and timeframe > 1:
-                if df['timestamp'].dt.minute.diff().max() <= 1:  # Check if 1-minute data is available
-                    logging.debug("Using existing 1-minute data for replay")
-                    # Ensure data is 1-minute granularity
-                    df.set_index('timestamp', inplace=True)
-                    df = df.resample('1T').agg({
-                        'open': 'first',
-                        'high': 'max',
-                        'low': 'min',
-                        'close': 'last',
-                        'volume': 'sum'
-                    }).dropna().reset_index()
-                else:
-                    # Interpolate 1-minute data from higher timeframe
-                    logging.debug(f"Interpolating 1-minute data from {timeframe}-minute candles")
-                    df = interpolate_to_one_minute(df, timeframe)
-            elif timeframe > 1:
-                # Standard resampling for non-replay mode
+            # Resample to the requested timeframe if not 1 minute
+            if timeframe > 1:
                 df.set_index('timestamp', inplace=True)
                 df = df.resample(f'{timeframe}T').agg({
                     'open': 'first',
@@ -415,16 +392,15 @@ def get_chart():
                     'low': 'min',
                     'close': 'last',
                     'volume': 'sum'
-                }).dropna().reset_index()
+                }).dropna()
+                df.reset_index(inplace=True)
                 logging.debug(f"Resampled data to {timeframe}-minute timeframe, new shape: {df.shape}")
 
         except Exception as e:
             logging.error(f"Error querying database for {ticker}: {str(e)}")
             return jsonify({'error': 'Database query failed'}), 500
-        
         if df.empty:
             return jsonify({'error': 'No data available for the selected date. Try another date.'}), 404
-        
         required_columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
         if not all(col in df.columns for col in required_columns):
             return jsonify({'error': 'Invalid data format'}), 400
@@ -439,69 +415,12 @@ def get_chart():
             'volume': df['volume'].tolist(),
             'ticker': ticker,
             'date': date,
-            'count': len(df)
+            'count': len(df)  # Update count to reflect filtered/resampled data
         }
         return jsonify({'chart_data': chart_data})
     except Exception as e:
         logging.error(f"Unexpected error in get_chart: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
-
-# Helper function to interpolate 1-minute data from higher timeframe candles
-def interpolate_to_one_minute(df, timeframe):
-    """
-    Interpolates higher timeframe candles (e.g., 5-minute) into 1-minute candles.
-    Assumes linear price movement between open and close for simplicity.
-    """
-    try:
-        df = df.set_index('timestamp')
-        # Create a 1-minute time range for the day
-        start_time = df.index.min().replace(hour=9, minute=30, second=0)
-        end_time = df.index.max().replace(hour=16, minute=0, second=0)
-        one_min_index = pd.date_range(start=start_time, end=end_time, freq='1T')
-        result = []
-
-        for i in range(len(df)):
-            candle = df.iloc[i]
-            start = candle.name
-            end = start + pd.Timedelta(minutes=timeframe)
-            # Generate 1-minute timestamps within this candle
-            candle_times = pd.date_range(start=start, end=end - pd.Timedelta(seconds=1), freq='1T')
-            if not candle_times.empty:
-                # Linearly interpolate prices
-                open_price = candle['open']
-                close_price = candle['close']
-                high_price = candle['high']
-                low_price = candle['low']
-                volume_per_min = candle['volume'] / len(candle_times)
-                
-                # Simple linear interpolation for close prices
-                price_diff = close_price - open_price
-                time_steps = len(candle_times)
-                for j, ts in enumerate(candle_times):
-                    fraction = j / (time_steps - 1) if time_steps > 1 else 0
-                    interpolated_close = open_price + (price_diff * fraction)
-                    # High and low are approximated within the candle's range
-                    interpolated_high = min(high_price, interpolated_close + (high_price - open_price) / 2)
-                    interpolated_low = max(low_price, interpolated_close - (open_price - low_price) / 2)
-                    result.append({
-                        'timestamp': ts,
-                        'open': open_price if j == 0 else result[-1]['close'],
-                        'high': interpolated_high,
-                        'low': interpolated_low,
-                        'close': interpolated_close,
-                        'volume': volume_per_min
-                    })
-
-        interpolated_df = pd.DataFrame(result)
-        # Reindex to ensure full 1-minute coverage, forward fill gaps
-        interpolated_df = interpolated_df.set_index('timestamp').reindex(one_min_index).ffill().reset_index()
-        interpolated_df = interpolated_df.rename(columns={'index': 'timestamp'})
-        logging.debug(f"Interpolated 1-minute data shape: {interpolated_df.shape}")
-        return interpolated_df
-    except Exception as e:
-        logging.error(f"Error interpolating 1-minute data: {str(e)}")
-        raise
-
 
 @app.route('/api/gaps', methods=['GET'])
 @limiter.limit("10 per 12 hours")
@@ -538,10 +457,6 @@ def get_gaps():
     except Exception as e:
         logging.error(f"Error processing gaps: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
-
-@app.route('/simulator')
-def simulator():
-    return render_template('simulator.html')
 
 @app.route('/api/gap_insights', methods=['GET'])
 @limiter.limit("3 per 12 hours")
@@ -756,6 +671,10 @@ def get_economic_events():
     except Exception as e:
         logging.error(f"Error processing economic events: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
+
+@app.route('/simulator')
+def simulator():
+    return render_template('simulator.html', session=session)
 
 @app.route('/api/earnings', methods=['GET'])
 @limiter.limit("10 per 12 hours")
