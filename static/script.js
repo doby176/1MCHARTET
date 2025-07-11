@@ -741,11 +741,13 @@ function placeSellTrade() {
 function updateTradeSummary() {
     const positionStatus = document.getElementById('position-status');
     const tradePnl = document.getElementById('trade-pnl');
-    const tradeHistoryEl = document.getElementById('trade-history');
+    const tradeHistoryTable = document.getElementById('trade-history-table');
+    const tradeHistoryTbody = document.getElementById('trade-history-tbody');
+    const tradeHistoryEmpty = document.getElementById('trade-history-empty');
     const buyButton = document.getElementById('buy-trade');
     const sellButton = document.getElementById('sell-trade');
 
-    if (!positionStatus || !tradePnl || !tradeHistoryEl || !buyButton || !sellButton) return;
+    if (!positionStatus || !tradePnl || !tradeHistoryTable || !tradeHistoryTbody || !tradeHistoryEmpty || !buyButton || !sellButton) return;
 
     // Update button states
     buyButton.disabled = !isReplayingSimulator || currentReplayIndexSimulator <= 0 || currentReplayIndexSimulator > chartDataSimulator.count || openPosition?.type === 'sell';
@@ -764,14 +766,33 @@ function updateTradeSummary() {
         tradePnl.textContent = `Realized P/L: $${tradeHistory.reduce((sum, trade) => sum + trade.pnl, 0).toFixed(2)}`;
     }
 
-    // Update trade history
+    // Update trade history table
     if (tradeHistory.length === 0) {
-        tradeHistoryEl.textContent = 'Trade History: None';
+        tradeHistoryTable.style.display = 'none';
+        tradeHistoryEmpty.style.display = 'block';
     } else {
-        const historyText = tradeHistory.map(trade => 
-            `${trade.type.toUpperCase()} ${trade.shares} shares @ $${trade.entryPrice.toFixed(2)} -> $${trade.exitPrice.toFixed(2)} at ${trade.timestamp.split(' ')[1]} (P/L: $${trade.pnl.toFixed(2)})`
-        ).join('; ');
-        tradeHistoryEl.textContent = `Trade History: ${historyText}`;
+        tradeHistoryTable.style.display = 'table';
+        tradeHistoryEmpty.style.display = 'none';
+        
+        // Clear existing rows
+        tradeHistoryTbody.innerHTML = '';
+        
+        // Add each trade as a table row
+        tradeHistory.forEach((trade, index) => {
+            const row = document.createElement('tr');
+            const pnlClass = trade.pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
+            
+            row.innerHTML = `
+                <td>${trade.type.toUpperCase()}</td>
+                <td>$${trade.entryPrice.toFixed(2)}</td>
+                <td>$${trade.exitPrice.toFixed(2)}</td>
+                <td>${trade.shares}</td>
+                <td>${trade.timestamp.split(' ')[1]}</td>
+                <td class="${pnlClass}">$${trade.pnl.toFixed(2)}</td>
+            `;
+            
+            tradeHistoryTbody.appendChild(row);
+        });
     }
 }
 

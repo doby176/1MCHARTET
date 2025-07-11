@@ -97,11 +97,12 @@ form button:hover {
     background-color: #112A7F;
 }
 
-#chart-container, #chart-container-gap, #chart-container-events, #chart-container-earnings {
+#chart-container, #chart-container-gap, #chart-container-events, #chart-container-earnings, #chart-container-simulator {
     margin-top: 20px;
+    width: 100%;
 }
 
-#plotly-chart, #plotly-chart-gap, #plotly-chart-events, #plotly-chart-earnings {
+#plotly-chart, #plotly-chart-gap, #plotly-chart-events, #plotly-chart-earnings, #plotly-chart-simulator {
     width: 100%;
     height: 600px;
     max-height: 800px;
@@ -418,9 +419,70 @@ footer p {
     font-weight: 400;
     color: #555;
     margin: 5px 0;
+}
+
+#position-status, #trade-pnl {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Trade History Table Styling */
+#trade-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 0.8em;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#trade-history-table th {
+    background-color: #1a1b2f;
+    color: white;
+    padding: 8px 4px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.75em;
+}
+
+#trade-history-table td {
+    padding: 6px 4px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    font-size: 0.75em;
+}
+
+#trade-history-table tr:nth-child(even) {
+    background-color: #ffffff;
+}
+
+#trade-history-table tr:nth-child(odd) {
+    background-color: #f5f5f5;
+}
+
+.pnl-positive {
+    color: #00cc00;
+    font-weight: bold;
+}
+
+.pnl-negative {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+#trade-history-container {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+#trade-summary h5 {
+    font-size: 1.1em;
+    margin: 10px 0 5px 0;
+    color: #1a1b2f;
+    font-weight: 600;
 }
 
 /* Collapsible Trade Summary for Mobile */
@@ -428,22 +490,46 @@ footer p {
     display: none;
 }
 
-#trade-toggle {
-    display: none;
-    padding: 8px 16px;
-    background-color: #153097;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: 500;
-    margin: 0 auto;
-}
+    #trade-toggle {
+        display: none;
+        padding: 8px 16px;
+        background-color: #153097;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: 500;
+        margin: 0 auto;
+    }
 
-#trade-toggle:hover {
-    background-color: #112A7F;
-}
+    #trade-toggle:hover {
+        background-color: #112A7F;
+    }
+
+    /* Mobile styles for trade history table */
+    @media (max-width: 600px) {
+        #trade-history-table {
+            font-size: 0.65em;
+        }
+        
+        #trade-history-table th,
+        #trade-history-table td {
+            padding: 4px 2px;
+            font-size: 0.65em;
+        }
+        
+        #trade-history-container {
+            max-height: 150px;
+        }
+        
+        #trade-summary h5 {
+            font-size: 1em;
+            margin: 10px 0 5px 0;
+            color: #1a1b2f;
+            font-weight: 600;
+        }
+    }
 
 /* Filter Section Styling */
 .filter-toggle {
