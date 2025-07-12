@@ -187,81 +187,106 @@ function aggregateCandles(data, timeframe) {
 function createChart(containerId, ticker, date, timeframe) {
     const container = document.getElementById(containerId);
     
+    if (!container) {
+        console.error(`Container with ID '${containerId}' not found`);
+        return null;
+    }
+    
     // Clear existing chart
     container.innerHTML = '';
     
-    // Create chart
-    const chart = LightweightCharts.createChart(container, {
-        width: container.clientWidth,
-        height: 600,
-        layout: {
-            background: { color: '#ffffff' },
-            textColor: '#333',
-        },
-        grid: {
-            vertLines: { color: '#e1e1e1' },
-            horzLines: { color: '#e1e1e1' },
-        },
-        crosshair: {
-            mode: LightweightCharts.CrosshairMode.Normal,
-        },
-        timeScale: {
-            timeVisible: true,
-            secondsVisible: false,
-            borderColor: '#485c7b',
-        },
-        rightPriceScale: {
-            borderColor: '#485c7b',
-        },
-    });
+    try {
+        // Check if LightweightCharts is available
+        if (typeof LightweightCharts === 'undefined') {
+            throw new Error('LightweightCharts library is not loaded');
+        }
+        
+        // Create chart
+        const chart = LightweightCharts.createChart(container, {
+            width: container.clientWidth,
+            height: 600,
+            layout: {
+                background: { color: '#ffffff' },
+                textColor: '#333',
+            },
+            grid: {
+                vertLines: { color: '#e1e1e1' },
+                horzLines: { color: '#e1e1e1' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            timeScale: {
+                timeVisible: true,
+                secondsVisible: false,
+                borderColor: '#485c7b',
+            },
+            rightPriceScale: {
+                borderColor: '#485c7b',
+            },
+        });
 
-    // Create candlestick series
-    const candleSeries = chart.addCandlestickSeries({
-        upColor: '#00cc00',
-        downColor: '#ff0000',
-        borderDownColor: '#ff0000',
-        borderUpColor: '#00cc00',
-        wickDownColor: '#ff0000',
-        wickUpColor: '#00cc00',
-    });
+        // Create candlestick series
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#00cc00',
+            downColor: '#ff0000',
+            borderDownColor: '#ff0000',
+            borderUpColor: '#00cc00',
+            wickDownColor: '#ff0000',
+            wickUpColor: '#00cc00',
+        });
 
-    // Create volume series
-    const volumeSeries = chart.addHistogramSeries({
-        color: '#888888',
-        priceFormat: {
-            type: 'volume',
-        },
-        priceScaleId: 'volume',
-        scaleMargins: {
-            top: 0.8,
-            bottom: 0,
-        },
-    });
+        // Create volume series
+        const volumeSeries = chart.addHistogramSeries({
+            color: '#888888',
+            priceFormat: {
+                type: 'volume',
+            },
+            priceScaleId: 'volume',
+            scaleMargins: {
+                top: 0.8,
+                bottom: 0,
+            },
+        });
 
-    // Handle window resize
-    const resizeObserver = new ResizeObserver(entries => {
-        if (entries.length === 0 || entries[0].target !== container) return;
-        const newRect = entries[0].contentRect;
-        chart.applyOptions({ width: newRect.width, height: newRect.height });
-    });
-    resizeObserver.observe(container);
+        // Handle window resize
+        const resizeObserver = new ResizeObserver(entries => {
+            if (entries.length === 0 || entries[0].target !== container) return;
+            const newRect = entries[0].contentRect;
+            chart.applyOptions({ width: newRect.width, height: newRect.height });
+        });
+        resizeObserver.observe(container);
 
-    // Store chart instance and series
-    chartInstances[containerId] = {
-        chart,
-        candleSeries,
-        volumeSeries,
-        resizeObserver
-    };
+        // Store chart instance and series
+        chartInstances[containerId] = {
+            chart,
+            candleSeries,
+            volumeSeries,
+            resizeObserver
+        };
 
-    return chartInstances[containerId];
+        return chartInstances[containerId];
+    } catch (error) {
+        console.error('Error creating chart:', error);
+        container.innerHTML = `<p>Error creating chart: ${error.message}</p>`;
+        return null;
+    }
 }
 
 function destroyChart(containerId) {
     if (chartInstances[containerId]) {
-        chartInstances[containerId].chart.remove();
-        chartInstances[containerId].resizeObserver.disconnect();
-        delete chartInstances[containerId];
+        try {
+            if (chartInstances[containerId].chart) {
+                chartInstances[containerId].chart.remove();
+            }
+            if (chartInstances[containerId].resizeObserver) {
+                chartInstances[containerId].resizeObserver.disconnect();
+            }
+            delete chartInstances[containerId];
+        } catch (error) {
+            console.error('Error destroying chart:', error);
+            delete chartInstances[containerId];
+        }
     }
 }
 
@@ -277,7 +302,10 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
     if (!chartData) return;
     
     const chartInstance = chartInstances[config.chartContainerId];
-    if (!chartInstance) return;
+    if (!chartInstance) {
+        console.error(`Chart instance not found for container: ${config.chartContainerId}`);
+        return;
+    }
 
     // Prepare candlestick data
     const candleData = candles.map((candle, i) => {
@@ -575,7 +603,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'ticker-select-simulator',
             dateInputId: 'date-simulator',
             timeframeSelectId: 'timeframe-select-simulator',
-            chartContainerId: 'plotly-chart-simulator',
+            chartContainerId: 'chart-simulator',
             formId: 'stock-form-simulator',
             restrictHours: false,
             replayControlsId: 'replay-controls-simulator',
@@ -585,7 +613,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'ticker-select-gap',
             dateInputId: 'date-gap',
             timeframeSelectId: 'timeframe-select-gap',
-            chartContainerId: 'plotly-chart-gap',
+            chartContainerId: 'chart-gap',
             formId: 'stock-form-gap',
             restrictHours: true,
             replayControlsId: 'replay-controls-gap',
@@ -595,7 +623,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'ticker-select-events',
             dateInputId: 'date-events',
             timeframeSelectId: 'timeframe-select-events',
-            chartContainerId: 'plotly-chart-events',
+            chartContainerId: 'chart-events',
             formId: 'stock-form-events',
             restrictHours: false,
             replayControlsId: 'replay-controls-events',
@@ -605,7 +633,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'earnings-ticker-select',
             dateInputId: 'date-gap',
             timeframeSelectId: 'timeframe-select-earnings',
-            chartContainerId: 'plotly-chart-earnings',
+            chartContainerId: 'chart-earnings',
             formId: 'earnings-form',
             restrictHours: true,
             replayControlsId: 'replay-controls-earnings',
@@ -752,7 +780,14 @@ async function loadChart(event, tabId) {
         destroyChart(chartContainerId);
         
         // Create new chart
-        createChart(chartContainerId, ticker, date, timeframe);
+        const chartInstance = createChart(chartContainerId, ticker, date, timeframe);
+        
+        if (!chartInstance) {
+            console.error('Failed to create chart instance');
+            chartContainer.innerHTML = '<p>Error creating chart. Please refresh the page and try again.</p>';
+            replayControls.style.display = 'none';
+            return;
+        }
         
         // Render initial chart - show complete chart for initial view
         renderChart(replayPrefix, aggregatedCandlesVar);
@@ -920,7 +955,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesSimulator = candles; },
             timeframe: () => timeframeSimulator,
             setTimeframe: (tf) => { timeframeSimulator = tf; },
-            chartContainerId: 'plotly-chart-simulator',
+            chartContainerId: 'chart-simulator',
             playButtonId: 'play-replay-simulator',
             pauseButtonId: 'pause-replay-simulator',
             startOverButtonId: 'start-over-replay-simulator',
@@ -946,7 +981,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesGap = candles; },
             timeframe: () => timeframeGap,
             setTimeframe: (tf) => { timeframeGap = tf; },
-            chartContainerId: 'plotly-chart-gap',
+            chartContainerId: 'chart-gap',
             playButtonId: 'play-replay-gap',
             pauseButtonId: 'pause-replay-gap',
             startOverButtonId: 'start-over-replay-gap',
@@ -972,7 +1007,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesEvents = candles; },
             timeframe: () => timeframeEvents,
             setTimeframe: (tf) => { timeframeEvents = tf; },
-            chartContainerId: 'plotly-chart-events',
+            chartContainerId: 'chart-events',
             playButtonId: 'play-replay-events',
             pauseButtonId: 'pause-replay-events',
             startOverButtonId: 'start-over-replay-events',
@@ -998,7 +1033,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesEarnings = candles; },
             timeframe: () => timeframeEarnings,
             setTimeframe: (tf) => { timeframeEarnings = tf; },
-            chartContainerId: 'plotly-chart-earnings',
+            chartContainerId: 'chart-earnings',
             playButtonId: 'play-replay-earnings',
             pauseButtonId: 'pause-replay-earnings',
             startOverButtonId: 'start-over-replay-earnings',
