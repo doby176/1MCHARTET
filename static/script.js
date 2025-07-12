@@ -68,6 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
 });
 
+// Global chart instances
+let chartInstances = {};
+
 // Replay globals for Market Simulator
 let chartDataSimulator = null;
 let replayIntervalSimulator = null;
@@ -181,64 +184,155 @@ function aggregateCandles(data, timeframe) {
     return candles;
 }
 
+function createChart(containerId, ticker, date, timeframe) {
+    const container = document.getElementById(containerId);
+    
+    // Clear existing chart
+    container.innerHTML = '';
+    
+    // Create chart
+    const chart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: 600,
+        layout: {
+            background: { color: '#ffffff' },
+            textColor: '#333',
+        },
+        grid: {
+            vertLines: { color: '#e1e1e1' },
+            horzLines: { color: '#e1e1e1' },
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        timeScale: {
+            timeVisible: true,
+            secondsVisible: false,
+            borderColor: '#485c7b',
+        },
+        rightPriceScale: {
+            borderColor: '#485c7b',
+        },
+    });
+
+    // Create candlestick series
+    const candleSeries = chart.addCandlestickSeries({
+        upColor: '#00cc00',
+        downColor: '#ff0000',
+        borderDownColor: '#ff0000',
+        borderUpColor: '#00cc00',
+        wickDownColor: '#ff0000',
+        wickUpColor: '#00cc00',
+    });
+
+    // Create volume series
+    const volumeSeries = chart.addHistogramSeries({
+        color: '#888888',
+        priceFormat: {
+            type: 'volume',
+        },
+        priceScaleId: 'volume',
+        scaleMargins: {
+            top: 0.8,
+            bottom: 0,
+        },
+    });
+
+    // Handle window resize
+    const resizeObserver = new ResizeObserver(entries => {
+        if (entries.length === 0 || entries[0].target !== container) return;
+        const newRect = entries[0].contentRect;
+        chart.applyOptions({ width: newRect.width, height: newRect.height });
+    });
+    resizeObserver.observe(container);
+
+    // Store chart instance and series
+    chartInstances[containerId] = {
+        chart,
+        candleSeries,
+        volumeSeries,
+        resizeObserver
+    };
+
+    return chartInstances[containerId];
+}
+
+function destroyChart(containerId) {
+    if (chartInstances[containerId]) {
+        chartInstances[containerId].chart.remove();
+        chartInstances[containerId].resizeObserver.disconnect();
+        delete chartInstances[containerId];
+    }
+}
+
+function timestampToTime(timestamp) {
+    const date = new Date(timestamp);
+    return date.getTime() / 1000; // Convert to seconds for lightweight-charts
+}
+
 function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = null) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
     
     if (!chartData) return;
     
-    const candlestickTrace = {
-        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
-        open: candles.map(c => c.open),
-        high: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].high;
-            }
-            return c.high;
-        }),
-        low: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].low;
-            }
-            return c.low;
-        }),
-        close: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].close;
-            }
-            return c.close;
-        }),
-        type: 'candlestick',
-        name: chartData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
-        y: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].volume;
-            }
-            return c.volume;
-        }),
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    
+    const chartInstance = chartInstances[config.chartContainerId];
+    if (!chartInstance) return;
+
+    // Prepare candlestick data
+    const candleData = candles.map((candle, i) => {
+        let high = candle.high;
+        let low = candle.low;
+        let close = candle.close;
+        let volume = candle.volume;
+
+        // Apply minute-by-minute updates for current candle
+        if (i === currentCandleIndex && minuteIndex !== null && candle.minuteUpdates[minuteIndex]) {
+            const update = candle.minuteUpdates[minuteIndex];
+            high = update.high;
+            low = update.low;
+            close = update.close;
+            volume = update.volume;
+        }
+
+        return {
+            time: timestampToTime(candle.timestamp),
+            open: candle.open,
+            high: high,
+            low: low,
+            close: close
+        };
+    });
+
+    // Prepare volume data
+    const volumeData = candles.map((candle, i) => {
+        let volume = candle.volume;
+
+        // Apply minute-by-minute updates for current candle
+        if (i === currentCandleIndex && minuteIndex !== null && candle.minuteUpdates[minuteIndex]) {
+            volume = candle.minuteUpdates[minuteIndex].volume;
+        }
+
+        return {
+            time: timestampToTime(candle.timestamp),
+            value: volume,
+            color: candle.close >= candle.open ? '#00cc0080' : '#ff000080'
+        };
+    });
+
+    // Update chart data
+    chartInstance.candleSeries.setData(candleData);
+    chartInstance.volumeSeries.setData(volumeData);
+
+    // Set chart title
     const tf = config.timeframe();
-    const layout = {
-        title: `${chartData.ticker} ${tf}-Minute Candlestick Chart - ${chartData.date} (Replay)`,
-        xaxis: { title: 'Time', type: 'date', rangeslider: { visible: false }, tickformat: '%H:%M' },
-        yaxis: { title: 'Price', domain: [0.3, 1] },
-        yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
+    const title = `${chartData.ticker} ${tf}-Minute Chart - ${chartData.date}`;
+    chartInstance.chart.applyOptions({
+        layout: {
+            background: { color: '#ffffff' },
+            textColor: '#333',
+        }
+    });
 }
 
 function populateEarningsOutcomes() {
@@ -648,11 +742,19 @@ async function loadChart(event, tabId) {
             if (replayIntervalEarnings) clearInterval(replayIntervalEarnings);
         }
 
-        // Render initial chart - show complete chart for initial view
+        // Create the chart
         const aggregatedCandlesVar = replayPrefix === 'simulator' ? aggregatedCandlesSimulator : 
                                    replayPrefix === 'gap' ? aggregatedCandlesGap :
                                    replayPrefix === 'events' ? aggregatedCandlesEvents :
                                    aggregatedCandlesEarnings;
+        
+        // Destroy existing chart if it exists
+        destroyChart(chartContainerId);
+        
+        // Create new chart
+        createChart(chartContainerId, ticker, date, timeframe);
+        
+        // Render initial chart - show complete chart for initial view
         renderChart(replayPrefix, aggregatedCandlesVar);
 
         // Handle replay controls
