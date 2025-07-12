@@ -5,6 +5,9 @@ let isReplaying = false;
 let isPaused = false;
 let aggregatedCandles = [];
 let timeframe = 1;
+let currentPosition = null; // 'long', 'short', or null
+let entryPrice = null;
+let entryTime = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Populate tickers
@@ -18,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('prev-candle').addEventListener('click', prevCandle);
     document.getElementById('next-candle').addEventListener('click', nextCandle);
     document.getElementById('replay-speed').addEventListener('change', updateReplaySpeed);
+    document.getElementById('long-position').addEventListener('click', () => handlePosition('long'));
+    document.getElementById('short-position').addEventListener('click', () => handlePosition('short'));
 });
 
 async function populateTickers() {
@@ -65,6 +70,7 @@ async function loadChart(event) {
         currentReplayIndex = 0;
         isReplaying = false;
         isPaused = false;
+        resetPosition(); // Reset trading position when loading new chart
         if (replayInterval) clearInterval(replayInterval);
 
         renderChart([]);
@@ -276,7 +282,9 @@ function startReplayInterval(replaySpeed) {
         const minuteIndex = currentReplayIndex % timeframe;
 
         renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
-        timestampDisplay.textContent = `Current Time: ${chartData.timestamp[currentReplayIndex].split(' ')[1]}`;
+        
+        // Update position display instead of just timestamp
+        updatePositionDisplay();
 
         prevButton.disabled = currentReplayIndex <= 0;
         nextButton.disabled = currentReplayIndex + 1 >= chartData.count;
@@ -308,6 +316,7 @@ function startOverReplay() {
     isReplaying = false;
     isPaused = false;
     currentReplayIndex = 0;
+    resetPosition(); // Reset trading position
     renderChart([]);
     const playButton = document.getElementById('play-replay');
     playButton.textContent = 'Play Replay';
@@ -344,9 +353,7 @@ function prevCandle() {
     const candleIndex = Math.floor(currentReplayIndex / timeframe);
     const minuteIndex = currentReplayIndex % timeframe;
     renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
-    document.getElementById('timestamp').textContent = currentReplayIndex > 0 
-        ? `Current Time: ${chartData.timestamp[currentReplayIndex - 1].split(' ')[1]}`
-        : 'Current Time: --:--:--';
+    updatePositionDisplay();
     document.getElementById('prev-candle').disabled = currentReplayIndex <= 0;
     document.getElementById('next-candle').disabled = currentReplayIndex >= chartData.count;
     document.getElementById('start-over-replay').disabled = currentReplayIndex <= 0;
@@ -358,9 +365,7 @@ function nextCandle() {
     const candleIndex = Math.floor(currentReplayIndex / timeframe);
     const minuteIndex = currentReplayIndex % timeframe;
     renderChart(aggregatedCandles.slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
-    document.getElementById('timestamp').textContent = currentReplayIndex > 0 
-        ? `Current Time: ${chartData.timestamp[currentReplayIndex - 1].split(' ')[1]}`
-        : 'Current Time: --:--:--';
+    updatePositionDisplay();
     document.getElementById('prev-candle').disabled = currentReplayIndex <= 0;
     document.getElementById('next-candle').disabled = currentReplayIndex >= chartData.count;
     document.getElementById('start-over-replay').disabled = currentReplayIndex <= 0;
@@ -371,4 +376,127 @@ function updateReplaySpeed() {
         pauseReplay();
         resumeReplay();
     }
+}
+
+function handlePosition(positionType) {
+    if (!chartData || currentReplayIndex <= 0) {
+        alert('Please start the replay first');
+        return;
+    }
+    
+    const currentPrice = getCurrentPrice();
+    const currentTime = chartData.timestamp[currentReplayIndex - 1];
+    
+    if (currentPosition === null) {
+        // Open new position
+        currentPosition = positionType;
+        entryPrice = currentPrice;
+        entryTime = currentTime;
+        
+        // Update button states
+        updateButtonStates();
+        
+        console.log(`Opened ${positionType} position at $${currentPrice} at ${currentTime}`);
+        updatePositionDisplay();
+        
+    } else if (currentPosition === positionType) {
+        // Close current position
+        const pnl = calculatePNL(currentPrice);
+        console.log(`Closed ${positionType} position at $${currentPrice}. P&L: $${pnl.toFixed(2)}`);
+        
+        // Reset position
+        currentPosition = null;
+        entryPrice = null;
+        entryTime = null;
+        
+        // Update button states
+        updateButtonStates();
+        updatePositionDisplay();
+        
+        // Show result
+        alert(`Position closed! P&L: $${pnl.toFixed(2)}`);
+        
+    } else {
+        // Switch positions (close current, open new)
+        const pnl = calculatePNL(currentPrice);
+        console.log(`Switched from ${currentPosition} to ${positionType}. Previous P&L: $${pnl.toFixed(2)}`);
+        
+        currentPosition = positionType;
+        entryPrice = currentPrice;
+        entryTime = currentTime;
+        
+        // Update button states
+        updateButtonStates();
+        updatePositionDisplay();
+        
+        alert(`Position switched! Previous P&L: $${pnl.toFixed(2)}`);
+    }
+}
+
+function getCurrentPrice() {
+    if (!chartData || currentReplayIndex <= 0) return 0;
+    return chartData.close[currentReplayIndex - 1];
+}
+
+function calculatePNL(currentPrice) {
+    if (!currentPosition || !entryPrice) return 0;
+    
+    if (currentPosition === 'long') {
+        return currentPrice - entryPrice;
+    } else if (currentPosition === 'short') {
+        return entryPrice - currentPrice;
+    }
+    return 0;
+}
+
+function updateButtonStates() {
+    const longBtn = document.getElementById('long-position');
+    const shortBtn = document.getElementById('short-position');
+    
+    // Reset button states
+    longBtn.classList.remove('active');
+    shortBtn.classList.remove('active');
+    
+    // Update button text and states
+    if (currentPosition === 'long') {
+        longBtn.classList.add('active');
+        longBtn.textContent = 'Close Long';
+        shortBtn.textContent = 'Switch to Short';
+    } else if (currentPosition === 'short') {
+        shortBtn.classList.add('active');
+        shortBtn.textContent = 'Close Short';
+        longBtn.textContent = 'Switch to Long';
+    } else {
+        longBtn.textContent = 'Long';
+        shortBtn.textContent = 'Short';
+    }
+}
+
+function updatePositionDisplay() {
+    const timestampElement = document.getElementById('timestamp');
+    const currentTime = chartData && currentReplayIndex > 0 ? chartData.timestamp[currentReplayIndex - 1].split(' ')[1] : '--:--:--';
+    
+    if (currentPosition) {
+        const currentPrice = getCurrentPrice();
+        const pnl = calculatePNL(currentPrice);
+        const pnlColor = pnl >= 0 ? 'green' : 'red';
+        
+        timestampElement.innerHTML = `
+            Current Time: ${currentTime}<br>
+            <span style="color: ${pnlColor};">
+                ${currentPosition.toUpperCase()} Position | Entry: $${entryPrice.toFixed(2)} | Current: $${currentPrice.toFixed(2)} | P&L: $${pnl.toFixed(2)}
+            </span>
+        `;
+    } else {
+        timestampElement.textContent = `Current Time: ${currentTime}`;
+    }
+}
+
+// Reset position when starting over
+function resetPosition() {
+    currentPosition = null;
+    entryPrice = null;
+    entryTime = null;
+    updateButtonStates();
+    updatePositionDisplay();
 }

@@ -388,13 +388,32 @@ def get_chart():
             # For non-replay mode, resample to the requested timeframe if not 1 minute
             if not replay_mode and timeframe > 1:
                 df.set_index('timestamp', inplace=True)
-                df = df.resample(f'{timeframe}T').agg({
-                    'open': 'first',
-                    'high': 'max',
-                    'low': 'min',
-                    'close': 'last',
-                    'volume': 'sum'
-                }).dropna()
+                
+                # Handle PRE/POST market data alignment for QQQ
+                if ticker == 'QQQ':
+                    # For QQQ, align resampling to start at 04:00 ET for PRE market
+                    # Create a proper base time for PRE market alignment
+                    first_date = df.index[0].date()
+                    base_time = pd.Timestamp(first_date).replace(hour=4, minute=0, second=0, microsecond=0)
+                    
+                    # Use the base time as origin for resampling
+                    df = df.resample(f'{timeframe}T', origin=base_time).agg({
+                        'open': 'first',
+                        'high': 'max',
+                        'low': 'min',
+                        'close': 'last',
+                        'volume': 'sum'
+                    }).dropna()
+                else:
+                    # For other stocks, use standard resampling
+                    df = df.resample(f'{timeframe}T').agg({
+                        'open': 'first',
+                        'high': 'max',
+                        'low': 'min',
+                        'close': 'last',
+                        'volume': 'sum'
+                    }).dropna()
+                
                 df.reset_index(inplace=True)
                 logging.debug(f"Resampled data to {timeframe}-minute timeframe, new shape: {df.shape}")
 
