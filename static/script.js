@@ -1,5 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing app...');
+    
+    // Check if LightweightCharts is loaded
+    if (typeof LightweightCharts === 'undefined') {
+        console.error('LightweightCharts library is not loaded!');
+        alert('Chart library failed to load. Please refresh the page.');
+        return;
+    } else {
+        console.log('LightweightCharts library loaded successfully');
+    }
+    
     loadTickers();
     loadYears();
     loadEarningsTickers();
@@ -190,14 +200,28 @@ function aggregateCandles(data, timeframe) {
 }
 
 function createChart(containerId, chartData, timeframe) {
+    console.log(`Creating chart for container: ${containerId}`);
+    
+    // Check if LightweightCharts is available
+    if (typeof LightweightCharts === 'undefined') {
+        console.error('LightweightCharts library is not loaded');
+        return null;
+    }
+    
     const container = document.getElementById(containerId);
     if (!container) {
         console.error(`Container ${containerId} not found`);
         return null;
     }
 
+    console.log(`Container found: ${containerId}, dimensions: ${container.clientWidth}x${container.clientHeight}`);
+
     // Clear previous chart
     container.innerHTML = '';
+
+    // Ensure minimum dimensions
+    const width = Math.max(container.clientWidth, 600);
+    const height = Math.max(container.clientHeight, 400);
 
     // Create chart title
     const title = document.createElement('div');
@@ -205,10 +229,11 @@ function createChart(containerId, chartData, timeframe) {
     title.textContent = `${chartData.ticker} ${timeframe}-Minute Chart - ${chartData.date}`;
     container.appendChild(title);
 
-    // Create chart
-    const chart = LightweightCharts.createChart(container, {
-        width: container.clientWidth,
-        height: container.clientHeight,
+    try {
+        // Create chart
+        const chart = LightweightCharts.createChart(container, {
+        width: width,
+        height: height,
         layout: {
             background: {
                 type: 'solid',
@@ -326,41 +351,57 @@ function createChart(containerId, chartData, timeframe) {
         }
     });
 
-    // Handle window resize
-    const resizeObserver = new ResizeObserver(entries => {
-        if (entries.length === 0 || entries[0].target !== container) return;
-        const { width, height } = entries[0].contentRect;
-        chart.applyOptions({ width, height });
-    });
-    resizeObserver.observe(container);
+        // Handle window resize
+        const resizeObserver = new ResizeObserver(entries => {
+            if (entries.length === 0 || entries[0].target !== container) return;
+            const { width, height } = entries[0].contentRect;
+            chart.applyOptions({ width, height });
+        });
+        resizeObserver.observe(container);
 
-    return {
-        chart,
-        candlestickSeries,
-        volumeSeries,
-        resizeObserver
-    };
+        console.log('Chart created successfully');
+        return {
+            chart,
+            candlestickSeries,
+            volumeSeries,
+            resizeObserver
+        };
+    } catch (error) {
+        console.error('Error creating chart:', error);
+        container.innerHTML = `<p style="color: red;">Error creating chart: ${error.message}</p>`;
+        return null;
+    }
 }
 
 function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = null) {
+    console.log(`Rendering chart for section: ${section}, candles length: ${candles.length}`);
+    
     const config = getReplayConfig(section);
     const chartData = config.chartData();
     
-    if (!chartData) return;
+    if (!chartData) {
+        console.error(`No chart data for section: ${section}`);
+        return;
+    }
 
     const containerId = config.chartContainerId;
+    console.log(`Chart container ID: ${containerId}`);
     
     // Create chart if it doesn't exist
     if (!chartInstances[section]) {
+        console.log(`Creating new chart instance for section: ${section}`);
         chartInstances[section] = createChart(containerId, chartData, config.timeframe());
     }
 
-    if (!chartInstances[section]) return;
+    if (!chartInstances[section]) {
+        console.error(`Failed to create chart instance for section: ${section}`);
+        return;
+    }
 
     const { candlestickSeries, volumeSeries } = chartInstances[section];
 
     // Prepare data for lightweight-charts
-    const candlestickData = candles.map((candle, i) => {
+    const candlestickData = candles.length > 0 ? candles.map((candle, i) => {
         let ohlc = {
             time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
             open: candle.open,
@@ -378,9 +419,9 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
         }
 
         return ohlc;
-    });
+    }) : [];
 
-    const volumeData = candles.map((candle, i) => {
+    const volumeData = candles.length > 0 ? candles.map((candle, i) => {
         let volume = candle.volume;
         
         // Apply minute-level updates for current candle during replay
@@ -393,14 +434,21 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
             value: volume,
             color: candle.close >= candle.open ? '#00cc0040' : '#ff000040'
         };
-    });
+    }) : [];
 
-    // Update chart data
-    candlestickSeries.setData(candlestickData);
-    volumeSeries.setData(volumeData);
+    try {
+        // Update chart data
+        console.log(`Setting candlestick data with ${candlestickData.length} points`);
+        candlestickSeries.setData(candlestickData);
+        console.log(`Setting volume data with ${volumeData.length} points`);
+        volumeSeries.setData(volumeData);
 
-    // Auto-fit content
-    chartInstances[section].chart.timeScale().fitContent();
+        // Auto-fit content
+        chartInstances[section].chart.timeScale().fitContent();
+        console.log('Chart data updated successfully');
+    } catch (error) {
+        console.error('Error updating chart data:', error);
+    }
 }
 
 function destroyChart(section) {
@@ -656,7 +704,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'ticker-select-simulator',
             dateInputId: 'date-simulator',
             timeframeSelectId: 'timeframe-select-simulator',
-            chartContainerId: 'plotly-chart-simulator',
+            chartContainerId: 'chart-simulator',
             formId: 'stock-form-simulator',
             restrictHours: false,
             replayControlsId: 'replay-controls-simulator',
@@ -666,7 +714,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'ticker-select-gap',
             dateInputId: 'date-gap',
             timeframeSelectId: 'timeframe-select-gap',
-            chartContainerId: 'plotly-chart-gap',
+            chartContainerId: 'chart-gap',
             formId: 'stock-form-gap',
             restrictHours: true,
             replayControlsId: 'replay-controls-gap',
@@ -676,7 +724,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'ticker-select-events',
             dateInputId: 'date-events',
             timeframeSelectId: 'timeframe-select-events',
-            chartContainerId: 'plotly-chart-events',
+            chartContainerId: 'chart-events',
             formId: 'stock-form-events',
             restrictHours: false,
             replayControlsId: 'replay-controls-events',
@@ -686,7 +734,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'earnings-ticker-select',
             dateInputId: 'date-gap',
             timeframeSelectId: 'timeframe-select-earnings',
-            chartContainerId: 'plotly-chart-earnings',
+            chartContainerId: 'chart-earnings',
             formId: 'earnings-form',
             restrictHours: true,
             replayControlsId: 'replay-controls-earnings',
@@ -844,6 +892,8 @@ async function loadChart(event, tabId) {
                                    replayPrefix === 'gap' ? aggregatedCandlesGap :
                                    replayPrefix === 'events' ? aggregatedCandlesEvents :
                                    aggregatedCandlesEarnings;
+        
+        console.log(`Loading chart for ${replayPrefix}, aggregated candles: ${aggregatedCandlesVar.length}`);
         renderChart(replayPrefix, aggregatedCandlesVar);
 
         // Handle replay controls
