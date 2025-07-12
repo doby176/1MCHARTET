@@ -19,7 +19,7 @@
     <meta name="robots" content="index, follow">
     <!-- Open Graph for social media -->
     <meta property="og:title" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025)">
-    <meta property="og:description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, adverse moves, and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading  (2015-2025).">
+    <meta property="og:description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, adverse moves, and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025).">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://onemchart.onrender.com">
     <!-- Twitter Card -->
@@ -30,7 +30,6 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css?v=41">
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
@@ -81,11 +80,6 @@
                 <div id="chart-container-simulator">
                     <div id="plotly-chart-simulator"></div>
                 </div>
-                <!-- Trading Buttons - positioned alongside chart for mobile visibility -->
-                <div id="trading-buttons-container" class="trading-buttons-container" style="display: none;">
-                    <button id="buy-trade" disabled>Long (Buy)</button>
-                    <button id="sell-trade" disabled>Short (Sell)</button>
-                </div>
                 <div id="replay-controls-simulator" class="replay-controls" style="display: none;">
                     <button id="play-replay-simulator" disabled>Play Replay</button>
                     <button id="pause-replay-simulator" disabled>Pause</button>
@@ -101,6 +95,8 @@
                         <option value="250">4x (0.25 sec/bar)</option>
                     </select>
                     <span id="replay-timestamp-simulator">Current Time: --:--:--</span>
+                    <button id="buy-trade" disabled>Long (Buy)</button>
+                    <button id="sell-trade" disabled>Short (Sell)</button>
                     <div id="trade-summary">
                         <h4>Trade Simulator</h4>
                         <p id="position-status">No open position</p>
@@ -456,6 +452,6 @@
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
     </script>
-    <script src="/static/script.js?v=27"></script>
+    <script src="/static/script.js?v=24"></script>
 </body>
 </html>
