@@ -187,106 +187,81 @@ function aggregateCandles(data, timeframe) {
 function createChart(containerId, ticker, date, timeframe) {
     const container = document.getElementById(containerId);
     
-    if (!container) {
-        console.error(`Container with ID '${containerId}' not found`);
-        return null;
-    }
-    
     // Clear existing chart
     container.innerHTML = '';
     
-    try {
-        // Check if LightweightCharts is available
-        if (typeof LightweightCharts === 'undefined') {
-            throw new Error('LightweightCharts library is not loaded');
-        }
-        
-        // Create chart
-        const chart = LightweightCharts.createChart(container, {
-            width: container.clientWidth,
-            height: 600,
-            layout: {
-                background: { color: '#ffffff' },
-                textColor: '#333',
-            },
-            grid: {
-                vertLines: { color: '#e1e1e1' },
-                horzLines: { color: '#e1e1e1' },
-            },
-            crosshair: {
-                mode: LightweightCharts.CrosshairMode.Normal,
-            },
-            timeScale: {
-                timeVisible: true,
-                secondsVisible: false,
-                borderColor: '#485c7b',
-            },
-            rightPriceScale: {
-                borderColor: '#485c7b',
-            },
-        });
+    // Create chart
+    const chart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: 600,
+        layout: {
+            background: { color: '#ffffff' },
+            textColor: '#333',
+        },
+        grid: {
+            vertLines: { color: '#e1e1e1' },
+            horzLines: { color: '#e1e1e1' },
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        timeScale: {
+            timeVisible: true,
+            secondsVisible: false,
+            borderColor: '#485c7b',
+        },
+        rightPriceScale: {
+            borderColor: '#485c7b',
+        },
+    });
 
-        // Create candlestick series
-        const candleSeries = chart.addCandlestickSeries({
-            upColor: '#00cc00',
-            downColor: '#ff0000',
-            borderDownColor: '#ff0000',
-            borderUpColor: '#00cc00',
-            wickDownColor: '#ff0000',
-            wickUpColor: '#00cc00',
-        });
+    // Create candlestick series
+    const candleSeries = chart.addCandlestickSeries({
+        upColor: '#00cc00',
+        downColor: '#ff0000',
+        borderDownColor: '#ff0000',
+        borderUpColor: '#00cc00',
+        wickDownColor: '#ff0000',
+        wickUpColor: '#00cc00',
+    });
 
-        // Create volume series
-        const volumeSeries = chart.addHistogramSeries({
-            color: '#888888',
-            priceFormat: {
-                type: 'volume',
-            },
-            priceScaleId: 'volume',
-            scaleMargins: {
-                top: 0.8,
-                bottom: 0,
-            },
-        });
+    // Create volume series
+    const volumeSeries = chart.addHistogramSeries({
+        color: '#888888',
+        priceFormat: {
+            type: 'volume',
+        },
+        priceScaleId: 'volume',
+        scaleMargins: {
+            top: 0.8,
+            bottom: 0,
+        },
+    });
 
-        // Handle window resize
-        const resizeObserver = new ResizeObserver(entries => {
-            if (entries.length === 0 || entries[0].target !== container) return;
-            const newRect = entries[0].contentRect;
-            chart.applyOptions({ width: newRect.width, height: newRect.height });
-        });
-        resizeObserver.observe(container);
+    // Handle window resize
+    const resizeObserver = new ResizeObserver(entries => {
+        if (entries.length === 0 || entries[0].target !== container) return;
+        const newRect = entries[0].contentRect;
+        chart.applyOptions({ width: newRect.width, height: newRect.height });
+    });
+    resizeObserver.observe(container);
 
-        // Store chart instance and series
-        chartInstances[containerId] = {
-            chart,
-            candleSeries,
-            volumeSeries,
-            resizeObserver
-        };
+    // Store chart instance and series
+    chartInstances[containerId] = {
+        chart,
+        candleSeries,
+        volumeSeries,
+        resizeObserver
+    };
 
-        return chartInstances[containerId];
-    } catch (error) {
-        console.error('Error creating chart:', error);
-        container.innerHTML = `<p>Error creating chart: ${error.message}</p>`;
-        return null;
-    }
+    return chartInstances[containerId];
 }
 
 function destroyChart(containerId) {
     if (chartInstances[containerId]) {
-        try {
-            if (chartInstances[containerId].chart) {
-                chartInstances[containerId].chart.remove();
-            }
-            if (chartInstances[containerId].resizeObserver) {
-                chartInstances[containerId].resizeObserver.disconnect();
-            }
-            delete chartInstances[containerId];
-        } catch (error) {
-            console.error('Error destroying chart:', error);
-            delete chartInstances[containerId];
-        }
+        chartInstances[containerId].chart.remove();
+        chartInstances[containerId].resizeObserver.disconnect();
+        delete chartInstances[containerId];
     }
 }
 
@@ -302,10 +277,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
     if (!chartData) return;
     
     const chartInstance = chartInstances[config.chartContainerId];
-    if (!chartInstance) {
-        console.error(`Chart instance not found for container: ${config.chartContainerId}`);
-        return;
-    }
+    if (!chartInstance) return;
 
     // Prepare candlestick data
     const candleData = candles.map((candle, i) => {
@@ -780,14 +752,7 @@ async function loadChart(event, tabId) {
         destroyChart(chartContainerId);
         
         // Create new chart
-        const chartInstance = createChart(chartContainerId, ticker, date, timeframe);
-        
-        if (!chartInstance) {
-            console.error('Failed to create chart instance');
-            chartContainer.innerHTML = '<p>Error creating chart. Please refresh the page and try again.</p>';
-            replayControls.style.display = 'none';
-            return;
-        }
+        createChart(chartContainerId, ticker, date, timeframe);
         
         // Render initial chart - show complete chart for initial view
         renderChart(replayPrefix, aggregatedCandlesVar);
