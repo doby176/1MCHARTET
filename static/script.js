@@ -181,64 +181,221 @@ function aggregateCandles(data, timeframe) {
     return candles;
 }
 
+// Store chart instances
+const chartInstances = {
+    simulator: null,
+    gap: null,
+    events: null,
+    earnings: null
+};
+
 function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = null) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
     
     if (!chartData) return;
     
-    const candlestickTrace = {
-        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
-        open: candles.map(c => c.open),
-        high: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].high;
+    // Get or create container
+    const container = document.getElementById(config.chartContainerId);
+    if (!container) return;
+    
+    // Clear existing chart
+    if (chartInstances[section]) {
+        chartInstances[section].remove();
+        chartInstances[section] = null;
+    }
+    container.innerHTML = '';
+    
+    // Create wrapper div for better layout control
+    const chartWrapper = document.createElement('div');
+    chartWrapper.style.width = '100%';
+    chartWrapper.style.height = '100%';
+    chartWrapper.style.display = 'flex';
+    chartWrapper.style.flexDirection = 'column';
+    container.appendChild(chartWrapper);
+    
+    // Add title
+    const titleDiv = document.createElement('div');
+    titleDiv.style.padding = '10px';
+    titleDiv.style.textAlign = 'center';
+    titleDiv.style.fontSize = '16px';
+    titleDiv.style.fontWeight = 'bold';
+    titleDiv.style.color = '#1a1b2f';
+    const tf = config.timeframe();
+    // Only show "(Replay)" if we're actually in replay mode
+    const isInReplayMode = currentCandleIndex !== -1 || (candles.length > 0 && candles.length < config.aggregatedCandles().length);
+    const replayText = isInReplayMode ? ' (Replay)' : '';
+    titleDiv.textContent = `${chartData.ticker} ${tf}-Minute Candlestick Chart - ${chartData.date}${replayText}`;
+    chartWrapper.appendChild(titleDiv);
+    
+    // Create main chart container
+    const mainChartDiv = document.createElement('div');
+    mainChartDiv.style.flex = '3';
+    mainChartDiv.style.minHeight = '300px';
+    chartWrapper.appendChild(mainChartDiv);
+    
+    // Create volume chart container
+    const volumeChartDiv = document.createElement('div');
+    volumeChartDiv.style.flex = '1';
+    volumeChartDiv.style.minHeight = '100px';
+    volumeChartDiv.style.borderTop = '1px solid #e1e1e1';
+    chartWrapper.appendChild(volumeChartDiv);
+    
+    // Create the main chart
+    const chart = LightweightCharts.createChart(mainChartDiv, {
+        width: mainChartDiv.clientWidth,
+        height: mainChartDiv.clientHeight,
+        layout: {
+            background: { color: '#ffffff' },
+            textColor: '#333',
+        },
+        grid: {
+            vertLines: { color: '#e1e1e1' },
+            horzLines: { color: '#e1e1e1' },
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+            borderColor: '#e1e1e1',
+        },
+        timeScale: {
+            borderColor: '#e1e1e1',
+            timeVisible: true,
+            secondsVisible: false,
+        },
+    });
+    
+    // Create volume chart
+    const volumeChart = LightweightCharts.createChart(volumeChartDiv, {
+        width: volumeChartDiv.clientWidth,
+        height: volumeChartDiv.clientHeight,
+        layout: {
+            background: { color: '#ffffff' },
+            textColor: '#333',
+        },
+        grid: {
+            vertLines: { color: '#e1e1e1' },
+            horzLines: { color: '#e1e1e1' },
+        },
+        rightPriceScale: {
+            borderColor: '#e1e1e1',
+        },
+        timeScale: {
+            borderColor: '#e1e1e1',
+            visible: false,
+        },
+    });
+    
+    // Add candlestick series
+    const candlestickSeries = chart.addCandlestickSeries({
+        upColor: '#00cc00',
+        downColor: '#ff0000',
+        borderVisible: false,
+        wickUpColor: '#00cc00',
+        wickDownColor: '#ff0000',
+    });
+    
+    // Add volume series
+    const volumeSeries = volumeChart.addHistogramSeries({
+        color: '#888888',
+        priceFormat: {
+            type: 'volume',
+        },
+        priceScaleId: '',
+    });
+    
+    // Prepare data
+    const candlestickData = [];
+    const volumeData = [];
+    
+    candles.forEach((candle, i) => {
+        const timestamp = new Date(candle.timestamp).getTime() / 1000;
+        
+        let open = candle.open;
+        let high = candle.high;
+        let low = candle.low;
+        let close = candle.close;
+        let volume = candle.volume;
+        
+        // Handle minute updates for current candle in replay
+        if (i === currentCandleIndex && minuteIndex !== null && candle.minuteUpdates && candle.minuteUpdates[minuteIndex]) {
+            high = candle.minuteUpdates[minuteIndex].high;
+            low = candle.minuteUpdates[minuteIndex].low;
+            close = candle.minuteUpdates[minuteIndex].close;
+            volume = candle.minuteUpdates[minuteIndex].volume;
+        }
+        
+        candlestickData.push({
+            time: timestamp,
+            open: open,
+            high: high,
+            low: low,
+            close: close,
+        });
+        
+        volumeData.push({
+            time: timestamp,
+            value: volume,
+            color: close >= open ? '#00cc0050' : '#ff000050',
+        });
+    });
+    
+    // Set data
+    if (candlestickData.length > 0) {
+        candlestickSeries.setData(candlestickData);
+        volumeSeries.setData(volumeData);
+        
+        // Sync time scales
+        chart.timeScale().subscribeVisibleTimeRangeChange(() => {
+            const timeRange = chart.timeScale().getVisibleRange();
+            if (timeRange) {
+                volumeChart.timeScale().setVisibleRange(timeRange);
             }
-            return c.high;
-        }),
-        low: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].low;
+        });
+        
+        volumeChart.timeScale().subscribeVisibleTimeRangeChange(() => {
+            const timeRange = volumeChart.timeScale().getVisibleRange();
+            if (timeRange) {
+                chart.timeScale().setVisibleRange(timeRange);
             }
-            return c.low;
-        }),
-        close: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].close;
-            }
-            return c.close;
-        }),
-        type: 'candlestick',
-        name: chartData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
-        y: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].volume;
-            }
-            return c.volume;
-        }),
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
+        });
+        
+        // Fit content
+        chart.timeScale().fitContent();
+        volumeChart.timeScale().fitContent();
+    }
+    
+    // Store chart instance
+    chartInstances[section] = {
+        chart: chart,
+        volumeChart: volumeChart,
+        candlestickSeries: candlestickSeries,
+        volumeSeries: volumeSeries,
+        remove: () => {
+            chart.remove();
+            volumeChart.remove();
+        }
     };
     
-    const tf = config.timeframe();
-    const layout = {
-        title: `${chartData.ticker} ${tf}-Minute Candlestick Chart - ${chartData.date} (Replay)`,
-        xaxis: { title: 'Time', type: 'date', rangeslider: { visible: false }, tickformat: '%H:%M' },
-        yaxis: { title: 'Price', domain: [0.3, 1] },
-        yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
+    // Handle resize
+    const resizeHandler = () => {
+        if (mainChartDiv.clientWidth > 0) {
+            chart.applyOptions({ width: mainChartDiv.clientWidth });
+        }
+        if (volumeChartDiv.clientWidth > 0) {
+            volumeChart.applyOptions({ width: volumeChartDiv.clientWidth });
+        }
     };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
+    
+    window.addEventListener('resize', resizeHandler);
+    
+    // Clean up resize handler when chart is removed
+    const originalRemove = chartInstances[section].remove;
+    chartInstances[section].remove = () => {
+        window.removeEventListener('resize', resizeHandler);
+        originalRemove();
+    };
 }
 
 function populateEarningsOutcomes() {
