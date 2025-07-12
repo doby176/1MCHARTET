@@ -112,6 +112,16 @@ form button:hover {
     position: relative;
 }
 
+#chart-simulator, #chart-gap, #chart-events, #chart-earnings {
+    width: 100%;
+    height: 600px;
+    max-height: 800px;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
 /* NEW: Ensure chart titles are readable with added timeframe text */
 .plotly .gtitle {
     font-size: 1.2em !important;
