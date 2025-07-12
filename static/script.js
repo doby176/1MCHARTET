@@ -8,6 +8,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     } else {
         console.log('LightweightCharts library loaded successfully');
+        // Check version and available methods
+        if (LightweightCharts.version) {
+            console.log('LightweightCharts version:', LightweightCharts.version);
+        }
+        // Test if V4 methods are available
+        const testChart = document.createElement('div');
+        try {
+            const tempChart = LightweightCharts.createChart(testChart, { width: 1, height: 1 });
+            if (typeof tempChart.addCandlestickSeries === 'function') {
+                console.log('✅ V4 addCandlestickSeries method available');
+            } else {
+                console.error('❌ addCandlestickSeries method not available - wrong version?');
+            }
+            tempChart.remove();
+        } catch (e) {
+            console.error('Error testing chart methods:', e);
+        }
     }
     
     loadTickers();
@@ -208,6 +225,17 @@ function createChart(containerId, chartData, timeframe) {
         return null;
     }
     
+    // Ensure V4 compatibility constants are available
+    if (!LightweightCharts.LineStyle) {
+        LightweightCharts.LineStyle = { Solid: 0, Dotted: 1, Dashed: 2, LargeDashed: 3, SparseDotted: 4 };
+    }
+    if (!LightweightCharts.CrosshairMode) {
+        LightweightCharts.CrosshairMode = { Normal: 0, Magnet: 1 };
+    }
+    if (!LightweightCharts.PriceLineSource) {
+        LightweightCharts.PriceLineSource = { LastBar: 0, LastVisible: 1 };
+    }
+    
     const container = document.getElementById(containerId);
     if (!container) {
         console.error(`Container ${containerId} not found`);
@@ -230,15 +258,12 @@ function createChart(containerId, chartData, timeframe) {
     container.appendChild(title);
 
     try {
-        // Create chart
+        // Create chart with V4 API
         const chart = LightweightCharts.createChart(container, {
         width: width,
         height: height,
         layout: {
-            background: {
-                type: 'solid',
-                color: '#ffffff'
-            },
+            backgroundColor: '#ffffff',
             textColor: '#333333',
             fontSize: 12,
             fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
@@ -246,12 +271,12 @@ function createChart(containerId, chartData, timeframe) {
         grid: {
             vertLines: {
                 color: '#e0e0e0',
-                style: 1,
+                style: LightweightCharts.LineStyle.Solid,
                 visible: true
             },
             horzLines: {
                 color: '#e0e0e0',
-                style: 1,
+                style: LightweightCharts.LineStyle.Solid,
                 visible: true
             }
         },
@@ -260,14 +285,14 @@ function createChart(containerId, chartData, timeframe) {
             vertLine: {
                 color: '#1a1b2f',
                 width: 1,
-                style: 2,
+                style: LightweightCharts.LineStyle.Dashed,
                 visible: true,
                 labelVisible: true
             },
             horzLine: {
                 color: '#1a1b2f',
                 width: 1,
-                style: 2,
+                style: LightweightCharts.LineStyle.Dashed,
                 visible: true,
                 labelVisible: true
             }
@@ -315,7 +340,7 @@ function createChart(containerId, chartData, timeframe) {
         }
     });
 
-    // Create candlestick series
+    // Create candlestick series with V4 API
     const candlestickSeries = chart.addCandlestickSeries({
         upColor: '#00cc00',
         downColor: '#ff0000',
@@ -338,7 +363,7 @@ function createChart(containerId, chartData, timeframe) {
         }
     });
 
-    // Create volume series
+    // Create volume series with V4 API
     const volumeSeries = chart.addHistogramSeries({
         color: '#888888',
         priceFormat: {
@@ -349,6 +374,14 @@ function createChart(containerId, chartData, timeframe) {
             top: 0.75,
             bottom: 0
         }
+    });
+    
+    // Configure volume price scale
+    chart.priceScale('volume').applyOptions({
+        scaleMargins: {
+            top: 0.75,
+            bottom: 0,
+        },
     });
 
         // Handle window resize
@@ -400,22 +433,22 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
 
     const { candlestickSeries, volumeSeries } = chartInstances[section];
 
-    // Prepare data for lightweight-charts
+    // Prepare data for lightweight-charts V4
     const candlestickData = candles.length > 0 ? candles.map((candle, i) => {
         let ohlc = {
             time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
-            open: candle.open,
-            high: candle.high,
-            low: candle.low,
-            close: candle.close
+            open: parseFloat(candle.open),
+            high: parseFloat(candle.high),
+            low: parseFloat(candle.low),
+            close: parseFloat(candle.close)
         };
 
         // Apply minute-level updates for current candle during replay
         if (i === currentCandleIndex && minuteIndex !== null && candle.minuteUpdates[minuteIndex]) {
             const update = candle.minuteUpdates[minuteIndex];
-            ohlc.high = update.high;
-            ohlc.low = update.low;
-            ohlc.close = update.close;
+            ohlc.high = parseFloat(update.high);
+            ohlc.low = parseFloat(update.low);
+            ohlc.close = parseFloat(update.close);
         }
 
         return ohlc;
@@ -431,7 +464,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
 
         return {
             time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
-            value: volume,
+            value: parseFloat(volume),
             color: candle.close >= candle.open ? '#00cc0040' : '#ff000040'
         };
     }) : [];
