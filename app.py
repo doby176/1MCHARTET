@@ -388,13 +388,55 @@ def get_chart():
             # For non-replay mode, resample to the requested timeframe if not 1 minute
             if not replay_mode and timeframe > 1:
                 df.set_index('timestamp', inplace=True)
-                df = df.resample(f'{timeframe}T').agg({
-                    'open': 'first',
-                    'high': 'max',
-                    'low': 'min',
-                    'close': 'last',
-                    'volume': 'sum'
-                }).dropna()
+                
+                # For QQQ with PRE/POST data, ensure proper alignment with market open times
+                if ticker == 'QQQ' and not restrict_hours:
+                    # For QQQ with extended hours, use standard resampling
+                    df = df.resample(f'{timeframe}T').agg({
+                        'open': 'first',
+                        'high': 'max',
+                        'low': 'min',
+                        'close': 'last',
+                        'volume': 'sum'
+                    }).dropna()
+                else:
+                    # For regular market hours or other tickers, align with market open (9:30 AM)
+                    market_open = pd.Timestamp(f'{target_date} 09:30:00')
+                    
+                    # Create a proper time index aligned with market open
+                    if not df.empty:
+                        # Find the first and last timestamps in the data
+                        first_timestamp = df.index.min()
+                        last_timestamp = df.index.max()
+                        
+                        # If we have regular market hours data, align with 9:30 AM
+                        if restrict_hours or (first_timestamp.time() >= pd.Timestamp('09:30:00').time() and 
+                                            last_timestamp.time() <= pd.Timestamp('16:00:00').time()):
+                            # Create aligned time index starting from market open
+                            start_time = market_open
+                            end_time = pd.Timestamp(f'{target_date} 16:00:00')
+                            
+                            # Create time index with proper alignment
+                            aligned_index = pd.date_range(start=start_time, end=end_time, freq=f'{timeframe}T')
+                            
+                            # Resample with proper alignment
+                            df = df.resample(f'{timeframe}T', origin=market_open).agg({
+                                'open': 'first',
+                                'high': 'max',
+                                'low': 'min',
+                                'close': 'last',
+                                'volume': 'sum'
+                            }).dropna()
+                        else:
+                            # For extended hours data, use standard resampling
+                            df = df.resample(f'{timeframe}T').agg({
+                                'open': 'first',
+                                'high': 'max',
+                                'low': 'min',
+                                'close': 'last',
+                                'volume': 'sum'
+                            }).dropna()
+                
                 df.reset_index(inplace=True)
                 logging.debug(f"Resampled data to {timeframe}-minute timeframe, new shape: {df.shape}")
 

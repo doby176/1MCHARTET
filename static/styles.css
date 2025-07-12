@@ -531,6 +531,42 @@ footer p {
         }
     }
 
+/* Buy/Sell Button Desktop Styles */
+#buy-trade, #sell-trade {
+    font-size: 1em;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border: none;
+}
+
+#buy-trade {
+    background-color: #00cc00;
+    color: white;
+}
+
+#sell-trade {
+    background-color: #ff4444;
+    color: white;
+}
+
+#buy-trade:hover:not(:disabled) {
+    background-color: #00b300;
+}
+
+#sell-trade:hover:not(:disabled) {
+    background-color: #dd3333;
+}
+
+#buy-trade:disabled, #sell-trade:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 /* Filter Section Styling */
 .filter-toggle {
     display: flex;
@@ -733,11 +769,13 @@ footer p {
     #trade-summary {
         max-width: 100%;
         padding: 8px;
-        position: sticky;
-        bottom: 0;
+        position: relative;
         background-color: #ffffff;
         z-index: 10;
-        box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border-radius: 8px;
     }
 
     #trade-summary h4 {
@@ -746,6 +784,35 @@ footer p {
 
     #trade-summary p {
         font-size: 0.8em;
+    }
+
+    /* Move buy/sell buttons closer to chart in mobile */
+    #buy-trade, #sell-trade {
+        font-size: 0.9em;
+        padding: 8px 16px;
+        margin: 4px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    #buy-trade {
+        background-color: #00cc00;
+        color: white;
+        border: none;
+    }
+
+    #sell-trade {
+        background-color: #ff4444;
+        color: white;
+        border: none;
+    }
+
+    #buy-trade:hover:not(:disabled) {
+        background-color: #00b300;
+    }
+
+    #sell-trade:hover:not(:disabled) {
+        background-color: #dd3333;
     }
 
     #trade-toggle {
