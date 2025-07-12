@@ -168,12 +168,20 @@ let indicatorSeries = {
     earnings: {}
 };
 
+// Store indicators that were active before replay (to restore after)
+let activeIndicatorsBeforeReplay = {
+    simulator: [],
+    gap: [],
+    events: [],
+    earnings: []
+};
+
 // Drawing Tools State
 let drawingTools = {
-    simulator: { active: null, lines: [] },
-    gap: { active: null, lines: [] },
-    events: { active: null, lines: [] },
-    earnings: { active: null, lines: [] }
+    simulator: { active: null, lines: [], pendingTool: null },
+    gap: { active: null, lines: [], pendingTool: null },
+    events: { active: null, lines: [], pendingTool: null },
+    earnings: { active: null, lines: [], pendingTool: null }
 };
 
 // User zoom tracking - to prevent auto-fit during manual zoom
@@ -346,6 +354,13 @@ function createChart(containerId, chartData, timeframe) {
     title.textContent = `${chartData.ticker} ${timeframe}-Minute Chart - ${chartData.date}`;
     container.appendChild(title);
 
+    // Create auto-zoom button
+    const autoZoomBtn = document.createElement('button');
+    autoZoomBtn.className = 'auto-zoom-btn';
+    autoZoomBtn.textContent = '🔍 Auto Fit';
+    autoZoomBtn.setAttribute('data-section', containerId.replace('chart-', ''));
+    container.appendChild(autoZoomBtn);
+
     try {
         // Create chart with V4 API
         const chart = LightweightCharts.createChart(container, {
@@ -517,6 +532,27 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
         // Set up zoom tracking for this chart
         if (chartInstances[section]) {
             setupChartZoomTracking(section);
+            
+            // Set up auto-zoom button functionality
+            const autoZoomBtn = document.querySelector(`#${containerId} .auto-zoom-btn`);
+            if (autoZoomBtn) {
+                autoZoomBtn.onclick = () => {
+                    if (chartInstances[section] && chartInstances[section].chart.timeScale) {
+                        chartInstances[section].chart.timeScale().fitContent();
+                        // Reset zoom state to allow auto-fit during replay
+                        userZoomState[section] = false;
+                        console.log(`Auto-fit triggered for ${section}`);
+                    }
+                };
+            }
+            
+            // Set up any pending drawing tools
+            if (drawingTools[section].pendingTool) {
+                const pendingTool = drawingTools[section].pendingTool;
+                drawingTools[section].pendingTool = null;
+                setupDrawingClickHandler(section, pendingTool);
+                console.log(`Set up pending drawing tool: ${pendingTool} for ${section}`);
+            }
         }
     }
 
@@ -570,8 +606,8 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
         console.log(`Setting volume data with ${volumeData.length} points`);
         volumeSeries.setData(volumeData);
 
-        // Update indicators in real-time for replay
-        updateIndicatorsForReplay(section, candlestickData, volumeData);
+        // Note: Indicators are disabled during replay for better performance and accuracy
+        // They will be restored when replay ends
 
         // Only auto-fit if user hasn't manually zoomed
         if (!userZoomState[section]) {
@@ -597,7 +633,7 @@ function destroyChart(section) {
     }
     // Clear indicators for this section
     indicatorSeries[section] = {};
-    drawingTools[section] = { active: null, lines: [] };
+    drawingTools[section] = { active: null, lines: [], pendingTool: null };
     // Reset user zoom state
     userZoomState[section] = false;
     // Clear click handlers
@@ -631,85 +667,87 @@ function setupChartZoomTracking(section) {
     }
 }
 
-// Update indicators in real-time during replay
-function updateIndicatorsForReplay(section, candlestickData, volumeData) {
-    if (!chartInstances[section] || !candlestickData.length) return;
+// Save currently active indicators before replay starts
+function saveActiveIndicators(section) {
+    const indicatorsPanel = document.getElementById(`chart-indicators-${section}`);
+    if (!indicatorsPanel) return;
     
-    // Get currently active indicators
-    const activeIndicators = Object.keys(indicatorSeries[section]);
+    activeIndicatorsBeforeReplay[section] = [];
+    const checkboxes = indicatorsPanel.querySelectorAll('input[type="checkbox"]:checked');
     
-    activeIndicators.forEach(indicatorKey => {
-        const parts = indicatorKey.split('_');
-        const indicator = parts[0];
-        const period = parts[1] ? parseInt(parts[1]) : null;
-        
-        // Skip composite indicators (like bollinger band components)
-        if (indicatorKey.includes('_upper') || indicatorKey.includes('_middle') || indicatorKey.includes('_lower')) {
-            return;
-        }
-        
-        // Calculate indicator with current replay data
-        let indicatorData = null;
-        
-        try {
-            switch (indicator) {
-                case 'sma':
-                    indicatorData = calculateSMA(candlestickData, period);
-                    break;
-                case 'ema':
-                    indicatorData = calculateEMA(candlestickData, period);
-                    break;
-                case 'vwap':
-                    indicatorData = calculateVWAP(candlestickData, volumeData);
-                    break;
-                case 'bollinger':
-                    const bbData = calculateBollingerBands(candlestickData, 20, 2);
-                    if (indicatorSeries[section][`${indicatorKey}_upper`]) {
-                        indicatorSeries[section][`${indicatorKey}_upper`].setData(bbData.upper);
-                    }
-                    if (indicatorSeries[section][`${indicatorKey}_middle`]) {
-                        indicatorSeries[section][`${indicatorKey}_middle`].setData(bbData.middle);
-                    }
-                    if (indicatorSeries[section][`${indicatorKey}_lower`]) {
-                        indicatorSeries[section][`${indicatorKey}_lower`].setData(bbData.lower);
-                    }
-                    return; // Skip setting data below
-                case 'rsi':
-                    const rsiData = calculateRSI(candlestickData, 14);
-                    const priceRange = Math.max(...candlestickData.map(d => d.high)) - Math.min(...candlestickData.map(d => d.low));
-                    const minPrice = Math.min(...candlestickData.map(d => d.low));
-                    indicatorData = rsiData.map(d => ({
-                        time: d.time,
-                        value: minPrice + (d.value / 100) * priceRange * 0.3
-                    }));
-                    break;
-                case 'macd':
-                    const macdData = calculateMACD(candlestickData, 12, 26, 9);
-                    const macdRange = Math.max(...macdData.macdLine.map(d => d.value)) - Math.min(...macdData.macdLine.map(d => d.value));
-                    const macdMinPrice = Math.min(...candlestickData.map(d => d.low));
-                    const macdPriceRange = Math.max(...candlestickData.map(d => d.high)) - macdMinPrice;
-                    indicatorData = macdData.macdLine.map(d => ({
-                        time: d.time,
-                        value: macdMinPrice + (d.value / (macdRange || 1)) * macdPriceRange * 0.2
-                    }));
-                    break;
-                case 'stochastic':
-                    const stochData = calculateStochastic(candlestickData, 14, 3);
-                    const stochMinPrice = Math.min(...candlestickData.map(d => d.low));
-                    const stochPriceRange = Math.max(...candlestickData.map(d => d.high)) - stochMinPrice;
-                    indicatorData = stochData.stochK.map(d => ({
-                        time: d.time,
-                        value: stochMinPrice + (d.value / 100) * stochPriceRange * 0.25
-                    }));
-                    break;
+    checkboxes.forEach(checkbox => {
+        const indicator = checkbox.dataset.indicator;
+        const period = checkbox.dataset.period ? parseInt(checkbox.dataset.period) : null;
+        activeIndicatorsBeforeReplay[section].push({
+            indicator: indicator,
+            period: period,
+            checkboxId: checkbox.id
+        });
+    });
+    
+    console.log(`Saved ${activeIndicatorsBeforeReplay[section].length} active indicators for ${section}:`, activeIndicatorsBeforeReplay[section]);
+}
+
+// Remove all indicators from chart during replay
+function removeAllIndicators(section) {
+    const chart = chartInstances[section]?.chart;
+    if (!chart) return;
+    
+    console.log(`Removing all indicators for ${section} during replay`);
+    
+    // Remove all indicator series from the chart
+    Object.keys(indicatorSeries[section]).forEach(indicatorKey => {
+        if (indicatorSeries[section][indicatorKey]) {
+            try {
+                chart.removeSeries(indicatorSeries[section][indicatorKey]);
+                console.log(`Removed indicator series: ${indicatorKey}`);
+            } catch (error) {
+                console.warn(`Error removing indicator ${indicatorKey}:`, error);
             }
-            
-            if (indicatorData && indicatorSeries[section][indicatorKey]) {
-                indicatorSeries[section][indicatorKey].setData(indicatorData);
-            }
-        } catch (error) {
-            console.warn(`Error updating indicator ${indicatorKey}:`, error);
         }
+    });
+    
+    // Clear the indicator series storage
+    indicatorSeries[section] = {};
+    console.log(`Cleared all indicators for ${section}`);
+}
+
+// Restore indicators after replay ends
+function restoreIndicators(section) {
+    if (activeIndicatorsBeforeReplay[section].length === 0) {
+        console.log(`No indicators to restore for ${section}`);
+        return;
+    }
+    
+    console.log(`Restoring ${activeIndicatorsBeforeReplay[section].length} indicators for ${section}`);
+    
+    const config = getReplayConfig(section);
+    const chartData = config.chartData();
+    
+    if (!chartData) {
+        console.log(`No chart data available for ${section}, cannot restore indicators`);
+        return;
+    }
+    
+    // Convert chart data to format needed for indicators
+    const candleData = chartData.timestamp.map((timestamp, i) => ({
+        time: Math.floor(new Date(timestamp).getTime() / 1000),
+        open: parseFloat(chartData.open[i]),
+        high: parseFloat(chartData.high[i]),
+        low: parseFloat(chartData.low[i]),
+        close: parseFloat(chartData.close[i])
+    }));
+    
+    const volumeData = chartData.timestamp.map((timestamp, i) => ({
+        time: Math.floor(new Date(timestamp).getTime() / 1000),
+        value: parseFloat(chartData.volume[i])
+    }));
+    
+    // Restore each indicator
+    activeIndicatorsBeforeReplay[section].forEach(indicatorInfo => {
+        const { indicator, period } = indicatorInfo;
+        addIndicatorToChart(section, indicator, period, candleData, volumeData);
+        console.log(`Restored indicator: ${indicator} ${period || ''} for ${section}`);
     });
 }
 
@@ -923,8 +961,13 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
     switch (indicator) {
         case 'sma':
             indicatorData = calculateSMA(candleData, period);
+            let smaColor = '#2196f3'; // Default blue
+            if (period === 9) smaColor = '#9c27b0'; // Purple for SMA 9
+            else if (period === 20) smaColor = '#ff9800'; // Orange for SMA 20
+            else if (period === 50) smaColor = '#2196f3'; // Blue for SMA 50
+            
             seriesOptions = {
-                color: period === 20 ? '#ff9800' : '#2196f3',
+                color: smaColor,
                 lineWidth: 2,
                 title: `SMA ${period}`
             };
@@ -1112,51 +1155,65 @@ function setupIndicatorListeners(section) {
 
 // Drawing Tools Functions (Enhanced)
 function activateDrawingTool(section, tool) {
+    // Temporarily disabled - drawing tools require complex overlay system
+    // Based on: https://github.com/tradingview/lightweight-charts/issues/1345
+    
     const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
     buttons.forEach(btn => btn.classList.remove('active'));
     
-    const activeButton = document.querySelector(`#chart-indicators-${section} [data-tool="${tool}"]`);
-    if (activeButton) {
-        activeButton.classList.add('active');
-        drawingTools[section].active = tool;
-        
-        // Set up click handler for drawing
-        setupDrawingClickHandler(section, tool);
-        
-        // Change cursor to indicate drawing mode
-        const chartContainer = document.getElementById(getReplayConfig(section).chartContainerId);
-        if (chartContainer) {
-            chartContainer.style.cursor = 'crosshair';
-        }
-        
-        console.log(`Activated drawing tool: ${tool} for ${section}`);
-    }
+    // Show coming soon message
+    alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
+    
+    console.log(`Drawing tool ${tool} clicked for ${section} - showing coming soon message`);
 }
 
 function setupDrawingClickHandler(section, tool) {
-    if (!chartInstances[section]) return;
+    if (!chartInstances[section]) {
+        console.log(`No chart instance for section: ${section}, deferring click handler setup`);
+        return;
+    }
     
     const chart = chartInstances[section].chart;
-    const chartContainer = document.getElementById(getReplayConfig(section).chartContainerId);
+    const chartContainerId = `chart-${section}`;
+    const chartContainer = document.getElementById(chartContainerId);
+    
+    if (!chartContainer) {
+        console.error(`Chart container not found: ${chartContainerId}`);
+        return;
+    }
     
     // Remove existing click handler
     if (chartClickHandlers[section]) {
         chartContainer.removeEventListener('click', chartClickHandlers[section]);
+        console.log(`Removed existing click handler for ${section}`);
     }
     
     // Create new click handler
     chartClickHandlers[section] = (event) => {
+        console.log(`Drawing click detected for ${section} with tool ${tool}`);
         handleDrawingClick(section, tool, event);
     };
     
     chartContainer.addEventListener('click', chartClickHandlers[section]);
+    console.log(`Drawing click handler set up for ${section} with tool ${tool}`);
+    
+    // Also try to set cursor immediately
+    chartContainer.style.cursor = 'crosshair';
+    console.log(`Set cursor to crosshair for ${section}`);
 }
 
 function handleDrawingClick(section, tool, event) {
     if (!chartInstances[section]) return;
     
     const chart = chartInstances[section].chart;
-    const chartContainer = document.getElementById(getReplayConfig(section).chartContainerId);
+    const chartContainerId = `chart-${section}`;
+    const chartContainer = document.getElementById(chartContainerId);
+    
+    if (!chartContainer) {
+        console.error(`Chart container not found: ${chartContainerId}`);
+        return;
+    }
+    
     const rect = chartContainer.getBoundingClientRect();
     
     // Get click coordinates relative to chart
@@ -1195,7 +1252,10 @@ function handleDrawingClick(section, tool, event) {
 }
 
 function showDrawingFeedback(section, tool, x, y) {
-    const chartContainer = document.getElementById(getReplayConfig(section).chartContainerId);
+    const chartContainerId = `chart-${section}`;
+    const chartContainer = document.getElementById(chartContainerId);
+    
+    if (!chartContainer) return;
     
     // Create visual feedback element
     const feedback = document.createElement('div');
@@ -1230,30 +1290,23 @@ function deactivateDrawingTool(section) {
     drawingTools[section].active = null;
     
     // Reset cursor
-    const chartContainer = document.getElementById(getReplayConfig(section).chartContainerId);
+    const chartContainerId = `chart-${section}`;
+    const chartContainer = document.getElementById(chartContainerId);
     if (chartContainer) {
         chartContainer.style.cursor = 'default';
     }
     
     // Remove click handler
-    if (chartClickHandlers[section]) {
+    if (chartClickHandlers[section] && chartContainer) {
         chartContainer.removeEventListener('click', chartClickHandlers[section]);
         chartClickHandlers[section] = null;
     }
 }
 
 function clearAllDrawings(section) {
-    drawingTools[section].lines = [];
-    deactivateDrawingTool(section);
-    
-    // Clear any visual feedback elements
-    const chartContainer = document.getElementById(getReplayConfig(section).chartContainerId);
-    if (chartContainer) {
-        const feedbackElements = chartContainer.querySelectorAll('.drawing-feedback');
-        feedbackElements.forEach(el => el.remove());
-    }
-    
-    console.log(`Cleared all drawings for ${section}`);
+    // Show the same coming soon message
+    alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
+    console.log(`Clear drawings clicked for ${section} - showing coming soon message`);
 }
 
 function populateEarningsOutcomes() {
@@ -1971,6 +2024,10 @@ function startReplay(section) {
     
     // Reset zoom state when starting replay to enable auto-fit
     userZoomState[section] = false;
+    
+    // Save current indicators and remove them during replay
+    saveActiveIndicators(section);
+    removeAllIndicators(section);
 
     const playButton = document.getElementById(config.playButtonId);
     const pauseButton = document.getElementById(config.pauseButtonId);
@@ -2110,6 +2167,9 @@ function startOverReplay(section) {
     
     // Reset zoom state when starting over to enable auto-fit
     userZoomState[section] = false;
+    
+    // Clear saved indicators since we're starting over
+    activeIndicatorsBeforeReplay[section] = [];
 
     const playButton = document.getElementById(config.playButtonId);
     const pauseButton = document.getElementById(config.pauseButtonId);
@@ -2138,6 +2198,12 @@ function startOverReplay(section) {
     
     // Update chart to show no candles (initial state)
     renderChart(section, []);
+    
+    // Re-setup indicators that were active
+    const indicatorsPanel = document.getElementById(`chart-indicators-${section}`);
+    if (indicatorsPanel) {
+        setupIndicatorListeners(section);
+    }
 
     // Update button states
     playButton.textContent = 'Play Replay';
@@ -2219,6 +2285,9 @@ function stopReplay(section) {
     
     // Restore full chart
     renderChart(section, config.aggregatedCandles());
+    
+    // Restore indicators that were active before replay
+    restoreIndicators(section);
 
     document.getElementById(config.timestampDisplayId).textContent = 'Current Time: --:--:--';
 }
