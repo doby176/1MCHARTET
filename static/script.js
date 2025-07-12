@@ -534,10 +534,19 @@ async function loadChart(event, tabId) {
     const button = form.querySelector('button[type="submit"]');
     const inputs = form.querySelectorAll('select, input');
     
+    // Determine market hours filter for events analysis
+    let marketHoursFilter = 'regular';
+    if (tabId === 'events-analysis') {
+        const marketHoursRadio = document.querySelector('input[name="market-hours-filter"]:checked');
+        if (marketHoursRadio) {
+            marketHoursFilter = marketHoursRadio.value;
+        }
+    }
+    
     // Determine if we should restrict hours based on ticker and tab
-    // QQQ should only show PRE/POST data in 'events-analysis' section
-    // All other sections should restrict QQQ to regular market hours (9:30-16:00)
-    const shouldRestrictHours = (ticker === 'QQQ' && tabId !== 'events-analysis') || restrictHours;
+    // For events analysis, use the market hours filter
+    // For other sections, restrict QQQ to regular market hours (9:30-16:00)
+    const shouldRestrictHours = (tabId !== 'events-analysis' && ticker === 'QQQ') || restrictHours;
 
     // Replay controls
     const replayControls = document.getElementById(replayControlsId);
@@ -565,8 +574,21 @@ async function loadChart(event, tabId) {
         return;
     }
 
-    console.log(`Loading chart for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrict_hours=${shouldRestrictHours}, tab=${tabId}`);
-    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=${timeframe > 1}${shouldRestrictHours ? '&restrict_hours=true' : ''}`;
+    console.log(`Loading chart for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrict_hours=${shouldRestrictHours}, market_hours_filter=${marketHoursFilter}, tab=${tabId}`);
+    
+    // Build URL with appropriate parameters
+    let url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=${timeframe > 1}`;
+    
+    // Add restrict_hours parameter for non-events sections
+    if (shouldRestrictHours) {
+        url += '&restrict_hours=true';
+    }
+    
+    // Add market_hours_filter parameter for events analysis
+    if (tabId === 'events-analysis') {
+        url += `&market_hours_filter=${marketHoursFilter}`;
+    }
+    
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
@@ -672,7 +694,7 @@ async function loadChart(event, tabId) {
 
         gtag('event', 'chart_load', {
             'event_category': 'Chart',
-            'event_label': `${ticker}_${date}_${timeframe}${shouldRestrictHours ? '_regular_hours' : ''}`,
+            'event_label': `${ticker}_${date}_${timeframe}${shouldRestrictHours ? '_regular_hours' : ''}${tabId === 'events-analysis' ? '_' + marketHoursFilter : ''}`,
             'tab': tabId
         });
     } catch (error) {
