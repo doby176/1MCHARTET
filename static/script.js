@@ -181,20 +181,6 @@ function aggregateCandles(data, timeframe) {
     return candles;
 }
 
-function createCandlesFromData(data) {
-    // Convert backend data to frontend candle format
-    // Since backend now handles resampling, we just convert the data structure
-    return data.timestamp.map((_, i) => ({
-        timestamp: data.timestamp[i],
-        open: data.open[i],
-        high: data.high[i],
-        low: data.low[i],
-        close: data.close[i],
-        volume: data.volume[i],
-        minuteUpdates: [] // No minute updates needed since backend provides proper timeframe
-    }));
-}
-
 function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = null) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
@@ -204,9 +190,24 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
     const candlestickTrace = {
         x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
         open: candles.map(c => c.open),
-        high: candles.map(c => c.high),
-        low: candles.map(c => c.low),
-        close: candles.map(c => c.close),
+        high: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].high;
+            }
+            return c.high;
+        }),
+        low: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].low;
+            }
+            return c.low;
+        }),
+        close: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].close;
+            }
+            return c.close;
+        }),
         type: 'candlestick',
         name: chartData.ticker,
         increasing: { line: { color: '#00cc00' } },
@@ -214,7 +215,12 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
     };
     const volumeTrace = {
         x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
-        y: candles.map(c => c.volume),
+        y: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].volume;
+            }
+            return c.volume;
+        }),
         type: 'bar',
         name: 'Volume',
         yaxis: 'y2',
@@ -556,11 +562,15 @@ async function loadChart(event, tabId) {
     if (!ticker || !date || !timeframe) {
         chartContainer.innerHTML = '<p>Please select a ticker, date, and timeframe.</p>';
         replayControls.style.display = 'none';
+        if (replayPrefix === 'simulator') {
+            const tradingButtonsContainer = document.getElementById('trading-buttons-container');
+            if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';
+        }
         return;
     }
 
     console.log(`Loading chart for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrict_hours=${shouldRestrictHours}, tab=${tabId}`);
-    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=false${shouldRestrictHours ? '&restrict_hours=true' : ''}`;
+    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=${timeframe > 1}${shouldRestrictHours ? '&restrict_hours=true' : ''}`;
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
@@ -600,6 +610,10 @@ async function loadChart(event, tabId) {
             console.error('Chart error:', data.error);
             chartContainer.innerHTML = `<p>${data.error}</p>`;
             replayControls.style.display = 'none';
+            if (replayPrefix === 'simulator') {
+                const tradingButtonsContainer = document.getElementById('trading-buttons-container');
+                if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';
+            }
             return;
         }
 
@@ -607,8 +621,7 @@ async function loadChart(event, tabId) {
         if (replayPrefix === 'simulator') { // Market Simulator
             chartDataSimulator = data.chart_data;
             timeframeSimulator = timeframe;
-            // Since backend now handles resampling, we create aggregated candles from the received data
-            aggregatedCandlesSimulator = createCandlesFromData(chartDataSimulator);
+            aggregatedCandlesSimulator = aggregateCandles(chartDataSimulator, timeframe);
             currentReplayIndexSimulator = 0;
             isReplayingSimulator = false;
             isPausedSimulator = false;
@@ -620,8 +633,7 @@ async function loadChart(event, tabId) {
         } else if (replayPrefix === 'gap') {
             chartDataGap = data.chart_data;
             timeframeGap = timeframe;
-            // Since backend now handles resampling, we create aggregated candles from the received data
-            aggregatedCandlesGap = createCandlesFromData(chartDataGap);
+            aggregatedCandlesGap = aggregateCandles(chartDataGap, timeframe);
             currentReplayIndexGap = 0;
             isReplayingGap = false;
             isPausedGap = false;
@@ -629,8 +641,7 @@ async function loadChart(event, tabId) {
         } else if (replayPrefix === 'events') {
             chartDataEvents = data.chart_data;
             timeframeEvents = timeframe;
-            // Since backend now handles resampling, we create aggregated candles from the received data
-            aggregatedCandlesEvents = createCandlesFromData(chartDataEvents);
+            aggregatedCandlesEvents = aggregateCandles(chartDataEvents, timeframe);
             currentReplayIndexEvents = 0;
             isReplayingEvents = false;
             isPausedEvents = false;
@@ -638,8 +649,7 @@ async function loadChart(event, tabId) {
         } else if (replayPrefix === 'earnings') {
             chartDataEarnings = data.chart_data;
             timeframeEarnings = timeframe;
-            // Since backend now handles resampling, we create aggregated candles from the received data
-            aggregatedCandlesEarnings = createCandlesFromData(chartDataEarnings);
+            aggregatedCandlesEarnings = aggregateCandles(chartDataEarnings, timeframe);
             currentReplayIndexEarnings = 0;
             isReplayingEarnings = false;
             isPausedEarnings = false;
@@ -662,6 +672,8 @@ async function loadChart(event, tabId) {
         prevButton.disabled = true;
         nextButton.disabled = true;
         if (replayPrefix === 'simulator') { // Market Simulator
+            const tradingButtonsContainer = document.getElementById('trading-buttons-container');
+            if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'block';
             if (buyButton) buyButton.disabled = true;
             if (sellButton) sellButton.disabled = true;
         }
@@ -677,6 +689,10 @@ async function loadChart(event, tabId) {
         console.error('Error loading chart:', error.message);
         chartContainer.innerHTML = '<p>Failed to load chart: ' + error.message + '. Please try again later.</p>';
         replayControls.style.display = 'none';
+        if (replayPrefix === 'simulator') {
+            const tradingButtonsContainer = document.getElementById('trading-buttons-container');
+            if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';
+        }
         alert('Failed to load chart: ' + error.message);
     }
 }
@@ -971,10 +987,11 @@ function startReplay(section) {
     }
 
     // Initial render
-    let candleIndex = config.currentReplayIndex();
+    let minuteIndex = config.currentReplayIndex() % config.timeframe();
+    let candleIndex = Math.floor(config.currentReplayIndex() / config.timeframe());
 
-    if (candleIndex > 0) {
-        renderChart(section, config.aggregatedCandles().slice(0, candleIndex));
+    if (candleIndex > 0 || minuteIndex > 0) {
+        renderChart(section, config.aggregatedCandles().slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
         timestampDisplay.textContent = config.currentReplayIndex() > 0 
             ? `Current Time: ${chartData.timestamp[config.currentReplayIndex() - 1].split(' ')[1]}`
             : 'Current Time: --:--:--';
@@ -989,10 +1006,11 @@ function startReplay(section) {
             return;
         }
 
-        candleIndex = config.currentReplayIndex();
+        candleIndex = Math.floor(config.currentReplayIndex() / config.timeframe());
+        minuteIndex = config.currentReplayIndex() % config.timeframe();
 
-        // Render only up to the current candle
-        renderChart(section, config.aggregatedCandles().slice(0, candleIndex + 1));
+        // Render only up to the current candle, with minute-by-minute updates for the current candle only
+        renderChart(section, config.aggregatedCandles().slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
         timestampDisplay.textContent = `Current Time: ${chartData.timestamp[config.currentReplayIndex()].split(' ')[1]}`;
 
         prevButton.disabled = config.currentReplayIndex() <= 0;
@@ -1005,6 +1023,9 @@ function startReplay(section) {
         }
 
         config.setCurrentReplayIndex(config.currentReplayIndex() + 1);
+        if (config.currentReplayIndex() % config.timeframe() === 0) {
+            minuteIndex = 0;
+        }
     }, replaySpeed));
 
     gtag('event', 'replay_start', {
@@ -1182,8 +1203,9 @@ function updateChartToIndex(section) {
         sellButton = document.getElementById('sell-trade');
     }
 
-    const candleIndex = config.currentReplayIndex();
-    renderChart(section, config.aggregatedCandles().slice(0, candleIndex + 1));
+    const candleIndex = Math.floor(config.currentReplayIndex() / config.timeframe());
+    const minuteIndex = config.currentReplayIndex() % config.timeframe();
+    renderChart(section, config.aggregatedCandles().slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
 
     // Update timestamp and button states
     timestampDisplay.textContent = config.currentReplayIndex() > 0 
