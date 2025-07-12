@@ -190,6 +190,16 @@ function createChart(containerId, ticker, date, timeframe) {
     // Clear existing chart
     container.innerHTML = '';
     
+    // Debug: Ensure LightweightCharts is loaded before creating chart
+    console.log('LightweightCharts available:', typeof LightweightCharts !== 'undefined');
+    console.log('LightweightCharts object:', LightweightCharts);
+
+    if (typeof LightweightCharts === 'undefined') {
+        console.error('LightweightCharts library not loaded!');
+        container.innerHTML = '<p style="color: red;">Error: Lightweight Charts library not loaded. Please refresh the page.</p>';
+        return null;
+    }
+
     // Create chart
     const chart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
@@ -215,8 +225,8 @@ function createChart(containerId, ticker, date, timeframe) {
         },
     });
 
-    // Create candlestick series
-    const candleSeries = chart.addCandlestickSeries({
+    // Create candlestick series using v5 API
+    const candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
         upColor: '#00cc00',
         downColor: '#ff0000',
         borderDownColor: '#ff0000',
@@ -225,8 +235,8 @@ function createChart(containerId, ticker, date, timeframe) {
         wickUpColor: '#00cc00',
     });
 
-    // Create volume series
-    const volumeSeries = chart.addHistogramSeries({
+    // Create volume series using v5 API
+    const volumeSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
         color: '#888888',
         priceFormat: {
             type: 'volume',
