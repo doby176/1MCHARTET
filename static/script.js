@@ -535,9 +535,9 @@ async function loadChart(event, tabId) {
     const inputs = form.querySelectorAll('select, input');
     
     // Determine if we should restrict hours based on ticker and tab
-    // QQQ should only show PRE/POST data in 'events-analysis' section
-    // All other sections should restrict QQQ to regular market hours (9:30-16:00)
-    const shouldRestrictHours = (ticker === 'QQQ' && tabId !== 'events-analysis') || restrictHours;
+    // QQQ should always be restricted to regular market hours (9:30-16:00) in ALL sections
+    // All other tickers follow their section's restrictHours setting
+    const shouldRestrictHours = (ticker === 'QQQ') || restrictHours;
 
     // Replay controls
     const replayControls = document.getElementById(replayControlsId);
