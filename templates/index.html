@@ -30,8 +30,7 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css?v=41">
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
     <header>
@@ -79,7 +78,7 @@
                     <button type="submit">Load Chart</button>
                 </form>
                 <div id="chart-container-simulator">
-                    <div id="plotly-chart-simulator"></div>
+                    <div id="chart-simulator"></div>
                 </div>
                 <!-- Trading Buttons - positioned alongside chart for mobile visibility -->
                 <div id="trading-buttons-container" class="trading-buttons-container" style="display: none;">
@@ -163,7 +162,7 @@
                     <ul id="gap-dates-list"></ul>
                 </div>
                 <div id="chart-container-gap">
-                    <div id="plotly-chart-gap"></div>
+                    <div id="chart-gap"></div>
                 </div>
                 <div id="replay-controls-gap" class="replay-controls" style="display: none;">
                     <button id="play-replay-gap" disabled>Play Replay</button>
@@ -308,7 +307,7 @@
                     <button type="submit">Load Chart</button>
                 </form>
                 <div id="chart-container-events">
-                    <div id="plotly-chart-events"></div>
+                    <div id="chart-events"></div>
                 </div>
                 <div id="replay-controls-events" class="replay-controls" style="display: none;">
                     <button id="play-replay-events" disabled>Play Replay</button>
@@ -390,7 +389,7 @@
                     <ul id="earnings-dates-list"></ul>
                 </div>
                 <div id="chart-container-earnings">
-                    <div id="plotly-chart-earnings"></div>
+                    <div id="chart-earnings"></div>
                 </div>
                 <div id="replay-controls-earnings" class="replay-controls" style="display: none;">
                     <button id="play-replay-earnings" disabled>Play Replay</button>
