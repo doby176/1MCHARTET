@@ -68,6 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
 });
 
+// Chart instances for TradingView lightweight-charts
+let chartInstances = {
+    simulator: null,
+    gap: null,
+    events: null,
+    earnings: null
+};
+
 // Replay globals for Market Simulator
 let chartDataSimulator = null;
 let replayIntervalSimulator = null;
@@ -181,64 +189,231 @@ function aggregateCandles(data, timeframe) {
     return candles;
 }
 
+function createChart(containerId, chartData, timeframe) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container ${containerId} not found`);
+        return null;
+    }
+
+    // Clear previous chart
+    container.innerHTML = '';
+
+    // Create chart title
+    const title = document.createElement('div');
+    title.className = 'chart-title';
+    title.textContent = `${chartData.ticker} ${timeframe}-Minute Chart - ${chartData.date}`;
+    container.appendChild(title);
+
+    // Create chart
+    const chart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: container.clientHeight,
+        layout: {
+            background: {
+                type: 'solid',
+                color: '#ffffff'
+            },
+            textColor: '#333333',
+            fontSize: 12,
+            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        },
+        grid: {
+            vertLines: {
+                color: '#e0e0e0',
+                style: 1,
+                visible: true
+            },
+            horzLines: {
+                color: '#e0e0e0',
+                style: 1,
+                visible: true
+            }
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+            vertLine: {
+                color: '#1a1b2f',
+                width: 1,
+                style: 2,
+                visible: true,
+                labelVisible: true
+            },
+            horzLine: {
+                color: '#1a1b2f',
+                width: 1,
+                style: 2,
+                visible: true,
+                labelVisible: true
+            }
+        },
+        priceScale: {
+            borderColor: '#cccccc',
+            borderVisible: true,
+            position: 'right',
+            scaleMargins: {
+                top: 0.1,
+                bottom: 0.25
+            }
+        },
+        timeScale: {
+            borderColor: '#cccccc',
+            borderVisible: true,
+            timeVisible: true,
+            secondsVisible: false,
+            tickMarkFormatter: (time) => {
+                const date = new Date(time * 1000);
+                return date.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                });
+            }
+        },
+        rightPriceScale: {
+            visible: true,
+            borderColor: '#cccccc'
+        },
+        leftPriceScale: {
+            visible: false
+        },
+        handleScroll: {
+            mouseWheel: true,
+            pressedMouseMove: true,
+            horzTouchDrag: true,
+            vertTouchDrag: true
+        },
+        handleScale: {
+            axisPressedMouseMove: true,
+            mouseWheel: true,
+            pinch: true
+        }
+    });
+
+    // Create candlestick series
+    const candlestickSeries = chart.addCandlestickSeries({
+        upColor: '#00cc00',
+        downColor: '#ff0000',
+        borderDownColor: '#ff0000',
+        borderUpColor: '#00cc00',
+        wickDownColor: '#ff0000',
+        wickUpColor: '#00cc00',
+        borderVisible: true,
+        wickVisible: true,
+        priceLineVisible: true,
+        priceLineSource: LightweightCharts.PriceLineSource.LastBar,
+        priceLineWidth: 1,
+        priceLineColor: '#1a1b2f',
+        priceLineStyle: LightweightCharts.LineStyle.Dotted,
+        baseLineVisible: false,
+        priceFormat: {
+            type: 'price',
+            precision: 2,
+            minMove: 0.01
+        }
+    });
+
+    // Create volume series
+    const volumeSeries = chart.addHistogramSeries({
+        color: '#888888',
+        priceFormat: {
+            type: 'volume'
+        },
+        priceScaleId: 'volume',
+        scaleMargins: {
+            top: 0.75,
+            bottom: 0
+        }
+    });
+
+    // Handle window resize
+    const resizeObserver = new ResizeObserver(entries => {
+        if (entries.length === 0 || entries[0].target !== container) return;
+        const { width, height } = entries[0].contentRect;
+        chart.applyOptions({ width, height });
+    });
+    resizeObserver.observe(container);
+
+    return {
+        chart,
+        candlestickSeries,
+        volumeSeries,
+        resizeObserver
+    };
+}
+
 function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = null) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
     
     if (!chartData) return;
+
+    const containerId = config.chartContainerId;
     
-    const candlestickTrace = {
-        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
-        open: candles.map(c => c.open),
-        high: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].high;
-            }
-            return c.high;
-        }),
-        low: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].low;
-            }
-            return c.low;
-        }),
-        close: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].close;
-            }
-            return c.close;
-        }),
-        type: 'candlestick',
-        name: chartData.ticker,
-        increasing: { line: { color: '#00cc00' } },
-        decreasing: { line: { color: '#ff0000' } }
-    };
-    const volumeTrace = {
-        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
-        y: candles.map((c, i) => {
-            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                return c.minuteUpdates[minuteIndex].volume;
-            }
-            return c.volume;
-        }),
-        type: 'bar',
-        name: 'Volume',
-        yaxis: 'y2',
-        marker: { color: '#888888' }
-    };
-    
-    const tf = config.timeframe();
-    const layout = {
-        title: `${chartData.ticker} ${tf}-Minute Candlestick Chart - ${chartData.date} (Replay)`,
-        xaxis: { title: 'Time', type: 'date', rangeslider: { visible: false }, tickformat: '%H:%M' },
-        yaxis: { title: 'Price', domain: [0.3, 1] },
-        yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
-        showlegend: true,
-        margin: { t: 50, b: 50, l: 50, r: 50 },
-        plot_bgcolor: '#ffffff',
-        paper_bgcolor: '#ffffff'
-    };
-    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
+    // Create chart if it doesn't exist
+    if (!chartInstances[section]) {
+        chartInstances[section] = createChart(containerId, chartData, config.timeframe());
+    }
+
+    if (!chartInstances[section]) return;
+
+    const { candlestickSeries, volumeSeries } = chartInstances[section];
+
+    // Prepare data for lightweight-charts
+    const candlestickData = candles.map((candle, i) => {
+        let ohlc = {
+            time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
+            open: candle.open,
+            high: candle.high,
+            low: candle.low,
+            close: candle.close
+        };
+
+        // Apply minute-level updates for current candle during replay
+        if (i === currentCandleIndex && minuteIndex !== null && candle.minuteUpdates[minuteIndex]) {
+            const update = candle.minuteUpdates[minuteIndex];
+            ohlc.high = update.high;
+            ohlc.low = update.low;
+            ohlc.close = update.close;
+        }
+
+        return ohlc;
+    });
+
+    const volumeData = candles.map((candle, i) => {
+        let volume = candle.volume;
+        
+        // Apply minute-level updates for current candle during replay
+        if (i === currentCandleIndex && minuteIndex !== null && candle.minuteUpdates[minuteIndex]) {
+            volume = candle.minuteUpdates[minuteIndex].volume;
+        }
+
+        return {
+            time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
+            value: volume,
+            color: candle.close >= candle.open ? '#00cc0040' : '#ff000040'
+        };
+    });
+
+    // Update chart data
+    candlestickSeries.setData(candlestickData);
+    volumeSeries.setData(volumeData);
+
+    // Auto-fit content
+    chartInstances[section].chart.timeScale().fitContent();
+}
+
+function destroyChart(section) {
+    if (chartInstances[section]) {
+        const { chart, resizeObserver } = chartInstances[section];
+        if (resizeObserver) {
+            resizeObserver.disconnect();
+        }
+        if (chart) {
+            chart.remove();
+        }
+        chartInstances[section] = null;
+    }
 }
 
 function populateEarningsOutcomes() {
@@ -619,6 +794,8 @@ async function loadChart(event, tabId) {
 
         // Store chart data and reset replay state
         if (replayPrefix === 'simulator') { // Market Simulator
+            // Destroy existing chart before creating new one
+            destroyChart('simulator');
             chartDataSimulator = data.chart_data;
             timeframeSimulator = timeframe;
             aggregatedCandlesSimulator = aggregateCandles(chartDataSimulator, timeframe);
@@ -631,6 +808,8 @@ async function loadChart(event, tabId) {
             tradeHistory = [];
             updateTradeSummary();
         } else if (replayPrefix === 'gap') {
+            // Destroy existing chart before creating new one
+            destroyChart('gap');
             chartDataGap = data.chart_data;
             timeframeGap = timeframe;
             aggregatedCandlesGap = aggregateCandles(chartDataGap, timeframe);
@@ -639,6 +818,8 @@ async function loadChart(event, tabId) {
             isPausedGap = false;
             if (replayIntervalGap) clearInterval(replayIntervalGap);
         } else if (replayPrefix === 'events') {
+            // Destroy existing chart before creating new one
+            destroyChart('events');
             chartDataEvents = data.chart_data;
             timeframeEvents = timeframe;
             aggregatedCandlesEvents = aggregateCandles(chartDataEvents, timeframe);
@@ -647,6 +828,8 @@ async function loadChart(event, tabId) {
             isPausedEvents = false;
             if (replayIntervalEvents) clearInterval(replayIntervalEvents);
         } else if (replayPrefix === 'earnings') {
+            // Destroy existing chart before creating new one
+            destroyChart('earnings');
             chartDataEarnings = data.chart_data;
             timeframeEarnings = timeframe;
             aggregatedCandlesEarnings = aggregateCandles(chartDataEarnings, timeframe);
@@ -832,7 +1015,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesSimulator = candles; },
             timeframe: () => timeframeSimulator,
             setTimeframe: (tf) => { timeframeSimulator = tf; },
-            chartContainerId: 'plotly-chart-simulator',
+            chartContainerId: 'chart-simulator',
             playButtonId: 'play-replay-simulator',
             pauseButtonId: 'pause-replay-simulator',
             startOverButtonId: 'start-over-replay-simulator',
@@ -858,7 +1041,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesGap = candles; },
             timeframe: () => timeframeGap,
             setTimeframe: (tf) => { timeframeGap = tf; },
-            chartContainerId: 'plotly-chart-gap',
+            chartContainerId: 'chart-gap',
             playButtonId: 'play-replay-gap',
             pauseButtonId: 'pause-replay-gap',
             startOverButtonId: 'start-over-replay-gap',
@@ -884,7 +1067,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesEvents = candles; },
             timeframe: () => timeframeEvents,
             setTimeframe: (tf) => { timeframeEvents = tf; },
-            chartContainerId: 'plotly-chart-events',
+            chartContainerId: 'chart-events',
             playButtonId: 'play-replay-events',
             pauseButtonId: 'pause-replay-events',
             startOverButtonId: 'start-over-replay-events',
@@ -910,7 +1093,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesEarnings = candles; },
             timeframe: () => timeframeEarnings,
             setTimeframe: (tf) => { timeframeEarnings = tf; },
-            chartContainerId: 'plotly-chart-earnings',
+            chartContainerId: 'chart-earnings',
             playButtonId: 'play-replay-earnings',
             pauseButtonId: 'pause-replay-earnings',
             startOverButtonId: 'start-over-replay-earnings',
@@ -1088,6 +1271,9 @@ function startOverReplay(section) {
     // Reset to the beginning
     config.setCurrentReplayIndex(0);
 
+    // Destroy current chart and recreate it
+    destroyChart(section);
+    
     // Update chart to show no candles (initial state)
     renderChart(section, []);
 
@@ -1166,6 +1352,9 @@ function stopReplay(section) {
         updateTradeSummary();
     }
 
+    // Destroy current chart and recreate it with full data
+    destroyChart(section);
+    
     // Restore full chart
     renderChart(section, config.aggregatedCandles());
 
