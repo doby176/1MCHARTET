@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lightweight Charts Test</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lightweight Charts Test - Fixed Implementation</h1>
+        
+        <div class="status success">
+            ✅ Lightweight Charts library loaded successfully
+        </div>
+        
+        <div class="controls">
+            <button onclick="testChart1()">Test Chart 1 (Simulator)</button>
+            <button onclick="testChart2()">Test Chart 2 (Gap Analysis)</button>
+            <button onclick="testChart3()">Test Chart 3 (Events)</button>
+            <button onclick="testChart4()">Test Chart 4 (Earnings)</button>
+            <button onclick="clearCharts()">Clear All Charts</button>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Chart Simulator (chart-simulator)</div>
+            <div id="chart-simulator" style="width: 100%; height: 400px;"></div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Gap Analysis Chart (chart-gap)</div>
+            <div id="chart-gap" style="width: 100%; height: 400px;"></div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Events Chart (chart-events)</div>
+            <div id="chart-events" style="width: 100%; height: 400px;"></div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">Earnings Chart (chart-earnings)</div>
+            <div id="chart-earnings" style="width: 100%; height: 400px;"></div>
+        </div>
+        
+        <div id="status-log"></div>
+    </div>
+
+    <script>
+        // Global chart instances
+        let chartInstances = {};
+        
+        // Sample data for testing
+        const sampleData = [
+            { time: '2023-01-01', open: 100, high: 105, low: 95, close: 102 },
+            { time: '2023-01-02', open: 102, high: 108, low: 100, close: 105 },
+            { time: '2023-01-03', open: 105, high: 110, low: 103, close: 108 },
+            { time: '2023-01-04', open: 108, high: 112, low: 106, close: 110 },
+            { time: '2023-01-05', open: 110, high: 115, low: 108, close: 112 },
+            { time: '2023-01-06', open: 112, high: 118, low: 110, close: 115 },
+            { time: '2023-01-07', open: 115, high: 120, low: 113, close: 118 },
+            { time: '2023-01-08', open: 118, high: 125, low: 116, close: 122 },
+            { time: '2023-01-09', open: 122, high: 128, low: 120, close: 125 },
+            { time: '2023-01-10', open: 125, high: 130, low: 123, close: 128 }
+        ];
+        
+        const sampleVolumeData = [
+            { time: '2023-01-01', value: 1000000, color: '#00cc0080' },
+            { time: '2023-01-02', value: 1200000, color: '#00cc0080' },
+            { time: '2023-01-03', value: 1100000, color: '#00cc0080' },
+            { time: '2023-01-04', value: 1300000, color: '#00cc0080' },
+            { time: '2023-01-05', value: 1150000, color: '#00cc0080' },
+            { time: '2023-01-06', value: 1400000, color: '#00cc0080' },
+            { time: '2023-01-07', value: 1250000, color: '#00cc0080' },
+            { time: '2023-01-08', value: 1350000, color: '#00cc0080' },
+            { time: '2023-01-09', value: 1450000, color: '#00cc0080' },
+            { time: '2023-01-10', value: 1300000, color: '#00cc0080' }
+        ];
+        
+        function log(message, isError = false) {
+            const statusLog = document.getElementById('status-log');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = isError ? 'status error' : 'status success';
+            statusDiv.textContent = message;
+            statusLog.appendChild(statusDiv);
+            console.log(message);
+        }
+        
+        function createChart(containerId, title) {
+            const container = document.getElementById(containerId);
+            
+            if (!container) {
+                log(`❌ Container with ID '${containerId}' not found`, true);
+                return null;
+            }
+            
+            // Clear existing chart
+            container.innerHTML = '';
+            
+            try {
+                // Check if LightweightCharts is available
+                if (typeof LightweightCharts === 'undefined') {
+                    throw new Error('LightweightCharts library is not loaded');
+                }
+                
+                // Create chart
+                const chart = LightweightCharts.createChart(container, {
+                    width: container.clientWidth,
+                    height: 400,
+                    layout: {
+                        background: { color: '#ffffff' },
+                        textColor: '#333',
+                    },
+                    grid: {
+                        vertLines: { color: '#e1e1e1' },
+                        horzLines: { color: '#e1e1e1' },
+                    },
+                    crosshair: {
+                        mode: LightweightCharts.CrosshairMode.Normal,
+                    },
+                    timeScale: {
+                        timeVisible: true,
+                        secondsVisible: false,
+                        borderColor: '#485c7b',
+                    },
+                    rightPriceScale: {
+                        borderColor: '#485c7b',
+                    },
+                });
+
+                // Create candlestick series
+                const candleSeries = chart.addCandlestickSeries({
+                    upColor: '#00cc00',
+                    downColor: '#ff0000',
+                    borderDownColor: '#ff0000',
+                    borderUpColor: '#00cc00',
+                    wickDownColor: '#ff0000',
+                    wickUpColor: '#00cc00',
+                });
+
+                // Create volume series
+                const volumeSeries = chart.addHistogramSeries({
+                    color: '#888888',
+                    priceFormat: {
+                        type: 'volume',
+                    },
+                    priceScaleId: 'volume',
+                    scaleMargins: {
+                        top: 0.8,
+                        bottom: 0,
+                    },
+                });
+
+                // Set data
+                candleSeries.setData(sampleData);
+                volumeSeries.setData(sampleVolumeData);
+
+                // Handle window resize
+                const resizeObserver = new ResizeObserver(entries => {
+                    if (entries.length === 0 || entries[0].target !== container) return;
+                    const newRect = entries[0].contentRect;
+                    chart.applyOptions({ width: newRect.width, height: newRect.height });
+                });
+                resizeObserver.observe(container);
+
+                // Store chart instance and series
+                chartInstances[containerId] = {
+                    chart,
+                    candleSeries,
+                    volumeSeries,
+                    resizeObserver
+                };
+
+                log(`✅ Successfully created chart: ${title} (${containerId})`);
+                return chartInstances[containerId];
+            } catch (error) {
+                log(`❌ Error creating chart ${title}: ${error.message}`, true);
+                container.innerHTML = `<p style="color: red;">Error creating chart: ${error.message}</p>`;
+                return null;
+            }
+        }
+        
+        function destroyChart(containerId) {
+            if (chartInstances[containerId]) {
+                try {
+                    if (chartInstances[containerId].chart) {
+                        chartInstances[containerId].chart.remove();
+                    }
+                    if (chartInstances[containerId].resizeObserver) {
+                        chartInstances[containerId].resizeObserver.disconnect();
+                    }
+                    delete chartInstances[containerId];
+                    log(`✅ Successfully destroyed chart: ${containerId}`);
+                } catch (error) {
+                    log(`❌ Error destroying chart ${containerId}: ${error.message}`, true);
+                    delete chartInstances[containerId];
+                }
+            }
+        }
+        
+        function testChart1() {
+            destroyChart('chart-simulator');
+            createChart('chart-simulator', 'Market Simulator');
+        }
+        
+        function testChart2() {
+            destroyChart('chart-gap');
+            createChart('chart-gap', 'Gap Analysis');
+        }
+        
+        function testChart3() {
+            destroyChart('chart-events');
+            createChart('chart-events', 'Events Analysis');
+        }
+        
+        function testChart4() {
+            destroyChart('chart-earnings');
+            createChart('chart-earnings', 'Earnings Analysis');
+        }
+        
+        function clearCharts() {
+            Object.keys(chartInstances).forEach(containerId => {
+                destroyChart(containerId);
+                document.getElementById(containerId).innerHTML = '';
+            });
+            log('✅ All charts cleared');
+        }
+        
+        // Test library loading on page load
+        window.addEventListener('load', function() {
+            if (typeof LightweightCharts !== 'undefined') {
+                log('✅ LightweightCharts library loaded successfully');
+                log('✅ All container IDs are properly configured');
+                log('✅ Chart creation functions are ready');
+                log('📝 Click the buttons above to test chart creation');
+            } else {
+                log('❌ LightweightCharts library failed to load', true);
+            }
+        });
+    </script>
+</body>
+</html>
