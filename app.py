@@ -389,16 +389,42 @@ def get_chart():
             if not replay_mode and timeframe > 1:
                 df.set_index('timestamp', inplace=True)
                 
-                # For QQQ with PRE/POST data, ensure proper alignment with market open times
+                # For QQQ with PRE/POST data, ensure proper alignment with market timing
                 if ticker == 'QQQ' and not restrict_hours:
-                    # For QQQ with extended hours, use standard resampling
-                    df = df.resample(f'{timeframe}T').agg({
-                        'open': 'first',
-                        'high': 'max',
-                        'low': 'min',
-                        'close': 'last',
-                        'volume': 'sum'
-                    }).dropna()
+                    # For QQQ with extended hours, align with PRE market start at 4:00 AM ET
+                    if not df.empty:
+                        first_timestamp = df.index.min()
+                        
+                        # Determine the proper alignment origin based on market session
+                        # PRE market starts at 4:00 AM ET, regular market at 9:30 AM ET
+                        pre_market_start = pd.Timestamp(f'{target_date} 04:00:00')
+                        market_open = pd.Timestamp(f'{target_date} 09:30:00')
+                        
+                        # If data starts before 9:30 AM, align with 4:00 AM for PRE market
+                        if first_timestamp.time() < pd.Timestamp('09:30:00').time():
+                            alignment_origin = pre_market_start
+                            logging.debug(f"Aligning QQQ extended hours data with PRE market start at 4:00 AM")
+                        else:
+                            alignment_origin = market_open
+                            logging.debug(f"Aligning QQQ data with market open at 9:30 AM")
+                        
+                        # Resample with proper alignment to ensure correct candle timing
+                        df = df.resample(f'{timeframe}T', origin=alignment_origin).agg({
+                            'open': 'first',
+                            'high': 'max',
+                            'low': 'min',
+                            'close': 'last',
+                            'volume': 'sum'
+                        }).dropna()
+                    else:
+                        # Fallback to standard resampling if data is empty
+                        df = df.resample(f'{timeframe}T').agg({
+                            'open': 'first',
+                            'high': 'max',
+                            'low': 'min',
+                            'close': 'last',
+                            'volume': 'sum'
+                        }).dropna()
                 else:
                     # For regular market hours or other tickers, align with market open (9:30 AM)
                     market_open = pd.Timestamp(f'{target_date} 09:30:00')

@@ -395,6 +395,20 @@ footer p {
     }
 }
 
+/* Trading Buttons Container Styling */
+.trading-buttons-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 10px auto;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    max-width: 400px;
+}
+
 /* Trade Summary Styling */
 #trade-summary {
     width: 100%;
@@ -786,13 +800,28 @@ footer p {
         font-size: 0.8em;
     }
 
+    /* Trading Buttons Container Mobile Styling */
+    .trading-buttons-container {
+        flex-direction: row;
+        justify-content: center;
+        gap: 10px;
+        margin: 8px auto;
+        padding: 8px;
+        max-width: 100%;
+        background-color: #f9f9f9;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
     /* Move buy/sell buttons closer to chart in mobile */
     #buy-trade, #sell-trade {
         font-size: 0.9em;
-        padding: 8px 16px;
-        margin: 4px;
+        padding: 10px 20px;
+        margin: 0;
         border-radius: 6px;
         font-weight: 600;
+        flex: 1;
+        max-width: 120px;
     }
 
     #buy-trade {

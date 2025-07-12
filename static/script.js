@@ -562,6 +562,10 @@ async function loadChart(event, tabId) {
     if (!ticker || !date || !timeframe) {
         chartContainer.innerHTML = '<p>Please select a ticker, date, and timeframe.</p>';
         replayControls.style.display = 'none';
+        if (replayPrefix === 'simulator') {
+            const tradingButtonsContainer = document.getElementById('trading-buttons-container');
+            if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';
+        }
         return;
     }
 
@@ -606,6 +610,10 @@ async function loadChart(event, tabId) {
             console.error('Chart error:', data.error);
             chartContainer.innerHTML = `<p>${data.error}</p>`;
             replayControls.style.display = 'none';
+            if (replayPrefix === 'simulator') {
+                const tradingButtonsContainer = document.getElementById('trading-buttons-container');
+                if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';
+            }
             return;
         }
 
@@ -664,6 +672,8 @@ async function loadChart(event, tabId) {
         prevButton.disabled = true;
         nextButton.disabled = true;
         if (replayPrefix === 'simulator') { // Market Simulator
+            const tradingButtonsContainer = document.getElementById('trading-buttons-container');
+            if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'block';
             if (buyButton) buyButton.disabled = true;
             if (sellButton) sellButton.disabled = true;
         }
@@ -679,6 +689,10 @@ async function loadChart(event, tabId) {
         console.error('Error loading chart:', error.message);
         chartContainer.innerHTML = '<p>Failed to load chart: ' + error.message + '. Please try again later.</p>';
         replayControls.style.display = 'none';
+        if (replayPrefix === 'simulator') {
+            const tradingButtonsContainer = document.getElementById('trading-buttons-container');
+            if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';
+        }
         alert('Failed to load chart: ' + error.message);
     }
 }
