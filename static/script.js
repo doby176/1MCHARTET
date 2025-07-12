@@ -160,6 +160,22 @@ let chartInstances = {
     earnings: null
 };
 
+// Technical Indicators Storage
+let indicatorSeries = {
+    simulator: {},
+    gap: {},
+    events: {},
+    earnings: {}
+};
+
+// Drawing Tools State
+let drawingTools = {
+    simulator: { active: null, lines: [] },
+    gap: { active: null, lines: [] },
+    events: { active: null, lines: [] },
+    earnings: { active: null, lines: [] }
+};
+
 // Replay globals for Market Simulator
 let chartDataSimulator = null;
 let replayIntervalSimulator = null;
@@ -552,6 +568,428 @@ function destroyChart(section) {
         }
         chartInstances[section] = null;
     }
+    // Clear indicators for this section
+    indicatorSeries[section] = {};
+    drawingTools[section] = { active: null, lines: [] };
+}
+
+// Technical Indicator Calculation Functions
+function calculateSMA(data, period) {
+    const sma = [];
+    for (let i = period - 1; i < data.length; i++) {
+        let sum = 0;
+        for (let j = 0; j < period; j++) {
+            sum += data[i - j].close;
+        }
+        sma.push({
+            time: data[i].time,
+            value: sum / period
+        });
+    }
+    return sma;
+}
+
+function calculateEMA(data, period) {
+    const ema = [];
+    const multiplier = 2 / (period + 1);
+    
+    // Start with SMA for first value
+    let sum = 0;
+    for (let i = 0; i < period; i++) {
+        sum += data[i].close;
+    }
+    ema.push({
+        time: data[period - 1].time,
+        value: sum / period
+    });
+    
+    // Calculate EMA for remaining values
+    for (let i = period; i < data.length; i++) {
+        const emaValue = (data[i].close - ema[ema.length - 1].value) * multiplier + ema[ema.length - 1].value;
+        ema.push({
+            time: data[i].time,
+            value: emaValue
+        });
+    }
+    return ema;
+}
+
+function calculateVWAP(candleData, volumeData) {
+    const vwap = [];
+    let cumulativeTPV = 0; // Typical Price * Volume
+    let cumulativeVolume = 0;
+    
+    for (let i = 0; i < candleData.length; i++) {
+        const typicalPrice = (candleData[i].high + candleData[i].low + candleData[i].close) / 3;
+        const volume = volumeData[i].value;
+        
+        cumulativeTPV += typicalPrice * volume;
+        cumulativeVolume += volume;
+        
+        vwap.push({
+            time: candleData[i].time,
+            value: cumulativeVolume > 0 ? cumulativeTPV / cumulativeVolume : candleData[i].close
+        });
+    }
+    return vwap;
+}
+
+function calculateRSI(data, period = 14) {
+    const rsi = [];
+    const gains = [];
+    const losses = [];
+    
+    // Calculate price changes
+    for (let i = 1; i < data.length; i++) {
+        const change = data[i].close - data[i - 1].close;
+        gains.push(change > 0 ? change : 0);
+        losses.push(change < 0 ? -change : 0);
+    }
+    
+    // Calculate initial average gain and loss
+    let avgGain = gains.slice(0, period).reduce((a, b) => a + b, 0) / period;
+    let avgLoss = losses.slice(0, period).reduce((a, b) => a + b, 0) / period;
+    
+    for (let i = period; i < data.length; i++) {
+        avgGain = (avgGain * (period - 1) + gains[i - 1]) / period;
+        avgLoss = (avgLoss * (period - 1) + losses[i - 1]) / period;
+        
+        const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+        const rsiValue = 100 - (100 / (1 + rs));
+        
+        rsi.push({
+            time: data[i].time,
+            value: rsiValue
+        });
+    }
+    return rsi;
+}
+
+function calculateMACD(data, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
+    const fastEMA = calculateEMA(data, fastPeriod);
+    const slowEMA = calculateEMA(data, slowPeriod);
+    
+    const macdLine = [];
+    const startIndex = slowPeriod - fastPeriod;
+    
+    for (let i = startIndex; i < fastEMA.length; i++) {
+        macdLine.push({
+            time: fastEMA[i].time,
+            value: fastEMA[i].value - slowEMA[i - startIndex].value
+        });
+    }
+    
+    const signalLine = calculateEMA(macdLine, signalPeriod);
+    const histogram = [];
+    
+    for (let i = 0; i < signalLine.length; i++) {
+        const macdIndex = i + signalPeriod - 1;
+        if (macdIndex < macdLine.length) {
+            histogram.push({
+                time: signalLine[i].time,
+                value: macdLine[macdIndex].value - signalLine[i].value
+            });
+        }
+    }
+    
+    return { macdLine, signalLine, histogram };
+}
+
+function calculateBollingerBands(data, period = 20, stdDev = 2) {
+    const sma = calculateSMA(data, period);
+    const bands = { upper: [], middle: [], lower: [] };
+    
+    for (let i = 0; i < sma.length; i++) {
+        const dataIndex = i + period - 1;
+        let sum = 0;
+        
+        // Calculate standard deviation
+        for (let j = 0; j < period; j++) {
+            sum += Math.pow(data[dataIndex - j].close - sma[i].value, 2);
+        }
+        const stdDeviation = Math.sqrt(sum / period);
+        
+        bands.upper.push({
+            time: sma[i].time,
+            value: sma[i].value + (stdDev * stdDeviation)
+        });
+        
+        bands.middle.push(sma[i]);
+        
+        bands.lower.push({
+            time: sma[i].time,
+            value: sma[i].value - (stdDev * stdDeviation)
+        });
+    }
+    
+    return bands;
+}
+
+function calculateStochastic(data, kPeriod = 14, dPeriod = 3) {
+    const stochK = [];
+    const stochD = [];
+    
+    for (let i = kPeriod - 1; i < data.length; i++) {
+        let highest = data[i].high;
+        let lowest = data[i].low;
+        
+        for (let j = 1; j < kPeriod; j++) {
+            highest = Math.max(highest, data[i - j].high);
+            lowest = Math.min(lowest, data[i - j].low);
+        }
+        
+        const kValue = highest === lowest ? 50 : ((data[i].close - lowest) / (highest - lowest)) * 100;
+        stochK.push({
+            time: data[i].time,
+            value: kValue
+        });
+    }
+    
+    // Calculate %D (SMA of %K)
+    for (let i = dPeriod - 1; i < stochK.length; i++) {
+        let sum = 0;
+        for (let j = 0; j < dPeriod; j++) {
+            sum += stochK[i - j].value;
+        }
+        stochD.push({
+            time: stochK[i].time,
+            value: sum / dPeriod
+        });
+    }
+    
+    return { stochK, stochD };
+}
+
+// Add Indicator to Chart
+function addIndicatorToChart(section, indicator, period, candleData, volumeData) {
+    const chart = chartInstances[section]?.chart;
+    if (!chart || !candleData.length) return;
+
+    const indicatorKey = `${indicator}_${period || ''}`;
+    
+    // Remove existing indicator of same type
+    if (indicatorSeries[section][indicatorKey]) {
+        chart.removeSeries(indicatorSeries[section][indicatorKey]);
+        delete indicatorSeries[section][indicatorKey];
+    }
+
+    let indicatorData = null;
+    let seriesOptions = {};
+    
+    // Calculate price range for scaling oscillators
+    const priceRange = Math.max(...candleData.map(d => d.high)) - Math.min(...candleData.map(d => d.low));
+    const minPrice = Math.min(...candleData.map(d => d.low));
+    
+    switch (indicator) {
+        case 'sma':
+            indicatorData = calculateSMA(candleData, period);
+            seriesOptions = {
+                color: period === 20 ? '#ff9800' : '#2196f3',
+                lineWidth: 2,
+                title: `SMA ${period}`
+            };
+            indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
+            break;
+            
+        case 'ema':
+            indicatorData = calculateEMA(candleData, period);
+            seriesOptions = {
+                color: period === 20 ? '#e91e63' : '#9c27b0',
+                lineWidth: 2,
+                title: `EMA ${period}`
+            };
+            indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
+            break;
+            
+        case 'vwap':
+            indicatorData = calculateVWAP(candleData, volumeData);
+            seriesOptions = {
+                color: '#4caf50',
+                lineWidth: 3,
+                title: 'VWAP'
+            };
+            indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
+            break;
+            
+        case 'bollinger':
+            const bbData = calculateBollingerBands(candleData, 20, 2);
+            // Add upper band
+            indicatorSeries[section][`${indicatorKey}_upper`] = chart.addLineSeries({
+                color: '#9e9e9e',
+                lineWidth: 1,
+                title: 'BB Upper'
+            });
+            indicatorSeries[section][`${indicatorKey}_upper`].setData(bbData.upper);
+            
+            // Add middle band (SMA)
+            indicatorSeries[section][`${indicatorKey}_middle`] = chart.addLineSeries({
+                color: '#607d8b',
+                lineWidth: 2,
+                title: 'BB Middle'
+            });
+            indicatorSeries[section][`${indicatorKey}_middle`].setData(bbData.middle);
+            
+            // Add lower band
+            indicatorSeries[section][`${indicatorKey}_lower`] = chart.addLineSeries({
+                color: '#9e9e9e',
+                lineWidth: 1,
+                title: 'BB Lower'
+            });
+            indicatorSeries[section][`${indicatorKey}_lower`].setData(bbData.lower);
+            return; // Don't set data again below
+            
+        case 'rsi':
+            indicatorData = calculateRSI(candleData, 14);
+            // Note: RSI should ideally be in a separate pane, but for simplicity, scaling to price range
+            indicatorData = indicatorData.map(d => ({
+                time: d.time,
+                value: minPrice + (d.value / 100) * priceRange * 0.3 // Scale RSI to 30% of price range
+            }));
+            seriesOptions = {
+                color: '#f44336',
+                lineWidth: 2,
+                title: 'RSI (scaled)'
+            };
+            indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
+            break;
+            
+        case 'macd':
+            const macdData = calculateMACD(candleData, 12, 26, 9);
+            // Scale MACD to price range for visibility
+            const macdRange = Math.max(...macdData.macdLine.map(d => d.value)) - Math.min(...macdData.macdLine.map(d => d.value));
+            const scaledMacd = macdData.macdLine.map(d => ({
+                time: d.time,
+                value: minPrice + (d.value / macdRange) * priceRange * 0.2
+            }));
+            
+            seriesOptions = {
+                color: '#ff5722',
+                lineWidth: 2,
+                title: 'MACD (scaled)'
+            };
+            indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
+            indicatorData = scaledMacd;
+            break;
+            
+        case 'stochastic':
+            const stochData = calculateStochastic(candleData, 14, 3);
+            // Scale Stochastic to price range
+            const scaledStochK = stochData.stochK.map(d => ({
+                time: d.time,
+                value: minPrice + (d.value / 100) * priceRange * 0.25
+            }));
+            
+            seriesOptions = {
+                color: '#673ab7',
+                lineWidth: 2,
+                title: 'Stochastic %K (scaled)'
+            };
+            indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
+            indicatorData = scaledStochK;
+            break;
+    }
+    
+    if (indicatorData && indicatorSeries[section][indicatorKey]) {
+        indicatorSeries[section][indicatorKey].setData(indicatorData);
+    }
+}
+
+// Remove Indicator from Chart
+function removeIndicatorFromChart(section, indicator, period) {
+    const chart = chartInstances[section]?.chart;
+    if (!chart) return;
+
+    const indicatorKey = `${indicator}_${period || ''}`;
+    
+    if (indicator === 'bollinger') {
+        // Remove all Bollinger Band components
+        ['upper', 'middle', 'lower'].forEach(component => {
+            const key = `${indicatorKey}_${component}`;
+            if (indicatorSeries[section][key]) {
+                chart.removeSeries(indicatorSeries[section][key]);
+                delete indicatorSeries[section][key];
+            }
+        });
+    } else if (indicatorSeries[section][indicatorKey]) {
+        chart.removeSeries(indicatorSeries[section][indicatorKey]);
+        delete indicatorSeries[section][indicatorKey];
+    }
+}
+
+// Handle Indicator Checkbox Changes
+function setupIndicatorListeners(section) {
+    const indicatorPanel = document.getElementById(`chart-indicators-${section}`);
+    if (!indicatorPanel) return;
+
+    // Add event listeners for indicator checkboxes
+    const checkboxes = indicatorPanel.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const indicator = e.target.dataset.indicator;
+            const period = parseInt(e.target.dataset.period) || null;
+            const isChecked = e.target.checked;
+            
+            const config = getReplayConfig(section);
+            const chartData = config.chartData();
+            
+            if (chartData && isChecked) {
+                // Convert chart data to format needed for indicators
+                const candleData = chartData.timestamp.map((timestamp, i) => ({
+                    time: Math.floor(new Date(timestamp).getTime() / 1000),
+                    open: parseFloat(chartData.open[i]),
+                    high: parseFloat(chartData.high[i]),
+                    low: parseFloat(chartData.low[i]),
+                    close: parseFloat(chartData.close[i])
+                }));
+                
+                const volumeData = chartData.timestamp.map((timestamp, i) => ({
+                    time: Math.floor(new Date(timestamp).getTime() / 1000),
+                    value: parseFloat(chartData.volume[i])
+                }));
+                
+                addIndicatorToChart(section, indicator, period, candleData, volumeData);
+            } else {
+                removeIndicatorFromChart(section, indicator, period);
+            }
+        });
+    });
+
+    // Add event listeners for drawing tools
+    const drawingButtons = indicatorPanel.querySelectorAll('.drawing-tool-btn');
+    drawingButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const tool = e.target.dataset.tool;
+            
+            if (tool === 'clear') {
+                clearAllDrawings(section);
+            } else {
+                activateDrawingTool(section, tool);
+            }
+        });
+    });
+}
+
+// Drawing Tools Functions (Simplified)
+function activateDrawingTool(section, tool) {
+    const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    const activeButton = document.querySelector(`#chart-indicators-${section} [data-tool="${tool}"]`);
+    if (activeButton) {
+        activeButton.classList.add('active');
+        drawingTools[section].active = tool;
+    }
+}
+
+function clearAllDrawings(section) {
+    drawingTools[section].lines = [];
+    drawingTools[section].active = null;
+    
+    const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Note: In a full implementation, you'd remove the actual drawn lines from the chart
+    console.log(`Cleared all drawings for ${section}`);
 }
 
 function populateEarningsOutcomes() {
@@ -870,11 +1308,13 @@ async function loadChart(event, tabId) {
         button.textContent = 'Rate Limit Exceeded';
         inputs.forEach(input => input.disabled = true);
         return;
-    }
+          }
 
     if (!ticker || !date || !timeframe) {
         chartContainer.innerHTML = '<p>Please select a ticker, date, and timeframe.</p>';
         replayControls.style.display = 'none';
+        const indicatorsPanel = document.getElementById(`chart-indicators-${replayPrefix}`);
+        if (indicatorsPanel) indicatorsPanel.style.display = 'none';
         if (replayPrefix === 'simulator') {
             const tradingButtonsContainer = document.getElementById('trading-buttons-container');
             if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';
@@ -923,6 +1363,8 @@ async function loadChart(event, tabId) {
             console.error('Chart error:', data.error);
             chartContainer.innerHTML = `<p>${data.error}</p>`;
             replayControls.style.display = 'none';
+            const indicatorsPanel = document.getElementById(`chart-indicators-${replayPrefix}`);
+            if (indicatorsPanel) indicatorsPanel.style.display = 'none';
             if (replayPrefix === 'simulator') {
                 const tradingButtonsContainer = document.getElementById('trading-buttons-container');
                 if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';
@@ -994,9 +1436,17 @@ async function loadChart(event, tabId) {
         startOverButton.disabled = true;
         prevButton.disabled = true;
         nextButton.disabled = true;
+        
+        // Show indicators panel and set up listeners
+        const indicatorsPanel = document.getElementById(`chart-indicators-${replayPrefix}`);
+        if (indicatorsPanel) {
+            indicatorsPanel.style.display = 'block';
+            setupIndicatorListeners(replayPrefix);
+        }
+        
         if (replayPrefix === 'simulator') { // Market Simulator
             const tradingButtonsContainer = document.getElementById('trading-buttons-container');
-            if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'block';
+            if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'flex';
             if (buyButton) buyButton.disabled = true;
             if (sellButton) sellButton.disabled = true;
         }
@@ -1012,6 +1462,8 @@ async function loadChart(event, tabId) {
         console.error('Error loading chart:', error.message);
         chartContainer.innerHTML = '<p>Failed to load chart: ' + error.message + '. Please try again later.</p>';
         replayControls.style.display = 'none';
+        const indicatorsPanel = document.getElementById(`chart-indicators-${replayPrefix}`);
+        if (indicatorsPanel) indicatorsPanel.style.display = 'none';
         if (replayPrefix === 'simulator') {
             const tradingButtonsContainer = document.getElementById('trading-buttons-container');
             if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';

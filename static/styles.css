@@ -404,6 +404,143 @@ footer p {
     }
 }
 
+/* Chart Indicators Panel Styling */
+.chart-indicators {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin: 15px 0;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.indicators-section, .drawing-tools-section {
+    margin-bottom: 20px;
+}
+
+.indicators-section h4, .drawing-tools-section h4 {
+    margin: 0 0 15px 0;
+    color: #1a1b2f;
+    font-size: 1.1em;
+    font-weight: 700;
+    text-align: center;
+    border-bottom: 2px solid #1a1b2f;
+    padding-bottom: 5px;
+}
+
+.indicators-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.indicator-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.indicator-group > label:first-child {
+    font-weight: 700;
+    color: #1a1b2f;
+    font-size: 0.95em;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #cccccc;
+    padding-bottom: 3px;
+}
+
+.indicator-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+    color: #333333;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.indicator-group label:hover {
+    background-color: #e8e8e8;
+}
+
+.indicator-group input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+.drawing-tool-btn {
+    padding: 10px 12px;
+    background-color: #153097;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.drawing-tool-btn:hover {
+    background-color: #112A7F;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.drawing-tool-btn.active {
+    background-color: #00cc00;
+    color: white;
+    box-shadow: 0 0 10px rgba(0,204,0,0.5);
+}
+
+.drawing-tool-btn.clear-btn {
+    background-color: #ff6b6b;
+}
+
+.drawing-tool-btn.clear-btn:hover {
+    background-color: #ff5252;
+}
+
+/* Mobile Indicators Panel */
+@media (max-width: 600px) {
+    .chart-indicators {
+        margin: 10px 0;
+        padding: 12px;
+    }
+    
+    .indicators-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .tools-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .drawing-tool-btn {
+        padding: 8px 10px;
+        font-size: 0.8em;
+    }
+    
+    .indicator-group label {
+        font-size: 0.85em;
+        padding: 3px 6px;
+    }
+}
+
 /* Trading Buttons Styling */
 .trading-buttons {
     display: flex;

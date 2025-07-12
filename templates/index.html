@@ -85,6 +85,41 @@
                     <button type="submit">Load Chart</button>
                 </form>
                 <div id="chart-container-simulator">
+                    <div id="chart-indicators-simulator" class="chart-indicators" style="display: none;">
+                        <div class="indicators-section">
+                            <h4>Technical Indicators</h4>
+                            <div class="indicators-grid">
+                                <div class="indicator-group">
+                                    <label>Moving Averages:</label>
+                                    <label><input type="checkbox" id="sma20-simulator" data-indicator="sma" data-period="20"> SMA 20</label>
+                                    <label><input type="checkbox" id="sma50-simulator" data-indicator="sma" data-period="50"> SMA 50</label>
+                                    <label><input type="checkbox" id="ema20-simulator" data-indicator="ema" data-period="20"> EMA 20</label>
+                                    <label><input type="checkbox" id="ema50-simulator" data-indicator="ema" data-period="50"> EMA 50</label>
+                                </div>
+                                <div class="indicator-group">
+                                    <label>Volume & Price:</label>
+                                    <label><input type="checkbox" id="vwap-simulator" data-indicator="vwap"> VWAP</label>
+                                    <label><input type="checkbox" id="bb-simulator" data-indicator="bollinger"> Bollinger Bands</label>
+                                </div>
+                                <div class="indicator-group">
+                                    <label>Oscillators:</label>
+                                    <label><input type="checkbox" id="rsi-simulator" data-indicator="rsi"> RSI (14)</label>
+                                    <label><input type="checkbox" id="macd-simulator" data-indicator="macd"> MACD</label>
+                                    <label><input type="checkbox" id="stoch-simulator" data-indicator="stochastic"> Stochastic</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="drawing-tools-section">
+                            <h4>Drawing Tools</h4>
+                            <div class="tools-grid">
+                                <button id="trend-line-simulator" class="drawing-tool-btn" data-tool="trendline">📈 Trend Line</button>
+                                <button id="horizontal-line-simulator" class="drawing-tool-btn" data-tool="horizontal">➖ Horizontal Line</button>
+                                <button id="fibonacci-simulator" class="drawing-tool-btn" data-tool="fibonacci">📊 Fibonacci</button>
+                                <button id="measure-tool-simulator" class="drawing-tool-btn" data-tool="measure">📏 Measure</button>
+                                <button id="clear-drawings-simulator" class="drawing-tool-btn clear-btn">🗑️ Clear All</button>
+                            </div>
+                        </div>
+                    </div>
                     <div id="chart-simulator"></div>
                 </div>
                 <div id="trading-buttons-container" class="trading-buttons" style="display: none;">
@@ -168,6 +203,31 @@
                     <ul id="gap-dates-list"></ul>
                 </div>
                 <div id="chart-container-gap">
+                    <div id="chart-indicators-gap" class="chart-indicators" style="display: none;">
+                        <div class="indicators-section">
+                            <h4>Technical Indicators</h4>
+                            <div class="indicators-grid">
+                                <div class="indicator-group">
+                                    <label>Moving Averages:</label>
+                                    <label><input type="checkbox" id="sma20-gap" data-indicator="sma" data-period="20"> SMA 20</label>
+                                    <label><input type="checkbox" id="sma50-gap" data-indicator="sma" data-period="50"> SMA 50</label>
+                                    <label><input type="checkbox" id="ema20-gap" data-indicator="ema" data-period="20"> EMA 20</label>
+                                    <label><input type="checkbox" id="ema50-gap" data-indicator="ema" data-period="50"> EMA 50</label>
+                                </div>
+                                <div class="indicator-group">
+                                    <label>Volume & Price:</label>
+                                    <label><input type="checkbox" id="vwap-gap" data-indicator="vwap"> VWAP</label>
+                                    <label><input type="checkbox" id="bb-gap" data-indicator="bollinger"> Bollinger Bands</label>
+                                </div>
+                                <div class="indicator-group">
+                                    <label>Oscillators:</label>
+                                    <label><input type="checkbox" id="rsi-gap" data-indicator="rsi"> RSI (14)</label>
+                                    <label><input type="checkbox" id="macd-gap" data-indicator="macd"> MACD</label>
+                                    <label><input type="checkbox" id="stoch-gap" data-indicator="stochastic"> Stochastic</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div id="chart-gap"></div>
                 </div>
                 <div id="replay-controls-gap" class="replay-controls" style="display: none;">
@@ -313,6 +373,31 @@
                     <button type="submit">Load Chart</button>
                 </form>
                 <div id="chart-container-events">
+                    <div id="chart-indicators-events" class="chart-indicators" style="display: none;">
+                        <div class="indicators-section">
+                            <h4>Technical Indicators</h4>
+                            <div class="indicators-grid">
+                                <div class="indicator-group">
+                                    <label>Moving Averages:</label>
+                                    <label><input type="checkbox" id="sma20-events" data-indicator="sma" data-period="20"> SMA 20</label>
+                                    <label><input type="checkbox" id="sma50-events" data-indicator="sma" data-period="50"> SMA 50</label>
+                                    <label><input type="checkbox" id="ema20-events" data-indicator="ema" data-period="20"> EMA 20</label>
+                                    <label><input type="checkbox" id="ema50-events" data-indicator="ema" data-period="50"> EMA 50</label>
+                                </div>
+                                <div class="indicator-group">
+                                    <label>Volume & Price:</label>
+                                    <label><input type="checkbox" id="vwap-events" data-indicator="vwap"> VWAP</label>
+                                    <label><input type="checkbox" id="bb-events" data-indicator="bollinger"> Bollinger Bands</label>
+                                </div>
+                                <div class="indicator-group">
+                                    <label>Oscillators:</label>
+                                    <label><input type="checkbox" id="rsi-events" data-indicator="rsi"> RSI (14)</label>
+                                    <label><input type="checkbox" id="macd-events" data-indicator="macd"> MACD</label>
+                                    <label><input type="checkbox" id="stoch-events" data-indicator="stochastic"> Stochastic</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div id="chart-events"></div>
                 </div>
                 <div id="replay-controls-events" class="replay-controls" style="display: none;">
@@ -395,6 +480,31 @@
                     <ul id="earnings-dates-list"></ul>
                 </div>
                 <div id="chart-container-earnings">
+                    <div id="chart-indicators-earnings" class="chart-indicators" style="display: none;">
+                        <div class="indicators-section">
+                            <h4>Technical Indicators</h4>
+                            <div class="indicators-grid">
+                                <div class="indicator-group">
+                                    <label>Moving Averages:</label>
+                                    <label><input type="checkbox" id="sma20-earnings" data-indicator="sma" data-period="20"> SMA 20</label>
+                                    <label><input type="checkbox" id="sma50-earnings" data-indicator="sma" data-period="50"> SMA 50</label>
+                                    <label><input type="checkbox" id="ema20-earnings" data-indicator="ema" data-period="20"> EMA 20</label>
+                                    <label><input type="checkbox" id="ema50-earnings" data-indicator="ema" data-period="50"> EMA 50</label>
+                                </div>
+                                <div class="indicator-group">
+                                    <label>Volume & Price:</label>
+                                    <label><input type="checkbox" id="vwap-earnings" data-indicator="vwap"> VWAP</label>
+                                    <label><input type="checkbox" id="bb-earnings" data-indicator="bollinger"> Bollinger Bands</label>
+                                </div>
+                                <div class="indicator-group">
+                                    <label>Oscillators:</label>
+                                    <label><input type="checkbox" id="rsi-earnings" data-indicator="rsi"> RSI (14)</label>
+                                    <label><input type="checkbox" id="macd-earnings" data-indicator="macd"> MACD</label>
+                                    <label><input type="checkbox" id="stoch-earnings" data-indicator="stochastic"> Stochastic</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div id="chart-earnings"></div>
                 </div>
                 <div id="replay-controls-earnings" class="replay-controls" style="display: none;">
@@ -461,6 +571,6 @@
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
     </script>
-    <script src="/static/script.js?v=31"></script>
+    <script src="/static/script.js?v=33"></script>
 </body>
 </html>
