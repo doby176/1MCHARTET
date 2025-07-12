@@ -112,15 +112,7 @@ form button:hover {
     position: relative;
 }
 
-/* NEW: Ensure chart titles are readable with added timeframe text */
-.plotly .gtitle {
-    font-size: 1.2em !important;
-    font-weight: 700 !important;
-    color: #1a1b2f !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
+
 
 .ads-container {
     margin-top: 20px;
@@ -732,12 +724,7 @@ footer p {
         overflow: hidden;
     }
 
-    /* NEW: Ensure chart titles are readable on mobile */
-    .plotly .gtitle {
-        font-size: 1em !important;
-        white-space: normal !important;
-        line-height: 1.2 !important;
-    }
+
 
     .ads-container {
         max-width: 280px;
