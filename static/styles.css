@@ -108,6 +108,13 @@ form button:hover {
     max-height: 800px;
 }
 
+/* Chart.js canvas styling */
+#chart-simulator, #chart-gap, #chart-events, #chart-earnings {
+    width: 100% !important;
+    height: 600px !important;
+    max-height: 800px !important;
+}
+
 /* NEW: Ensure chart titles are readable with added timeframe text */
 .plotly .gtitle {
     font-size: 1.2em !important;
@@ -687,6 +694,13 @@ footer p {
         max-height: 400px;
         width: 100%;
         max-width: 100%;
+    }
+    
+    #chart-simulator, #chart-gap, #chart-events, #chart-earnings {
+        height: 300px !important;
+        max-height: 400px !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
 
     /* NEW: Ensure chart titles are readable on mobile */
