@@ -1,98 +1,155 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing app...');
     
-    // Check if LightweightCharts is loaded
-    if (typeof LightweightCharts === 'undefined') {
-        console.error('LightweightCharts library is not loaded!');
-        alert('Chart library failed to load. Please refresh the page.');
-        return;
-    } else {
-        console.log('LightweightCharts library loaded successfully');
-        // Check version and available methods
-        if (LightweightCharts.version) {
-            console.log('LightweightCharts version:', LightweightCharts.version);
-        }
-        // Test if V4 methods are available
-        const testChart = document.createElement('div');
-        try {
-            const tempChart = LightweightCharts.createChart(testChart, { width: 1, height: 1 });
-            if (typeof tempChart.addCandlestickSeries === 'function') {
-                console.log('✅ V4 addCandlestickSeries method available');
-            } else {
-                console.error('❌ addCandlestickSeries method not available - wrong version?');
+    // Check if this page has chart containers (only check library on pages that need charts)
+    const hasChartContainers = !!(
+        document.getElementById('chart-simulator') ||
+        document.getElementById('chart-gap') ||
+        document.getElementById('chart-events') ||
+        document.getElementById('chart-earnings')
+    );
+    
+    if (hasChartContainers) {
+        // Only check for LightweightCharts on pages that have chart containers
+        if (typeof LightweightCharts === 'undefined') {
+            console.error('LightweightCharts library is not loaded!');
+            alert('Chart library failed to load. Please refresh the page.');
+            return;
+        } else {
+            console.log('LightweightCharts library loaded successfully');
+            // Check version and available methods
+            if (LightweightCharts.version) {
+                console.log('LightweightCharts version:', LightweightCharts.version);
             }
-            tempChart.remove();
-        } catch (e) {
-            console.error('Error testing chart methods:', e);
+            // Test if V4 methods are available
+            const testChart = document.createElement('div');
+            try {
+                const tempChart = LightweightCharts.createChart(testChart, { width: 1, height: 1 });
+                if (typeof tempChart.addCandlestickSeries === 'function') {
+                    console.log('✅ V4 addCandlestickSeries method available');
+                } else {
+                    console.error('❌ addCandlestickSeries method not available - wrong version?');
+                }
+                tempChart.remove();
+            } catch (e) {
+                console.error('Error testing chart methods:', e);
+            }
         }
+    } else {
+        console.log('No chart containers found on this page - skipping chart library check');
     }
     
-    loadTickers();
-    loadYears();
-    loadEarningsTickers();
-    loadBinOptions();
-    populateEarningsOutcomes();
+    // Load data for pages that need it
+    if (typeof loadTickers === 'function') loadTickers();
+    if (typeof loadYears === 'function') loadYears();
+    if (typeof loadEarningsTickers === 'function') loadEarningsTickers();
+    if (typeof loadBinOptions === 'function') loadBinOptions();
+    if (typeof populateEarningsOutcomes === 'function') populateEarningsOutcomes();
     
-    // Initialize stock forms for all tabs
-    document.getElementById('stock-form-simulator').addEventListener('submit', (e) => loadChart(e, 'market-simulator'));
-    document.getElementById('stock-form-gap').addEventListener('submit', (e) => loadChart(e, 'gap-analysis'));
-    document.getElementById('stock-form-events').addEventListener('submit', (e) => loadChart(e, 'events-analysis'));
-    document.getElementById('gap-form').addEventListener('submit', loadGapDates);
-    document.getElementById('events-form').addEventListener('submit', loadEventDates);
-    document.getElementById('earnings-form').addEventListener('submit', loadEarningsDates);
-    document.getElementById('gap-insights-form').addEventListener('submit', loadGapInsights);
-    
-    // Replay control listeners (Market Simulator)
-    document.getElementById('play-replay-simulator').addEventListener('click', () => startReplay('simulator'));
-    document.getElementById('pause-replay-simulator').addEventListener('click', () => pauseReplay('simulator'));
-    document.getElementById('start-over-replay-simulator').addEventListener('click', () => startOverReplay('simulator'));
-    document.getElementById('prev-candle-simulator').addEventListener('click', () => prevCandle('simulator'));
-    document.getElementById('next-candle-simulator').addEventListener('click', () => nextCandle('simulator'));
-    document.getElementById('replay-speed-simulator').addEventListener('change', () => updateReplaySpeed('simulator'));
-    // Trade simulator listeners (exclusive to Market Simulator)
-    document.getElementById('buy-trade').addEventListener('click', placeBuyTrade);
-    document.getElementById('sell-trade').addEventListener('click', placeSellTrade);
+    // Initialize chart-related event listeners only on pages that have chart containers
+    if (hasChartContainers) {
+        // Initialize stock forms for all tabs
+        const formSimulator = document.getElementById('stock-form-simulator');
+        const formGap = document.getElementById('stock-form-gap');
+        const formEvents = document.getElementById('stock-form-events');
+        const formGapForm = document.getElementById('gap-form');
+        const formEventsForm = document.getElementById('events-form');
+        const formEarningsForm = document.getElementById('earnings-form');
+        const formGapInsights = document.getElementById('gap-insights-form');
+        
+        if (formSimulator) formSimulator.addEventListener('submit', (e) => loadChart(e, 'market-simulator'));
+        if (formGap) formGap.addEventListener('submit', (e) => loadChart(e, 'gap-analysis'));
+        if (formEvents) formEvents.addEventListener('submit', (e) => loadChart(e, 'events-analysis'));
+        if (formGapForm) formGapForm.addEventListener('submit', loadGapDates);
+        if (formEventsForm) formEventsForm.addEventListener('submit', loadEventDates);
+        if (formEarningsForm) formEarningsForm.addEventListener('submit', loadEarningsDates);
+        if (formGapInsights) formGapInsights.addEventListener('submit', loadGapInsights);
+        
+        // Replay control listeners (Market Simulator)
+        const playSimulator = document.getElementById('play-replay-simulator');
+        const pauseSimulator = document.getElementById('pause-replay-simulator');
+        const startOverSimulator = document.getElementById('start-over-replay-simulator');
+        const prevSimulator = document.getElementById('prev-candle-simulator');
+        const nextSimulator = document.getElementById('next-candle-simulator');
+        const speedSimulator = document.getElementById('replay-speed-simulator');
+        const buyTrade = document.getElementById('buy-trade');
+        const sellTrade = document.getElementById('sell-trade');
+        
+        if (playSimulator) playSimulator.addEventListener('click', () => startReplay('simulator'));
+        if (pauseSimulator) pauseSimulator.addEventListener('click', () => pauseReplay('simulator'));
+        if (startOverSimulator) startOverSimulator.addEventListener('click', () => startOverReplay('simulator'));
+        if (prevSimulator) prevSimulator.addEventListener('click', () => prevCandle('simulator'));
+        if (nextSimulator) nextSimulator.addEventListener('click', () => nextCandle('simulator'));
+        if (speedSimulator) speedSimulator.addEventListener('change', () => updateReplaySpeed('simulator'));
+        if (buyTrade) buyTrade.addEventListener('click', placeBuyTrade);
+        if (sellTrade) sellTrade.addEventListener('click', placeSellTrade);
 
-    // Replay control listeners for Gap Analysis
-    document.getElementById('play-replay-gap').addEventListener('click', () => startReplay('gap'));
-    document.getElementById('pause-replay-gap').addEventListener('click', () => pauseReplay('gap'));
-    document.getElementById('start-over-replay-gap').addEventListener('click', () => startOverReplay('gap'));
-    document.getElementById('prev-candle-gap').addEventListener('click', () => prevCandle('gap'));
-    document.getElementById('next-candle-gap').addEventListener('click', () => nextCandle('gap'));
-    document.getElementById('replay-speed-gap').addEventListener('change', () => updateReplaySpeed('gap'));
+        // Replay control listeners for Gap Analysis
+        const playGap = document.getElementById('play-replay-gap');
+        const pauseGap = document.getElementById('pause-replay-gap');
+        const startOverGap = document.getElementById('start-over-replay-gap');
+        const prevGap = document.getElementById('prev-candle-gap');
+        const nextGap = document.getElementById('next-candle-gap');
+        const speedGap = document.getElementById('replay-speed-gap');
+        
+        if (playGap) playGap.addEventListener('click', () => startReplay('gap'));
+        if (pauseGap) pauseGap.addEventListener('click', () => pauseReplay('gap'));
+        if (startOverGap) startOverGap.addEventListener('click', () => startOverReplay('gap'));
+        if (prevGap) prevGap.addEventListener('click', () => prevCandle('gap'));
+        if (nextGap) nextGap.addEventListener('click', () => nextCandle('gap'));
+        if (speedGap) speedGap.addEventListener('change', () => updateReplaySpeed('gap'));
 
-    // Replay control listeners for Events Analysis
-    document.getElementById('play-replay-events').addEventListener('click', () => startReplay('events'));
-    document.getElementById('pause-replay-events').addEventListener('click', () => pauseReplay('events'));
-    document.getElementById('start-over-replay-events').addEventListener('click', () => startOverReplay('events'));
-    document.getElementById('prev-candle-events').addEventListener('click', () => prevCandle('events'));
-    document.getElementById('next-candle-events').addEventListener('click', () => nextCandle('events'));
-    document.getElementById('replay-speed-events').addEventListener('change', () => updateReplaySpeed('events'));
+        // Replay control listeners for Events Analysis
+        const playEvents = document.getElementById('play-replay-events');
+        const pauseEvents = document.getElementById('pause-replay-events');
+        const startOverEvents = document.getElementById('start-over-replay-events');
+        const prevEvents = document.getElementById('prev-candle-events');
+        const nextEvents = document.getElementById('next-candle-events');
+        const speedEvents = document.getElementById('replay-speed-events');
+        
+        if (playEvents) playEvents.addEventListener('click', () => startReplay('events'));
+        if (pauseEvents) pauseEvents.addEventListener('click', () => pauseReplay('events'));
+        if (startOverEvents) startOverEvents.addEventListener('click', () => startOverReplay('events'));
+        if (prevEvents) prevEvents.addEventListener('click', () => prevCandle('events'));
+        if (nextEvents) nextEvents.addEventListener('click', () => nextCandle('events'));
+        if (speedEvents) speedEvents.addEventListener('change', () => updateReplaySpeed('events'));
 
-    // Replay control listeners for Earnings Analysis
-    document.getElementById('play-replay-earnings').addEventListener('click', () => startReplay('earnings'));
-    document.getElementById('pause-replay-earnings').addEventListener('click', () => pauseReplay('earnings'));
-    document.getElementById('start-over-replay-earnings').addEventListener('click', () => startOverReplay('earnings'));
-    document.getElementById('prev-candle-earnings').addEventListener('click', () => prevCandle('earnings'));
-    document.getElementById('next-candle-earnings').addEventListener('click', () => nextCandle('earnings'));
-    document.getElementById('replay-speed-earnings').addEventListener('change', () => updateReplaySpeed('earnings'));
+        // Replay control listeners for Earnings Analysis
+        const playEarnings = document.getElementById('play-replay-earnings');
+        const pauseEarnings = document.getElementById('pause-replay-earnings');
+        const startOverEarnings = document.getElementById('start-over-replay-earnings');
+        const prevEarnings = document.getElementById('prev-candle-earnings');
+        const nextEarnings = document.getElementById('next-candle-earnings');
+        const speedEarnings = document.getElementById('replay-speed-earnings');
+        
+        if (playEarnings) playEarnings.addEventListener('click', () => startReplay('earnings'));
+        if (pauseEarnings) pauseEarnings.addEventListener('click', () => pauseReplay('earnings'));
+        if (startOverEarnings) startOverEarnings.addEventListener('click', () => startOverReplay('earnings'));
+        if (prevEarnings) prevEarnings.addEventListener('click', () => prevCandle('earnings'));
+        if (nextEarnings) nextEarnings.addEventListener('click', () => nextCandle('earnings'));
+        if (speedEarnings) speedEarnings.addEventListener('change', () => updateReplaySpeed('earnings'));
 
-    // Handle filter type toggle for events
-    const filterRadios = document.querySelectorAll('input[name="filter-type"]');
-    filterRadios.forEach(radio => {
-        radio.addEventListener('change', toggleFilterSection);
-    });
+        // Handle filter type toggle for events
+        const filterRadios = document.querySelectorAll('input[name="filter-type"]');
+        filterRadios.forEach(radio => {
+            radio.addEventListener('change', toggleFilterSection);
+        });
 
-    // Handle filter type toggle for earnings
-    const earningsFilterRadios = document.querySelectorAll('input[name="earnings-filter-type"]');
-    earningsFilterRadios.forEach(radio => {
-        radio.addEventListener('change', toggleEarningsFilterSection);
-    });
+        // Handle filter type toggle for earnings
+        const earningsFilterRadios = document.querySelectorAll('input[name="earnings-filter-type"]');
+        earningsFilterRadios.forEach(radio => {
+            radio.addEventListener('change', toggleEarningsFilterSection);
+        });
 
-    // Initialize ticker selects for all tabs
-    document.getElementById('ticker-select-simulator').addEventListener('change', () => loadDates('ticker-select-simulator', 'date-simulator'));
-    document.getElementById('ticker-select-gap').addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
-    document.getElementById('ticker-select-events').addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
+        // Initialize ticker selects for all tabs
+        const tickerSimulator = document.getElementById('ticker-select-simulator');
+        const tickerGap = document.getElementById('ticker-select-gap');
+        const tickerEvents = document.getElementById('ticker-select-events');
+        
+        if (tickerSimulator) tickerSimulator.addEventListener('change', () => loadDates('ticker-select-simulator', 'date-simulator'));
+        if (tickerGap) tickerGap.addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
+        if (tickerEvents) tickerEvents.addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
+    }
 });
 
 // Chart instances for TradingView lightweight-charts
