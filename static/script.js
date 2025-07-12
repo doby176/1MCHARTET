@@ -138,12 +138,19 @@ function aggregateCandles(data, timeframe) {
         }));
     }
 
+    console.log(`Aggregating ${data.timestamp.length} candles to ${timeframe}-minute timeframe`);
     const candles = [];
     let currentCandle = null;
     let minuteCount = 0;
 
+    // Parse timestamps to ensure proper time-based aggregation
+    const timestampDates = data.timestamp.map(ts => new Date(ts));
+    
     for (let i = 0; i < data.timestamp.length; i++) {
+        const currentTime = timestampDates[i];
+        
         if (minuteCount === 0) {
+            // Start a new candle
             currentCandle = {
                 timestamp: data.timestamp[i],
                 open: data.open[i],
@@ -153,7 +160,9 @@ function aggregateCandles(data, timeframe) {
                 volume: data.volume[i],
                 minuteUpdates: []
             };
+            minuteCount = 1;
         } else {
+            // Update the current candle
             currentCandle.high = Math.max(currentCandle.high, data.high[i]);
             currentCandle.low = Math.min(currentCandle.low, data.low[i]);
             currentCandle.close = data.close[i];
@@ -165,19 +174,23 @@ function aggregateCandles(data, timeframe) {
                 close: currentCandle.close,
                 volume: currentCandle.volume
             });
+            minuteCount++;
         }
 
-        minuteCount++;
+        // Check if we should complete this candle
         if (minuteCount === timeframe) {
             candles.push(currentCandle);
             minuteCount = 0;
+            currentCandle = null;
         }
     }
 
+    // Add any remaining partial candle
     if (currentCandle && minuteCount > 0) {
         candles.push(currentCandle);
     }
 
+    console.log(`Aggregated to ${candles.length} ${timeframe}-minute candles`);
     return candles;
 }
 
@@ -570,7 +583,9 @@ async function loadChart(event, tabId) {
     }
 
     console.log(`Loading chart for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrict_hours=${shouldRestrictHours}, tab=${tabId}`);
-    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=${timeframe > 1}${shouldRestrictHours ? '&restrict_hours=true' : ''}`;
+    // Use server-side resampling for better alignment and missing candle handling
+    // Only use replay_mode=true when we actually need 1-minute data for replay functionality
+    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=true${shouldRestrictHours ? '&restrict_hours=true' : ''}`;
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
