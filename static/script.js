@@ -187,81 +187,106 @@ function aggregateCandles(data, timeframe) {
 function createChart(containerId, ticker, date, timeframe) {
     const container = document.getElementById(containerId);
     
+    if (!container) {
+        console.error(`Chart container with ID '${containerId}' not found`);
+        return null;
+    }
+    
     // Clear existing chart
     container.innerHTML = '';
     
-    // Create chart
-    const chart = LightweightCharts.createChart(container, {
-        width: container.clientWidth,
-        height: 600,
-        layout: {
-            background: { color: '#ffffff' },
-            textColor: '#333',
-        },
-        grid: {
-            vertLines: { color: '#e1e1e1' },
-            horzLines: { color: '#e1e1e1' },
-        },
-        crosshair: {
-            mode: LightweightCharts.CrosshairMode.Normal,
-        },
-        timeScale: {
-            timeVisible: true,
-            secondsVisible: false,
-            borderColor: '#485c7b',
-        },
-        rightPriceScale: {
-            borderColor: '#485c7b',
-        },
-    });
+    // Check if LightweightCharts is available
+    if (typeof LightweightCharts === 'undefined') {
+        console.error('LightweightCharts library is not loaded');
+        container.innerHTML = '<p>Error: Chart library not loaded</p>';
+        return null;
+    }
+    
+    try {
+        // Create chart
+        const chart = LightweightCharts.createChart(container, {
+            width: container.clientWidth || 800,
+            height: 600,
+            layout: {
+                background: { color: '#ffffff' },
+                textColor: '#333',
+            },
+            grid: {
+                vertLines: { color: '#e1e1e1' },
+                horzLines: { color: '#e1e1e1' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            timeScale: {
+                timeVisible: true,
+                secondsVisible: false,
+                borderColor: '#485c7b',
+            },
+            rightPriceScale: {
+                borderColor: '#485c7b',
+            },
+        });
 
-    // Create candlestick series
-    const candleSeries = chart.addCandlestickSeries({
-        upColor: '#00cc00',
-        downColor: '#ff0000',
-        borderDownColor: '#ff0000',
-        borderUpColor: '#00cc00',
-        wickDownColor: '#ff0000',
-        wickUpColor: '#00cc00',
-    });
+        // Create candlestick series
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#00cc00',
+            downColor: '#ff0000',
+            borderDownColor: '#ff0000',
+            borderUpColor: '#00cc00',
+            wickDownColor: '#ff0000',
+            wickUpColor: '#00cc00',
+        });
 
-    // Create volume series
-    const volumeSeries = chart.addHistogramSeries({
-        color: '#888888',
-        priceFormat: {
-            type: 'volume',
-        },
-        priceScaleId: 'volume',
-        scaleMargins: {
-            top: 0.8,
-            bottom: 0,
-        },
-    });
+        // Create volume series
+        const volumeSeries = chart.addHistogramSeries({
+            color: '#888888',
+            priceFormat: {
+                type: 'volume',
+            },
+            priceScaleId: 'volume',
+            scaleMargins: {
+                top: 0.8,
+                bottom: 0,
+            },
+        });
 
-    // Handle window resize
-    const resizeObserver = new ResizeObserver(entries => {
-        if (entries.length === 0 || entries[0].target !== container) return;
-        const newRect = entries[0].contentRect;
-        chart.applyOptions({ width: newRect.width, height: newRect.height });
-    });
-    resizeObserver.observe(container);
+        // Handle window resize
+        const resizeObserver = new ResizeObserver(entries => {
+            if (entries.length === 0 || entries[0].target !== container) return;
+            const newRect = entries[0].contentRect;
+            chart.applyOptions({ width: newRect.width, height: newRect.height });
+        });
+        resizeObserver.observe(container);
 
-    // Store chart instance and series
-    chartInstances[containerId] = {
-        chart,
-        candleSeries,
-        volumeSeries,
-        resizeObserver
-    };
+        // Store chart instance and series
+        chartInstances[containerId] = {
+            chart,
+            candleSeries,
+            volumeSeries,
+            resizeObserver
+        };
 
-    return chartInstances[containerId];
+        console.log(`Chart created successfully for container: ${containerId}`);
+        return chartInstances[containerId];
+    } catch (error) {
+        console.error('Error creating chart:', error);
+        container.innerHTML = '<p>Error creating chart: ' + error.message + '</p>';
+        return null;
+    }
 }
 
 function destroyChart(containerId) {
     if (chartInstances[containerId]) {
-        chartInstances[containerId].chart.remove();
-        chartInstances[containerId].resizeObserver.disconnect();
-        delete chartInstances[containerId];
+        try {
+            chartInstances[containerId].chart.remove();
+            chartInstances[containerId].resizeObserver.disconnect();
+            delete chartInstances[containerId];
+            console.log(`Chart destroyed for container: ${containerId}`);
+        } catch (error) {
+            console.error('Error destroying chart:', error);
+            delete chartInstances[containerId];
+        }
     }
 }
 
@@ -274,10 +299,16 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
     const config = getReplayConfig(section);
     const chartData = config.chartData();
     
-    if (!chartData) return;
+    if (!chartData) {
+        console.error('No chart data available for section:', section);
+        return;
+    }
     
     const chartInstance = chartInstances[config.chartContainerId];
-    if (!chartInstance) return;
+    if (!chartInstance) {
+        console.error('Chart instance not found for container:', config.chartContainerId);
+        return;
+    }
 
     // Prepare candlestick data
     const candleData = candles.map((candle, i) => {
@@ -575,7 +606,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'ticker-select-simulator',
             dateInputId: 'date-simulator',
             timeframeSelectId: 'timeframe-select-simulator',
-            chartContainerId: 'plotly-chart-simulator',
+            chartContainerId: 'chart-simulator',
             formId: 'stock-form-simulator',
             restrictHours: false,
             replayControlsId: 'replay-controls-simulator',
@@ -585,7 +616,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'ticker-select-gap',
             dateInputId: 'date-gap',
             timeframeSelectId: 'timeframe-select-gap',
-            chartContainerId: 'plotly-chart-gap',
+            chartContainerId: 'chart-gap',
             formId: 'stock-form-gap',
             restrictHours: true,
             replayControlsId: 'replay-controls-gap',
@@ -595,7 +626,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'ticker-select-events',
             dateInputId: 'date-events',
             timeframeSelectId: 'timeframe-select-events',
-            chartContainerId: 'plotly-chart-events',
+            chartContainerId: 'chart-events',
             formId: 'stock-form-events',
             restrictHours: false,
             replayControlsId: 'replay-controls-events',
@@ -605,7 +636,7 @@ async function loadChart(event, tabId) {
             tickerSelectId: 'earnings-ticker-select',
             dateInputId: 'date-gap',
             timeframeSelectId: 'timeframe-select-earnings',
-            chartContainerId: 'plotly-chart-earnings',
+            chartContainerId: 'chart-earnings',
             formId: 'earnings-form',
             restrictHours: true,
             replayControlsId: 'replay-controls-earnings',
@@ -920,7 +951,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesSimulator = candles; },
             timeframe: () => timeframeSimulator,
             setTimeframe: (tf) => { timeframeSimulator = tf; },
-            chartContainerId: 'plotly-chart-simulator',
+            chartContainerId: 'chart-simulator',
             playButtonId: 'play-replay-simulator',
             pauseButtonId: 'pause-replay-simulator',
             startOverButtonId: 'start-over-replay-simulator',
@@ -946,7 +977,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesGap = candles; },
             timeframe: () => timeframeGap,
             setTimeframe: (tf) => { timeframeGap = tf; },
-            chartContainerId: 'plotly-chart-gap',
+            chartContainerId: 'chart-gap',
             playButtonId: 'play-replay-gap',
             pauseButtonId: 'pause-replay-gap',
             startOverButtonId: 'start-over-replay-gap',
@@ -972,7 +1003,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesEvents = candles; },
             timeframe: () => timeframeEvents,
             setTimeframe: (tf) => { timeframeEvents = tf; },
-            chartContainerId: 'plotly-chart-events',
+            chartContainerId: 'chart-events',
             playButtonId: 'play-replay-events',
             pauseButtonId: 'pause-replay-events',
             startOverButtonId: 'start-over-replay-events',
@@ -998,7 +1029,7 @@ function getReplayConfig(section) {
             setAggregatedCandles: (candles) => { aggregatedCandlesEarnings = candles; },
             timeframe: () => timeframeEarnings,
             setTimeframe: (tf) => { timeframeEarnings = tf; },
-            chartContainerId: 'plotly-chart-earnings',
+            chartContainerId: 'chart-earnings',
             playButtonId: 'play-replay-earnings',
             pauseButtonId: 'pause-replay-earnings',
             startOverButtonId: 'start-over-replay-earnings',
