@@ -188,24 +188,22 @@ function createChart(containerId, ticker, date, timeframe) {
     const container = document.getElementById(containerId);
     
     if (!container) {
-        console.error(`Chart container with ID '${containerId}' not found`);
+        console.error(`Container with ID '${containerId}' not found`);
         return null;
     }
     
     // Clear existing chart
     container.innerHTML = '';
     
-    // Check if LightweightCharts is available
-    if (typeof LightweightCharts === 'undefined') {
-        console.error('LightweightCharts library is not loaded');
-        container.innerHTML = '<p>Error: Chart library not loaded</p>';
-        return null;
-    }
-    
     try {
+        // Check if LightweightCharts is available
+        if (typeof LightweightCharts === 'undefined') {
+            throw new Error('LightweightCharts library is not loaded');
+        }
+        
         // Create chart
         const chart = LightweightCharts.createChart(container, {
-            width: container.clientWidth || 800,
+            width: container.clientWidth,
             height: 600,
             layout: {
                 background: { color: '#ffffff' },
@@ -267,11 +265,10 @@ function createChart(containerId, ticker, date, timeframe) {
             resizeObserver
         };
 
-        console.log(`Chart created successfully for container: ${containerId}`);
         return chartInstances[containerId];
     } catch (error) {
         console.error('Error creating chart:', error);
-        container.innerHTML = '<p>Error creating chart: ' + error.message + '</p>';
+        container.innerHTML = `<p>Error creating chart: ${error.message}</p>`;
         return null;
     }
 }
@@ -279,10 +276,13 @@ function createChart(containerId, ticker, date, timeframe) {
 function destroyChart(containerId) {
     if (chartInstances[containerId]) {
         try {
-            chartInstances[containerId].chart.remove();
-            chartInstances[containerId].resizeObserver.disconnect();
+            if (chartInstances[containerId].chart) {
+                chartInstances[containerId].chart.remove();
+            }
+            if (chartInstances[containerId].resizeObserver) {
+                chartInstances[containerId].resizeObserver.disconnect();
+            }
             delete chartInstances[containerId];
-            console.log(`Chart destroyed for container: ${containerId}`);
         } catch (error) {
             console.error('Error destroying chart:', error);
             delete chartInstances[containerId];
@@ -299,14 +299,11 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
     const config = getReplayConfig(section);
     const chartData = config.chartData();
     
-    if (!chartData) {
-        console.error('No chart data available for section:', section);
-        return;
-    }
+    if (!chartData) return;
     
     const chartInstance = chartInstances[config.chartContainerId];
     if (!chartInstance) {
-        console.error('Chart instance not found for container:', config.chartContainerId);
+        console.error(`Chart instance not found for container: ${config.chartContainerId}`);
         return;
     }
 
@@ -783,7 +780,14 @@ async function loadChart(event, tabId) {
         destroyChart(chartContainerId);
         
         // Create new chart
-        createChart(chartContainerId, ticker, date, timeframe);
+        const chartInstance = createChart(chartContainerId, ticker, date, timeframe);
+        
+        if (!chartInstance) {
+            console.error('Failed to create chart instance');
+            chartContainer.innerHTML = '<p>Error creating chart. Please refresh the page and try again.</p>';
+            replayControls.style.display = 'none';
+            return;
+        }
         
         // Render initial chart - show complete chart for initial view
         renderChart(replayPrefix, aggregatedCandlesVar);
