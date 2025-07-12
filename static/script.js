@@ -606,8 +606,8 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
         console.log(`Setting volume data with ${volumeData.length} points`);
         volumeSeries.setData(volumeData);
 
-        // Note: Indicators are disabled during replay for better performance and accuracy
-        // They will be restored when replay ends
+        // Update VWAP during replay (only indicator that works properly in real-time)
+        updateVWAPForReplay(section, candlestickData, volumeData);
 
         // Only auto-fit if user hasn't manually zoomed
         if (!userZoomState[section]) {
@@ -688,28 +688,58 @@ function saveActiveIndicators(section) {
     console.log(`Saved ${activeIndicatorsBeforeReplay[section].length} active indicators for ${section}:`, activeIndicatorsBeforeReplay[section]);
 }
 
-// Remove all indicators from chart during replay
+// Remove all indicators from chart during replay except VWAP
 function removeAllIndicators(section) {
     const chart = chartInstances[section]?.chart;
     if (!chart) return;
     
-    console.log(`Removing all indicators for ${section} during replay`);
+    console.log(`Removing all indicators except VWAP for ${section} during replay`);
     
-    // Remove all indicator series from the chart
+    // Remove all indicator series from the chart except VWAP
     Object.keys(indicatorSeries[section]).forEach(indicatorKey => {
+        // Keep VWAP since it works properly during replay
+        if (indicatorKey === 'vwap') {
+            console.log(`Keeping VWAP indicator active during replay`);
+            return;
+        }
+        
         if (indicatorSeries[section][indicatorKey]) {
             try {
                 chart.removeSeries(indicatorSeries[section][indicatorKey]);
                 console.log(`Removed indicator series: ${indicatorKey}`);
+                delete indicatorSeries[section][indicatorKey];
             } catch (error) {
                 console.warn(`Error removing indicator ${indicatorKey}:`, error);
             }
         }
     });
     
-    // Clear the indicator series storage
-    indicatorSeries[section] = {};
-    console.log(`Cleared all indicators for ${section}`);
+    console.log(`Removed all indicators except VWAP for ${section}`);
+}
+
+// Update only VWAP during replay (since it works properly in real-time)
+function updateVWAPForReplay(section, candlestickData, volumeData) {
+    if (!chartInstances[section] || !candlestickData.length) {
+        console.log(`No chart instance or data for ${section}, skipping VWAP update`);
+        return;
+    }
+    
+    // Check if VWAP is active
+    if (indicatorSeries[section]['vwap']) {
+        console.log(`Updating VWAP for ${section} with ${candlestickData.length} candles`);
+        
+        try {
+            const vwapData = calculateVWAP(candlestickData, volumeData);
+            if (vwapData && vwapData.length > 0) {
+                indicatorSeries[section]['vwap'].setData(vwapData);
+                console.log(`Updated VWAP with ${vwapData.length} points`);
+            }
+        } catch (error) {
+            console.error(`Error updating VWAP during replay:`, error);
+        }
+    } else {
+        console.log(`VWAP not active for ${section}`);
+    }
 }
 
 // Restore indicators after replay ends
@@ -743,9 +773,16 @@ function restoreIndicators(section) {
         value: parseFloat(chartData.volume[i])
     }));
     
-    // Restore each indicator
+    // Restore each indicator (except VWAP which stayed active during replay)
     activeIndicatorsBeforeReplay[section].forEach(indicatorInfo => {
         const { indicator, period } = indicatorInfo;
+        
+        // Skip VWAP since it remained active during replay
+        if (indicator === 'vwap') {
+            console.log(`Skipping VWAP restoration - it remained active during replay`);
+            return;
+        }
+        
         addIndicatorToChart(section, indicator, period, candleData, volumeData);
         console.log(`Restored indicator: ${indicator} ${period || ''} for ${section}`);
     });
