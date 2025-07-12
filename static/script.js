@@ -1,14 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing app...');
-    
-    // Check if LightweightCharts is loaded
-    if (typeof LightweightCharts === 'undefined') {
-        console.error('LightweightCharts library is not loaded!');
-        alert('Chart library failed to load. Please refresh the page.');
-    } else {
-        console.log('LightweightCharts library loaded successfully');
-    }
-    
     loadTickers();
     loadYears();
     loadEarningsTickers();
@@ -190,151 +181,64 @@ function aggregateCandles(data, timeframe) {
     return candles;
 }
 
-// LightweightCharts instance storage
-const chartInstances = {
-    'simulator': null,
-    'gap': null,
-    'events': null,
-    'earnings': null
-};
-
-function createChart(containerId) {
-    console.log('Creating chart in container:', containerId);
-    
-    try {
-        // Check if LightweightCharts is loaded
-        if (typeof LightweightCharts === 'undefined') {
-            console.error('LightweightCharts library is not loaded!');
-            throw new Error('LightweightCharts library is not loaded');
-        }
-        
-        const container = document.getElementById(containerId);
-        if (!container) {
-            console.error('Container not found:', containerId);
-            throw new Error(`Container ${containerId} not found`);
-        }
-        
-        // Clear the container
-        container.innerHTML = '';
-        
-        // Create chart element
-        const chartElement = document.createElement('div');
-        chartElement.style.width = '100%';
-        chartElement.style.height = '600px';
-        container.appendChild(chartElement);
-        
-        // Create the chart
-        const chart = LightweightCharts.createChart(chartElement, {
-            width: container.offsetWidth,
-            height: 600,
-            layout: {
-                backgroundColor: '#ffffff',
-                textColor: '#000000',
-            },
-            grid: {
-                vertLines: {
-                    color: '#e0e0e0',
-                },
-                horzLines: {
-                    color: '#e0e0e0',
-                },
-            },
-            timeScale: {
-                timeVisible: true,
-                secondsVisible: false,
-            },
-        });
-        
-        console.log('Chart created successfully');
-        return chart;
-    } catch (error) {
-        console.error('Error creating chart:', error);
-        const container = document.getElementById(containerId);
-        if (container) {
-            container.innerHTML = `<div style="color: red; padding: 20px;">Failed to create chart: ${error.message}</div>`;
-        }
-        return null;
-    }
-}
-
 function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = null) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
     
-    if (!chartData) {
-        console.error('No chart data available');
-        return;
-    }
+    if (!chartData) return;
     
-    console.log('Rendering chart for section:', section, 'with', candles.length, 'candles');
-    
-    try {
-        // Create or get existing chart
-        let chart = chartInstances[section];
-        if (!chart) {
-            chart = createChart(config.chartContainerId);
-            if (!chart) {
-                console.error('Failed to create chart instance');
-                return;
-            }
-            chartInstances[section] = chart;
-        }
-        
-        // Create candlestick series
-        const candlestickSeries = chart.addCandlestickSeries({
-            upColor: '#00cc00',
-            downColor: '#ff0000',
-            borderVisible: false,
-            wickUpColor: '#00cc00',
-            wickDownColor: '#ff0000',
-        });
-        
-        // Prepare data for LightweightCharts
-        const chartCandles = candles.slice(0, currentCandleIndex + 1).map((c, i) => {
-            let candle = {
-                time: new Date(c.timestamp).getTime() / 1000, // Convert to Unix timestamp
-                open: c.open,
-                high: c.high,
-                low: c.low,
-                close: c.close
-            };
-            
-            // Handle minute updates for the current candle
+    const candlestickTrace = {
+        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
+        open: candles.map(c => c.open),
+        high: candles.map((c, i) => {
             if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
-                candle.high = c.minuteUpdates[minuteIndex].high;
-                candle.low = c.minuteUpdates[minuteIndex].low;
-                candle.close = c.minuteUpdates[minuteIndex].close;
+                return c.minuteUpdates[minuteIndex].high;
             }
-            
-            return candle;
-        });
-        
-        // Set the data
-        candlestickSeries.setData(chartCandles);
-        
-        // Fit content
-        chart.timeScale().fitContent();
-        
-        // Update title
-        const tf = config.timeframe();
-        const container = document.getElementById(config.chartContainerId);
-        const titleDiv = container.querySelector('.chart-title') || document.createElement('div');
-        titleDiv.className = 'chart-title';
-        titleDiv.style.cssText = 'position: absolute; top: 10px; left: 10px; z-index: 1; background: rgba(255,255,255,0.8); padding: 5px;';
-        titleDiv.textContent = `${chartData.ticker} ${tf}-Minute Chart - ${chartData.date} (Replay)`;
-        if (!container.querySelector('.chart-title')) {
-            container.style.position = 'relative';
-            container.appendChild(titleDiv);
-        }
-        
-        console.log('Chart rendered successfully with', chartCandles.length, 'candles');
-    } catch (error) {
-        console.error('Error rendering chart:', error);
-        const container = document.getElementById(config.chartContainerId);
-        if (container) {
-            container.innerHTML = `<div style="color: red; padding: 20px;">Failed to render chart: ${error.message}</div>`;
-        }
-    }
+            return c.high;
+        }),
+        low: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].low;
+            }
+            return c.low;
+        }),
+        close: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].close;
+            }
+            return c.close;
+        }),
+        type: 'candlestick',
+        name: chartData.ticker,
+        increasing: { line: { color: '#00cc00' } },
+        decreasing: { line: { color: '#ff0000' } }
+    };
+    const volumeTrace = {
+        x: candles.map(c => c.timestamp), // Always use the candle's starting timestamp
+        y: candles.map((c, i) => {
+            if (i === currentCandleIndex && minuteIndex !== null && c.minuteUpdates[minuteIndex]) {
+                return c.minuteUpdates[minuteIndex].volume;
+            }
+            return c.volume;
+        }),
+        type: 'bar',
+        name: 'Volume',
+        yaxis: 'y2',
+        marker: { color: '#888888' }
+    };
+    
+    const tf = config.timeframe();
+    const layout = {
+        title: `${chartData.ticker} ${tf}-Minute Candlestick Chart - ${chartData.date} (Replay)`,
+        xaxis: { title: 'Time', type: 'date', rangeslider: { visible: false }, tickformat: '%H:%M' },
+        yaxis: { title: 'Price', domain: [0.3, 1] },
+        yaxis2: { title: 'Volume', domain: [0, 0.25], anchor: 'x' },
+        showlegend: true,
+        margin: { t: 50, b: 50, l: 50, r: 50 },
+        plot_bgcolor: '#ffffff',
+        paper_bgcolor: '#ffffff'
+    };
+    Plotly.newPlot(config.chartContainerId, [candlestickTrace, volumeTrace], layout, { responsive: true });
 }
 
 function populateEarningsOutcomes() {
@@ -629,11 +533,6 @@ async function loadChart(event, tabId) {
     const form = document.getElementById(formId);
     const button = form.querySelector('button[type="submit"]');
     const inputs = form.querySelectorAll('select, input');
-    
-    // Determine if we should restrict hours based on ticker and tab
-    // QQQ should always be restricted to regular market hours (9:30-16:00) in ALL sections
-    // All other tickers follow their section's restrictHours setting
-    const shouldRestrictHours = (ticker === 'QQQ') || restrictHours;
 
     // Replay controls
     const replayControls = document.getElementById(replayControlsId);
@@ -658,15 +557,11 @@ async function loadChart(event, tabId) {
     if (!ticker || !date || !timeframe) {
         chartContainer.innerHTML = '<p>Please select a ticker, date, and timeframe.</p>';
         replayControls.style.display = 'none';
-        if (replayPrefix === 'simulator') {
-            const tradingButtonsContainer = document.getElementById('trading-buttons-container');
-            if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';
-        }
         return;
     }
 
-    console.log(`Loading chart for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrict_hours=${shouldRestrictHours}, tab=${tabId}`);
-    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=${timeframe > 1}${shouldRestrictHours ? '&restrict_hours=true' : ''}`;
+    console.log(`Loading chart for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrict_hours=${restrictHours}, tab=${tabId}`);
+    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=${timeframe > 1}${restrictHours ? '&restrict_hours=true' : ''}`;
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
@@ -706,10 +601,6 @@ async function loadChart(event, tabId) {
             console.error('Chart error:', data.error);
             chartContainer.innerHTML = `<p>${data.error}</p>`;
             replayControls.style.display = 'none';
-            if (replayPrefix === 'simulator') {
-                const tradingButtonsContainer = document.getElementById('trading-buttons-container');
-                if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';
-            }
             return;
         }
 
@@ -757,63 +648,7 @@ async function loadChart(event, tabId) {
                                    replayPrefix === 'gap' ? aggregatedCandlesGap :
                                    replayPrefix === 'events' ? aggregatedCandlesEvents :
                                    aggregatedCandlesEarnings;
-        
-        // For initial load, render all candles at once
-        const config = getReplayConfig(replayPrefix);
-        const container = document.getElementById(config.chartContainerId);
-        
-        if (container) {
-            try {
-                // Create or get existing chart
-                let chart = chartInstances[replayPrefix];
-                if (!chart) {
-                    chart = createChart(config.chartContainerId);
-                    if (!chart) {
-                        throw new Error('Failed to create chart instance');
-                    }
-                    chartInstances[replayPrefix] = chart;
-                }
-                
-                // Create candlestick series
-                const candlestickSeries = chart.addCandlestickSeries({
-                    upColor: '#00cc00',
-                    downColor: '#ff0000',
-                    borderVisible: false,
-                    wickUpColor: '#00cc00',
-                    wickDownColor: '#ff0000',
-                });
-                
-                // Prepare data for LightweightCharts
-                const chartCandles = aggregatedCandlesVar.map(c => ({
-                    time: new Date(c.timestamp).getTime() / 1000, // Convert to Unix timestamp
-                    open: c.open,
-                    high: c.high,
-                    low: c.low,
-                    close: c.close
-                }));
-                
-                // Set the data
-                candlestickSeries.setData(chartCandles);
-                
-                // Fit content
-                chart.timeScale().fitContent();
-                
-                // Add title
-                const titleDiv = container.querySelector('.chart-title') || document.createElement('div');
-                titleDiv.className = 'chart-title';
-                titleDiv.style.cssText = 'position: absolute; top: 10px; left: 10px; z-index: 1; background: rgba(255,255,255,0.8); padding: 5px;';
-                titleDiv.textContent = `${data.chart_data.ticker} ${timeframe}-Minute Chart - ${data.chart_data.date}`;
-                if (!container.querySelector('.chart-title')) {
-                    container.style.position = 'relative';
-                    container.appendChild(titleDiv);
-                }
-                
-                console.log('Initial chart rendered successfully with', chartCandles.length, 'candles');
-            } catch (error) {
-                console.error('Error rendering initial chart:', error);
-                container.innerHTML = `<div style="color: red; padding: 20px;">Failed to render chart: ${error.message}</div>`;
-            }
-        }
+        renderChart(replayPrefix, aggregatedCandlesVar);
 
         // Handle replay controls
         replayControls.style.display = 'block';
@@ -824,8 +659,6 @@ async function loadChart(event, tabId) {
         prevButton.disabled = true;
         nextButton.disabled = true;
         if (replayPrefix === 'simulator') { // Market Simulator
-            const tradingButtonsContainer = document.getElementById('trading-buttons-container');
-            if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'block';
             if (buyButton) buyButton.disabled = true;
             if (sellButton) sellButton.disabled = true;
         }
@@ -834,17 +667,13 @@ async function loadChart(event, tabId) {
 
         gtag('event', 'chart_load', {
             'event_category': 'Chart',
-            'event_label': `${ticker}_${date}_${timeframe}${shouldRestrictHours ? '_regular_hours' : ''}`,
+            'event_label': `${ticker}_${date}_${timeframe}${restrictHours ? '_regular_hours' : ''}`,
             'tab': tabId
         });
     } catch (error) {
         console.error('Error loading chart:', error.message);
         chartContainer.innerHTML = '<p>Failed to load chart: ' + error.message + '. Please try again later.</p>';
         replayControls.style.display = 'none';
-        if (replayPrefix === 'simulator') {
-            const tradingButtonsContainer = document.getElementById('trading-buttons-container');
-            if (tradingButtonsContainer) tradingButtonsContainer.style.display = 'none';
-        }
         alert('Failed to load chart: ' + error.message);
     }
 }
