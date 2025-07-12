@@ -748,6 +748,9 @@ async function loadChart(event, tabId) {
                                    replayPrefix === 'events' ? aggregatedCandlesEvents :
                                    aggregatedCandlesEarnings;
         
+        // Ensure the Lightweight Charts library is ready
+        await ensureLightweightChartsLoaded();
+        
         // Destroy existing chart if it exists
         destroyChart(chartContainerId);
         
@@ -1863,5 +1866,27 @@ function openTab(tabName) {
     gtag('event', 'tab_open', {
         'event_category': 'Navigation',
         'event_label': tabName
+    });
+}
+
+// Ensure Lightweight Charts script is fully loaded before using its API
+async function ensureLightweightChartsLoaded(timeout = 5000) {
+    if (typeof window !== 'undefined' && window.LightweightCharts && typeof window.LightweightCharts.createChart === 'function') {
+        return;
+    }
+
+    // Wait until the script becomes available (poll every 100 ms)
+    await new Promise((resolve, reject) => {
+        const interval = 100;
+        let waited = 0;
+        const timer = setInterval(() => {
+            if (window.LightweightCharts && typeof window.LightweightCharts.createChart === 'function') {
+                clearInterval(timer);
+                resolve();
+            } else if ((waited += interval) >= timeout) {
+                clearInterval(timer);
+                reject(new Error('Lightweight Charts library failed to load within expected time.'));
+            }
+        }, interval);
     });
 }
