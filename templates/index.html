@@ -116,7 +116,7 @@
                                 <button id="horizontal-line-simulator" class="drawing-tool-btn" data-tool="horizontal">➖ Horizontal Line</button>
                                 <button id="fibonacci-simulator" class="drawing-tool-btn" data-tool="fibonacci">📊 Fibonacci</button>
                                 <button id="measure-tool-simulator" class="drawing-tool-btn" data-tool="measure">📏 Measure</button>
-                                <button id="clear-drawings-simulator" class="drawing-tool-btn clear-btn">🗑️ Clear All</button>
+                                <button id="clear-drawings-simulator" class="drawing-tool-btn clear-btn" data-tool="clear">🗑️ Clear All</button>
                             </div>
                         </div>
                     </div>
@@ -225,6 +225,16 @@
                                     <label><input type="checkbox" id="macd-gap" data-indicator="macd"> MACD</label>
                                     <label><input type="checkbox" id="stoch-gap" data-indicator="stochastic"> Stochastic</label>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="drawing-tools-section">
+                            <h4>Drawing Tools</h4>
+                            <div class="tools-grid">
+                                <button id="trend-line-gap" class="drawing-tool-btn" data-tool="trendline">📈 Trend Line</button>
+                                <button id="horizontal-line-gap" class="drawing-tool-btn" data-tool="horizontal">➖ Horizontal Line</button>
+                                <button id="fibonacci-gap" class="drawing-tool-btn" data-tool="fibonacci">📊 Fibonacci</button>
+                                <button id="measure-tool-gap" class="drawing-tool-btn" data-tool="measure">📏 Measure</button>
+                                <button id="clear-drawings-gap" class="drawing-tool-btn clear-btn" data-tool="clear">🗑️ Clear All</button>
                             </div>
                         </div>
                     </div>
@@ -397,6 +407,16 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="drawing-tools-section">
+                            <h4>Drawing Tools</h4>
+                            <div class="tools-grid">
+                                <button id="trend-line-events" class="drawing-tool-btn" data-tool="trendline">📈 Trend Line</button>
+                                <button id="horizontal-line-events" class="drawing-tool-btn" data-tool="horizontal">➖ Horizontal Line</button>
+                                <button id="fibonacci-events" class="drawing-tool-btn" data-tool="fibonacci">📊 Fibonacci</button>
+                                <button id="measure-tool-events" class="drawing-tool-btn" data-tool="measure">📏 Measure</button>
+                                <button id="clear-drawings-events" class="drawing-tool-btn clear-btn" data-tool="clear">🗑️ Clear All</button>
+                            </div>
+                        </div>
                     </div>
                     <div id="chart-events"></div>
                 </div>
@@ -504,6 +524,16 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="drawing-tools-section">
+                            <h4>Drawing Tools</h4>
+                            <div class="tools-grid">
+                                <button id="trend-line-earnings" class="drawing-tool-btn" data-tool="trendline">📈 Trend Line</button>
+                                <button id="horizontal-line-earnings" class="drawing-tool-btn" data-tool="horizontal">➖ Horizontal Line</button>
+                                <button id="fibonacci-earnings" class="drawing-tool-btn" data-tool="fibonacci">📊 Fibonacci</button>
+                                <button id="measure-tool-earnings" class="drawing-tool-btn" data-tool="measure">📏 Measure</button>
+                                <button id="clear-drawings-earnings" class="drawing-tool-btn clear-btn" data-tool="clear">🗑️ Clear All</button>
+                            </div>
+                        </div>
                     </div>
                     <div id="chart-earnings"></div>
                 </div>
@@ -571,6 +601,6 @@
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
     </script>
-    <script src="/static/script.js?v=33"></script>
+    <script src="/static/script.js?v=34"></script>
 </body>
 </html>

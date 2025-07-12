@@ -1558,3 +1558,26 @@ form#signup-form p a:hover, form#login-form p a:hover {
         font-size: 0.9em;
     }
 }
+
+/* Drawing Feedback Animation */
+@keyframes drawingPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.5);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+.drawing-feedback {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+    animation: drawingPulse 1s ease-out forwards;
+}
