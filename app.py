@@ -389,9 +389,9 @@ def get_chart():
             if not replay_mode and timeframe > 1:
                 df.set_index('timestamp', inplace=True)
                 
-                # For QQQ with PRE/POST data, ensure proper alignment with market open times
+                # Handle resampling based on data type and ticker
                 if ticker == 'QQQ' and not restrict_hours:
-                    # For QQQ with extended hours, use standard resampling
+                    # For QQQ with extended hours (PRE/POST), use standard resampling
                     df = df.resample(f'{timeframe}T').agg({
                         'open': 'first',
                         'high': 'max',
@@ -400,42 +400,53 @@ def get_chart():
                         'volume': 'sum'
                     }).dropna()
                 else:
-                    # For regular market hours or other tickers, align with market open (9:30 AM)
+                    # For regular market hours data, ensure proper alignment with market open (9:30 AM)
                     market_open = pd.Timestamp(f'{target_date} 09:30:00')
                     
-                    # Create a proper time index aligned with market open
                     if not df.empty:
-                        # Find the first and last timestamps in the data
-                        first_timestamp = df.index.min()
-                        last_timestamp = df.index.max()
+                        # Use proper alignment with market open time
+                        # The origin parameter ensures that resampling buckets align with market open
+                        df_resampled = df.resample(f'{timeframe}T', origin=market_open).agg({
+                            'open': 'first',
+                            'high': 'max',
+                            'low': 'min',
+                            'close': 'last',
+                            'volume': 'sum'
+                        }).dropna()
                         
-                        # If we have regular market hours data, align with 9:30 AM
-                        if restrict_hours or (first_timestamp.time() >= pd.Timestamp('09:30:00').time() and 
-                                            last_timestamp.time() <= pd.Timestamp('16:00:00').time()):
-                            # Create aligned time index starting from market open
-                            start_time = market_open
-                            end_time = pd.Timestamp(f'{target_date} 16:00:00')
+                        # If the first candle doesn't start at market open due to missing data,
+                        # create a proper time index to ensure candles start at the correct times
+                        if not df_resampled.empty:
+                            # Create expected time index aligned with market open
+                            market_start = pd.Timestamp(f'{target_date} 09:30:00')
+                            market_end = pd.Timestamp(f'{target_date} 16:00:00')
+                            expected_times = pd.date_range(start=market_start, end=market_end, freq=f'{timeframe}T')
                             
-                            # Create time index with proper alignment
-                            aligned_index = pd.date_range(start=start_time, end=end_time, freq=f'{timeframe}T')
+                            # Only keep candles that align with expected market times
+                            df_resampled = df_resampled[df_resampled.index.isin(expected_times)]
                             
-                            # Resample with proper alignment
-                            df = df.resample(f'{timeframe}T', origin=market_open).agg({
-                                'open': 'first',
-                                'high': 'max',
-                                'low': 'min',
-                                'close': 'last',
-                                'volume': 'sum'
-                            }).dropna()
-                        else:
-                            # For extended hours data, use standard resampling
-                            df = df.resample(f'{timeframe}T').agg({
-                                'open': 'first',
-                                'high': 'max',
-                                'low': 'min',
-                                'close': 'last',
-                                'volume': 'sum'
-                            }).dropna()
+                            # If we lost the first candle due to missing data and we have data after 9:30,
+                            # try to create a proper first candle
+                            if (df_resampled.empty or df_resampled.index[0] > market_start) and not df.empty:
+                                # Find the first available data point
+                                first_available = df.index[0]
+                                if first_available <= market_start + pd.Timedelta(minutes=timeframe):
+                                    # If we have data within the first timeframe window, create a proper candle
+                                    first_window_data = df[(df.index >= market_start) & 
+                                                         (df.index < market_start + pd.Timedelta(minutes=timeframe))]
+                                    if not first_window_data.empty:
+                                        first_candle = pd.DataFrame({
+                                            'open': [first_window_data['open'].iloc[0]],
+                                            'high': [first_window_data['high'].max()],
+                                            'low': [first_window_data['low'].min()],
+                                            'close': [first_window_data['close'].iloc[-1]],
+                                            'volume': [first_window_data['volume'].sum()]
+                                        }, index=[market_start])
+                                        
+                                        # Combine with resampled data
+                                        df_resampled = pd.concat([first_candle, df_resampled[df_resampled.index > market_start]])
+                        
+                        df = df_resampled
                 
                 df.reset_index(inplace=True)
                 logging.debug(f"Resampled data to {timeframe}-minute timeframe, new shape: {df.shape}")
