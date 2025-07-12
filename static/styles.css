@@ -106,13 +106,17 @@ form button:hover {
     width: 100%;
     height: 600px;
     max-height: 800px;
-    border: 1px solid #e1e1e1;
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
 }
 
-
+/* NEW: Ensure chart titles are readable with added timeframe text */
+.plotly .gtitle {
+    font-size: 1.2em !important;
+    font-weight: 700 !important;
+    color: #1a1b2f !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
 
 .ads-container {
     margin-top: 20px;
@@ -389,6 +393,20 @@ footer p {
         width: 100%;
         max-width: 120px;
     }
+}
+
+/* Trading Buttons Container Styling */
+.trading-buttons-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 10px auto;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    max-width: 400px;
 }
 
 /* Trade Summary Styling */
@@ -714,17 +732,19 @@ footer p {
         font-size: 0.7em;
     }
 
-    #plotly-chart, #plotly-chart-gap, #plotly-chart-events, #plotly-chart-earnings, #plotly-chart-simulator {
+    #plotly-chart, #plotly-chart-gap, #plotly-chart-events, #plotly-chart-earnings {
         height: 300px;
         max-height: 400px;
         width: 100%;
         max-width: 100%;
-        border: 1px solid #e1e1e1;
-        border-radius: 8px;
-        overflow: hidden;
     }
 
-
+    /* NEW: Ensure chart titles are readable on mobile */
+    .plotly .gtitle {
+        font-size: 1em !important;
+        white-space: normal !important;
+        line-height: 1.2 !important;
+    }
 
     .ads-container {
         max-width: 280px;
@@ -780,13 +800,28 @@ footer p {
         font-size: 0.8em;
     }
 
+    /* Trading Buttons Container Mobile Styling */
+    .trading-buttons-container {
+        flex-direction: row;
+        justify-content: center;
+        gap: 10px;
+        margin: 8px auto;
+        padding: 8px;
+        max-width: 100%;
+        background-color: #f9f9f9;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
     /* Move buy/sell buttons closer to chart in mobile */
     #buy-trade, #sell-trade {
         font-size: 0.9em;
-        padding: 8px 16px;
-        margin: 4px;
+        padding: 10px 20px;
+        margin: 0;
         border-radius: 6px;
         font-weight: 600;
+        flex: 1;
+        max-width: 120px;
     }
 
     #buy-trade {

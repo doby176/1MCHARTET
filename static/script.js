@@ -223,7 +223,7 @@ function createChart(containerId) {
         chartElement.style.height = '600px';
         container.appendChild(chartElement);
         
-        // Create the chart with v4 API
+        // Create the chart
         const chart = LightweightCharts.createChart(chartElement, {
             width: container.offsetWidth,
             height: 600,
@@ -243,15 +243,6 @@ function createChart(containerId) {
                 timeVisible: true,
                 secondsVisible: false,
             },
-            crosshair: {
-                mode: LightweightCharts.CrosshairMode.Normal,
-            },
-            rightPriceScale: {
-                borderColor: '#e0e0e0',
-            },
-            leftPriceScale: {
-                borderColor: '#e0e0e0',
-            },
         });
         
         console.log('Chart created successfully');
@@ -265,6 +256,7 @@ function createChart(containerId) {
         return null;
     }
 }
+
 function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = null) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
@@ -288,12 +280,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
             chartInstances[section] = chart;
         }
         
-        // Remove existing series if any
-        chart.remove();
-        chart = createChart(config.chartContainerId);
-        chartInstances[section] = chart;
-        
-        // Create candlestick series with v4 API
+        // Create candlestick series
         const candlestickSeries = chart.addCandlestickSeries({
             upColor: '#00cc00',
             downColor: '#ff0000',
@@ -302,10 +289,10 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
             wickDownColor: '#ff0000',
         });
         
-        // Prepare data for LightweightCharts v4
+        // Prepare data for LightweightCharts
         const chartCandles = candles.slice(0, currentCandleIndex + 1).map((c, i) => {
             let candle = {
-                time: Math.floor(new Date(c.timestamp).getTime() / 1000), // Convert to Unix timestamp (integer)
+                time: new Date(c.timestamp).getTime() / 1000, // Convert to Unix timestamp
                 open: c.open,
                 high: c.high,
                 low: c.low,
@@ -348,86 +335,6 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
             container.innerHTML = `<div style="color: red; padding: 20px;">Failed to render chart: ${error.message}</div>`;
         }
     }
-        
-        // Handle minute updates for current candle in replay
-        if (i === currentCandleIndex && minuteIndex !== null && candle.minuteUpdates && candle.minuteUpdates[minuteIndex]) {
-            high = candle.minuteUpdates[minuteIndex].high;
-            low = candle.minuteUpdates[minuteIndex].low;
-            close = candle.minuteUpdates[minuteIndex].close;
-            volume = candle.minuteUpdates[minuteIndex].volume;
-        }
-        
-        candlestickData.push({
-            time: timestamp,
-            open: open,
-            high: high,
-            low: low,
-            close: close,
-        });
-        
-        volumeData.push({
-            time: timestamp,
-            value: volume,
-            color: close >= open ? '#00cc0050' : '#ff000050',
-        });
-    });
-    
-    // Set data
-    if (candlestickData.length > 0) {
-        candlestickSeries.setData(candlestickData);
-        volumeSeries.setData(volumeData);
-        
-        // Sync time scales
-        chart.timeScale().subscribeVisibleTimeRangeChange(() => {
-            const timeRange = chart.timeScale().getVisibleRange();
-            if (timeRange) {
-                volumeChart.timeScale().setVisibleRange(timeRange);
-            }
-        });
-        
-        volumeChart.timeScale().subscribeVisibleTimeRangeChange(() => {
-            const timeRange = volumeChart.timeScale().getVisibleRange();
-            if (timeRange) {
-                chart.timeScale().setVisibleRange(timeRange);
-            }
-        });
-        
-        // Fit content
-        chart.timeScale().fitContent();
-        volumeChart.timeScale().fitContent();
-    }
-    
-    // Store chart instance
-    chartInstances[section] = {
-        chart: chart,
-        volumeChart: volumeChart,
-        candlestickSeries: candlestickSeries,
-        volumeSeries: volumeSeries,
-        remove: () => {
-            chart.remove();
-            volumeChart.remove();
-        }
-    };
-    
-    // Handle resize
-    const resizeHandler = () => {
-        if (mainChartDiv.clientWidth > 0) {
-            chart.applyOptions({ width: mainChartDiv.clientWidth });
-        }
-        if (volumeChartDiv.clientWidth > 0) {
-            volumeChart.applyOptions({ width: volumeChartDiv.clientWidth });
-        }
-    };
-    
-    window.addEventListener('resize', resizeHandler);
-    
-    // Clean up resize handler when chart is removed
-    const originalRemove = chartInstances[section].remove;
-    chartInstances[section].remove = () => {
-        window.removeEventListener('resize', resizeHandler);
-        originalRemove();
-    };
-
 }
 
 function populateEarningsOutcomes() {
