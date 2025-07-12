@@ -102,92 +102,20 @@ form button:hover {
     width: 100%;
 }
 
-.chart-controls {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-    justify-content: center;
-    flex-wrap: wrap;
-    padding: 10px;
-    background-color: #f5f5f5;
-    border-radius: 8px;
-    border: 1px solid #e1e1e1;
-}
-
-.chart-control-btn {
-    padding: 8px 16px;
-    background-color: #153097;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.875em;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    min-width: 100px;
-}
-
-.chart-control-btn:hover {
-    background-color: #112A7F;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.chart-control-btn:active {
-    transform: translateY(0);
-}
-
-.chart-control-btn:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-.chart-control-btn.active {
-    background-color: #0d1f60;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-}
-
-#lightweight-chart-simulator, #lightweight-chart-gap, #lightweight-chart-events, #lightweight-chart-earnings {
+#plotly-chart, #plotly-chart-gap, #plotly-chart-events, #plotly-chart-earnings, #plotly-chart-simulator {
     width: 100%;
     height: 600px;
     max-height: 800px;
-    border: 1px solid #e1e1e1;
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
-    background-color: #ffffff;
 }
 
-/* Chart tooltip styling */
-.chart-tooltip {
-    position: absolute;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 0.875em;
-    z-index: 1000;
-    pointer-events: none;
-    white-space: nowrap;
-}
-
-.chart-tooltip .tooltip-title {
-    font-weight: bold;
-    margin-bottom: 4px;
-}
-
-.chart-tooltip .tooltip-value {
-    margin: 2px 0;
-}
-
-.chart-tooltip .tooltip-value.positive {
-    color: #00cc00;
-}
-
-.chart-tooltip .tooltip-value.negative {
-    color: #ff4444;
+/* NEW: Ensure chart titles are readable with added timeframe text */
+.plotly .gtitle {
+    font-size: 1.2em !important;
+    font-weight: 700 !important;
+    color: #1a1b2f !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 .ads-container {
@@ -603,42 +531,6 @@ footer p {
         }
     }
 
-/* Buy/Sell Button Desktop Styles */
-#buy-trade, #sell-trade {
-    font-size: 1em;
-    padding: 10px 20px;
-    margin: 5px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    border: none;
-}
-
-#buy-trade {
-    background-color: #00cc00;
-    color: white;
-}
-
-#sell-trade {
-    background-color: #ff4444;
-    color: white;
-}
-
-#buy-trade:hover:not(:disabled) {
-    background-color: #00b300;
-}
-
-#sell-trade:hover:not(:disabled) {
-    background-color: #dd3333;
-}
-
-#buy-trade:disabled, #sell-trade:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
 /* Filter Section Styling */
 .filter-toggle {
     display: flex;
@@ -790,27 +682,18 @@ footer p {
         font-size: 0.7em;
     }
 
-    .chart-controls {
-        flex-direction: column;
-        gap: 6px;
-        margin-bottom: 8px;
-        padding: 8px;
-    }
-    
-    .chart-control-btn {
-        font-size: 0.8em;
-        padding: 6px 12px;
-        width: 100%;
-        max-width: 200px;
-        min-width: unset;
-        margin: 0 auto;
-    }
-    
-    #lightweight-chart-simulator, #lightweight-chart-gap, #lightweight-chart-events, #lightweight-chart-earnings {
+    #plotly-chart, #plotly-chart-gap, #plotly-chart-events, #plotly-chart-earnings {
         height: 300px;
         max-height: 400px;
         width: 100%;
         max-width: 100%;
+    }
+
+    /* NEW: Ensure chart titles are readable on mobile */
+    .plotly .gtitle {
+        font-size: 1em !important;
+        white-space: normal !important;
+        line-height: 1.2 !important;
     }
 
     .ads-container {
@@ -850,13 +733,11 @@ footer p {
     #trade-summary {
         max-width: 100%;
         padding: 8px;
-        position: relative;
+        position: sticky;
+        bottom: 0;
         background-color: #ffffff;
         z-index: 10;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-top: 10px;
-        margin-bottom: 10px;
-        border-radius: 8px;
+        box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
     }
 
     #trade-summary h4 {
@@ -865,35 +746,6 @@ footer p {
 
     #trade-summary p {
         font-size: 0.8em;
-    }
-
-    /* Move buy/sell buttons closer to chart in mobile */
-    #buy-trade, #sell-trade {
-        font-size: 0.9em;
-        padding: 8px 16px;
-        margin: 4px;
-        border-radius: 6px;
-        font-weight: 600;
-    }
-
-    #buy-trade {
-        background-color: #00cc00;
-        color: white;
-        border: none;
-    }
-
-    #sell-trade {
-        background-color: #ff4444;
-        color: white;
-        border: none;
-    }
-
-    #buy-trade:hover:not(:disabled) {
-        background-color: #00b300;
-    }
-
-    #sell-trade:hover:not(:disabled) {
-        background-color: #dd3333;
     }
 
     #trade-toggle {
