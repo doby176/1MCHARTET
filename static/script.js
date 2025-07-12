@@ -230,10 +230,10 @@ function createChart(containerId, ticker, date, timeframe) {
     console.log('Chart methods:', Object.getOwnPropertyNames(chart));
     console.log('Chart addCandlestickSeries type:', typeof chart.addCandlestickSeries);
 
-    // Create candlestick series
+    // Create candlestick series (using v5.0 API)
     let candleSeries;
     try {
-        candleSeries = chart.addCandlestickSeries({
+        candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
             upColor: '#00cc00',
             downColor: '#ff0000',
             borderDownColor: '#ff0000',
@@ -248,10 +248,10 @@ function createChart(containerId, ticker, date, timeframe) {
         return null;
     }
 
-    // Create volume series
+    // Create volume series (using v5.0 API)
     let volumeSeries;
     try {
-        volumeSeries = chart.addHistogramSeries({
+        volumeSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
             color: '#888888',
             priceFormat: {
                 type: 'volume',
