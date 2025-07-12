@@ -389,21 +389,18 @@ def get_chart():
             if not replay_mode and timeframe > 1:
                 df.set_index('timestamp', inplace=True)
                 
-                # Implement robust candle alignment system for QQQ with extended hours
+                # For QQQ with PRE/POST data, ensure proper alignment with market timing
                 if ticker == 'QQQ' and not restrict_hours:
-                    # For QQQ with extended hours, create a complete time index to handle missing candles
+                    # For QQQ with extended hours, align with PRE market start at 4:00 AM ET
                     if not df.empty:
                         first_timestamp = df.index.min()
-                        last_timestamp = df.index.max()
                         
                         # Determine the proper alignment origin based on market session
                         # PRE market starts at 4:00 AM ET, regular market at 9:30 AM ET
                         pre_market_start = pd.Timestamp(f'{target_date} 04:00:00')
                         market_open = pd.Timestamp(f'{target_date} 09:30:00')
-                        market_close = pd.Timestamp(f'{target_date} 16:00:00')
-                        post_market_end = pd.Timestamp(f'{target_date} 20:00:00')
                         
-                        # Create alignment origin based on data availability
+                        # If data starts before 9:30 AM, align with 4:00 AM for PRE market
                         if first_timestamp.time() < pd.Timestamp('09:30:00').time():
                             alignment_origin = pre_market_start
                             logging.debug(f"Aligning QQQ extended hours data with PRE market start at 4:00 AM")
@@ -411,43 +408,14 @@ def get_chart():
                             alignment_origin = market_open
                             logging.debug(f"Aligning QQQ data with market open at 9:30 AM")
                         
-                        # Create a complete 1-minute time index to fill gaps
-                        # Determine the full time range based on available data
-                        start_time = max(pre_market_start, first_timestamp.floor('1min'))
-                        end_time = min(post_market_end, last_timestamp.ceil('1min'))
-                        
-                        # Create complete minute-by-minute index
-                        complete_index = pd.date_range(start=start_time, end=end_time, freq='1min')
-                        
-                        # Reindex the dataframe to fill missing minutes
-                        df_complete = df.reindex(complete_index)
-                        
-                        # Forward fill missing data to handle gaps
-                        df_complete['open'] = df_complete['open'].ffill()
-                        df_complete['high'] = df_complete['high'].ffill()
-                        df_complete['low'] = df_complete['low'].ffill()
-                        df_complete['close'] = df_complete['close'].ffill()
-                        df_complete['volume'] = df_complete['volume'].fillna(0)  # Fill missing volume with 0
-                        
-                        # After forward fill, if we still have NaN at the beginning, use the first available value
-                        first_valid_idx = df_complete['close'].first_valid_index()
-                        if first_valid_idx is not None:
-                            first_values = df_complete.loc[first_valid_idx]
-                            df_complete['open'] = df_complete['open'].fillna(first_values['open'])
-                            df_complete['high'] = df_complete['high'].fillna(first_values['high'])
-                            df_complete['low'] = df_complete['low'].fillna(first_values['low'])
-                            df_complete['close'] = df_complete['close'].fillna(first_values['close'])
-                        
-                        # Now resample with proper alignment to ensure correct candle timing
-                        df_resampled = df_complete.resample(f'{timeframe}T', origin=alignment_origin).agg({
+                        # Resample with proper alignment to ensure correct candle timing
+                        df = df.resample(f'{timeframe}T', origin=alignment_origin).agg({
                             'open': 'first',
                             'high': 'max',
                             'low': 'min',
                             'close': 'last',
                             'volume': 'sum'
                         }).dropna()
-                        
-                        df = df_resampled
                     else:
                         # Fallback to standard resampling if data is empty
                         df = df.resample(f'{timeframe}T').agg({
@@ -458,44 +426,27 @@ def get_chart():
                             'volume': 'sum'
                         }).dropna()
                 else:
-                    # For regular market hours or other tickers, use simpler alignment
+                    # For regular market hours or other tickers, align with market open (9:30 AM)
                     market_open = pd.Timestamp(f'{target_date} 09:30:00')
                     
+                    # Create a proper time index aligned with market open
                     if not df.empty:
+                        # Find the first and last timestamps in the data
                         first_timestamp = df.index.min()
                         last_timestamp = df.index.max()
                         
-                        # For regular market hours, create complete time index from 9:30 to 16:00
+                        # If we have regular market hours data, align with 9:30 AM
                         if restrict_hours or (first_timestamp.time() >= pd.Timestamp('09:30:00').time() and 
                                             last_timestamp.time() <= pd.Timestamp('16:00:00').time()):
-                            # Create complete time index for regular market hours
-                            start_time = pd.Timestamp(f'{target_date} 09:30:00')
+                            # Create aligned time index starting from market open
+                            start_time = market_open
                             end_time = pd.Timestamp(f'{target_date} 16:00:00')
                             
-                            # Create complete minute-by-minute index
-                            complete_index = pd.date_range(start=start_time, end=end_time, freq='1min')
+                            # Create time index with proper alignment
+                            aligned_index = pd.date_range(start=start_time, end=end_time, freq=f'{timeframe}T')
                             
-                            # Reindex the dataframe to fill missing minutes
-                            df_complete = df.reindex(complete_index)
-                            
-                            # Forward fill missing data
-                            df_complete['open'] = df_complete['open'].ffill()
-                            df_complete['high'] = df_complete['high'].ffill()
-                            df_complete['low'] = df_complete['low'].ffill()
-                            df_complete['close'] = df_complete['close'].ffill()
-                            df_complete['volume'] = df_complete['volume'].fillna(0)
-                            
-                            # Handle any remaining NaN values at the beginning
-                            first_valid_idx = df_complete['close'].first_valid_index()
-                            if first_valid_idx is not None:
-                                first_values = df_complete.loc[first_valid_idx]
-                                df_complete['open'] = df_complete['open'].fillna(first_values['open'])
-                                df_complete['high'] = df_complete['high'].fillna(first_values['high'])
-                                df_complete['low'] = df_complete['low'].fillna(first_values['low'])
-                                df_complete['close'] = df_complete['close'].fillna(first_values['close'])
-                            
-                            # Resample with proper alignment to market open
-                            df = df_complete.resample(f'{timeframe}T', origin=market_open).agg({
+                            # Resample with proper alignment
+                            df = df.resample(f'{timeframe}T', origin=market_open).agg({
                                 'open': 'first',
                                 'high': 'max',
                                 'low': 'min',
