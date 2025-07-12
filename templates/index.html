@@ -87,6 +87,10 @@
                 <div id="chart-container-simulator">
                     <div id="chart-simulator"></div>
                 </div>
+                <div id="trading-buttons-container" class="trading-buttons" style="display: none;">
+                    <button id="buy-trade" class="trading-btn long-btn" disabled>LONG (Buy)</button>
+                    <button id="sell-trade" class="trading-btn short-btn" disabled>SHORT (Sell)</button>
+                </div>
                 <div id="replay-controls-simulator" class="replay-controls" style="display: none;">
                     <button id="play-replay-simulator" disabled>Play Replay</button>
                     <button id="pause-replay-simulator" disabled>Pause</button>
@@ -102,8 +106,6 @@
                         <option value="250">4x (0.25 sec/bar)</option>
                     </select>
                     <span id="replay-timestamp-simulator">Current Time: --:--:--</span>
-                    <button id="buy-trade" disabled>Long (Buy)</button>
-                    <button id="sell-trade" disabled>Short (Sell)</button>
                     <div id="trade-summary">
                         <h4>Trade Simulator</h4>
                         <p id="position-status">No open position</p>
@@ -459,6 +461,6 @@
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
     </script>
-    <script src="/static/script.js?v=30"></script>
+    <script src="/static/script.js?v=31"></script>
 </body>
 </html>

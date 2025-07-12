@@ -404,6 +404,84 @@ footer p {
     }
 }
 
+/* Trading Buttons Styling */
+.trading-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 15px auto;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    max-width: 400px;
+}
+
+.trading-btn {
+    padding: 12px 24px;
+    font-size: 1.1em;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.long-btn {
+    background-color: #00cc00;
+    color: white;
+    border: 2px solid #00aa00;
+}
+
+.long-btn:hover:not(:disabled) {
+    background-color: #00aa00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.short-btn {
+    background-color: #ff0000;
+    color: white;
+    border: 2px solid #cc0000;
+}
+
+.short-btn:hover:not(:disabled) {
+    background-color: #cc0000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.trading-btn:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+    opacity: 0.6;
+    border: 2px solid #999999;
+    transform: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Mobile Trading Buttons */
+@media (max-width: 600px) {
+    .trading-buttons {
+        flex-direction: column;
+        gap: 12px;
+        margin: 10px auto;
+        padding: 12px;
+        max-width: 280px;
+    }
+    
+    .trading-btn {
+        padding: 10px 20px;
+        font-size: 1em;
+        min-width: 100%;
+    }
+}
+
 /* Trade Summary Styling */
 #trade-summary {
     width: 100%;
