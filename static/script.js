@@ -190,7 +190,18 @@ function createChart(containerId, ticker, date, timeframe) {
     // Clear existing chart
     container.innerHTML = '';
     
+    // Debug: Check if LightweightCharts is available
+    console.log('LightweightCharts available:', typeof LightweightCharts !== 'undefined');
+    console.log('LightweightCharts object:', LightweightCharts);
+    
+    if (typeof LightweightCharts === 'undefined') {
+        console.error('LightweightCharts library not loaded!');
+        container.innerHTML = '<p style="color: red;">Error: Lightweight Charts library not loaded. Please refresh the page.</p>';
+        return null;
+    }
+    
     // Create chart
+    console.log('Creating chart for container:', containerId);
     const chart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
         height: 600,
@@ -215,28 +226,48 @@ function createChart(containerId, ticker, date, timeframe) {
         },
     });
 
+    console.log('Chart created successfully:', chart);
+    console.log('Chart methods:', Object.getOwnPropertyNames(chart));
+    console.log('Chart addCandlestickSeries type:', typeof chart.addCandlestickSeries);
+
     // Create candlestick series
-    const candleSeries = chart.addCandlestickSeries({
-        upColor: '#00cc00',
-        downColor: '#ff0000',
-        borderDownColor: '#ff0000',
-        borderUpColor: '#00cc00',
-        wickDownColor: '#ff0000',
-        wickUpColor: '#00cc00',
-    });
+    let candleSeries;
+    try {
+        candleSeries = chart.addCandlestickSeries({
+            upColor: '#00cc00',
+            downColor: '#ff0000',
+            borderDownColor: '#ff0000',
+            borderUpColor: '#00cc00',
+            wickDownColor: '#ff0000',
+            wickUpColor: '#00cc00',
+        });
+        console.log('Candlestick series created successfully:', candleSeries);
+    } catch (error) {
+        console.error('Failed to create candlestick series:', error);
+        container.innerHTML = `<p style="color: red;">Error creating chart: ${error.message}</p>`;
+        return null;
+    }
 
     // Create volume series
-    const volumeSeries = chart.addHistogramSeries({
-        color: '#888888',
-        priceFormat: {
-            type: 'volume',
-        },
-        priceScaleId: 'volume',
-        scaleMargins: {
-            top: 0.8,
-            bottom: 0,
-        },
-    });
+    let volumeSeries;
+    try {
+        volumeSeries = chart.addHistogramSeries({
+            color: '#888888',
+            priceFormat: {
+                type: 'volume',
+            },
+            priceScaleId: 'volume',
+            scaleMargins: {
+                top: 0.8,
+                bottom: 0,
+            },
+        });
+        console.log('Volume series created successfully:', volumeSeries);
+    } catch (error) {
+        console.error('Failed to create volume series:', error);
+        container.innerHTML = `<p style="color: red;">Error creating volume series: ${error.message}</p>`;
+        return null;
+    }
 
     // Handle window resize
     const resizeObserver = new ResizeObserver(entries => {

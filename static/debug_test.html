@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Lightweight Charts</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #chart { width: 600px; height: 400px; border: 1px solid #ccc; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Lightweight Charts Debug Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Library Loading</h3>
+        <div id="library-test"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: Chart Creation</h3>
+        <div id="chart-creation-test"></div>
+        <div id="chart"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: addCandlestickSeries Method</h3>
+        <div id="candlestick-test"></div>
+    </div>
+
+    <script>
+        console.log('Starting debug tests...');
+        
+        // Test 1: Check if LightweightCharts is available
+        function testLibraryLoading() {
+            const resultDiv = document.getElementById('library-test');
+            
+            if (typeof LightweightCharts !== 'undefined') {
+                resultDiv.innerHTML = '<span class="success">✓ LightweightCharts library loaded successfully</span>';
+                console.log('LightweightCharts object:', LightweightCharts);
+                return true;
+            } else {
+                resultDiv.innerHTML = '<span class="error">✗ LightweightCharts library NOT loaded</span>';
+                console.error('LightweightCharts is undefined');
+                return false;
+            }
+        }
+        
+        // Test 2: Try to create a chart
+        function testChartCreation() {
+            const resultDiv = document.getElementById('chart-creation-test');
+            const chartContainer = document.getElementById('chart');
+            
+            try {
+                const chart = LightweightCharts.createChart(chartContainer, {
+                    width: 600,
+                    height: 400,
+                    layout: {
+                        background: { color: '#ffffff' },
+                        textColor: '#333',
+                    }
+                });
+                
+                resultDiv.innerHTML = '<span class="success">✓ Chart created successfully</span>';
+                console.log('Chart object:', chart);
+                return chart;
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">✗ Chart creation failed: ${error.message}</span>`;
+                console.error('Chart creation error:', error);
+                return null;
+            }
+        }
+        
+        // Test 3: Try to add candlestick series
+        function testCandlestickSeries(chart) {
+            const resultDiv = document.getElementById('candlestick-test');
+            
+            if (!chart) {
+                resultDiv.innerHTML = '<span class="error">✗ Cannot test - no chart available</span>';
+                return;
+            }
+            
+            try {
+                console.log('Chart methods available:', Object.getOwnPropertyNames(chart));
+                console.log('Chart prototype:', Object.getOwnPropertyNames(Object.getPrototypeOf(chart)));
+                
+                if (typeof chart.addCandlestickSeries === 'function') {
+                    const candleSeries = chart.addCandlestickSeries({
+                        upColor: '#00cc00',
+                        downColor: '#ff0000',
+                        borderDownColor: '#ff0000',
+                        borderUpColor: '#00cc00',
+                        wickDownColor: '#ff0000',
+                        wickUpColor: '#00cc00',
+                    });
+                    
+                    resultDiv.innerHTML = '<span class="success">✓ addCandlestickSeries method works correctly</span>';
+                    console.log('Candlestick series:', candleSeries);
+                    
+                    // Add sample data
+                    const sampleData = [
+                        { time: '2023-01-01', open: 100, high: 110, low: 95, close: 105 },
+                        { time: '2023-01-02', open: 105, high: 115, low: 100, close: 108 },
+                        { time: '2023-01-03', open: 108, high: 120, low: 105, close: 112 }
+                    ];
+                    candleSeries.setData(sampleData);
+                    
+                } else {
+                    resultDiv.innerHTML = `<span class="error">✗ addCandlestickSeries is not a function. Type: ${typeof chart.addCandlestickSeries}</span>`;
+                    console.error('addCandlestickSeries method not found on chart object');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">✗ addCandlestickSeries failed: ${error.message}</span>`;
+                console.error('addCandlestickSeries error:', error);
+            }
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', function() {
+            console.log('Page loaded, running tests...');
+            
+            setTimeout(() => {
+                const libraryLoaded = testLibraryLoading();
+                
+                if (libraryLoaded) {
+                    const chart = testChartCreation();
+                    testCandlestickSeries(chart);
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
