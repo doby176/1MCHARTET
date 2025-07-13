@@ -12,20 +12,11 @@
         gtag('config', 'G-BFDR405H06');
     </script>
     <meta name="google-adsense-account" content="ca-pub-9416785017460416">
-    <title>1MChart - Precision Nasdaq Gap & Earnings Insights</title>
-    <meta name="description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, and reversal patterns. Analyze earnings outcomes (Beat, Miss...) and key news events (CPI, FOMC...) with high-frequency 1-minute interactive charts data for strategic day trading (2015-2025).">
-    <meta name="keywords" content="1-minute stock charts, Nasdaq gap insights, QQQ gap fill rate, QQQ gap trading, intraday gap analysis, QQQ price action patterns, day trading, price action analysis, Nasdaq gap statistics, earnings price action, CPI, PPI, FOMC, NFP, QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, META, intraday trading, historical stock data, trading tools, technical analysis, stock market analysis, QQQ gap trading strategies, stock gap analytics">
+    <title>1MChart - Free Sample Features</title>
+    <meta name="description" content="Try 1MChart's features for free! Sample Market Simulator with QQQ & NVDA, Gap Analysis, and Events Analysis. No signup required.">
+    <meta name="keywords" content="free trading simulator, sample gap analysis, try 1mchart, free stock analysis">
     <meta name="author" content="1MChart Team">
     <meta name="robots" content="index, follow">
-    <!-- Open Graph for social media -->
-    <meta property="og:title" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025)">
-    <meta property="og:description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, adverse moves, and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025).">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://onemchart.onrender.com">
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="1MChart - Precision Nasdaq Gap & Earnings Insights">
-    <meta name="twitter:description" content="Elevate your trading with 1MChart's advanced Nasdaq gap insights, including gap fill rates, adverse moves, and reversal patterns. Analyze earnings outcomes (Beat, Miss, Slight Beat) and key news events (CPI, FOMC) with high-frequency 1-minute data for strategic day trading (2015-2025).">
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
@@ -43,33 +34,46 @@
     <header>
         <img src="/static/logo-new.png?v=2" alt="1MChart Logo" class="logo">
         <div class="seo-description">
-            <p>Master the Market with 1MChart's Precision Trading Tools. Backtest 1-minute charts, replay historical trading days, paper trade with our simulator, and unlock actionable Nasdaq gap and event-driven insights.</p>
-            <p><strong>The Edge Lies In The Data.</strong></p>
+            <p><strong>🎯 FREE SAMPLE - Try 1MChart's Features!</strong></p>
+            <p>Experience our Market Simulator, Gap Analysis, and Events Analysis with limited sample data.</p>
+            <div class="upgrade-notice">
+                <p><strong>💎 Want Full Access?</strong> <a href="/register" class="upgrade-link">Sign up for complete data (10 years, all tickers, all features)</a></p>
+            </div>
         </div>
         <div class="user-info">
-            <p>Welcome, <span id="username">{{ session.username | default('Guest') }}</span> | <a href="/logout">Log Out</a></p>
+            <p>Sample Mode | <a href="/register">Sign Up for Full Access</a> | <a href="/">Back to Home</a></p>
         </div>
     </header>
+
     <main>
         <div class="card">
             <div class="tabs">
-                <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
-                <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
-                <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
-                <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
-                <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
+                <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator (Sample)</button>
+                <button class="tab-button" onclick="openTab('gap-analysis')">Gap Analysis (Sample)</button>
+                <button class="tab-button" onclick="openTab('events-analysis')">Events Analysis (Sample)</button>
+                <button class="tab-button" onclick="openTab('gap-insights')">Gap Insights (Premium)</button>
             </div>
+
             <!-- Market Simulator Section -->
             <div id="market-simulator" class="tab-content active">
+                <div class="sample-notice">
+                    <h3>🎯 Market Simulator - Sample Version</h3>
+                    <p><strong>Sample includes:</strong> QQQ & NVDA only | 2023-2024 data only</p>
+                    <p><strong>Full version includes:</strong> 10+ tickers | 10 years of data (2015-2025) | All features</p>
+                    <a href="/register" class="upgrade-btn">🚀 Upgrade for Full Access</a>
+                </div>
+                
                 <h2>Market Simulator</h2>
                 <p>Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls.</p>
                 <form id="stock-form-simulator">
                     <label for="ticker-select-simulator">Select Ticker:</label>
                     <select id="ticker-select-simulator" name="ticker">
                         <option value="">Select a ticker</option>
+                        <option value="QQQ">QQQ</option>
+                        <option value="NVDA">NVDA</option>
                     </select>
                     <label for="date-simulator">Select Date:</label>
-                    <input type="date" id="date-simulator" name="date">
+                    <input type="date" id="date-simulator" name="date" min="2023-01-01" max="2024-12-31">
                     <label for="timeframe-select-simulator">Select Timeframe:</label>
                     <select id="timeframe-select-simulator" name="timeframe">
                         <option value="1">1 Minute</option>
@@ -168,19 +172,27 @@
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- Nasdaq Gap Analysis Section -->
+
+            <!-- Gap Analysis Section -->
             <div id="gap-analysis" class="tab-content">
-                <h2>Nasdaq Gap Analysis</h2>
+                <div class="sample-notice">
+                    <h3>📊 Gap Analysis - Sample Version</h3>
+                    <p><strong>Sample includes:</strong> QQQ only | Limited gap sizes | 2023-2024 data only</p>
+                    <p><strong>Full version includes:</strong> All gap sizes | Complete historical data</p>
+                    <a href="/register" class="upgrade-btn">🚀 Upgrade for Full Access</a>
+                </div>
+                
+                <h2>Gap Analysis</h2>
                 <p>Uncover Nasdaq gap trading opportunities with chart analytics. Filter by gap size and direction to reveal intraday price action patterns missed by daily charts.</p>
                 <form id="gap-form">
                     <label for="gap-size-select">Select Gap Size Bin:</label>
                     <select id="gap-size-select" name="gap_size">
                         <option value="">Select gap size</option>
-                        <option value="0.15-0.35%">0.15-0.35%</option>
-                        <option value="0.35-0.5%">0.35-0.5%</option>
-                        <option value="0.5-1%">0.5-1%</option>
-                        <option value="1-1.5%">1-1.5%</option>
-                        <option value="1.5%+">1.5%+</option>
+                        <option value="0.15-0.35%">0.15-0.35% (Sample)</option>
+                        <option value="0.35-0.5%">0.35-0.5% (Sample)</option>
+                        <option value="0.5-1%">0.5-1% (Sample)</option>
+                        <option value="1-1.5%">1-1.5% (Sample)</option>
+                        <option value="1.5%+">1.5%+ (Sample)</option>
                     </select>
                     <label for="day-select">Select Day of Week:</label>
                     <select id="day-select" name="day">
@@ -200,9 +212,31 @@
                     <button type="submit">Find Gap Dates</button>
                 </form>
                 <div id="gap-dates">
-                    <p>Select a gap size, day, and direction to view dates with gaps.</p>
+                    <p>Select a gap size, day, and direction to view dates with gaps (QQQ only).</p>
                     <ul id="gap-dates-list"></ul>
                 </div>
+                <form id="stock-form-gap">
+                    <label for="ticker-select-gap">Select Ticker:</label>
+                    <select id="ticker-select-gap" name="ticker">
+                        <option value="">Select a ticker</option>
+                        <option value="QQQ">QQQ</option>
+                    </select>
+                    <label for="date-gap">Select Date:</label>
+                    <input type="date" id="date-gap" name="date" min="2023-01-01" max="2024-12-31">
+                    <label for="timeframe-select-gap">Select Timeframe:</label>
+                    <select id="timeframe-select-gap" name="timeframe">
+                        <option value="1">1 Minute</option>
+                        <option value="2">2 Minutes</option>
+                        <option value="3">3 Minutes</option>
+                        <option value="5">5 Minutes</option>
+                        <option value="10">10 Minutes</option>
+                        <option value="15">15 Minutes</option>
+                        <option value="30">30 Minutes</option>
+                        <option value="60">60 Minutes</option>
+                        <option value="240">240 Minutes</option>
+                    </select>
+                    <button type="submit">Load Chart</button>
+                </form>
                 <div id="chart-container-gap">
                     <div id="chart-indicators-gap" class="chart-indicators" style="display: none;">
                         <div class="indicators-section">
@@ -258,96 +292,42 @@
                     </select>
                     <span id="replay-timestamp-gap">Current Time: --:--:--</span>
                 </div>
-                <form id="stock-form-gap">
-                    <label for="ticker-select-gap">Select Ticker:</label>
-                    <select id="ticker-select-gap" name="ticker">
-                        <option value="">Select a ticker</option>
-                    </select>
-                    <label for="date-gap">Select Date:</label>
-                    <input type="date" id="date-gap" name="date">
-                    <label for="timeframe-select-gap">Select Timeframe:</label>
-                    <select id="timeframe-select-gap" name="timeframe">
-                        <option value="1">1 Minute</option>
-                        <option value="2">2 Minutes</option>
-                        <option value="3">3 Minutes</option>
-                        <option value="5">5 Minutes</option>
-                        <option value="10">10 Minutes</option>
-                        <option value="15">15 Minutes</option>
-                        <option value="30">30 Minutes</option>
-                        <option value="60">60 Minutes</option>
-                        <option value="240">240 Minutes</option>
-                    </select>
-                    <button type="submit">Load Chart</button>
-                </form>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- Nasdaq Gap Insights Section -->
-            <div id="gap-insights" class="tab-content">
-                <h2>Nasdaq Gap Insights</h2>
-                <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
-                <form id="gap-insights-form">
-                    <label for="gap-insights-size-select">Select Gap Size Bin:</label>
-                    <select id="gap-insights-size-select" name="gap_size">
-                        <option value="">Select gap size</option>
-                        <option value="0.15-0.35%">0.15-0.35%</option>
-                        <option value="0.35-0.5%">0.35-0.5%</option>
-                        <option value="0.5-1%">0.5-1%</option>
-                        <option value="1-1.5%">1-1.5%</option>
-                        <option value="1.5%+">1.5%+</option>
-                    </select>
-                    <label for="gap-insights-day-select">Select Day of Week:</label>
-                    <select id="gap-insights-day-select" name="day">
-                        <option value="">Select day</option>
-                        <option value="Monday">Monday</option>
-                        <option value="Tuesday">Tuesday</option>
-                        <option value="Wednesday">Wednesday</option>
-                        <option value="Thursday">Thursday</option>
-                        <option value="Friday">Friday</option>
-                    </select>
-                    <label for="gap-insights-direction-select">Select Gap Direction:</label>
-                    <select id="gap-insights-direction-select" name="gap_direction">
-                        <option value="">Select gap direction</option>
-                        <option value="up">Gap Up</option>
-                        <option value="down">Gap Down</option>
-                    </select>
-                    <button type="submit">Get Insights</button>
-                </form>
-                <div id="gap-insights-results">
-                    <p>Select a gap size, day, and direction to view Nasdaq gap insights and statistics.</p>
-                </div>
-                <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
-            </div>
-            <!-- News Event Analysis Section -->
+
+            <!-- Events Analysis Section -->
             <div id="events-analysis" class="tab-content">
+                <div class="sample-notice">
+                    <h3>📰 Events Analysis - Sample Version</h3>
+                    <p><strong>Sample includes:</strong> QQQ only | CPI & FOMC events only | 2023-2024 data only</p>
+                    <p><strong>Full version includes:</strong> All event types (CPI, PPI, FOMC, NFP) | Complete historical data</p>
+                    <a href="/register" class="upgrade-btn">🚀 Upgrade for Full Access</a>
+                </div>
+                
                 <h2>News Event Analysis</h2>
-                <p>Master Nasdaq price action on key news days (CPI, PPI, FOMC, NFP) with chart analytics to seize intraday trading opportunities.</p>
+                <p>Master Nasdaq price action on key news days (CPI, FOMC) with chart analytics to seize intraday trading opportunities.</p>
                 <div class="filter-toggle">
                     <label><input type="radio" name="filter-type" value="year" checked> Filter by Event Type and Year</label>
-                    <label><input type="radio" name="filter-type" value="bin"> Filter by Event Type and Economic Impact Range</label>
                 </div>
                 <form id="events-form">
                     <div id="year-filter" class="filter-section active">
                         <label for="event-type-select">Select Event Type:</label>
                         <select id="event-type-select" name="event_type">
                             <option value="">Select event type</option>
-                            <option value="CPI">CPI</option>
-                            <option value="PPI">PPI</option>
-                            <option value="FOMC">FOMC</option>
-                            <option value="NFP">NFP</option>
+                            <option value="CPI">CPI (Sample)</option>
+                            <option value="FOMC">FOMC (Sample)</option>
                         </select>
                         <label for="year-select">Select Year:</label>
                         <select id="year-select" name="year">
                             <option value="">Select year</option>
                         </select>
                     </div>
-                    <div id="bin-filter" class="filter-section">
+                    <div id="bin-filter" class="filter-section" style="display: none;">
                         <label for="bin-event-type-select">Select Event Type:</label>
                         <select id="bin-event-type-select" name="event_type">
                             <option value="">Select event type</option>
-                            <option value="CPI">CPI</option>
-                            <option value="PPI">PPI</option>
-                            <option value="FOMC">FOMC</option>
-                            <option value="NFP">NFP</option>
+                            <option value="CPI">CPI (Sample)</option>
+                            <option value="FOMC">FOMC (Sample)</option>
                         </select>
                         <label for="bin-select">Select Economic Impact Range:</label>
                         <select id="bin-select" name="bin">
@@ -360,16 +340,17 @@
                     <button type="submit">Find Event Dates</button>
                 </form>
                 <div id="event-dates">
-                    <p>Select filters to view dates with events.</p>
+                    <p>Select event type and year to view dates with events (QQQ only).</p>
                     <ul id="event-dates-list"></ul>
                 </div>
                 <form id="stock-form-events">
                     <label for="ticker-select-events">Select Ticker:</label>
                     <select id="ticker-select-events" name="ticker">
                         <option value="">Select a ticker</option>
+                        <option value="QQQ">QQQ</option>
                     </select>
                     <label for="date-events">Select Date:</label>
-                    <input type="date" id="date-events" name="date">
+                    <input type="date" id="date-events" name="date" min="2023-01-01" max="2024-12-31">
                     <label for="timeframe-select-events">Select Timeframe:</label>
                     <select id="timeframe-select-events" name="timeframe">
                         <option value="1">1 Minute</option>
@@ -441,170 +422,249 @@
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- Earnings Analysis Section -->
-            <div id="earnings-analysis" class="tab-content">
-                <h2>Earnings Analysis</h2>
-                <p>Analyze stock earnings reactions with chart analytics to pinpoint intraday price action patterns and build winning trading strategies.</p>
-                <div class="filter-toggle">
-                    <label><input type="radio" name="earnings-filter-type" value="ticker-outcome" checked> Filter by Ticker and Outcome</label>
-                    <label><input type="radio" name="earnings-filter-type" value="ticker-only"> Filter by Ticker Only</label>
-                </div>
-                <form id="earnings-form">
-                    <div id="ticker-outcome-filter" class="filter-section active">
-                        <label for="earnings-ticker-select">Select Ticker:</label>
-                        <select id="earnings-ticker-select" name="ticker">
-                            <option value="">Select a ticker</option>
-                        </select>
-                        <label for="earnings-bin-select">Select Earnings Outcome:</label>
-                        <select id="earnings-bin-select" name="bin">
-                            <option value="">Select outcome</option>
-                            <option value="miss">Miss (<-10%)</option>
-                            <option value="slight-miss">Slight Miss (-10% to 0%)</option>
-                            <option value="slight-beat">Slight Beat (0% to 10%)</option>
-                            <option value="beat">Beat (>10%)</option>
-                            <option value="unknown">Unknown</option>
-                        </select>
-                        <label for="timeframe-select-earnings">Select Timeframe:</label>
-                        <select id="timeframe-select-earnings" name="timeframe">
-                            <option value="1">1 Minute</option>
-                            <option value="2">2 Minutes</option>
-                            <option value="3">3 Minutes</option>
-                            <option value="5">5 Minutes</option>
-                            <option value="10">10 Minutes</option>
-                            <option value="15">15 Minutes</option>
-                            <option value="30">30 Minutes</option>
-                            <option value="60">60 Minutes</option>
-                            <option value="240">240 Minutes</option>
-                        </select>
-                        <p class="earnings-outcome-note">Earnings outcomes reflect stock price movement: Miss (<-10%), Slight Miss (-10% to 0%), Slight Beat (0% to 10%), Beat (>10%), Unknown (data unavailable).</p>
-                    </div>
-                    <div id="ticker-only-filter" class="filter-section">
-                        <label for="earnings-ticker-only-select">Select Ticker:</label>
-                        <select id="earnings-ticker-only-select" name="ticker">
-                            <option value="">Select a ticker</option>
-                        </select>
-                        <label for="timeframe-select-earnings">Select Timeframe:</label>
-                        <select id="timeframe-select-earnings" name="timeframe">
-                            <option value="1">1 Minute</option>
-                            <option value="2">2 Minutes</option>
-                            <option value="3">3 Minutes</option>
-                            <option value="5">5 Minutes</option>
-                            <option value="10">10 Minutes</option>
-                            <option value="15">15 Minutes</option>
-                            <option value="30">30 Minutes</option>
-                            <option value="60">60 Minutes</option>
-                            <option value="240">240 Minutes</option>
-                        </select>
-                    </div>
-                    <button type="submit">Find Earnings Dates</button>
-                </form>
-                <div id="earnings-dates">
-                    <p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>
-                    <ul id="earnings-dates-list"></ul>
-                </div>
-                <div id="chart-container-earnings">
-                    <div id="chart-indicators-earnings" class="chart-indicators" style="display: none;">
-                        <div class="indicators-section">
-                            <h4>Technical Indicators</h4>
-                            <div class="indicators-grid">
-                                <div class="indicator-group">
-                                    <label>Moving Averages:</label>
-                                    <label><input type="checkbox" id="sma9-earnings" data-indicator="sma" data-period="9"> SMA 9</label>
-                                    <label><input type="checkbox" id="sma20-earnings" data-indicator="sma" data-period="20"> SMA 20</label>
-                                    <label><input type="checkbox" id="sma50-earnings" data-indicator="sma" data-period="50"> SMA 50</label>
-                                    <label><input type="checkbox" id="ema20-earnings" data-indicator="ema" data-period="20"> EMA 20</label>
-                                    <label><input type="checkbox" id="ema50-earnings" data-indicator="ema" data-period="50"> EMA 50</label>
+
+            <!-- Gap Insights Section -->
+            <div id="gap-insights" class="tab-content">
+                <div class="premium-notice" style="text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white; margin: 20px 0;">
+                    <div style="max-width: 800px; margin: 0 auto;">
+                        <h2 style="font-size: 2.5em; margin-bottom: 20px; color: #fff;">💎 Gap Insights - Premium Feature</h2>
+                        <p style="font-size: 1.3em; margin-bottom: 30px; line-height: 1.6;">
+                            <strong>The Most Powerful Section on 1MChart</strong><br>
+                            Get actionable data from ALL NASDAQ gaps with comprehensive analytics, statistics, and insights.
+                        </p>
+                        
+                        <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 10px; margin: 30px 0; backdrop-filter: blur(10px);">
+                            <h3 style="color: #fff; margin-bottom: 20px;">🚀 What You'll Get:</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; text-align: left;">
+                                <div>
+                                    <strong>📊 Gap Fill Rates</strong><br>
+                                    <small>Historical gap fill percentages by size and day</small>
                                 </div>
-                                <div class="indicator-group">
-                                    <label>Volume & Price:</label>
-                                    <label><input type="checkbox" id="vwap-earnings" data-indicator="vwap"> VWAP</label>
-                                    <label><input type="checkbox" id="bb-earnings" data-indicator="bollinger"> Bollinger Bands</label>
+                                <div>
+                                    <strong>📈 Median Moves</strong><br>
+                                    <small>Average price moves before gap fills</small>
                                 </div>
-                                <div class="indicator-group">
-                                    <label>Oscillators:</label>
-                                    <label><input type="checkbox" id="rsi-earnings" data-indicator="rsi"> RSI (14)</label>
-                                    <label><input type="checkbox" id="macd-earnings" data-indicator="macd"> MACD</label>
-                                    <label><input type="checkbox" id="stoch-earnings" data-indicator="stochastic"> Stochastic</label>
+                                <div>
+                                    <strong>🎯 Max Moves</strong><br>
+                                    <small>Maximum unfilled gap movements</small>
+                                </div>
+                                <div>
+                                    <strong>⚡ Live Testing</strong><br>
+                                    <small>Test strategies with replay & simulator</small>
                                 </div>
                             </div>
                         </div>
-                        <div class="drawing-tools-section">
-                            <h4>Drawing Tools <span style="color: #ff9800; font-size: 0.8em;">(Coming Soon)</span></h4>
-                            <div class="tools-grid">
-                                <button id="trend-line-earnings" class="drawing-tool-btn coming-soon" data-tool="trendline">📈 Trend Line</button>
-                                <button id="horizontal-line-earnings" class="drawing-tool-btn coming-soon" data-tool="horizontal">➖ Horizontal Line</button>
-                                <button id="fibonacci-earnings" class="drawing-tool-btn coming-soon" data-tool="fibonacci">📊 Fibonacci</button>
-                                <button id="measure-tool-earnings" class="drawing-tool-btn coming-soon" data-tool="measure">📏 Measure</button>
-                                <button id="clear-drawings-earnings" class="drawing-tool-btn clear-btn coming-soon" data-tool="clear">🗑️ Clear All</button>
+                        
+                        <div style="margin: 40px 0;">
+                            <p style="font-size: 1.4em; margin-bottom: 25px;">
+                                <strong>🔥 Turn Gap Data Into Profit</strong><br>
+                                <small style="font-size: 0.9em;">Professional traders use this data to make informed gap trading decisions</small>
+                            </p>
+                            
+                            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                                <a href="/register" style="background: #28a745; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: all 0.3s ease; display: inline-block;">
+                                    🚀 Sign Up FREE - Full Access
+                                </a>
+                                <a href="/" style="background: rgba(255,255,255,0.2); color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: all 0.3s ease; display: inline-block; backdrop-filter: blur(10px);">
+                                    ← Back to Home
+                                </a>
                             </div>
                         </div>
+                        
+                        <div style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 8px; backdrop-filter: blur(10px);">
+                            <p style="margin: 0; font-size: 0.9em; opacity: 0.9;">
+                                <strong>💡 Pro Tip:</strong> Gap Insights combined with our Market Simulator and Replay features create the ultimate gap trading strategy development environment.
+                            </p>
+                        </div>
                     </div>
-                    <div id="chart-earnings"></div>
-                </div>
-                <div id="replay-controls-earnings" class="replay-controls" style="display: none;">
-                    <button id="play-replay-earnings" disabled>Play Replay</button>
-                    <button id="pause-replay-earnings" disabled>Pause</button>
-                    <button id="start-over-replay-earnings" disabled>Start Over</button>
-                    <button id="next-candle-earnings" disabled>Next Candle</button>
-                    <button id="prev-candle-earnings" disabled>Previous Candle</button>
-                    <label for="replay-start-time-earnings">Start Time (HH:MM):</label>
-                    <input type="text" id="replay-start-time-earnings" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]">
-                    <label for="replay-speed-earnings">Replay Speed:</label>
-                    <select id="replay-speed-earnings">
-                        <option value="1000">1x (1 sec/bar)</option>
-                        <option value="500">2x (0.5 sec/bar)</option>
-                        <option value="250">4x (0.25 sec/bar)</option>
-                    </select>
-                    <span id="replay-timestamp-earnings">Current Time: --:--:--</span>
                 </div>
                 <img src="/static/logo-new.png" alt="1MChart Section Logo" class="section-logo">
             </div>
-            <!-- AdSense Ad Unit -->
-            <div class="ads-container">
-                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
-                <ins class="adsbygoogle"
-                    style="display:block"
-                    data-ad-client="ca-pub-9416785017460416"
-                    data-ad-slot="5487535867"
-                    data-ad-format="auto"
-                    data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
         </div>
     </main>
-    <footer class="footer">
-        <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
-        <p>More coming soon</p>
-        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site, All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
-        <img src="/static/logo-new.png" alt="1MChart Footer Logo" class="footer-logo">
-    </footer>
+
     <script>
-        // Disable right-click without alert
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-        });
-        // Disable text selection
-        document.addEventListener('selectstart', function(e) {
-            e.preventDefault();
-        });
-        // Disable drag-and-drop
-        document.addEventListener('dragstart', function(e) {
-            e.preventDefault();
-        });
-        // Tab switching function
-        function openTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.classList.remove('active');
-            });
-            document.getElementById(tabId).classList.add('active');
-            document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
+        // Set sample mode flag
+        window.SAMPLE_MODE = true;
+        
+        function openTab(tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+            if (document.getElementById(tabName)) {
+                document.getElementById(tabName).classList.add("active");
+            }
+            const targetButton = document.querySelector(`button[onclick="openTab('${tabName}')"]`);
+            if (targetButton) {
+                targetButton.classList.add("active");
+            }
         }
+        
+        // Ensure proper event handling after scripts load
+        window.addEventListener('load', function() {
+            console.log('Sample page and scripts loaded, setting up event handlers...');
+            
+            // Override form submissions to prevent page redirects
+            const forms = ['stock-form-simulator', 'gap-form', 'events-form', 'stock-form-gap', 'stock-form-events'];
+            forms.forEach(formId => {
+                const form = document.getElementById(formId);
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        console.log(`Form ${formId} submitted, preventing default behavior`);
+                        
+                        // Check if functions exist before calling
+                        if (formId === 'stock-form-simulator' && typeof loadChart === 'function') {
+                            loadChart(e, 'market-simulator');
+                        } else if (formId === 'gap-form' && typeof loadGapDates === 'function') {
+                            loadGapDates(e);
+                        } else if (formId === 'events-form' && typeof loadEventDates === 'function') {
+                            loadEventDates(e);
+                        } else if (formId === 'stock-form-gap' && typeof loadChart === 'function') {
+                            loadChart(e, 'gap-analysis');
+                        } else if (formId === 'stock-form-events' && typeof loadChart === 'function') {
+                            loadChart(e, 'events-analysis');
+                        } else {
+                            console.error(`Function not found for form ${formId}`);
+                        }
+                    });
+                    console.log(`Event handler attached to form: ${formId}`);
+                }
+            });
+            
+            // Setup replay control event listeners explicitly
+            console.log('Setting up replay control event listeners...');
+            
+            // Market Simulator replay controls
+            const playSimulator = document.getElementById('play-replay-simulator');
+            const pauseSimulator = document.getElementById('pause-replay-simulator');
+            const startOverSimulator = document.getElementById('start-over-replay-simulator');
+            const prevSimulator = document.getElementById('prev-candle-simulator');
+            const nextSimulator = document.getElementById('next-candle-simulator');
+            const speedSimulator = document.getElementById('replay-speed-simulator');
+            const buyTrade = document.getElementById('buy-trade');
+            const sellTrade = document.getElementById('sell-trade');
+            
+            if (playSimulator && typeof startReplay === 'function') {
+                playSimulator.addEventListener('click', () => {
+                    console.log('Play replay clicked for simulator');
+                    startReplay('simulator');
+                });
+                console.log('Play button event listener attached for simulator');
+            }
+            
+            if (pauseSimulator && typeof pauseReplay === 'function') {
+                pauseSimulator.addEventListener('click', () => {
+                    console.log('Pause replay clicked for simulator');
+                    pauseReplay('simulator');
+                });
+            }
+            
+            if (startOverSimulator && typeof startOverReplay === 'function') {
+                startOverSimulator.addEventListener('click', () => {
+                    console.log('Start over replay clicked for simulator');
+                    startOverReplay('simulator');
+                });
+            }
+            
+            if (prevSimulator && typeof prevCandle === 'function') {
+                prevSimulator.addEventListener('click', () => {
+                    console.log('Previous candle clicked for simulator');
+                    prevCandle('simulator');
+                });
+            }
+            
+            if (nextSimulator && typeof nextCandle === 'function') {
+                nextSimulator.addEventListener('click', () => {
+                    console.log('Next candle clicked for simulator');
+                    nextCandle('simulator');
+                });
+            }
+            
+            if (speedSimulator && typeof updateReplaySpeed === 'function') {
+                speedSimulator.addEventListener('change', () => {
+                    console.log('Replay speed changed for simulator');
+                    updateReplaySpeed('simulator');
+                });
+            }
+            
+            if (buyTrade && typeof placeBuyTrade === 'function') {
+                buyTrade.addEventListener('click', () => {
+                    console.log('Buy trade clicked');
+                    placeBuyTrade();
+                });
+            }
+            
+            if (sellTrade && typeof placeSellTrade === 'function') {
+                sellTrade.addEventListener('click', () => {
+                    console.log('Sell trade clicked');
+                    placeSellTrade();
+                });
+            }
+            
+            // Gap Analysis replay controls
+            const playGap = document.getElementById('play-replay-gap');
+            const pauseGap = document.getElementById('pause-replay-gap');
+            const startOverGap = document.getElementById('start-over-replay-gap');
+            const prevGap = document.getElementById('prev-candle-gap');
+            const nextGap = document.getElementById('next-candle-gap');
+            const speedGap = document.getElementById('replay-speed-gap');
+            
+            if (playGap && typeof startReplay === 'function') {
+                playGap.addEventListener('click', () => startReplay('gap'));
+            }
+            if (pauseGap && typeof pauseReplay === 'function') {
+                pauseGap.addEventListener('click', () => pauseReplay('gap'));
+            }
+            if (startOverGap && typeof startOverReplay === 'function') {
+                startOverGap.addEventListener('click', () => startOverReplay('gap'));
+            }
+            if (prevGap && typeof prevCandle === 'function') {
+                prevGap.addEventListener('click', () => prevCandle('gap'));
+            }
+            if (nextGap && typeof nextCandle === 'function') {
+                nextGap.addEventListener('click', () => nextCandle('gap'));
+            }
+            if (speedGap && typeof updateReplaySpeed === 'function') {
+                speedGap.addEventListener('change', () => updateReplaySpeed('gap'));
+            }
+            
+            // Events Analysis replay controls
+            const playEvents = document.getElementById('play-replay-events');
+            const pauseEvents = document.getElementById('pause-replay-events');
+            const startOverEvents = document.getElementById('start-over-replay-events');
+            const prevEvents = document.getElementById('prev-candle-events');
+            const nextEvents = document.getElementById('next-candle-events');
+            const speedEvents = document.getElementById('replay-speed-events');
+            
+            if (playEvents && typeof startReplay === 'function') {
+                playEvents.addEventListener('click', () => startReplay('events'));
+            }
+            if (pauseEvents && typeof pauseReplay === 'function') {
+                pauseEvents.addEventListener('click', () => pauseReplay('events'));
+            }
+            if (startOverEvents && typeof startOverReplay === 'function') {
+                startOverEvents.addEventListener('click', () => startOverReplay('events'));
+            }
+            if (prevEvents && typeof prevCandle === 'function') {
+                prevEvents.addEventListener('click', () => prevCandle('events'));
+            }
+            if (nextEvents && typeof nextCandle === 'function') {
+                nextEvents.addEventListener('click', () => nextCandle('events'));
+            }
+            if (speedEvents && typeof updateReplaySpeed === 'function') {
+                speedEvents.addEventListener('change', () => updateReplaySpeed('events'));
+            }
+            
+            console.log('All event handlers set up successfully');
+        });
     </script>
-    <script src="/static/script.js?v=50"></script>
+    <script src="/static/script.js?v=51"></script>
 </body>
 </html>
