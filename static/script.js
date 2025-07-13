@@ -409,6 +409,11 @@ function createChart(containerId, chartData, timeframe) {
             borderVisible: true,
             timeVisible: true,
             secondsVisible: false,
+            barSpacing: 8,  // Fixed bar spacing to prevent thinning
+            fixLeftEdge: false,
+            fixRightEdge: false,
+            lockVisibleTimeRangeOnResize: true,
+            rightBarStaysOnScroll: true,
             tickMarkFormatter: (time) => {
                 const date = new Date(time * 1000);
                 return date.toLocaleTimeString('en-US', { 
@@ -662,6 +667,68 @@ function setupChartZoomTracking(section) {
 }
 
 
+
+// Clear indicators when replay starts so they build up naturally
+function clearIndicatorsForReplay(section) {
+    const chart = chartInstances[section]?.chart;
+    if (!chart) return;
+    
+    console.log(`Clearing indicators for ${section} before replay starts`);
+    
+    // Get all active indicators except Bollinger Bands (they're disabled during replay anyway)
+    Object.keys(indicatorSeries[section]).forEach(indicatorKey => {
+        if (indicatorKey.includes('bollinger') || indicatorKey.includes('_upper') || indicatorKey.includes('_middle') || indicatorKey.includes('_lower')) {
+            // Skip Bollinger Bands - they're disabled during replay
+            return;
+        }
+        
+        if (indicatorSeries[section][indicatorKey]) {
+            try {
+                // Clear the data but keep the series for real-time updates
+                indicatorSeries[section][indicatorKey].setData([]);
+                console.log(`Cleared data for indicator: ${indicatorKey}`);
+            } catch (error) {
+                console.warn(`Error clearing indicator ${indicatorKey}:`, error);
+            }
+        }
+    });
+    
+    console.log(`Cleared indicators for ${section} - they will build up during replay`);
+}
+
+// Fix chart layout to maintain consistent candle spacing/width
+function fixChartLayout(section) {
+    const chart = chartInstances[section]?.chart;
+    if (!chart) return;
+    
+    try {
+        // Force the chart to maintain consistent bar spacing and layout
+        const timeScale = chart.timeScale();
+        
+        // Get current visible range
+        const visibleRange = timeScale.getVisibleRange();
+        
+        // Apply fixed bar spacing to prevent thinning
+        chart.applyOptions({
+            timeScale: {
+                barSpacing: 8,  // Consistent spacing
+                fixLeftEdge: false,
+                fixRightEdge: false,
+                lockVisibleTimeRangeOnResize: true,
+                rightBarStaysOnScroll: true
+            }
+        });
+        
+        // Restore the visible range if it was changed
+        if (visibleRange) {
+            timeScale.setVisibleRange(visibleRange);
+        }
+        
+        console.log(`Fixed chart layout for ${section}`);
+    } catch (error) {
+        console.warn(`Error fixing chart layout for ${section}:`, error);
+    }
+}
 
 // Update indicators in real-time during replay (except Bollinger Bands which have issues)
 function updateIndicatorsForReplay(section, candlestickData, volumeData) {
@@ -1104,6 +1171,9 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
     
     if (indicatorData && indicatorSeries[section][indicatorKey]) {
         indicatorSeries[section][indicatorKey].setData(indicatorData);
+        
+        // Ensure chart layout remains consistent after adding indicator
+        fixChartLayout(section);
     }
 }
 
@@ -1127,6 +1197,9 @@ function removeIndicatorFromChart(section, indicator, period) {
         chart.removeSeries(indicatorSeries[section][indicatorKey]);
         delete indicatorSeries[section][indicatorKey];
     }
+    
+    // Ensure chart layout remains consistent after removing indicator
+    fixChartLayout(section);
 }
 
 // Handle Indicator Checkbox Changes
@@ -2078,6 +2151,9 @@ function startReplay(section) {
     
     // Reset zoom state when starting replay to enable auto-fit
     userZoomState[section] = false;
+    
+    // Clear all indicators before starting replay so they build up naturally
+    clearIndicatorsForReplay(section);
 
     const playButton = document.getElementById(config.playButtonId);
     const pauseButton = document.getElementById(config.pauseButtonId);
@@ -2217,6 +2293,9 @@ function startOverReplay(section) {
     
     // Reset zoom state when starting over to enable auto-fit
     userZoomState[section] = false;
+    
+    // Clear all indicators before starting over so they build up naturally (like play replay)
+    clearIndicatorsForReplay(section);
 
     const playButton = document.getElementById(config.playButtonId);
     const pauseButton = document.getElementById(config.pauseButtonId);
