@@ -473,8 +473,134 @@
                     console.log(`Event handler attached to form: ${formId}`);
                 }
             });
+            
+            // Setup replay control event listeners explicitly
+            console.log('Setting up replay control event listeners...');
+            
+            // Market Simulator replay controls
+            const playSimulator = document.getElementById('play-replay-simulator');
+            const pauseSimulator = document.getElementById('pause-replay-simulator');
+            const startOverSimulator = document.getElementById('start-over-replay-simulator');
+            const prevSimulator = document.getElementById('prev-candle-simulator');
+            const nextSimulator = document.getElementById('next-candle-simulator');
+            const speedSimulator = document.getElementById('replay-speed-simulator');
+            const buyTrade = document.getElementById('buy-trade');
+            const sellTrade = document.getElementById('sell-trade');
+            
+            if (playSimulator && typeof startReplay === 'function') {
+                playSimulator.addEventListener('click', () => {
+                    console.log('Play replay clicked for simulator');
+                    startReplay('simulator');
+                });
+                console.log('Play button event listener attached for simulator');
+            }
+            
+            if (pauseSimulator && typeof pauseReplay === 'function') {
+                pauseSimulator.addEventListener('click', () => {
+                    console.log('Pause replay clicked for simulator');
+                    pauseReplay('simulator');
+                });
+            }
+            
+            if (startOverSimulator && typeof startOverReplay === 'function') {
+                startOverSimulator.addEventListener('click', () => {
+                    console.log('Start over replay clicked for simulator');
+                    startOverReplay('simulator');
+                });
+            }
+            
+            if (prevSimulator && typeof prevCandle === 'function') {
+                prevSimulator.addEventListener('click', () => {
+                    console.log('Previous candle clicked for simulator');
+                    prevCandle('simulator');
+                });
+            }
+            
+            if (nextSimulator && typeof nextCandle === 'function') {
+                nextSimulator.addEventListener('click', () => {
+                    console.log('Next candle clicked for simulator');
+                    nextCandle('simulator');
+                });
+            }
+            
+            if (speedSimulator && typeof updateReplaySpeed === 'function') {
+                speedSimulator.addEventListener('change', () => {
+                    console.log('Replay speed changed for simulator');
+                    updateReplaySpeed('simulator');
+                });
+            }
+            
+            if (buyTrade && typeof placeBuyTrade === 'function') {
+                buyTrade.addEventListener('click', () => {
+                    console.log('Buy trade clicked');
+                    placeBuyTrade();
+                });
+            }
+            
+            if (sellTrade && typeof placeSellTrade === 'function') {
+                sellTrade.addEventListener('click', () => {
+                    console.log('Sell trade clicked');
+                    placeSellTrade();
+                });
+            }
+            
+            // Gap Analysis replay controls
+            const playGap = document.getElementById('play-replay-gap');
+            const pauseGap = document.getElementById('pause-replay-gap');
+            const startOverGap = document.getElementById('start-over-replay-gap');
+            const prevGap = document.getElementById('prev-candle-gap');
+            const nextGap = document.getElementById('next-candle-gap');
+            const speedGap = document.getElementById('replay-speed-gap');
+            
+            if (playGap && typeof startReplay === 'function') {
+                playGap.addEventListener('click', () => startReplay('gap'));
+            }
+            if (pauseGap && typeof pauseReplay === 'function') {
+                pauseGap.addEventListener('click', () => pauseReplay('gap'));
+            }
+            if (startOverGap && typeof startOverReplay === 'function') {
+                startOverGap.addEventListener('click', () => startOverReplay('gap'));
+            }
+            if (prevGap && typeof prevCandle === 'function') {
+                prevGap.addEventListener('click', () => prevCandle('gap'));
+            }
+            if (nextGap && typeof nextCandle === 'function') {
+                nextGap.addEventListener('click', () => nextCandle('gap'));
+            }
+            if (speedGap && typeof updateReplaySpeed === 'function') {
+                speedGap.addEventListener('change', () => updateReplaySpeed('gap'));
+            }
+            
+            // Events Analysis replay controls
+            const playEvents = document.getElementById('play-replay-events');
+            const pauseEvents = document.getElementById('pause-replay-events');
+            const startOverEvents = document.getElementById('start-over-replay-events');
+            const prevEvents = document.getElementById('prev-candle-events');
+            const nextEvents = document.getElementById('next-candle-events');
+            const speedEvents = document.getElementById('replay-speed-events');
+            
+            if (playEvents && typeof startReplay === 'function') {
+                playEvents.addEventListener('click', () => startReplay('events'));
+            }
+            if (pauseEvents && typeof pauseReplay === 'function') {
+                pauseEvents.addEventListener('click', () => pauseReplay('events'));
+            }
+            if (startOverEvents && typeof startOverReplay === 'function') {
+                startOverEvents.addEventListener('click', () => startOverReplay('events'));
+            }
+            if (prevEvents && typeof prevCandle === 'function') {
+                prevEvents.addEventListener('click', () => prevCandle('events'));
+            }
+            if (nextEvents && typeof nextCandle === 'function') {
+                nextEvents.addEventListener('click', () => nextCandle('events'));
+            }
+            if (speedEvents && typeof updateReplaySpeed === 'function') {
+                speedEvents.addEventListener('change', () => updateReplaySpeed('events'));
+            }
+            
+            console.log('All event handlers set up successfully');
         });
     </script>
-    <script src="/static/script.js?v=48"></script>
+    <script src="/static/script.js?v=49"></script>
 </body>
 </html>

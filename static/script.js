@@ -1904,7 +1904,7 @@ async function loadChart(event, tabId) {
             timeframeSelectId: 'timeframe-select-simulator',
             chartContainerId: 'chart-simulator',
             formId: 'stock-form-simulator',
-            restrictHours: false,
+            restrictHours: true,
             replayControlsId: 'replay-controls-simulator',
             replayPrefix: 'simulator'
         },
@@ -1959,6 +1959,7 @@ async function loadChart(event, tabId) {
     // QQQ should always be restricted to regular market hours (9:30-16:00) in ALL sections
     // All other tickers follow their section's restrictHours setting
     const shouldRestrictHours = (ticker === 'QQQ') || restrictHours;
+    console.log(`Market hours filtering: ticker=${ticker}, restrictHours=${restrictHours}, shouldRestrictHours=${shouldRestrictHours}`);
 
     // Replay controls
     const replayControls = document.getElementById(replayControlsId);
