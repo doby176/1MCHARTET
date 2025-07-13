@@ -433,7 +433,12 @@ function createChart(containerId, chartData, timeframe) {
         },
         rightPriceScale: {
             visible: true,
-            borderColor: '#cccccc'
+            borderColor: '#cccccc',
+            autoScale: true,
+            scaleMargins: {
+                top: 0.1,
+                bottom: 0.25
+            }
         },
         leftPriceScale: {
             visible: false
@@ -544,11 +549,60 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
             const autoZoomBtn = document.querySelector(`#${containerId} .auto-zoom-btn`);
             if (autoZoomBtn) {
                 autoZoomBtn.onclick = () => {
-                    if (chartInstances[section] && chartInstances[section].chart.timeScale) {
-                        chartInstances[section].chart.timeScale().fitContent();
+                    if (chartInstances[section] && chartInstances[section].chart) {
+                        const chart = chartInstances[section].chart;
+                        
+                        // Reset both time scale (X-axis) and price scale (Y-axis)
+                        console.log(`Auto-fit triggered for ${section} - resetting both axes`);
+                        
+                        // Reset time scale (horizontal/width)
+                        chart.timeScale().fitContent();
+                         
+                         // Reset price scale (vertical/height) - multiple approaches to ensure it works
+                         setTimeout(() => {
+                             try {
+                                 const priceScale = chart.priceScale('right');
+                                 if (priceScale) {
+                                     // Method 1: Reset to auto-scale with default margins
+                                     priceScale.applyOptions({
+                                         autoScale: true,
+                                         scaleMargins: {
+                                             top: 0.1,
+                                             bottom: 0.25
+                                         }
+                                     });
+                                     
+                                     // Method 2: Try to fit content if method exists
+                                     if (typeof priceScale.fitContent === 'function') {
+                                         priceScale.fitContent();
+                                     }
+                                 }
+                                 
+                                 // Also reset left price scale if it exists
+                                 const leftPriceScale = chart.priceScale('left');
+                                 if (leftPriceScale) {
+                                     leftPriceScale.applyOptions({
+                                         autoScale: true
+                                     });
+                                     if (typeof leftPriceScale.fitContent === 'function') {
+                                         leftPriceScale.fitContent();
+                                     }
+                                 }
+                                 
+                                 // Method 3: Force a refresh by re-fitting the time scale which might trigger price scale reset
+                                 setTimeout(() => {
+                                     chart.timeScale().fitContent();
+                                 }, 25);
+                                 
+                                 console.log('Price scale reset completed');
+                             } catch (error) {
+                                 console.warn('Error resetting price scale:', error);
+                             }
+                         }, 50);
+                        
                         // Reset zoom state to allow auto-fit during replay
                         userZoomState[section] = false;
-                        console.log(`Auto-fit triggered for ${section}`);
+                        console.log(`Auto-fit completed for ${section} - both X and Y axes reset`);
                     }
                 };
             }
