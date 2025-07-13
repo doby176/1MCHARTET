@@ -200,7 +200,7 @@ def filter_dates_for_sample(dates):
 
 def get_sample_gap_bins():
     """Return limited gap bins for sample mode"""
-    return ['1-2%', '2-3%']
+    return ['0.15-0.35%', '0.35-0.5%', '0.5-1%', '1-1.5%', '1.5%+']
 
 def get_sample_years():
     """Return limited years for sample mode"""
@@ -353,7 +353,7 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route('/api/tickers', methods=['GET'])
-@limiter.limit("10 per 12 hours")
+@limiter.limit("3 per 12 hours")
 def get_tickers():
     if is_sample_mode():
         logging.debug("Returning sample tickers (limited)")
@@ -363,7 +363,7 @@ def get_tickers():
         return jsonify({'tickers': VALID_TICKERS})
 
 @app.route('/api/valid_dates', methods=['GET'])
-@limiter.limit("10 per 12 hours")
+@limiter.limit("3 per 12 hours")
 def get_valid_dates():
     ticker = request.args.get('ticker')
     logging.debug(f"Fetching valid dates for ticker: {ticker}")
@@ -399,7 +399,7 @@ def get_valid_dates():
         return jsonify({'error': f'Failed to fetch dates for {ticker}'}), 500
 
 @app.route('/api/stock/chart', methods=['GET'])
-@limiter.limit("10 per 12 hours")
+@limiter.limit("3 per 12 hours")
 def get_chart():
     try:
         ticker = request.args.get('ticker')
@@ -492,7 +492,7 @@ def get_chart():
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/gaps', methods=['GET'])
-@limiter.limit("10 per 12 hours")
+@limiter.limit("3 per 12 hours")
 def get_gaps():
     try:
         gap_size = request.args.get('gap_size')
@@ -646,7 +646,7 @@ def get_gap_insights():
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/years', methods=['GET'])
-@limiter.limit("10 per 12 hours")
+@limiter.limit("3 per 12 hours")
 def get_years():
     try:
         logging.debug("Fetching unique years from news_events.csv")
@@ -678,7 +678,7 @@ def get_years():
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/events', methods=['GET'])
-@limiter.limit("10 per 12 hours")
+@limiter.limit("3 per 12 hours")
 def get_events():
     try:
         event_type = request.args.get('event_type')
@@ -707,6 +707,12 @@ def get_events():
             except ValueError:
                 logging.error(f"Invalid year format: {year}")
                 return jsonify({'error': 'Invalid year format'}), 400
+        
+        # Filter event types for sample mode
+        if is_sample_mode():
+            sample_event_types = get_sample_event_types()
+            filtered_df = filtered_df[filtered_df['event_type'].isin(sample_event_types)]
+            logging.debug(f"Filtered to sample event types: {sample_event_types}")
         dates = filtered_df['date'].dt.strftime('%Y-%m-%d').tolist()
         logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
         if not dates:

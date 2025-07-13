@@ -177,7 +177,7 @@
                 <div class="sample-notice">
                     <h3>📊 Gap Analysis - Sample Version</h3>
                     <p><strong>Sample includes:</strong> QQQ only | Limited gap sizes | 2023-2024 data only</p>
-                    <p><strong>Full version includes:</strong> All tickers | All gap sizes (0.15% to 1.5%+) | Complete historical data</p>
+                    <p><strong>Full version includes:</strong> All tickers | All gap sizes | Complete historical data</p>
                     <a href="/register" class="upgrade-btn">🚀 Upgrade for Full Access</a>
                 </div>
                 
@@ -187,9 +187,41 @@
                     <label for="gap-size-select">Select Gap Size Bin:</label>
                     <select id="gap-size-select" name="gap_size">
                         <option value="">Select gap size</option>
-                        <option value="1-2%">1-2% (Sample)</option>
-                        <option value="2-3%">2-3% (Sample)</option>
+                        <option value="0.15-0.35%">0.15-0.35% (Sample)</option>
+                        <option value="0.35-0.5%">0.35-0.5% (Sample)</option>
+                        <option value="0.5-1%">0.5-1% (Sample)</option>
+                        <option value="1-1.5%">1-1.5% (Sample)</option>
+                        <option value="1.5%+">1.5%+ (Sample)</option>
                     </select>
+                    <label for="day-select">Select Day of Week:</label>
+                    <select id="day-select" name="day">
+                        <option value="">Select day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                    <label for="gap-direction-select">Select Gap Direction:</label>
+                    <select id="gap-direction-select" name="gap_direction">
+                        <option value="">Select gap direction</option>
+                        <option value="up">Gap Up</option>
+                        <option value="down">Gap Down</option>
+                    </select>
+                    <button type="submit">Find Gap Dates</button>
+                </form>
+                <div id="gap-dates">
+                    <p>Select a gap size, day, and direction to view dates with gaps (QQQ only).</p>
+                    <ul id="gap-dates-list"></ul>
+                </div>
+                <form id="stock-form-gap">
+                    <label for="ticker-select-gap">Select Ticker:</label>
+                    <select id="ticker-select-gap" name="ticker">
+                        <option value="">Select a ticker</option>
+                        <option value="QQQ">QQQ</option>
+                    </select>
+                    <label for="date-gap">Select Date:</label>
+                    <input type="date" id="date-gap" name="date" min="2023-01-01" max="2024-12-31">
                     <label for="timeframe-select-gap">Select Timeframe:</label>
                     <select id="timeframe-select-gap" name="timeframe">
                         <option value="1">1 Minute</option>
@@ -202,15 +234,6 @@
                         <option value="60">60 Minutes</option>
                         <option value="240">240 Minutes</option>
                     </select>
-                    <button type="submit">Find Gap Dates</button>
-                </form>
-                <div id="gap-dates">
-                    <p>Select a gap size to view dates with gaps (QQQ only).</p>
-                    <ul id="gap-dates-list"></ul>
-                </div>
-                <form id="stock-form-gap">
-                    <label for="date-gap">Select Date:</label>
-                    <input type="date" id="date-gap" name="date" min="2023-01-01" max="2024-12-31">
                     <button type="submit">Load Chart</button>
                 </form>
                 <div id="chart-container-gap">
@@ -282,19 +305,37 @@
                 
                 <h2>News Event Analysis</h2>
                 <p>Master Nasdaq price action on key news days (CPI, FOMC) with chart analytics to seize intraday trading opportunities.</p>
+                <div class="filter-toggle">
+                    <label><input type="radio" name="filter-type" value="year" checked> Filter by Event Type and Year</label>
+                </div>
                 <form id="events-form">
-                    <label for="event-type-select">Select Event Type:</label>
-                    <select id="event-type-select" name="event_type">
-                        <option value="">Select event type</option>
-                        <option value="CPI">CPI (Sample)</option>
-                        <option value="FOMC">FOMC (Sample)</option>
-                    </select>
-                    <label for="year-select">Select Year:</label>
-                    <select id="year-select" name="year">
-                        <option value="">Select year</option>
-                        <option value="2024">2024 (Sample)</option>
-                        <option value="2023">2023 (Sample)</option>
-                    </select>
+                    <div id="year-filter" class="filter-section active">
+                        <label for="event-type-select">Select Event Type:</label>
+                        <select id="event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI (Sample)</option>
+                            <option value="FOMC">FOMC (Sample)</option>
+                        </select>
+                        <label for="year-select">Select Year:</label>
+                        <select id="year-select" name="year">
+                            <option value="">Select year</option>
+                        </select>
+                    </div>
+                    <div id="bin-filter" class="filter-section" style="display: none;">
+                        <label for="bin-event-type-select">Select Event Type:</label>
+                        <select id="bin-event-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="CPI">CPI (Sample)</option>
+                            <option value="FOMC">FOMC (Sample)</option>
+                        </select>
+                        <label for="bin-select">Select Economic Impact Range:</label>
+                        <select id="bin-select" name="bin">
+                            <option value="">Select range</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
                     <button type="submit">Find Event Dates</button>
                 </form>
                 <div id="event-dates">
@@ -302,6 +343,11 @@
                     <ul id="event-dates-list"></ul>
                 </div>
                 <form id="stock-form-events">
+                    <label for="ticker-select-events">Select Ticker:</label>
+                    <select id="ticker-select-events" name="ticker">
+                        <option value="">Select a ticker</option>
+                        <option value="QQQ">QQQ</option>
+                    </select>
                     <label for="date-events">Select Date:</label>
                     <input type="date" id="date-events" name="date" min="2023-01-01" max="2024-12-31">
                     <label for="timeframe-select-events">Select Timeframe:</label>
