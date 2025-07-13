@@ -614,7 +614,10 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
         }
         
         // Fix chart layout to ensure consistent spacing after rendering
-        fixChartLayout(section);
+        // Only fix layout if user hasn't manually zoomed to avoid interfering with user zoom
+        if (!userZoomState[section]) {
+            fixChartLayout(section);
+        }
         
         console.log('Chart data updated successfully');
     } catch (error) {
@@ -708,8 +711,8 @@ function fixChartLayout(section) {
         // Force the chart to maintain consistent bar spacing and layout
         const timeScale = chart.timeScale();
         
-        // Get current visible range
-        const visibleRange = timeScale.getVisibleRange();
+        // Get current visible range only if user hasn't manually zoomed
+        const visibleRange = !userZoomState[section] ? timeScale.getVisibleRange() : null;
         
         // Apply fixed bar spacing to prevent thinning
         chart.applyOptions({
@@ -722,12 +725,12 @@ function fixChartLayout(section) {
             }
         });
         
-        // Restore the visible range if it was changed
-        if (visibleRange) {
+        // Restore the visible range only if user hasn't manually zoomed
+        if (visibleRange && !userZoomState[section]) {
             timeScale.setVisibleRange(visibleRange);
         }
         
-        console.log(`Fixed chart layout for ${section}`);
+        console.log(`Fixed chart layout for ${section} (user zoom state: ${userZoomState[section]})`);
     } catch (error) {
         console.warn(`Error fixing chart layout for ${section}:`, error);
     }
@@ -1176,7 +1179,10 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
         indicatorSeries[section][indicatorKey].setData(indicatorData);
         
         // Ensure chart layout remains consistent after adding indicator
-        fixChartLayout(section);
+        // Only fix layout if user hasn't manually zoomed to avoid interfering with user zoom
+        if (!userZoomState[section]) {
+            fixChartLayout(section);
+        }
     }
 }
 
@@ -1202,7 +1208,10 @@ function removeIndicatorFromChart(section, indicator, period) {
     }
     
     // Ensure chart layout remains consistent after removing indicator
-    fixChartLayout(section);
+    // Only fix layout if user hasn't manually zoomed to avoid interfering with user zoom
+    if (!userZoomState[section]) {
+        fixChartLayout(section);
+    }
 }
 
 // Handle Indicator Checkbox Changes
@@ -1240,6 +1249,14 @@ function setupIndicatorListeners(section) {
             } else {
                 removeIndicatorFromChart(section, indicator, period);
             }
+            
+            // Fix chart layout after adding/removing indicator to prevent spacing issues
+            // Only fix layout if user hasn't manually zoomed to avoid interfering with user zoom
+            setTimeout(() => {
+                if (!userZoomState[section]) {
+                    fixChartLayout(section);
+                }
+            }, 100);
         });
     });
 
@@ -1891,7 +1908,10 @@ async function loadChart(event, tabId) {
             });
             
             // Fix chart layout after all indicators are added to prevent spacing issues
-            fixChartLayout(replayPrefix);
+            // Only fix layout if user hasn't manually zoomed to avoid interfering with user zoom
+            if (!userZoomState[replayPrefix]) {
+                fixChartLayout(replayPrefix);
+            }
         }
         
         if (replayPrefix === 'simulator') { // Market Simulator
