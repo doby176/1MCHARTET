@@ -168,13 +168,7 @@ let indicatorSeries = {
     earnings: {}
 };
 
-// Store indicators that were active before replay (to restore after)
-let activeIndicatorsBeforeReplay = {
-    simulator: [],
-    gap: [],
-    events: [],
-    earnings: []
-};
+
 
 // Drawing Tools State
 let drawingTools = {
@@ -606,8 +600,8 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
         console.log(`Setting volume data with ${volumeData.length} points`);
         volumeSeries.setData(volumeData);
 
-        // Update VWAP during replay (only indicator that works properly in real-time)
-        updateVWAPForReplay(section, candlestickData, volumeData);
+        // Update indicators in real-time for replay (except Bollinger Bands which have issues)
+        updateIndicatorsForReplay(section, candlestickData, volumeData);
 
         // Only auto-fit if user hasn't manually zoomed
         if (!userZoomState[section]) {
@@ -667,126 +661,116 @@ function setupChartZoomTracking(section) {
     }
 }
 
-// Save currently active indicators before replay starts
-function saveActiveIndicators(section) {
-    const indicatorsPanel = document.getElementById(`chart-indicators-${section}`);
-    if (!indicatorsPanel) return;
-    
-    activeIndicatorsBeforeReplay[section] = [];
-    const checkboxes = indicatorsPanel.querySelectorAll('input[type="checkbox"]:checked');
-    
-    checkboxes.forEach(checkbox => {
-        const indicator = checkbox.dataset.indicator;
-        const period = checkbox.dataset.period ? parseInt(checkbox.dataset.period) : null;
-        activeIndicatorsBeforeReplay[section].push({
-            indicator: indicator,
-            period: period,
-            checkboxId: checkbox.id
-        });
-    });
-    
-    console.log(`Saved ${activeIndicatorsBeforeReplay[section].length} active indicators for ${section}:`, activeIndicatorsBeforeReplay[section]);
-}
 
-// Remove all indicators from chart during replay except VWAP
-function removeAllIndicators(section) {
-    const chart = chartInstances[section]?.chart;
-    if (!chart) return;
-    
-    console.log(`Removing all indicators except VWAP for ${section} during replay`);
-    
-    // Remove all indicator series from the chart except VWAP
-    Object.keys(indicatorSeries[section]).forEach(indicatorKey => {
-        // Keep VWAP since it works properly during replay
-        if (indicatorKey === 'vwap') {
-            console.log(`Keeping VWAP indicator active during replay`);
-            return;
-        }
-        
-        if (indicatorSeries[section][indicatorKey]) {
-            try {
-                chart.removeSeries(indicatorSeries[section][indicatorKey]);
-                console.log(`Removed indicator series: ${indicatorKey}`);
-                delete indicatorSeries[section][indicatorKey];
-            } catch (error) {
-                console.warn(`Error removing indicator ${indicatorKey}:`, error);
-            }
-        }
-    });
-    
-    console.log(`Removed all indicators except VWAP for ${section}`);
-}
 
-// Update only VWAP during replay (since it works properly in real-time)
-function updateVWAPForReplay(section, candlestickData, volumeData) {
+// Update indicators in real-time during replay (except Bollinger Bands which have issues)
+function updateIndicatorsForReplay(section, candlestickData, volumeData) {
     if (!chartInstances[section] || !candlestickData.length) {
-        console.log(`No chart instance or data for ${section}, skipping VWAP update`);
+        console.log(`No chart instance or data for ${section}, skipping indicator update`);
         return;
     }
     
-    // Check if VWAP is active
-    if (indicatorSeries[section]['vwap']) {
-        console.log(`Updating VWAP for ${section} with ${candlestickData.length} candles`);
+    console.log(`Updating indicators for ${section} with ${candlestickData.length} candles`);
+    
+    // Get currently active indicators
+    const activeIndicators = Object.keys(indicatorSeries[section]);
+    console.log(`Active indicators for ${section}:`, activeIndicators);
+    
+    if (activeIndicators.length === 0) {
+        console.log(`No active indicators for ${section}`);
+        return;
+    }
+    
+    activeIndicators.forEach(indicatorKey => {
+        // Skip Bollinger Bands during replay - they cause issues
+        if (indicatorKey.includes('bollinger') || indicatorKey.includes('_upper') || indicatorKey.includes('_middle') || indicatorKey.includes('_lower')) {
+            console.log(`Skipping Bollinger Bands during replay: ${indicatorKey}`);
+            return;
+        }
+        
+        const parts = indicatorKey.split('_');
+        const indicator = parts[0];
+        const period = parts[1] ? parseInt(parts[1]) : null;
+        
+        // Calculate indicator with current replay data
+        let indicatorData = null;
         
         try {
-            const vwapData = calculateVWAP(candlestickData, volumeData);
-            if (vwapData && vwapData.length > 0) {
-                indicatorSeries[section]['vwap'].setData(vwapData);
-                console.log(`Updated VWAP with ${vwapData.length} points`);
+            switch (indicator) {
+                case 'sma':
+                    if (candlestickData.length >= period) {
+                        indicatorData = calculateSMA(candlestickData, period);
+                        console.log(`Calculated SMA ${period} with ${indicatorData.length} points`);
+                    }
+                    break;
+                case 'ema':
+                    if (candlestickData.length >= period) {
+                        indicatorData = calculateEMA(candlestickData, period);
+                        console.log(`Calculated EMA ${period} with ${indicatorData.length} points`);
+                    }
+                    break;
+                case 'vwap':
+                    indicatorData = calculateVWAP(candlestickData, volumeData);
+                    console.log(`Calculated VWAP with ${indicatorData.length} points`);
+                    break;
+                case 'rsi':
+                    if (candlestickData.length >= 14) {
+                        const rsiData = calculateRSI(candlestickData, 14);
+                        if (candlestickData.length > 0) {
+                            const priceRange = Math.max(...candlestickData.map(d => d.high)) - Math.min(...candlestickData.map(d => d.low));
+                            const minPrice = Math.min(...candlestickData.map(d => d.low));
+                            indicatorData = rsiData.map(d => ({
+                                time: d.time,
+                                value: minPrice + (d.value / 100) * priceRange * 0.3
+                            }));
+                        }
+                        console.log(`Calculated RSI with ${indicatorData?.length || 0} points`);
+                    }
+                    break;
+                case 'macd':
+                    if (candlestickData.length >= 26) {
+                        const macdData = calculateMACD(candlestickData, 12, 26, 9);
+                        if (macdData.macdLine.length > 0) {
+                            const macdRange = Math.max(...macdData.macdLine.map(d => d.value)) - Math.min(...macdData.macdLine.map(d => d.value));
+                            const macdMinPrice = Math.min(...candlestickData.map(d => d.low));
+                            const macdPriceRange = Math.max(...candlestickData.map(d => d.high)) - macdMinPrice;
+                            indicatorData = macdData.macdLine.map(d => ({
+                                time: d.time,
+                                value: macdMinPrice + (d.value / (macdRange || 1)) * macdPriceRange * 0.2
+                            }));
+                        }
+                        console.log(`Calculated MACD with ${indicatorData?.length || 0} points`);
+                    }
+                    break;
+                case 'stochastic':
+                    if (candlestickData.length >= 14) {
+                        const stochData = calculateStochastic(candlestickData, 14, 3);
+                        if (stochData.stochK.length > 0) {
+                            const stochMinPrice = Math.min(...candlestickData.map(d => d.low));
+                            const stochPriceRange = Math.max(...candlestickData.map(d => d.high)) - stochMinPrice;
+                            indicatorData = stochData.stochK.map(d => ({
+                                time: d.time,
+                                value: stochMinPrice + (d.value / 100) * stochPriceRange * 0.25
+                            }));
+                        }
+                        console.log(`Calculated Stochastic with ${indicatorData?.length || 0} points`);
+                    }
+                    break;
+            }
+            
+            if (indicatorData && indicatorData.length > 0 && indicatorSeries[section][indicatorKey]) {
+                indicatorSeries[section][indicatorKey].setData(indicatorData);
+                console.log(`Updated ${indicatorKey} indicator with ${indicatorData.length} points`);
+            } else if (indicatorData && indicatorData.length === 0) {
+                console.log(`No data points for ${indicatorKey} - not enough historical data`);
             }
         } catch (error) {
-            console.error(`Error updating VWAP during replay:`, error);
+            console.error(`Error updating indicator ${indicatorKey}:`, error);
         }
-    } else {
-        console.log(`VWAP not active for ${section}`);
-    }
-}
-
-// Restore indicators after replay ends
-function restoreIndicators(section) {
-    if (activeIndicatorsBeforeReplay[section].length === 0) {
-        console.log(`No indicators to restore for ${section}`);
-        return;
-    }
-    
-    console.log(`Restoring ${activeIndicatorsBeforeReplay[section].length} indicators for ${section}`);
-    
-    const config = getReplayConfig(section);
-    const chartData = config.chartData();
-    
-    if (!chartData) {
-        console.log(`No chart data available for ${section}, cannot restore indicators`);
-        return;
-    }
-    
-    // Convert chart data to format needed for indicators
-    const candleData = chartData.timestamp.map((timestamp, i) => ({
-        time: Math.floor(new Date(timestamp).getTime() / 1000),
-        open: parseFloat(chartData.open[i]),
-        high: parseFloat(chartData.high[i]),
-        low: parseFloat(chartData.low[i]),
-        close: parseFloat(chartData.close[i])
-    }));
-    
-    const volumeData = chartData.timestamp.map((timestamp, i) => ({
-        time: Math.floor(new Date(timestamp).getTime() / 1000),
-        value: parseFloat(chartData.volume[i])
-    }));
-    
-    // Restore each indicator (except VWAP which stayed active during replay)
-    activeIndicatorsBeforeReplay[section].forEach(indicatorInfo => {
-        const { indicator, period } = indicatorInfo;
-        
-        // Skip VWAP since it remained active during replay
-        if (indicator === 'vwap') {
-            console.log(`Skipping VWAP restoration - it remained active during replay`);
-            return;
-        }
-        
-        addIndicatorToChart(section, indicator, period, candleData, volumeData);
-        console.log(`Restored indicator: ${indicator} ${period || ''} for ${section}`);
     });
 }
+
+
 
 // Technical Indicator Calculation Functions
 function calculateSMA(data, period) {
@@ -1032,6 +1016,15 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             break;
             
         case 'bollinger':
+            // Skip Bollinger Bands if replay is active (they cause display issues during replay)
+            const config = getReplayConfig(section);
+            const isReplayActive = config && (config.replayIndex !== null && config.replayIndex >= 0 && config.replayIndex < config.totalCandles);
+            
+            if (isReplayActive) {
+                console.log(`Skipping Bollinger Bands during active replay for ${section}`);
+                return;
+            }
+            
             const bbData = calculateBollingerBands(candleData, 20, 2);
             // Add upper band
             indicatorSeries[section][`${indicatorKey}_upper`] = chart.addLineSeries({
@@ -1796,6 +1789,30 @@ async function loadChart(event, tabId) {
         if (indicatorsPanel) {
             indicatorsPanel.style.display = 'block';
             setupIndicatorListeners(replayPrefix);
+            
+            // Re-activate any checked indicators
+            const checkboxes = indicatorsPanel.querySelectorAll('input[type="checkbox"]:checked');
+            checkboxes.forEach(checkbox => {
+                const indicator = checkbox.dataset.indicator;
+                const period = parseInt(checkbox.dataset.period) || null;
+                
+                // Convert chart data to format needed for indicators
+                const candleData = data.chart_data.timestamp.map((timestamp, i) => ({
+                    time: Math.floor(new Date(timestamp).getTime() / 1000),
+                    open: parseFloat(data.chart_data.open[i]),
+                    high: parseFloat(data.chart_data.high[i]),
+                    low: parseFloat(data.chart_data.low[i]),
+                    close: parseFloat(data.chart_data.close[i])
+                }));
+                
+                const volumeData = data.chart_data.timestamp.map((timestamp, i) => ({
+                    time: Math.floor(new Date(timestamp).getTime() / 1000),
+                    value: parseFloat(data.chart_data.volume[i])
+                }));
+                
+                addIndicatorToChart(replayPrefix, indicator, period, candleData, volumeData);
+                console.log(`Re-activated indicator: ${indicator} ${period || ''} for ${replayPrefix}`);
+            });
         }
         
         if (replayPrefix === 'simulator') { // Market Simulator
@@ -2061,10 +2078,6 @@ function startReplay(section) {
     
     // Reset zoom state when starting replay to enable auto-fit
     userZoomState[section] = false;
-    
-    // Save current indicators and remove them during replay
-    saveActiveIndicators(section);
-    removeAllIndicators(section);
 
     const playButton = document.getElementById(config.playButtonId);
     const pauseButton = document.getElementById(config.pauseButtonId);
@@ -2204,9 +2217,6 @@ function startOverReplay(section) {
     
     // Reset zoom state when starting over to enable auto-fit
     userZoomState[section] = false;
-    
-    // Clear saved indicators since we're starting over
-    activeIndicatorsBeforeReplay[section] = [];
 
     const playButton = document.getElementById(config.playButtonId);
     const pauseButton = document.getElementById(config.pauseButtonId);
@@ -2322,9 +2332,6 @@ function stopReplay(section) {
     
     // Restore full chart
     renderChart(section, config.aggregatedCandles());
-    
-    // Restore indicators that were active before replay
-    restoreIndicators(section);
 
     document.getElementById(config.timestampDisplayId).textContent = 'Current Time: --:--:--';
 }
