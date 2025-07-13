@@ -2394,6 +2394,62 @@ function getReplayConfig(section) {
     return configs[section];
 }
 
+// Set initial zoom for replay to show normal-sized candles instead of huge ones
+function setInitialReplayZoom(section) {
+    const chart = chartInstances[section]?.chart;
+    if (!chart) return;
+    
+    try {
+        const config = getReplayConfig(section);
+        const chartData = config.chartData();
+        
+        console.log(`Setting initial replay zoom for ${section}`);
+        
+        // Set reasonable bar spacing for normal-sized candles
+        chart.applyOptions({
+            timeScale: {
+                barSpacing: 8,  // Normal spacing, not auto-fitted to huge size
+                fixLeftEdge: false,
+                fixRightEdge: false,
+                lockVisibleTimeRangeOnResize: true,
+                rightBarStaysOnScroll: true
+            }
+        });
+        
+        // Calculate a reasonable visible time range that would show ~80-100 candles
+        // This ensures candles start at normal size instead of taking half the screen
+        if (chartData && chartData.timestamp && chartData.timestamp.length > 0) {
+            const startTimestamp = Math.floor(new Date(chartData.timestamp[0]).getTime() / 1000);
+            const timeframe = config.timeframe();
+            
+            // Show space for about 80 candles worth of time (this makes individual candles normal-sized)
+            const candleWidthInSeconds = timeframe * 60; // timeframe is in minutes
+            const visibleRangeInSeconds = 80 * candleWidthInSeconds;
+            const endTimestamp = startTimestamp + visibleRangeInSeconds;
+            
+            chart.timeScale().setVisibleRange({
+                from: startTimestamp,
+                to: endTimestamp
+            });
+            
+            console.log(`Set initial visible range: ${visibleRangeInSeconds / 60} minutes (${80} candles width)`);
+        }
+        
+        console.log(`Initial replay zoom set for ${section} - candles should be normal size`);
+        
+        // Temporarily set user zoom state to prevent auto-fit from overriding our initial zoom
+        // This will be reset to false after a few seconds to allow normal auto-fit behavior
+        userZoomState[section] = true;
+        setTimeout(() => {
+            userZoomState[section] = false;
+            console.log(`Reset zoom state for ${section} - auto-fit now enabled`);
+        }, 3000); // 3 seconds should be enough for replay to get going
+        
+    } catch (error) {
+        console.warn(`Error setting initial replay zoom for ${section}:`, error);
+    }
+}
+
 function startReplay(section) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
@@ -2474,6 +2530,9 @@ function startReplay(section) {
         renderChart(section, []);
         timestampDisplay.textContent = 'Current Time: --:--:--';
     }
+    
+    // Set initial zoom for replay to show candles at normal size (not huge)
+    setInitialReplayZoom(section);
 
     config.setReplayInterval(setInterval(() => {
         if (config.currentReplayIndex() >= chartData.count) {
@@ -2574,6 +2633,9 @@ function startOverReplay(section) {
     
     // Update chart to show no candles (initial state)
     renderChart(section, []);
+    
+    // Set initial zoom for start over to show normal-sized candles
+    setInitialReplayZoom(section);
     
     // Re-setup indicators that were active
     const indicatorsPanel = document.getElementById(`chart-indicators-${section}`);
