@@ -1751,15 +1751,26 @@ async function loadTickers() {
             }
         });
         console.log('Response status:', response.status);
-        if (response.status === 429) {
-            const data = await response.json();
-            console.error('Rate limit error:', data.error);
-            tickerSelectSimulator.innerHTML = `<option value="">${data.error}</option>`;
-            tickerSelectGap.innerHTML = `<option value="">${data.error}</option>`;
-            tickerSelectEvents.innerHTML = `<option value="">${data.error}</option>`;
-            alert(data.error);
-            return;
-        }
+                    if (response.status === 429) {
+                const data = await response.json();
+                console.error('Rate limit error:', data.error);
+                const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
+                const errorMessage = isInSampleMode 
+                    ? 'Sample limit reached: 3 free calls used. Sign up FREE for more!'
+                    : data.error;
+                tickerSelectSimulator.innerHTML = `<option value="">${errorMessage}</option>`;
+                tickerSelectGap.innerHTML = `<option value="">${errorMessage}</option>`;
+                tickerSelectEvents.innerHTML = `<option value="">${errorMessage}</option>`;
+                if (isInSampleMode) {
+                    alert(data.error + '\n\nClick OK to go to the signup page.');
+                    setTimeout(() => {
+                        window.location.href = '/register';
+                    }, 2000);
+                } else {
+                    alert(data.error);
+                }
+                return;
+            }
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
@@ -1974,7 +1985,11 @@ async function loadChart(event, tabId) {
     // Check rate limit state
     const rateLimitResetTime = localStorage.getItem(`chartRateLimitReset_${tabId}`);
     if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
-        chartContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
+        const limitMessage = isInSampleMode 
+            ? `<p style="color: red; font-weight: bold;">Sample limit reached: You've used your 3 free API calls. <a href="/register" style="color: #28a745; font-weight: bold;">Sign up FREE</a> for 10 calls per 12 hours and full access!</p>`
+            : `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 10 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
+        chartContainer.innerHTML = limitMessage;
         button.disabled = true;
         button.textContent = 'Rate Limit Exceeded';
         inputs.forEach(input => input.disabled = true);

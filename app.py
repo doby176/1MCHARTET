@@ -1,6 +1,8 @@
 import redis
 import boto3
 import os
+import time
+import json
 from flask import Flask, render_template, request, jsonify, session, send_from_directory, redirect, url_for
 from flask_limiter import Limiter
 from flask_session import Session
@@ -49,6 +51,59 @@ limiter = Limiter(
     headers_enabled=True
 )
 
+# Helper function to check and enforce sample mode limits
+def check_sample_mode_limit():
+    """Check if sample mode user has exceeded 3 calls per 12 hours"""
+    if not is_sample_mode():
+        return True  # Not in sample mode, no additional restriction
+    
+    session_key = get_session_key()
+    current_time = int(time.time())
+    
+    # Get current call count for this session
+    call_key = f"sample_calls_{session_key}"
+    
+    try:
+        # Try to get from Redis first
+        redis_client = redis.Redis.from_url(os.environ.get('REDIS_URL', 'redis://localhost:6379'))
+        calls_data = redis_client.get(call_key)
+        
+        if calls_data:
+            calls_info = json.loads(calls_data)
+            calls_count = calls_info.get('count', 0)
+            first_call_time = calls_info.get('first_call', current_time)
+        else:
+            calls_count = 0
+            first_call_time = current_time
+        
+        # Check if 12 hours have passed since first call
+        if current_time - first_call_time > 12 * 60 * 60:  # 12 hours in seconds
+            # Reset counter
+            calls_count = 0
+            first_call_time = current_time
+        
+        # Check if exceeded limit
+        if calls_count >= 3:
+            return False
+        
+        # Increment counter
+        calls_count += 1
+        calls_info = {
+            'count': calls_count,
+            'first_call': first_call_time
+        }
+        
+        # Store back to Redis with 12 hour expiration
+        redis_client.setex(call_key, 12 * 60 * 60, json.dumps(calls_info))
+        
+        logging.debug(f"Sample mode call {calls_count}/3 for session {session_key}")
+        return True
+        
+    except Exception as e:
+        logging.error(f"Error checking sample mode limit: {str(e)}")
+        # Fallback to allowing the call if Redis is down
+        return True
+
 # Test Redis connection
 try:
     redis_client = redis.Redis.from_url(os.environ.get('REDIS_URL', 'redis://localhost:6379'))
@@ -63,6 +118,13 @@ except redis.ConnectionError as e:
 @app.errorhandler(429)
 def ratelimit_handler(e):
     logging.info(f"Rate limit exceeded for session: {session.get('user_id')}")
+    
+    # Check if request is from sample mode
+    if is_sample_mode():
+        return jsonify({
+            'error': 'Sample limit reached: You\'ve used your 3 free API calls. Sign up FREE for 10 calls per 12 hours and full access!'
+        }), 429
+    
     if request.path == '/api/gap_insights':
         return jsonify({
             'error': 'Rate limit exceeded: You have reached the limit of 3 requests per 12 hours. Please wait and try again later.'
@@ -243,18 +305,6 @@ def landing():
 def sample():
     """Sample page with limited features for trying without signup"""
     logging.debug("Rendering sample.html")
-    
-    # Reset rate limits for sample mode if requested
-    reset_limits = request.args.get('reset_limits')
-    if reset_limits == 'true':
-        try:
-            # Clear rate limit storage for this session
-            session_key = get_session_key()
-            logging.debug(f"Resetting rate limits for session: {session_key}")
-            # Note: This is a simple reset - in production you might want more sophisticated logic
-        except Exception as e:
-            logging.error(f"Error resetting rate limits: {str(e)}")
-    
     return render_template('sample.html')
 
 @app.route('/api/sample/gap_bins', methods=['GET'])
@@ -368,6 +418,12 @@ def logout():
 @limiter.limit("10 per 12 hours")
 def get_tickers():
     if is_sample_mode():
+        if not check_sample_mode_limit():
+            logging.info(f"Sample mode limit exceeded for session: {session.get('user_id')}")
+            return jsonify({
+                'error': 'Sample limit reached: You\'ve used your 3 free API calls. Sign up FREE for 10 calls per 12 hours and full access!'
+            }), 429
+        
         logging.debug("Returning sample tickers (limited)")
         return jsonify({'tickers': get_sample_tickers()})
     else:
@@ -413,6 +469,14 @@ def get_valid_dates():
 @app.route('/api/stock/chart', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_chart():
+    # Check sample mode limit first
+    if is_sample_mode():
+        if not check_sample_mode_limit():
+            logging.info(f"Sample mode limit exceeded for session: {session.get('user_id')}")
+            return jsonify({
+                'error': 'Sample limit reached: You\'ve used your 3 free API calls. Sign up FREE for 10 calls per 12 hours and full access!'
+            }), 429
+    
     try:
         ticker = request.args.get('ticker')
         date = request.args.get('date')
@@ -506,6 +570,14 @@ def get_chart():
 @app.route('/api/gaps', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_gaps():
+    # Check sample mode limit first
+    if is_sample_mode():
+        if not check_sample_mode_limit():
+            logging.info(f"Sample mode limit exceeded for session: {session.get('user_id')}")
+            return jsonify({
+                'error': 'Sample limit reached: You\'ve used your 3 free API calls. Sign up FREE for 10 calls per 12 hours and full access!'
+            }), 429
+    
     try:
         gap_size = request.args.get('gap_size')
         day = request.args.get('day')
@@ -660,6 +732,14 @@ def get_gap_insights():
 @app.route('/api/years', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_years():
+    # Check sample mode limit first
+    if is_sample_mode():
+        if not check_sample_mode_limit():
+            logging.info(f"Sample mode limit exceeded for session: {session.get('user_id')}")
+            return jsonify({
+                'error': 'Sample limit reached: You\'ve used your 3 free API calls. Sign up FREE for 10 calls per 12 hours and full access!'
+            }), 429
+    
     try:
         logging.debug("Fetching unique years from news_events.csv")
         if not os.path.exists(EVENTS_DATA_PATH):
@@ -692,6 +772,14 @@ def get_years():
 @app.route('/api/events', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_events():
+    # Check sample mode limit first
+    if is_sample_mode():
+        if not check_sample_mode_limit():
+            logging.info(f"Sample mode limit exceeded for session: {session.get('user_id')}")
+            return jsonify({
+                'error': 'Sample limit reached: You\'ve used your 3 free API calls. Sign up FREE for 10 calls per 12 hours and full access!'
+            }), 429
+    
     try:
         event_type = request.args.get('event_type')
         year = request.args.get('year')
