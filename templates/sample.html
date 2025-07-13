@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Analytics Tag -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BFDR405H06"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-BFDR405H06');
+    </script>
+    <meta name="google-adsense-account" content="ca-pub-9416785017460416">
+    <title>1MChart - Free Sample Features</title>
+    <meta name="description" content="Try 1MChart's features for free! Sample Market Simulator with QQQ & NVDA, Gap Analysis, and Events Analysis. No signup required.">
+    <meta name="keywords" content="free trading simulator, sample gap analysis, try 1mchart, free stock analysis">
+    <meta name="author" content="1MChart Team">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css?v=48">
+    <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+    <script>
+        // Fallback CDN if primary fails
+        if (typeof LightweightCharts === 'undefined') {
+            console.warn('Primary CDN failed, trying fallback...');
+            document.write('<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"><\/script>');
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <img src="/static/logo-new.png?v=2" alt="1MChart Logo" class="logo">
+        <div class="seo-description">
+            <p><strong>🎯 FREE SAMPLE - Try 1MChart's Features!</strong></p>
+            <p>Experience our Market Simulator, Gap Analysis, and Events Analysis with limited sample data.</p>
+            <div class="upgrade-notice">
+                <p><strong>💎 Want Full Access?</strong> <a href="/register" class="upgrade-link">Sign up for complete data (10 years, all tickers, all features)</a></p>
+            </div>
+        </div>
+        <div class="user-info">
+            <p>Sample Mode | <a href="/register">Sign Up for Full Access</a> | <a href="/">Back to Home</a></p>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><button onclick="openTab('market-simulator')" class="tablinks active">🎯 Market Simulator (Sample)</button></li>
+            <li><button onclick="openTab('gap-analysis')" class="tablinks">📊 Gap Analysis (Sample)</button></li>
+            <li><button onclick="openTab('events-analysis')" class="tablinks">📰 Events Analysis (Sample)</button></li>
+        </ul>
+        <div class="nav-info">
+            <span class="sample-badge">🆓 FREE SAMPLE</span>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Market Simulator Tab -->
+        <div id="market-simulator" class="tabcontent active">
+            <div class="sample-notice">
+                <h3>🎯 Market Simulator - Sample Version</h3>
+                <p><strong>Sample includes:</strong> QQQ & NVDA only | 2023-2024 data only</p>
+                <p><strong>Full version includes:</strong> 10+ tickers | 10 years of data (2015-2025) | All features</p>
+                <a href="/register" class="upgrade-btn">🚀 Upgrade for Full Access</a>
+            </div>
+            
+            <form id="stock-form-simulator" onsubmit="loadChart(event, 'market-simulator')">
+                <label for="ticker-select-simulator">Ticker:</label>
+                <select id="ticker-select-simulator" onchange="loadDates('ticker-select-simulator', 'date-simulator')">
+                    <option value="">Select a ticker...</option>
+                    <option value="QQQ">QQQ</option>
+                    <option value="NVDA">NVDA</option>
+                </select>
+
+                <label for="date-simulator">Date:</label>
+                <input type="date" id="date-simulator" min="2023-01-01" max="2024-12-31">
+
+                <label for="timeframe-select-simulator">Timeframe:</label>
+                <select id="timeframe-select-simulator">
+                    <option value="1">1 min</option>
+                    <option value="2">2 min</option>
+                    <option value="5">5 min</option>
+                    <option value="15">15 min</option>
+                </select>
+
+                <button type="submit">Load Chart</button>
+            </form>
+
+            <div class="chart-section">
+                <div id="chart-indicators-simulator" class="indicators-panel" style="display: none;">
+                    <div class="indicators-content">
+                        <div class="moving-averages-section">
+                            <h4>Moving Averages</h4>
+                            <div class="ma-controls">
+                                <label><input type="checkbox" id="sma9-simulator" data-indicator="sma" data-period="9"> SMA 9</label>
+                                <label><input type="checkbox" id="sma20-simulator" data-indicator="sma" data-period="20"> SMA 20</label>
+                                <label><input type="checkbox" id="sma50-simulator" data-indicator="sma" data-period="50"> SMA 50</label>
+                                <label><input type="checkbox" id="ema20-simulator" data-indicator="ema" data-period="20"> EMA 20</label>
+                                <label><input type="checkbox" id="ema50-simulator" data-indicator="ema" data-period="50"> EMA 50</label>
+                            </div>
+                        </div>
+                        <div class="volume-price-section">
+                            <h4>Volume & Price</h4>
+                            <div class="vp-controls">
+                                <label><input type="checkbox" id="vwap-simulator" data-indicator="vwap"> VWAP</label>
+                                <label><input type="checkbox" id="bollinger-simulator" data-indicator="bollinger"> Bollinger Bands</label>
+                            </div>
+                        </div>
+                        <div class="oscillators-section">
+                            <h4>Oscillators</h4>
+                            <div class="osc-controls">
+                                <label><input type="checkbox" id="rsi-simulator" data-indicator="rsi"> RSI</label>
+                                <label><input type="checkbox" id="macd-simulator" data-indicator="macd"> MACD</label>
+                                <label><input type="checkbox" id="stochastic-simulator" data-indicator="stochastic"> Stochastic</label>
+                            </div>
+                        </div>
+                        <div class="drawing-tools-section">
+                            <h4>Drawing Tools <span style="color: #ff9800; font-size: 0.8em;">(Coming Soon)</span></h4>
+                            <div class="tools-grid">
+                                <button id="trend-line-simulator" class="drawing-tool-btn coming-soon" data-tool="trendline">📈 Trend Line</button>
+                                <button id="horizontal-line-simulator" class="drawing-tool-btn coming-soon" data-tool="horizontal">➖ Horizontal Line</button>
+                                <button id="fibonacci-simulator" class="drawing-tool-btn coming-soon" data-tool="fibonacci">📊 Fibonacci</button>
+                                <button id="measure-tool-simulator" class="drawing-tool-btn coming-soon" data-tool="measure">📏 Measure</button>
+                                <button id="clear-drawings-simulator" class="drawing-tool-btn clear-btn coming-soon" data-tool="clear">🗑️ Clear All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="chart-simulator"></div>
+                
+                <div id="trading-buttons-container" style="display: none;">
+                    <button id="buy-trade" class="trade-btn long-btn">📈 LONG</button>
+                    <button id="sell-trade" class="trade-btn short-btn">📉 SHORT</button>
+                </div>
+                
+                <div id="replay-controls-simulator" style="display: none;">
+                    <div class="replay-section">
+                        <h3>📹 Replay Controls</h3>
+                        <div class="replay-controls">
+                            <input type="time" id="replay-start-time-simulator" placeholder="Start time (HH:MM)">
+                            <select id="replay-speed-simulator">
+                                <option value="50">Very Fast (50ms)</option>
+                                <option value="100">Fast (100ms)</option>
+                                <option value="200" selected>Normal (200ms)</option>
+                                <option value="500">Slow (500ms)</option>
+                                <option value="1000">Very Slow (1s)</option>
+                            </select>
+                            <div class="replay-buttons">
+                                <button id="play-replay-simulator">▶️ Play Replay</button>
+                                <button id="pause-replay-simulator" disabled>⏸️ Pause</button>
+                                <button id="start-over-replay-simulator" disabled>🔄 Start Over</button>
+                                <button id="prev-candle-simulator" disabled>⏮️ Previous</button>
+                                <button id="next-candle-simulator" disabled>⏭️ Next</button>
+                            </div>
+                        </div>
+                        <div id="replay-timestamp-simulator">Current Time: --:--:--</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="trade-summary" style="display: none;">
+                <h3>📊 Trade Summary</h3>
+                <div id="trade-details"></div>
+            </div>
+        </div>
+
+        <!-- Gap Analysis Tab -->
+        <div id="gap-analysis" class="tabcontent">
+            <div class="sample-notice">
+                <h3>📊 Gap Analysis - Sample Version</h3>
+                <p><strong>Sample includes:</strong> 2 gap bins only | Limited recent dates</p>
+                <p><strong>Full version includes:</strong> All gap bins (0.1% to 10%+) | Complete historical data | Advanced filters</p>
+                <a href="/register" class="upgrade-btn">🚀 Upgrade for Full Access</a>
+            </div>
+            
+            <form id="stock-form-gap" onsubmit="loadChart(event, 'gap-analysis')">
+                <label for="ticker-select-gap">Ticker:</label>
+                <select id="ticker-select-gap" onchange="loadGapDates(event)">
+                    <option value="">Select a ticker...</option>
+                    <option value="QQQ">QQQ</option>
+                </select>
+
+                <label for="gap-bin-select">Gap Size:</label>
+                <select id="gap-bin-select">
+                    <option value="">Select gap size...</option>
+                    <!-- Gap bins will be populated by JavaScript -->
+                </select>
+
+                <label for="date-gap">Date:</label>
+                <input type="date" id="date-gap">
+
+                <label for="timeframe-select-gap">Timeframe:</label>
+                <select id="timeframe-select-gap">
+                    <option value="1">1 min</option>
+                    <option value="2">2 min</option>
+                    <option value="5">5 min</option>
+                    <option value="15">15 min</option>
+                </select>
+
+                <button type="submit">Load Chart</button>
+            </form>
+
+            <div class="chart-section">
+                <div id="chart-indicators-gap" class="indicators-panel" style="display: none;">
+                    <!-- Same indicators as simulator -->
+                </div>
+                <div id="chart-gap"></div>
+                <div id="replay-controls-gap" style="display: none;">
+                    <!-- Same replay controls as simulator -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Analysis Tab -->
+        <div id="events-analysis" class="tabcontent">
+            <div class="sample-notice">
+                <h3>📰 Events Analysis - Sample Version</h3>
+                <p><strong>Sample includes:</strong> QQQ only | Recent CPI & FOMC events only</p>
+                <p><strong>Full version includes:</strong> All tickers | All event types | Complete historical data</p>
+                <a href="/register" class="upgrade-btn">🚀 Upgrade for Full Access</a>
+            </div>
+            
+            <form id="stock-form-events" onsubmit="loadChart(event, 'events-analysis')">
+                <label for="ticker-select-events">Ticker:</label>
+                <select id="ticker-select-events" onchange="loadEventDates(event)">
+                    <option value="">Select a ticker...</option>
+                    <option value="QQQ">QQQ</option>
+                </select>
+
+                <label for="year-select">Year:</label>
+                <select id="year-select">
+                    <option value="">Select year...</option>
+                    <option value="2024">2024 (Sample)</option>
+                    <option value="2023">2023 (Sample)</option>
+                </select>
+
+                <label for="event-type-select">Event Type:</label>
+                <select id="event-type-select">
+                    <option value="">Select event type...</option>
+                    <option value="CPI">CPI (Sample)</option>
+                    <option value="FOMC">FOMC (Sample)</option>
+                </select>
+
+                <label for="date-events">Date:</label>
+                <input type="date" id="date-events">
+
+                <label for="timeframe-select-events">Timeframe:</label>
+                <select id="timeframe-select-events">
+                    <option value="1">1 min</option>
+                    <option value="2">2 min</option>
+                    <option value="5">5 min</option>
+                    <option value="15">15 min</option>
+                </select>
+
+                <button type="submit">Load Chart</button>
+            </form>
+
+            <div class="chart-section">
+                <div id="chart-indicators-events" class="indicators-panel" style="display: none;">
+                    <!-- Same indicators as simulator -->
+                </div>
+                <div id="chart-events"></div>
+                <div id="replay-controls-events" style="display: none;">
+                    <!-- Same replay controls as simulator -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Set sample mode flag
+        window.SAMPLE_MODE = true;
+        
+        function openTab(tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+            document.getElementById(tabName).classList.add("active");
+            document.querySelector(`button[onclick="openTab('${tabName}')"]`).classList.add("active");
+        }
+        
+        // Load sample gap bins on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSampleGapBins();
+        });
+        
+        async function loadSampleGapBins() {
+            try {
+                const response = await fetch('/api/sample/gap_bins');
+                const data = await response.json();
+                
+                const gapBinSelect = document.getElementById('gap-bin-select');
+                data.gap_bins.forEach(bin => {
+                    const option = document.createElement('option');
+                    option.value = bin;
+                    option.textContent = `${bin} (Sample)`;
+                    option.style.backgroundColor = '#fff3cd';
+                    option.style.color = '#856404';
+                    gapBinSelect.appendChild(option);
+                });
+                
+                console.log('Loaded sample gap bins:', data.gap_bins);
+            } catch (error) {
+                console.error('Error loading sample gap bins:', error);
+            }
+        }
+    </script>
+    <script src="/static/script.js?v=48"></script>
+</body>
+</html>

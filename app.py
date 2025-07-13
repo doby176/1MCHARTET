@@ -172,6 +172,44 @@ def initialize_tickers():
     VALID_TICKERS = sorted(VALID_TICKERS)
     logging.debug(f"Initialized tickers: {VALID_TICKERS}")
 
+def is_sample_mode():
+    """Check if the request is coming from sample mode based on referrer"""
+    referrer = request.headers.get('Referer', '')
+    return '/sample' in referrer or request.args.get('sample_mode') == 'true'
+
+def get_sample_tickers():
+    """Return limited tickers for sample mode"""
+    return ['QQQ', 'NVDA']
+
+def filter_dates_for_sample(dates):
+    """Filter dates to only include 2023-2024 for sample mode"""
+    if not dates:
+        return dates
+    
+    # Filter to only 2023-2024 dates
+    filtered_dates = []
+    for date in dates:
+        try:
+            if '2023-' in date or '2024-' in date:
+                filtered_dates.append(date)
+        except:
+            continue
+    
+    # Limit to maximum 20 recent dates for sample
+    return sorted(filtered_dates, reverse=True)[:20]
+
+def get_sample_gap_bins():
+    """Return limited gap bins for sample mode"""
+    return ['1-2%', '2-3%']
+
+def get_sample_years():
+    """Return limited years for sample mode"""
+    return ['2023', '2024']
+
+def get_sample_event_types():
+    """Return limited event types for sample mode"""
+    return ['CPI', 'FOMC']
+
 with app.app_context():
     initialize_tickers()
 
@@ -199,6 +237,24 @@ def index():
 @limiter.limit("10 per day")
 def landing():
     logging.debug("Rendering landing.html")
+    return render_template('landing.html')
+
+@app.route('/sample')
+def sample():
+    """Sample page with limited features for trying without signup"""
+    logging.debug("Rendering sample.html")
+    return render_template('sample.html')
+
+@app.route('/api/sample/gap_bins', methods=['GET'])
+def get_sample_gap_bins_api():
+    """Return limited gap bins for sample mode"""
+    logging.debug("Returning sample gap bins")
+    return jsonify({'gap_bins': get_sample_gap_bins()})
+
+@app.route('/register')
+def register():
+    """Registration page route"""
+    logging.debug("Rendering landing.html for registration")
     return render_template('landing.html')
 
 @app.route('/signup', methods=['POST'])
@@ -299,8 +355,12 @@ def logout():
 @app.route('/api/tickers', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_tickers():
-    logging.debug("Returning precomputed tickers")
-    return jsonify({'tickers': VALID_TICKERS})
+    if is_sample_mode():
+        logging.debug("Returning sample tickers (limited)")
+        return jsonify({'tickers': get_sample_tickers()})
+    else:
+        logging.debug("Returning precomputed tickers")
+        return jsonify({'tickers': VALID_TICKERS})
 
 @app.route('/api/valid_dates', methods=['GET'])
 @limiter.limit("10 per 12 hours")
@@ -326,7 +386,14 @@ def get_valid_dates():
         if not dates:
             logging.warning(f"No dates available for {ticker}")
             return jsonify({'error': f'No dates available for {ticker}'}), 404
-        return jsonify({'dates': sorted(dates)})
+        
+        # Filter dates for sample mode
+        dates_list = sorted(dates)
+        if is_sample_mode():
+            dates_list = filter_dates_for_sample(dates_list)
+            logging.debug(f"Filtered to {len(dates_list)} dates for sample mode")
+        
+        return jsonify({'dates': dates_list})
     except Exception as e:
         logging.error(f"Error fetching dates for {ticker}: {str(e)}")
         return jsonify({'error': f'Failed to fetch dates for {ticker}'}), 500
@@ -454,6 +521,12 @@ def get_gaps():
         if not dates:
             logging.debug(f"No gaps found for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
             return jsonify({'dates': [], 'message': 'No gaps found for the selected criteria'})
+        
+        # Filter dates for sample mode
+        if is_sample_mode():
+            dates = filter_dates_for_sample(dates)
+            logging.debug(f"Filtered to {len(dates)} gap dates for sample mode")
+        
         logging.debug(f"Found {len(dates)} gap dates")
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
@@ -588,6 +661,13 @@ def get_years():
                 return jsonify({'error': 'Invalid events data format'}), 400
             df['date'] = pd.to_datetime(df['date'])
             years = sorted(df['date'].dt.year.unique().tolist())
+            
+            # Filter years for sample mode
+            if is_sample_mode():
+                sample_years = [int(year) for year in get_sample_years()]
+                years = [year for year in years if year in sample_years]
+                logging.debug(f"Filtered to sample years: {years}")
+            
             logging.debug(f"Found years: {years}")
             return jsonify({'years': years})
         except Exception as e:
