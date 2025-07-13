@@ -355,6 +355,14 @@ function createChart(containerId, chartData, timeframe) {
     autoZoomBtn.setAttribute('data-section', containerId.replace('chart-', ''));
     container.appendChild(autoZoomBtn);
 
+    // Create debug spacing button for testing
+    const debugSpacingBtn = document.createElement('button');
+    debugSpacingBtn.className = 'debug-spacing-btn';
+    debugSpacingBtn.textContent = '🔧 Fix Spacing';
+    debugSpacingBtn.style.cssText = 'position: absolute; top: 10px; left: 120px; z-index: 1000; background: #ff9800; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;';
+    debugSpacingBtn.setAttribute('data-section', containerId.replace('chart-', ''));
+    container.appendChild(debugSpacingBtn);
+
     try {
         // Create chart with V4 API
         const chart = LightweightCharts.createChart(container, {
@@ -544,6 +552,15 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                     }
                 };
             }
+
+            // Set up debug spacing button functionality
+            const debugSpacingBtn = document.querySelector(`#${containerId} .debug-spacing-btn`);
+            if (debugSpacingBtn) {
+                debugSpacingBtn.onclick = () => {
+                    console.log(`Manual spacing fix triggered for ${section}`);
+                    manualSpacingFix(section);
+                };
+            }
             
             // Set up any pending drawing tools
             if (drawingTools[section].pendingTool) {
@@ -702,6 +719,91 @@ function clearIndicatorsForReplay(section) {
     console.log(`Cleared indicators for ${section} - they will build up during replay`);
 }
 
+// Manual spacing fix for debugging - tries different approaches
+function manualSpacingFix(section) {
+    console.log(`Starting manual spacing fix for ${section}`);
+    
+    const chart = chartInstances[section]?.chart;
+    if (!chart) {
+        console.log('No chart instance found');
+        return;
+    }
+    
+    const config = getReplayConfig(section);
+    const aggregatedCandles = config.aggregatedCandles();
+    
+    if (!aggregatedCandles || aggregatedCandles.length === 0) {
+        console.log('No aggregated candles found');
+        return;
+    }
+    
+    console.log(`Found ${aggregatedCandles.length} candles`);
+    
+    // Try the exact same approach as renderChart function uses during replay
+    try {
+        const { candlestickSeries, volumeSeries } = chartInstances[section];
+        
+        // Store current zoom state
+        const timeScale = chart.timeScale();
+        const visibleRange = userZoomState[section] ? timeScale.getVisibleRange() : null;
+        
+        console.log('Preparing candlestick data...');
+        
+        // Use EXACTLY the same data preparation as renderChart
+        const candlestickData = aggregatedCandles.map((candle, i) => {
+            return {
+                time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
+                open: parseFloat(candle.open),
+                high: parseFloat(candle.high),
+                low: parseFloat(candle.low),
+                close: parseFloat(candle.close)
+            };
+        });
+
+        const volumeData = aggregatedCandles.map((candle, i) => {
+            return {
+                time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
+                value: parseFloat(candle.volume),
+                color: candle.close >= candle.open ? '#00cc0040' : '#ff000040'
+            };
+        });
+        
+        console.log(`Setting candlestick data with ${candlestickData.length} points`);
+        candlestickSeries.setData(candlestickData);
+        console.log(`Setting volume data with ${volumeData.length} points`);
+        volumeSeries.setData(volumeData);
+        
+        // *** KEY INSIGHT: Follow the EXACT sequence that renderChart uses during replay ***
+        console.log('Following renderChart sequence...');
+        
+        // 1. Update ALL indicators like replay does (this might be the magic!)
+        updateIndicatorsForReplay(section, candlestickData, volumeData);
+        
+        // 2. Only auto-fit if user hasn't manually zoomed (like renderChart)
+        if (!userZoomState[section]) {
+            console.log('Auto-fitting content');
+            timeScale.fitContent();
+        }
+        
+        // 3. Fix chart layout like renderChart does (only if user hasn't zoomed)
+        if (!userZoomState[section]) {
+            console.log('Applying layout fix');
+            fixChartLayout(section);
+        }
+        
+        // 4. Restore user zoom if they had manually zoomed
+        if (visibleRange && userZoomState[section]) {
+            console.log('Restoring user zoom');
+            timeScale.setVisibleRange(visibleRange);
+        }
+        
+        console.log('Manual spacing fix completed successfully');
+        
+    } catch (error) {
+        console.error('Error in manual spacing fix:', error);
+    }
+}
+
 // Refresh chart data to maintain proper spacing (like replay mechanism does)
 function refreshChartDataForSpacing(section) {
     const chart = chartInstances[section]?.chart;
@@ -756,12 +858,23 @@ function refreshChartDataForSpacing(section) {
         candlestickSeries.setData(candlestickData);
         volumeSeries.setData(volumeData);
         
-        // Restore user zoom if they had manually zoomed
+        // *** Follow the EXACT renderChart sequence ***
+        // 1. Update ALL indicators like replay does (this might maintain spacing!)
+        updateIndicatorsForReplay(section, candlestickData, volumeData);
+        
+        // 2. Auto-fit only if user hasn't manually zoomed
+        if (!userZoomState[section]) {
+            timeScale.fitContent();
+        }
+        
+        // 3. Fix chart layout like renderChart does (only if user hasn't zoomed)
+        if (!userZoomState[section]) {
+            fixChartLayout(section);
+        }
+        
+        // 4. Restore user zoom if they had manually zoomed
         if (visibleRange && userZoomState[section]) {
             timeScale.setVisibleRange(visibleRange);
-        } else if (!userZoomState[section]) {
-            // Auto-fit only if user hasn't manually zoomed
-            timeScale.fitContent();
         }
         
         console.log(`Refreshed chart data for ${section} to maintain spacing (user zoom: ${userZoomState[section]})`);
