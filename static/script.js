@@ -2394,6 +2394,28 @@ function getReplayConfig(section) {
     return configs[section];
 }
 
+// Restore normal auto-scroll behavior after replay ends
+function restoreNormalScrollBehavior(section) {
+    const chart = chartInstances[section]?.chart;
+    if (!chart) return;
+    
+    try {
+        console.log(`Restoring normal auto-scroll behavior for ${section}`);
+        
+        // Re-enable auto-scroll for normal chart viewing
+        chart.applyOptions({
+            timeScale: {
+                rightBarStaysOnScroll: true  // Restore normal auto-scroll behavior
+            }
+        });
+        
+        console.log(`Normal auto-scroll behavior restored for ${section}`);
+        
+    } catch (error) {
+        console.warn(`Error restoring normal scroll behavior for ${section}:`, error);
+    }
+}
+
 // Set initial zoom for replay to show normal-sized candles instead of huge ones
 function setInitialReplayZoom(section) {
     const chart = chartInstances[section]?.chart;
@@ -2405,14 +2427,14 @@ function setInitialReplayZoom(section) {
         
         console.log(`Setting initial replay zoom for ${section}`);
         
-        // Set reasonable bar spacing for normal-sized candles
+        // Set reasonable bar spacing for normal-sized candles AND disable auto-scroll
         chart.applyOptions({
             timeScale: {
                 barSpacing: 8,  // Normal spacing, not auto-fitted to huge size
                 fixLeftEdge: false,
                 fixRightEdge: false,
                 lockVisibleTimeRangeOnResize: true,
-                rightBarStaysOnScroll: true
+                rightBarStaysOnScroll: false  // CRITICAL: Disable auto-scroll during replay
             }
         });
         
@@ -2723,6 +2745,9 @@ function stopReplay(section) {
     
     // Restore full chart
     renderChart(section, config.aggregatedCandles());
+    
+    // Restore normal auto-scroll behavior after replay ends
+    restoreNormalScrollBehavior(section);
 
     document.getElementById(config.timestampDisplayId).textContent = 'Current Time: --:--:--';
 }
