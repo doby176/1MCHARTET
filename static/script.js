@@ -702,6 +702,74 @@ function clearIndicatorsForReplay(section) {
     console.log(`Cleared indicators for ${section} - they will build up during replay`);
 }
 
+// Refresh chart data to maintain proper spacing (like replay mechanism does)
+function refreshChartDataForSpacing(section) {
+    const chart = chartInstances[section]?.chart;
+    if (!chart) return;
+    
+    try {
+        const config = getReplayConfig(section);
+        const isReplayActive = config && (config.replayIndex !== null && config.replayIndex >= 0 && config.replayIndex < config.totalCandles);
+        
+        // Don't refresh during active replay - replay handles this itself
+        if (isReplayActive) {
+            console.log(`Skipping data refresh during active replay for ${section}`);
+            return;
+        }
+        
+        // Get current chart data
+        const chartData = config.chartData();
+        if (!chartData) {
+            console.log(`No chart data available for ${section}`);
+            return;
+        }
+        
+        // Get all aggregated candles (complete chart)
+        const aggregatedCandles = config.aggregatedCandles();
+        if (!aggregatedCandles || aggregatedCandles.length === 0) {
+            console.log(`No aggregated candles for ${section}`);
+            return;
+        }
+        
+        const { candlestickSeries, volumeSeries } = chartInstances[section];
+        
+        // Prepare fresh data for lightweight-charts (same as replay mechanism)
+        const candlestickData = aggregatedCandles.map(candle => ({
+            time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
+            open: parseFloat(candle.open),
+            high: parseFloat(candle.high),
+            low: parseFloat(candle.low),
+            close: parseFloat(candle.close)
+        }));
+        
+        const volumeData = aggregatedCandles.map(candle => ({
+            time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
+            value: parseFloat(candle.volume),
+            color: candle.close >= candle.open ? '#00cc0040' : '#ff000040'
+        }));
+        
+        // Get current visible range to preserve user zoom
+        const timeScale = chart.timeScale();
+        const visibleRange = userZoomState[section] ? timeScale.getVisibleRange() : null;
+        
+        // Re-set the data (this is what replay does that maintains spacing)
+        candlestickSeries.setData(candlestickData);
+        volumeSeries.setData(volumeData);
+        
+        // Restore user zoom if they had manually zoomed
+        if (visibleRange && userZoomState[section]) {
+            timeScale.setVisibleRange(visibleRange);
+        } else if (!userZoomState[section]) {
+            // Auto-fit only if user hasn't manually zoomed
+            timeScale.fitContent();
+        }
+        
+        console.log(`Refreshed chart data for ${section} to maintain spacing (user zoom: ${userZoomState[section]})`);
+    } catch (error) {
+        console.warn(`Error refreshing chart data for ${section}:`, error);
+    }
+}
+
 // Fix chart layout to maintain consistent candle spacing/width
 function fixChartLayout(section) {
     const chart = chartInstances[section]?.chart;
@@ -1178,11 +1246,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
     if (indicatorData && indicatorSeries[section][indicatorKey]) {
         indicatorSeries[section][indicatorKey].setData(indicatorData);
         
-        // Ensure chart layout remains consistent after adding indicator
-        // Only fix layout if user hasn't manually zoomed to avoid interfering with user zoom
-        if (!userZoomState[section]) {
-            fixChartLayout(section);
-        }
+        // Refresh chart data to maintain proper spacing (like replay mechanism does)
+        refreshChartDataForSpacing(section);
     }
 }
 
@@ -1207,11 +1272,8 @@ function removeIndicatorFromChart(section, indicator, period) {
         delete indicatorSeries[section][indicatorKey];
     }
     
-    // Ensure chart layout remains consistent after removing indicator
-    // Only fix layout if user hasn't manually zoomed to avoid interfering with user zoom
-    if (!userZoomState[section]) {
-        fixChartLayout(section);
-    }
+    // Refresh chart data to maintain proper spacing (like replay mechanism does)
+    refreshChartDataForSpacing(section);
 }
 
 // Handle Indicator Checkbox Changes
@@ -1251,11 +1313,9 @@ function setupIndicatorListeners(section) {
             }
             
             // Fix chart layout after adding/removing indicator to prevent spacing issues
-            // Only fix layout if user hasn't manually zoomed to avoid interfering with user zoom
+            // Refresh chart data like replay does to maintain proper spacing
             setTimeout(() => {
-                if (!userZoomState[section]) {
-                    fixChartLayout(section);
-                }
+                refreshChartDataForSpacing(section);
             }, 100);
         });
     });
@@ -1907,11 +1967,8 @@ async function loadChart(event, tabId) {
                 console.log(`Re-activated indicator: ${indicator} ${period || ''} for ${replayPrefix}`);
             });
             
-            // Fix chart layout after all indicators are added to prevent spacing issues
-            // Only fix layout if user hasn't manually zoomed to avoid interfering with user zoom
-            if (!userZoomState[replayPrefix]) {
-                fixChartLayout(replayPrefix);
-            }
+            // Refresh chart data after all indicators are added to prevent spacing issues
+            refreshChartDataForSpacing(replayPrefix);
         }
         
         if (replayPrefix === 'simulator') { // Market Simulator
