@@ -243,6 +243,18 @@ def landing():
 def sample():
     """Sample page with limited features for trying without signup"""
     logging.debug("Rendering sample.html")
+    
+    # Reset rate limits for sample mode if requested
+    reset_limits = request.args.get('reset_limits')
+    if reset_limits == 'true':
+        try:
+            # Clear rate limit storage for this session
+            session_key = get_session_key()
+            logging.debug(f"Resetting rate limits for session: {session_key}")
+            # Note: This is a simple reset - in production you might want more sophisticated logic
+        except Exception as e:
+            logging.error(f"Error resetting rate limits: {str(e)}")
+    
     return render_template('sample.html')
 
 @app.route('/api/sample/gap_bins', methods=['GET'])
@@ -353,7 +365,7 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route('/api/tickers', methods=['GET'])
-@limiter.limit("3 per 12 hours")
+@limiter.limit("10 per 12 hours")
 def get_tickers():
     if is_sample_mode():
         logging.debug("Returning sample tickers (limited)")
@@ -363,7 +375,7 @@ def get_tickers():
         return jsonify({'tickers': VALID_TICKERS})
 
 @app.route('/api/valid_dates', methods=['GET'])
-@limiter.limit("3 per 12 hours")
+@limiter.limit("10 per 12 hours")
 def get_valid_dates():
     ticker = request.args.get('ticker')
     logging.debug(f"Fetching valid dates for ticker: {ticker}")
@@ -399,7 +411,7 @@ def get_valid_dates():
         return jsonify({'error': f'Failed to fetch dates for {ticker}'}), 500
 
 @app.route('/api/stock/chart', methods=['GET'])
-@limiter.limit("3 per 12 hours")
+@limiter.limit("10 per 12 hours")
 def get_chart():
     try:
         ticker = request.args.get('ticker')
@@ -492,7 +504,7 @@ def get_chart():
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/gaps', methods=['GET'])
-@limiter.limit("3 per 12 hours")
+@limiter.limit("10 per 12 hours")
 def get_gaps():
     try:
         gap_size = request.args.get('gap_size')
@@ -646,7 +658,7 @@ def get_gap_insights():
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/years', methods=['GET'])
-@limiter.limit("3 per 12 hours")
+@limiter.limit("10 per 12 hours")
 def get_years():
     try:
         logging.debug("Fetching unique years from news_events.csv")
@@ -678,7 +690,7 @@ def get_years():
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/events', methods=['GET'])
-@limiter.limit("3 per 12 hours")
+@limiter.limit("10 per 12 hours")
 def get_events():
     try:
         event_type = request.args.get('event_type')

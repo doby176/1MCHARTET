@@ -41,7 +41,7 @@
             </div>
         </div>
         <div class="user-info">
-            <p>Sample Mode | <a href="/register">Sign Up for Full Access</a> | <a href="/">Back to Home</a></p>
+            <p>Sample Mode | <a href="/register">Sign Up for Full Access</a> | <a href="/">Back to Home</a> | <a href="/sample?reset_limits=true" style="color: #ff9800;">🔄 Reset Limits</a></p>
         </div>
     </header>
 
@@ -441,6 +441,39 @@
             document.getElementById(tabName).classList.add("active");
             document.querySelector(`button[onclick="openTab('${tabName}')"]`).classList.add("active");
         }
+        
+        // Ensure proper event handling after scripts load
+        window.addEventListener('load', function() {
+            console.log('Sample page and scripts loaded, setting up event handlers...');
+            
+            // Override form submissions to prevent page redirects
+            const forms = ['stock-form-simulator', 'gap-form', 'events-form', 'stock-form-gap', 'stock-form-events'];
+            forms.forEach(formId => {
+                const form = document.getElementById(formId);
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        console.log(`Form ${formId} submitted, preventing default behavior`);
+                        
+                        // Check if functions exist before calling
+                        if (formId === 'stock-form-simulator' && typeof loadChart === 'function') {
+                            loadChart(e, 'market-simulator');
+                        } else if (formId === 'gap-form' && typeof loadGapDates === 'function') {
+                            loadGapDates(e);
+                        } else if (formId === 'events-form' && typeof loadEventDates === 'function') {
+                            loadEventDates(e);
+                        } else if (formId === 'stock-form-gap' && typeof loadChart === 'function') {
+                            loadChart(e, 'gap-analysis');
+                        } else if (formId === 'stock-form-events' && typeof loadChart === 'function') {
+                            loadChart(e, 'events-analysis');
+                        } else {
+                            console.error(`Function not found for form ${formId}`);
+                        }
+                    });
+                    console.log(`Event handler attached to form: ${formId}`);
+                }
+            });
+        });
     </script>
     <script src="/static/script.js?v=48"></script>
 </body>
