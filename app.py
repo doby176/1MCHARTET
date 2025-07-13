@@ -712,6 +712,12 @@ def get_events():
         if not dates:
             logging.debug(f"No events found for event_type={event_type}, year={year}")
             return jsonify({'dates': [], 'message': 'No events found for the selected criteria'})
+        
+        # Filter dates for sample mode
+        if is_sample_mode():
+            dates = filter_dates_for_sample(dates)
+            logging.debug(f"Filtered to {len(dates)} event dates for sample mode")
+        
         logging.debug(f"Found {len(dates)} event dates")
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
