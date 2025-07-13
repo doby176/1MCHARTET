@@ -30,23 +30,35 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=48">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=50">
+    <style>
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .auth-btn[style*="background: #f8f9fa"]:hover {
+            background: #e9ecef !important;
+        }
+        .auth-btn[style*="background: #007bff"]:hover {
+            background: #0056b3 !important;
+        }
+    </style>
     <title>1MChart - Precision Trading Insights</title>
 </head>
 <body>
     <header class="landing-header">
-        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
-        <h1>Discover Powerful Nasdaq Gap Insights, News Analysis, Market Replay and Earnings Data with 1MChart</h1>
-    </header>
-    <div class="header-cta">
-        <div class="cta-buttons">
-            <a href="{{ url_for('login') }}" class="cta-button">Log In</a>
-            <a href="{{ url_for('landing') }}" class="cta-button cta-signup">Sign Up</a>
+        <div class="header-top" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <div class="auth-buttons" style="display: flex; gap: 10px;">
+                <a href="{{ url_for('login') }}" class="auth-btn" style="background: #f8f9fa; color: #495057; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9em; font-weight: 500; border: 1px solid #dee2e6; transition: all 0.2s ease;">Log In</a>
+                <a href="{{ url_for('landing') }}" class="auth-btn" style="background: #007bff; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9em; font-weight: 500; transition: all 0.2s ease;">Sign Up</a>
+            </div>
         </div>
-    </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo" style="margin: 20px auto; display: block;">
+    </header>
+    
     <main class="landing-main">
         <section class="hero">
-            <h2>Trade Smarter with 1MChart</h2>
+            <h1 style="font-size: 2.5em; margin-bottom: 20px;">Trade Smarter with 1MChart</h1>
             <p>Harness the power of high-frequency 1-minute data to simulate trades with the Market Simulator, replay market sessions, analyze Nasdaq gaps, earnings reactions, and key economic events (CPI, FOMC, NFP). Build data-driven trading strategies with precision.</p>
             <p class="free-trial-text"><strong>Start for free. No credit card required.</strong></p>
             <div class="cta-buttons">
@@ -116,8 +128,8 @@
             <h2>Ready to Elevate Your Trading?</h2>
             <p>Join 1MChart today and gain access to powerful analytics tools and market replay features designed for day traders.</p>
             <div class="cta-buttons">
-                <a href="{{ url_for('landing') }}" class="cta-button cta-signup">Get Started</a>
-                <a href="{{ url_for('login') }}" class="cta-button">Log In</a>
+                <a href="/sample" class="sample-btn" style="background: #ff9800; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: all 0.3s ease; display: inline-block; margin: 10px;">🚀 Try Sample Features</a>
+                <a href="{{ url_for('landing') }}" class="signup-btn" style="background: #28a745; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: all 0.3s ease; display: inline-block; margin: 10px;">📈 Full Access Signup</a>
             </div>
             <!-- Ad below CTA buttons -->
             <div class="ad-container">
@@ -140,6 +152,6 @@
         <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='script.js') }}?v=23"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=50"></script>
 </body>
 </html>
