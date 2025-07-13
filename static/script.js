@@ -679,14 +679,17 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
         // Update indicators in real-time for replay (except Bollinger Bands which have issues)
         updateIndicatorsForReplay(section, candlestickData, volumeData);
 
-        // Only auto-fit if user hasn't manually zoomed
-        if (!userZoomState[section]) {
+        // Detect if we're in replay mode (during replay, we have specific candle indices)
+        const isReplayMode = (currentCandleIndex >= 0 || minuteIndex !== null);
+        
+        // Only auto-fit if user hasn't manually zoomed AND we're not in replay mode
+        if (!userZoomState[section] && !isReplayMode) {
             chartInstances[section].chart.timeScale().fitContent();
         }
         
         // Fix chart layout to ensure consistent spacing after rendering
-        // Only fix layout if user hasn't manually zoomed to avoid interfering with user zoom
-        if (!userZoomState[section]) {
+        // Only fix layout if user hasn't manually zoomed and not in replay mode
+        if (!userZoomState[section] && !isReplayMode) {
             fixChartLayout(section);
         }
         
@@ -2444,9 +2447,9 @@ function setInitialReplayZoom(section) {
             const startTimestamp = Math.floor(new Date(chartData.timestamp[0]).getTime() / 1000);
             const timeframe = config.timeframe();
             
-            // Show space for about 80 candles worth of time (this makes individual candles normal-sized)
+            // Show space for about 120 candles worth of time (this makes individual candles normal-sized and gives more room)
             const candleWidthInSeconds = timeframe * 60; // timeframe is in minutes
-            const visibleRangeInSeconds = 80 * candleWidthInSeconds;
+            const visibleRangeInSeconds = 120 * candleWidthInSeconds;
             const endTimestamp = startTimestamp + visibleRangeInSeconds;
             
             chart.timeScale().setVisibleRange({
@@ -2454,18 +2457,15 @@ function setInitialReplayZoom(section) {
                 to: endTimestamp
             });
             
-            console.log(`Set initial visible range: ${visibleRangeInSeconds / 60} minutes (${80} candles width)`);
+            console.log(`Set initial visible range: ${visibleRangeInSeconds / 60} minutes (${120} candles width)`);
         }
         
         console.log(`Initial replay zoom set for ${section} - candles should be normal size`);
         
-        // Temporarily set user zoom state to prevent auto-fit from overriding our initial zoom
-        // This will be reset to false after a few seconds to allow normal auto-fit behavior
+        // Set user zoom state to prevent auto-fit from overriding our replay zoom
+        // This will be reset when replay ends to allow normal auto-fit behavior
         userZoomState[section] = true;
-        setTimeout(() => {
-            userZoomState[section] = false;
-            console.log(`Reset zoom state for ${section} - auto-fit now enabled`);
-        }, 3000); // 3 seconds should be enough for replay to get going
+        console.log(`Set zoom state for ${section} - maintaining fixed replay view`);
         
     } catch (error) {
         console.warn(`Error setting initial replay zoom for ${section}:`, error);
@@ -2622,7 +2622,7 @@ function startOverReplay(section) {
     const chartData = config.chartData();
     if (!chartData) return;
     
-    // Reset zoom state when starting over to enable auto-fit
+    // Reset zoom state when starting over (will be set again by setInitialReplayZoom)
     userZoomState[section] = false;
     
     // Clear all indicators before starting over so they build up naturally (like play replay)
@@ -2748,6 +2748,10 @@ function stopReplay(section) {
     
     // Restore normal auto-scroll behavior after replay ends
     restoreNormalScrollBehavior(section);
+    
+    // Reset zoom state to allow normal auto-fit behavior after replay
+    userZoomState[section] = false;
+    console.log(`Reset zoom state for ${section} - auto-fit now enabled after replay`);
 
     document.getElementById(config.timestampDisplayId).textContent = 'Current Time: --:--:--';
 }
