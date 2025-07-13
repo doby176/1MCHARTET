@@ -613,6 +613,9 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
             chartInstances[section].chart.timeScale().fitContent();
         }
         
+        // Fix chart layout to ensure consistent spacing after rendering
+        fixChartLayout(section);
+        
         console.log('Chart data updated successfully');
     } catch (error) {
         console.error('Error updating chart data:', error);
@@ -1886,6 +1889,9 @@ async function loadChart(event, tabId) {
                 addIndicatorToChart(replayPrefix, indicator, period, candleData, volumeData);
                 console.log(`Re-activated indicator: ${indicator} ${period || ''} for ${replayPrefix}`);
             });
+            
+            // Fix chart layout after all indicators are added to prevent spacing issues
+            fixChartLayout(replayPrefix);
         }
         
         if (replayPrefix === 'simulator') { // Market Simulator
