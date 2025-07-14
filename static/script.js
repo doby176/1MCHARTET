@@ -368,15 +368,27 @@ function createChart(containerId, chartData, timeframe) {
     if (containerId === 'chart-simulator') {
         pnlOverlayElement = document.createElement('div');
         pnlOverlayElement.className = 'pnl-overlay';
-        pnlOverlayElement.style.cssText = 'position: absolute; top: 60px; right: 15px; background: rgba(0, 0, 0, 0.85); color: white; padding: 12px 16px; border-radius: 8px; font-family: "Courier New", monospace; font-size: 0.9em; font-weight: 600; z-index: 15; min-width: 220px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); display: none;';
+        // Check if mobile
+        const isMobile = window.innerWidth <= 768;
+        const positionStyle = isMobile 
+            ? 'position: absolute; top: 10px; left: 10px; background: rgba(0, 0, 0, 0.85); color: white; padding: 8px 10px; border-radius: 6px; font-family: "Courier New", monospace; font-size: 0.7em; font-weight: 600; z-index: 15; min-width: 140px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); display: none;'
+            : 'position: absolute; top: 60px; right: 15px; background: rgba(0, 0, 0, 0.85); color: white; padding: 12px 16px; border-radius: 8px; font-family: "Courier New", monospace; font-size: 0.9em; font-weight: 600; z-index: 15; min-width: 220px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); display: none;';
+        
+        pnlOverlayElement.style.cssText = positionStyle;
         
         const positionInfo = document.createElement('div');
         positionInfo.id = 'position-info';
-        positionInfo.style.cssText = 'margin-bottom: 6px; font-size: 0.85em; color: #cccccc;';
+        const positionInfoStyle = isMobile 
+            ? 'margin-bottom: 4px; font-size: 0.8em; color: #cccccc;'
+            : 'margin-bottom: 6px; font-size: 0.85em; color: #cccccc;';
+        positionInfo.style.cssText = positionInfoStyle;
         
         const pnlInfo = document.createElement('div');
         pnlInfo.id = 'pnl-info';
-        pnlInfo.style.cssText = 'font-size: 1em; font-weight: 700;';
+        const pnlInfoStyle = isMobile 
+            ? 'font-size: 0.9em; font-weight: 700;'
+            : 'font-size: 1em; font-weight: 700;';
+        pnlInfo.style.cssText = pnlInfoStyle;
         
         pnlOverlayElement.appendChild(positionInfo);
         pnlOverlayElement.appendChild(pnlInfo);
@@ -563,50 +575,55 @@ function setupTPSLDragging(chart, container) {
     let dragLine = null;
     
     container.addEventListener('mousedown', (e) => {
-        if (!openPosition || !takeProfitLine || !stopLossLine) return;
+        if (!openPosition || !takeProfitLine || !stopLossLine || !chartInstances.simulator?.candlestickSeries) {
+            return;
+        }
         
         const rect = container.getBoundingClientRect();
         const y = e.clientY - rect.top;
         
-        // Convert mouse Y to price
-        const price = chart.coordinateToPrice(y);
-        if (price === null) return;
+        // Use SERIES coordinate conversion methods (correct API)
+        const series = chartInstances.simulator.candlestickSeries;
         
         const tpPrice = takeProfitLine.options().price;
         const slPrice = stopLossLine.options().price;
         
-        // Check if mouse is near TP or SL line (within 10 pixels tolerance)
-        const tpY = chart.priceToCoordinate(tpPrice);
-        const slY = chart.priceToCoordinate(slPrice);
+        // Check if mouse is near TP or SL line (within 15 pixels tolerance)
+        const tpY = series.priceToCoordinate(tpPrice);
+        const slY = series.priceToCoordinate(slPrice);
         
-        if (tpY !== null && Math.abs(y - tpY) < 10) {
+        if (tpY !== null && Math.abs(y - tpY) < 15) {
             isMouseDown = true;
             dragLine = 'tp';
             container.style.cursor = 'ns-resize';
             e.preventDefault();
-        } else if (slY !== null && Math.abs(y - slY) < 10) {
+            e.stopPropagation();
+        } else if (slY !== null && Math.abs(y - slY) < 15) {
             isMouseDown = true;
             dragLine = 'sl';
             container.style.cursor = 'ns-resize';
             e.preventDefault();
+            e.stopPropagation();
         }
     });
     
     container.addEventListener('mousemove', (e) => {
-        if (!openPosition || !takeProfitLine || !stopLossLine) return;
+        if (!openPosition || !takeProfitLine || !stopLossLine || !chartInstances.simulator?.candlestickSeries) return;
         
         const rect = container.getBoundingClientRect();
         const y = e.clientY - rect.top;
+        const series = chartInstances.simulator.candlestickSeries;
         
         if (isMouseDown && dragLine) {
             // Update line position while dragging
-            const newPrice = chart.coordinateToPrice(y);
-            if (newPrice === null) return;
+            const newPrice = series.coordinateToPrice(y);
+            
+            if (newPrice === null || newPrice === undefined) return;
             
             if (dragLine === 'tp') {
                 // Update Take Profit line
-                chartInstances.simulator.candlestickSeries.removePriceLine(takeProfitLine);
-                takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
+                series.removePriceLine(takeProfitLine);
+                takeProfitLine = series.createPriceLine({
                     price: newPrice,
                     color: '#00ff00',
                     lineWidth: 1,
@@ -616,8 +633,8 @@ function setupTPSLDragging(chart, container) {
                 });
             } else if (dragLine === 'sl') {
                 // Update Stop Loss line
-                chartInstances.simulator.candlestickSeries.removePriceLine(stopLossLine);
-                stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
+                series.removePriceLine(stopLossLine);
+                stopLossLine = series.createPriceLine({
                     price: newPrice,
                     color: '#ff4444',
                     lineWidth: 1,
@@ -628,20 +645,17 @@ function setupTPSLDragging(chart, container) {
             }
         } else {
             // Change cursor when hovering over TP/SL lines
-            const price = chart.coordinateToPrice(y);
-            if (price !== null) {
-                const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
-                const slPrice = stopLossLine ? stopLossLine.options().price : null;
-                
-                const tpY = tpPrice ? chart.priceToCoordinate(tpPrice) : null;
-                const slY = slPrice ? chart.priceToCoordinate(slPrice) : null;
-                
-                if ((tpY !== null && Math.abs(y - tpY) < 10) || 
-                    (slY !== null && Math.abs(y - slY) < 10)) {
-                    container.style.cursor = 'ns-resize';
-                } else {
-                    container.style.cursor = 'default';
-                }
+            const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
+            const slPrice = stopLossLine ? stopLossLine.options().price : null;
+            
+            const tpY = tpPrice ? series.priceToCoordinate(tpPrice) : null;
+            const slY = slPrice ? series.priceToCoordinate(slPrice) : null;
+            
+            if ((tpY !== null && Math.abs(y - tpY) < 15) || 
+                (slY !== null && Math.abs(y - slY) < 15)) {
+                container.style.cursor = 'ns-resize';
+            } else {
+                container.style.cursor = 'default';
             }
         }
     });

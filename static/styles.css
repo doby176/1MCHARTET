@@ -481,6 +481,28 @@ form button:disabled::before {
     font-weight: 700;
 }
 
+/* Mobile optimization for P&L overlay */
+@media (max-width: 768px) {
+    .pnl-overlay {
+        top: 10px;
+        left: 10px;
+        right: auto;
+        min-width: 140px;
+        padding: 8px 10px;
+        font-size: 0.7em;
+        border-radius: 6px;
+    }
+    
+    .pnl-overlay #position-info {
+        margin-bottom: 4px;
+        font-size: 0.8em;
+    }
+    
+    .pnl-overlay #pnl-info {
+        font-size: 0.9em;
+    }
+}
+
 /* Professional Data Display */
 #gap-dates, 
 #event-dates, 
