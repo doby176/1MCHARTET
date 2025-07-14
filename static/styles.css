@@ -445,6 +445,13 @@ form button:disabled::before {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Hide chart title on mobile to prevent blocking price action */
+@media (max-width: 768px) {
+    .chart-title {
+        display: none;
+    }
+}
+
 /* P&L Overlay - TradingView Style */
 .pnl-overlay {
     position: absolute;

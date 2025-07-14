@@ -208,6 +208,8 @@ let entryPriceLine = null;
 let takeProfitLine = null;
 let stopLossLine = null;
 let pnlOverlayElement = null;
+let isDragging = false;
+let dragTarget = null;
 let tradeHistory = [];
 const POSITION_SIZE = 100;
 
@@ -360,19 +362,13 @@ function createChart(containerId, chartData, timeframe) {
     autoZoomBtn.setAttribute('data-section', containerId.replace('chart-', ''));
     container.appendChild(autoZoomBtn);
 
-    // Create background color toggle button
-    const bgToggleBtn = document.createElement('button');
-    bgToggleBtn.className = 'bg-toggle-btn';
-    bgToggleBtn.textContent = '🌙 Dark';
-    bgToggleBtn.style.cssText = 'position: absolute; top: 10px; right: 100px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 9999; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease;';
-    bgToggleBtn.setAttribute('data-section', containerId.replace('chart-', ''));
-    container.appendChild(bgToggleBtn);
+    // Dark button removed per user request
 
     // Create P&L overlay for simulator charts
     if (containerId === 'chart-simulator') {
         pnlOverlayElement = document.createElement('div');
         pnlOverlayElement.className = 'pnl-overlay';
-        pnlOverlayElement.style.cssText = 'position: absolute; top: 15px; right: 15px; background: rgba(0, 0, 0, 0.85); color: white; padding: 12px 16px; border-radius: 8px; font-family: "Courier New", monospace; font-size: 0.9em; font-weight: 600; z-index: 15; min-width: 220px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); display: none;';
+        pnlOverlayElement.style.cssText = 'position: absolute; top: 60px; right: 15px; background: rgba(0, 0, 0, 0.85); color: white; padding: 12px 16px; border-radius: 8px; font-family: "Courier New", monospace; font-size: 0.9em; font-weight: 600; z-index: 15; min-width: 220px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); display: none;';
         
         const positionInfo = document.createElement('div');
         positionInfo.id = 'position-info';
@@ -540,37 +536,13 @@ function createChart(containerId, chartData, timeframe) {
             volumeSeries,
             resizeObserver
         };
-        
-        // Set up background toggle functionality after chart is created
-        const bgToggleBtn = container.querySelector('.bg-toggle-btn');
-        if (bgToggleBtn) {
-            let isDark = false;
-            bgToggleBtn.onclick = () => {
-                console.log('Dark mode toggle clicked');
-                isDark = !isDark;
-                if (isDark) {
-                    console.log('Switching to dark mode');
-                    chart.applyOptions({
-                        layout: {
-                            backgroundColor: '#000000',
-                            textColor: '#ffffff'
-                        }
-                    });
-                    bgToggleBtn.textContent = '☀️ Light';
-                    bgToggleBtn.style.backgroundColor = '#333333';
-                } else {
-                    console.log('Switching to light mode');
-                    chart.applyOptions({
-                        layout: {
-                            backgroundColor: '#ffffff',
-                            textColor: '#333333'
-                        }
-                    });
-                    bgToggleBtn.textContent = '🌙 Dark';
-                    bgToggleBtn.style.backgroundColor = '#153097';
-                }
-            };
+
+        // Add dragging functionality for TP/SL lines (simulator only)
+        if (containerId === 'chart-simulator') {
+            setupTPSLDragging(chart, container);
         }
+        
+        // Dark button functionality removed per user request
         
         return {
             chart,
@@ -583,6 +555,108 @@ function createChart(containerId, chartData, timeframe) {
         container.innerHTML = `<p style="color: red;">Error creating chart: ${error.message}</p>`;
         return null;
     }
+}
+
+// TP/SL Dragging functionality
+function setupTPSLDragging(chart, container) {
+    let isMouseDown = false;
+    let dragLine = null;
+    
+    container.addEventListener('mousedown', (e) => {
+        if (!openPosition || !takeProfitLine || !stopLossLine) return;
+        
+        const rect = container.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        
+        // Convert mouse Y to price
+        const price = chart.coordinateToPrice(y);
+        if (price === null) return;
+        
+        const tpPrice = takeProfitLine.options().price;
+        const slPrice = stopLossLine.options().price;
+        
+        // Check if mouse is near TP or SL line (within 10 pixels tolerance)
+        const tpY = chart.priceToCoordinate(tpPrice);
+        const slY = chart.priceToCoordinate(slPrice);
+        
+        if (tpY !== null && Math.abs(y - tpY) < 10) {
+            isMouseDown = true;
+            dragLine = 'tp';
+            container.style.cursor = 'ns-resize';
+            e.preventDefault();
+        } else if (slY !== null && Math.abs(y - slY) < 10) {
+            isMouseDown = true;
+            dragLine = 'sl';
+            container.style.cursor = 'ns-resize';
+            e.preventDefault();
+        }
+    });
+    
+    container.addEventListener('mousemove', (e) => {
+        if (!openPosition || !takeProfitLine || !stopLossLine) return;
+        
+        const rect = container.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        
+        if (isMouseDown && dragLine) {
+            // Update line position while dragging
+            const newPrice = chart.coordinateToPrice(y);
+            if (newPrice === null) return;
+            
+            if (dragLine === 'tp') {
+                // Update Take Profit line
+                chartInstances.simulator.candlestickSeries.removePriceLine(takeProfitLine);
+                takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
+                    price: newPrice,
+                    color: '#00ff00',
+                    lineWidth: 1,
+                    lineStyle: LightweightCharts.LineStyle.Dashed,
+                    axisLabelVisible: true,
+                    title: `TP: $${newPrice.toFixed(2)}`
+                });
+            } else if (dragLine === 'sl') {
+                // Update Stop Loss line
+                chartInstances.simulator.candlestickSeries.removePriceLine(stopLossLine);
+                stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
+                    price: newPrice,
+                    color: '#ff4444',
+                    lineWidth: 1,
+                    lineStyle: LightweightCharts.LineStyle.Dashed,
+                    axisLabelVisible: true,
+                    title: `SL: $${newPrice.toFixed(2)}`
+                });
+            }
+        } else {
+            // Change cursor when hovering over TP/SL lines
+            const price = chart.coordinateToPrice(y);
+            if (price !== null) {
+                const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
+                const slPrice = stopLossLine ? stopLossLine.options().price : null;
+                
+                const tpY = tpPrice ? chart.priceToCoordinate(tpPrice) : null;
+                const slY = slPrice ? chart.priceToCoordinate(slPrice) : null;
+                
+                if ((tpY !== null && Math.abs(y - tpY) < 10) || 
+                    (slY !== null && Math.abs(y - slY) < 10)) {
+                    container.style.cursor = 'ns-resize';
+                } else {
+                    container.style.cursor = 'default';
+                }
+            }
+        }
+    });
+    
+    container.addEventListener('mouseup', () => {
+        isMouseDown = false;
+        dragLine = null;
+        container.style.cursor = 'default';
+    });
+    
+    container.addEventListener('mouseleave', () => {
+        isMouseDown = false;
+        dragLine = null;
+        container.style.cursor = 'default';
+    });
 }
 
 function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = null) {
