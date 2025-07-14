@@ -338,9 +338,9 @@ function createChart(containerId, chartData, timeframe) {
     // Clear previous chart
     container.innerHTML = '';
 
-    // Ensure minimum dimensions
-    const width = Math.max(container.clientWidth, 600);
-    const height = Math.max(container.clientHeight, 400);
+    // Ensure minimum dimensions - use fixed values like old working version  
+    const width = 800;
+    const height = 650;
 
     // Create chart title
     const title = document.createElement('div');
@@ -352,38 +352,39 @@ function createChart(containerId, chartData, timeframe) {
     const autoZoomBtn = document.createElement('button');
     autoZoomBtn.className = 'auto-zoom-btn';
     autoZoomBtn.textContent = '🔍 Auto Fit';
+    autoZoomBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 9999; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease;';
     autoZoomBtn.setAttribute('data-section', containerId.replace('chart-', ''));
     container.appendChild(autoZoomBtn);
 
-    // Create debug spacing button for testing
-    const debugSpacingBtn = document.createElement('button');
-    debugSpacingBtn.className = 'debug-spacing-btn';
-    debugSpacingBtn.textContent = '🔧 Fix Spacing';
-    debugSpacingBtn.style.cssText = 'position: absolute; top: 10px; left: 120px; z-index: 1000; background: #ff9800; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;';
-    debugSpacingBtn.setAttribute('data-section', containerId.replace('chart-', ''));
-    container.appendChild(debugSpacingBtn);
+    // Create background color toggle button
+    const bgToggleBtn = document.createElement('button');
+    bgToggleBtn.className = 'bg-toggle-btn';
+    bgToggleBtn.textContent = '🌙 Dark';
+    bgToggleBtn.style.cssText = 'position: absolute; top: 10px; right: 100px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 9999; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease;';
+    bgToggleBtn.setAttribute('data-section', containerId.replace('chart-', ''));
+    container.appendChild(bgToggleBtn);
+
+
 
     try {
-        // Create chart with V4 API
+        // Create chart with V4 API - simple config like old version
         const chart = LightweightCharts.createChart(container, {
         width: width,
         height: height,
         layout: {
             backgroundColor: '#ffffff',
-            textColor: '#333333',
-            fontSize: 12,
-            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            textColor: '#333333'
         },
         grid: {
             vertLines: {
                 color: '#e0e0e0',
                 style: LightweightCharts.LineStyle.Solid,
-                visible: true
+                visible: false
             },
             horzLines: {
                 color: '#e0e0e0',
                 style: LightweightCharts.LineStyle.Solid,
-                visible: true
+                visible: false
             }
         },
         crosshair: {
@@ -408,8 +409,8 @@ function createChart(containerId, chartData, timeframe) {
             borderVisible: true,
             position: 'right',
             scaleMargins: {
-                top: 0.1,
-                bottom: 0.25
+                top: 0.05,
+                bottom: 0.15
             }
         },
         timeScale: {
@@ -436,8 +437,8 @@ function createChart(containerId, chartData, timeframe) {
             borderColor: '#cccccc',
             autoScale: true,
             scaleMargins: {
-                top: 0.1,
-                bottom: 0.25
+                top: 0.05,
+                bottom: 0.15
             }
         },
         leftPriceScale: {
@@ -487,7 +488,7 @@ function createChart(containerId, chartData, timeframe) {
         },
         priceScaleId: 'volume',
         scaleMargins: {
-            top: 0.75,
+            top: 0.85,
             bottom: 0
         }
     });
@@ -495,7 +496,7 @@ function createChart(containerId, chartData, timeframe) {
     // Configure volume price scale
     chart.priceScale('volume').applyOptions({
         scaleMargins: {
-            top: 0.75,
+            top: 0.85,
             bottom: 0,
         },
     });
@@ -509,6 +510,35 @@ function createChart(containerId, chartData, timeframe) {
         resizeObserver.observe(container);
 
         console.log('Chart created successfully');
+        
+        // Set up background toggle functionality after chart is created
+        const bgToggleBtn = container.querySelector('.bg-toggle-btn');
+        if (bgToggleBtn) {
+            let isDark = false;
+            bgToggleBtn.onclick = () => {
+                isDark = !isDark;
+                if (isDark) {
+                    chart.applyOptions({
+                        layout: {
+                            backgroundColor: '#000000',
+                            textColor: '#ffffff'
+                        }
+                    });
+                    bgToggleBtn.textContent = '☀️ Light';
+                    bgToggleBtn.style.backgroundColor = '#333333';
+                } else {
+                    chart.applyOptions({
+                        layout: {
+                            backgroundColor: '#ffffff',
+                            textColor: '#333333'
+                        }
+                    });
+                    bgToggleBtn.textContent = '🌙 Dark';
+                    bgToggleBtn.style.backgroundColor = '#153097';
+                }
+            };
+        }
+        
         return {
             chart,
             candlestickSeries,
@@ -563,19 +593,31 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                              try {
                                  const priceScale = chart.priceScale('right');
                                  if (priceScale) {
-                                     // Method 1: Reset to auto-scale with default margins
-                                     priceScale.applyOptions({
-                                         autoScale: true,
-                                         scaleMargins: {
-                                             top: 0.1,
-                                             bottom: 0.25
-                                         }
-                                     });
+                                                              // Method 1: Reset to auto-scale with default margins
+                         priceScale.applyOptions({
+                             autoScale: true,
+                             scaleMargins: {
+                                 top: 0.05,
+                                 bottom: 0.15
+                             }
+                         });
                                      
                                      // Method 2: Try to fit content if method exists
                                      if (typeof priceScale.fitContent === 'function') {
                                          priceScale.fitContent();
                                      }
+                                 }
+                                 
+                                 // Also reset volume scale
+                                 const volumeScale = chart.priceScale('volume');
+                                 if (volumeScale) {
+                                     volumeScale.applyOptions({
+                                         autoScale: true,
+                                         scaleMargins: {
+                                             top: 0.85,
+                                             bottom: 0
+                                         }
+                                     });
                                  }
                                  
                                  // Also reset left price scale if it exists
@@ -607,14 +649,8 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                 };
             }
 
-            // Set up debug spacing button functionality
-            const debugSpacingBtn = document.querySelector(`#${containerId} .debug-spacing-btn`);
-            if (debugSpacingBtn) {
-                debugSpacingBtn.onclick = () => {
-                    console.log(`Manual spacing fix triggered for ${section}`);
-                    manualSpacingFix(section);
-                };
-            }
+
+
             
             // Set up any pending drawing tools
             if (drawingTools[section].pendingTool) {

@@ -30,7 +30,7 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=50">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=69">
     <style>
         .landing-header {
             position: relative;
@@ -142,26 +142,29 @@
                 </div>
             </div>
         </section>
-        <section class="cta-section">
+        
+        <!-- New Card CTA Section -->
+        <div class="card" style="max-width: 800px; margin: 2rem auto; text-align: center;">
             <h2>Ready to Elevate Your Trading?</h2>
             <p>Join 1MChart today and gain access to powerful analytics tools and market replay features designed for day traders.</p>
             <div class="cta-buttons">
-                <a href="/sample" class="sample-btn" style="background: #ff9800; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: all 0.3s ease; display: inline-block; margin: 10px;">🚀 Try Sample Features</a>
-                <a href="{{ url_for('landing') }}" class="signup-btn" style="background: #28a745; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: all 0.3s ease; display: inline-block; margin: 10px;">📈 Full Access Signup</a>
+                <a href="/sample" class="sample-btn">🚀 Try Sample Features</a>
+                <a href="/register" class="signup-btn">📈 Full Access Signup</a>
             </div>
-            <!-- Ad below CTA buttons -->
-            <div class="ad-container">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-9416785017460416"
-                     data-ad-slot="5487535867"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-        </section>
+        </div>
+        
+        <!-- Ad below CTA buttons -->
+        <div class="ad-container">
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9416785017460416"
+                 data-ad-slot="5487535867"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
     </main>
     <footer class="footer">
         <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
