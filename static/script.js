@@ -2009,7 +2009,13 @@ async function loadChart(event, tabId) {
     }
 
     console.log(`Loading chart for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrict_hours=${shouldRestrictHours}, tab=${tabId}`);
-    const url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=${timeframe > 1}${shouldRestrictHours ? '&restrict_hours=true' : ''}`;
+    
+    // Check if we're in sample mode and add sample_action parameter for Load Chart button
+    const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
+    let url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=${timeframe > 1}${shouldRestrictHours ? '&restrict_hours=true' : ''}`;
+    if (isInSampleMode && tabId === 'market-simulator') {
+        url += '&sample_action=load_chart';
+    }
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
     try {
@@ -2024,20 +2030,38 @@ async function loadChart(event, tabId) {
         if (response.status === 429) {
             const data = await response.json();
             console.error('Rate limit error:', data.error);
-            chartContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
-            button.disabled = true;
-            button.textContent = 'Rate Limit Exceeded';
-            inputs.forEach(input => input.disabled = true);
-            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
-            localStorage.setItem(`chartRateLimitReset_${tabId}`, resetTime);
-            setTimeout(() => {
-                button.disabled = false;
-                button.textContent = 'Load Chart';
-                inputs.forEach(input => input.disabled = false);
-                localStorage.removeItem(`chartRateLimitReset_${tabId}`);
-                chartContainer.innerHTML = '<p>Please select a ticker, date, and timeframe to generate a chart.</p>';
-            }, 12 * 60 * 60 * 1000);
-            alert(data.error);
+            
+            // Handle sample mode action limit vs regular rate limit differently
+            if (data.limit_reached && isInSampleMode) {
+                // Sample action limit reached - show clear message with signup link
+                chartContainer.innerHTML = `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
+                        <h4 style="color: #856404; margin: 0 0 10px 0;">🚀 Sample Limit Reached</h4>
+                        <p style="color: #856404; margin: 0 0 15px 0; font-size: 16px;">You've used all 3 free action buttons. To continue exploring:</p>
+                        <a href="/register" style="display: inline-block; background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">📈 Sign Up FREE for Unlimited Access</a>
+                        <p style="color: #6c757d; margin: 15px 0 0 0; font-size: 14px;">Free account includes 10 API calls per 12 hours + full features</p>
+                    </div>
+                `;
+                button.disabled = true;
+                button.textContent = 'Limit Reached - Sign Up for More';
+                inputs.forEach(input => input.disabled = true);
+                // Don't set timeout reset for sample limit - it's per session action
+            } else {
+                // Regular rate limit exceeded
+                chartContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+                button.disabled = true;
+                button.textContent = 'Rate Limit Exceeded';
+                inputs.forEach(input => input.disabled = true);
+                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+                localStorage.setItem(`chartRateLimitReset_${tabId}`, resetTime);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Load Chart';
+                    inputs.forEach(input => input.disabled = false);
+                    localStorage.removeItem(`chartRateLimitReset_${tabId}`);
+                    chartContainer.innerHTML = '<p>Please select a ticker, date, and timeframe to generate a chart.</p>';
+                }, 12 * 60 * 60 * 1000);
+            }
             return;
         }
         if (!response.ok) {
@@ -2855,7 +2879,13 @@ async function loadGapDates(event) {
     }
 
     console.log(`Fetching gaps for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
-    const url = `/api/gaps?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
+    
+    // Check if we're in sample mode and add sample_action parameter for Find Gap Dates button
+    const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
+    let url = `/api/gaps?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
+    if (isInSampleMode) {
+        url += '&sample_action=find_gap_dates';
+    }
     console.log('Fetching URL:', url);
     gapDatesContainer.innerHTML = '<p>Loading gap dates...</p>';
     try {
@@ -2870,20 +2900,38 @@ async function loadGapDates(event) {
         if (response.status === 429) {
             const data = await response.json();
             console.error('Rate limit error:', data.error);
-            gapDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
-            button.disabled = true;
-            button.textContent = 'Rate Limit Exceeded';
-            selects.forEach(select => select.disabled = true);
-            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
-            localStorage.setItem('gapDatesRateLimitReset', resetTime);
-            setTimeout(() => {
-                button.disabled = false;
-                button.textContent = 'Find Gap Dates';
-                selects.forEach(select => select.disabled = false);
-                localStorage.removeItem('gapDatesRateLimitReset');
-                gapDatesContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction to view gap dates.</p>';
-            }, 12 * 60 * 60 * 1000);
-            alert(data.error);
+            
+            // Handle sample mode action limit vs regular rate limit differently
+            if (data.limit_reached && isInSampleMode) {
+                // Sample action limit reached - show clear message with signup link
+                gapDatesContainer.innerHTML = `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
+                        <h4 style="color: #856404; margin: 0 0 10px 0;">🚀 Sample Limit Reached</h4>
+                        <p style="color: #856404; margin: 0 0 15px 0; font-size: 16px;">You've used all 3 free action buttons. To continue exploring:</p>
+                        <a href="/register" style="display: inline-block; background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">📈 Sign Up FREE for Unlimited Access</a>
+                        <p style="color: #6c757d; margin: 15px 0 0 0; font-size: 14px;">Free account includes 10 API calls per 12 hours + full features</p>
+                    </div>
+                `;
+                button.disabled = true;
+                button.textContent = 'Limit Reached - Sign Up for More';
+                selects.forEach(select => select.disabled = true);
+                // Don't set timeout reset for sample limit - it's per session action
+            } else {
+                // Regular rate limit exceeded
+                gapDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+                button.disabled = true;
+                button.textContent = 'Rate Limit Exceeded';
+                selects.forEach(select => select.disabled = true);
+                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+                localStorage.setItem('gapDatesRateLimitReset', resetTime);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Find Gap Dates';
+                    selects.forEach(select => select.disabled = false);
+                    localStorage.removeItem('gapDatesRateLimitReset');
+                    gapDatesContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction to view gap dates.</p>';
+                }, 12 * 60 * 60 * 1000);
+            }
             return;
         }
         if (!response.ok) {
@@ -3021,6 +3069,12 @@ async function loadEventDates(event) {
         url = `/api/economic_events?event_type=${encodeURIComponent(eventType)}&bin=${encodeURIComponent(bin)}`;
     }
 
+    // Check if we're in sample mode and add sample_action parameter for Find Event Dates button
+    const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
+    if (isInSampleMode && filterType === 'year') {
+        url += '&sample_action=find_event_dates';
+    }
+
     console.log(`Fetching events for filterType=${filterType}, event_type=${eventType}, year=${year}, bin=${bin}`);
     console.log('Fetching URL:', url);
     eventDatesContainer.innerHTML = '<p>Loading event dates...</p>';
@@ -3036,20 +3090,38 @@ async function loadEventDates(event) {
         if (response.status === 429) {
             const data = await response.json();
             console.error('Rate limit error:', data.error);
-            eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
-            button.disabled = true;
-            button.textContent = 'Rate Limit Exceeded';
-            selects.forEach(select => select.disabled = true);
-            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
-            localStorage.setItem('eventDatesRateLimitReset', resetTime);
-            setTimeout(() => {
-                button.disabled = false;
-                button.textContent = 'Find Event Dates';
-                selects.forEach(select => select.disabled = false);
-                localStorage.removeItem('eventDatesRateLimitReset');
-                eventDatesContainer.innerHTML = '<p>Select filters to view dates with events.</p>';
-            }, 1000);
-            alert(data.error);
+            
+            // Handle sample mode action limit vs regular rate limit differently
+            if (data.limit_reached && isInSampleMode) {
+                // Sample action limit reached - show clear message with signup link
+                eventDatesContainer.innerHTML = `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
+                        <h4 style="color: #856404; margin: 0 0 10px 0;">🚀 Sample Limit Reached</h4>
+                        <p style="color: #856404; margin: 0 0 15px 0; font-size: 16px;">You've used all 3 free action buttons. To continue exploring:</p>
+                        <a href="/register" style="display: inline-block; background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">📈 Sign Up FREE for Unlimited Access</a>
+                        <p style="color: #6c757d; margin: 15px 0 0 0; font-size: 14px;">Free account includes 10 API calls per 12 hours + full features</p>
+                    </div>
+                `;
+                button.disabled = true;
+                button.textContent = 'Limit Reached - Sign Up for More';
+                selects.forEach(select => select.disabled = true);
+                // Don't set timeout reset for sample limit - it's per session action
+            } else {
+                // Regular rate limit exceeded
+                eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+                button.disabled = true;
+                button.textContent = 'Rate Limit Exceeded';
+                selects.forEach(select => select.disabled = true);
+                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+                localStorage.setItem('eventDatesRateLimitReset', resetTime);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Find Event Dates';
+                    selects.forEach(select => select.disabled = false);
+                    localStorage.removeItem('eventDatesRateLimitReset');
+                    eventDatesContainer.innerHTML = '<p>Select filters to view dates with events.</p>';
+                }, 1000);
+            }
             return;
         }
         if (!response.ok) {
