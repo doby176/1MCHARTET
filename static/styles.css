@@ -445,6 +445,13 @@ form button:disabled::before {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Hide chart title on mobile to prevent blocking price action */
+@media (max-width: 768px) {
+    .chart-title {
+        display: none;
+    }
+}
+
 /* P&L Overlay - TradingView Style */
 .pnl-overlay {
     position: absolute;
@@ -472,6 +479,28 @@ form button:disabled::before {
 .pnl-overlay #pnl-info {
     font-size: 1em;
     font-weight: 700;
+}
+
+/* Mobile optimization for P&L overlay */
+@media (max-width: 768px) {
+    .pnl-overlay {
+        top: 10px;
+        left: 10px;
+        right: auto;
+        min-width: 140px;
+        padding: 8px 10px;
+        font-size: 0.7em;
+        border-radius: 6px;
+    }
+    
+    .pnl-overlay #position-info {
+        margin-bottom: 4px;
+        font-size: 0.8em;
+    }
+    
+    .pnl-overlay #pnl-info {
+        font-size: 0.9em;
+    }
 }
 
 /* Professional Data Display */
