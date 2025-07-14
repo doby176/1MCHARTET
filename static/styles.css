@@ -1327,6 +1327,7 @@ footer p {
     border-radius: 6px;
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 0.85rem;
 }
 
 #trade-history-table th {
@@ -1335,13 +1336,15 @@ footer p {
     padding: var(--spacing-sm);
     text-align: left;
     font-weight: var(--font-weight-semibold);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 #trade-history-table td {
     padding: var(--spacing-sm);
     border-bottom: 1px solid #e9ecef;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    word-wrap: break-word;
+    max-width: 120px;
 }
 
 #trade-history-table tbody tr:hover {
@@ -1360,6 +1363,106 @@ footer p {
     background: white;
     border-radius: 6px;
     border: 1px solid #e9ecef;
+}
+
+/* Mobile Trade History Improvements */
+@media (max-width: 768px) {
+    #trade-history-container {
+        margin-top: var(--spacing-lg);
+        padding: var(--spacing-md);
+        background: var(--light-grey);
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--medium-grey);
+    }
+    
+    #trade-history-container h5 {
+        font-size: 1.1rem;
+        text-align: center;
+        margin-bottom: var(--spacing-md);
+        color: var(--charcoal);
+    }
+    
+    #trade-history-table {
+        font-size: 0.8rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    #trade-history-table th {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.8rem;
+    }
+    
+    #trade-history-table td {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.8rem;
+        max-width: 80px;
+    }
+    
+    /* Make table scrollable horizontally on mobile */
+    #trade-history-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    #trade-history-table thead,
+    #trade-history-table tbody,
+    #trade-history-table tr,
+    #trade-history-table th,
+    #trade-history-table td {
+        display: block;
+    }
+    
+    #trade-history-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    
+    #trade-history-table tr {
+        border: 1px solid #ccc;
+        margin-bottom: var(--spacing-xs);
+        background: white;
+        border-radius: 4px;
+        padding: var(--spacing-xs);
+    }
+    
+    #trade-history-table td {
+        border: none;
+        position: relative;
+        padding-left: 50%;
+        text-align: left;
+        word-wrap: break-word;
+        white-space: normal;
+        max-width: none;
+    }
+    
+    #trade-history-table td:before {
+        content: attr(data-label) ": ";
+        position: absolute;
+        left: var(--spacing-xs);
+        width: 45%;
+        padding-right: var(--spacing-xs);
+        white-space: nowrap;
+        font-weight: var(--font-weight-semibold);
+        color: var(--primary-blue);
+    }
+}
+
+@media (max-width: 480px) {
+    #trade-history-container {
+        padding: var(--spacing-sm);
+    }
+    
+    #trade-history-table td {
+        font-size: 0.75rem;
+        padding-left: 45%;
+    }
+    
+    #trade-history-table td:before {
+        font-size: 0.75rem;
+        width: 40%;
+    }
 }
 
 /* Responsive Design */

@@ -170,13 +170,7 @@ let indicatorSeries = {
 
 
 
-// Drawing Tools State
-let drawingTools = {
-    simulator: { active: null, lines: [], pendingTool: null },
-    gap: { active: null, lines: [], pendingTool: null },
-    events: { active: null, lines: [], pendingTool: null },
-    earnings: { active: null, lines: [], pendingTool: null }
-};
+
 
 // User zoom tracking - to prevent auto-fit during manual zoom
 let userZoomState = {
@@ -186,13 +180,7 @@ let userZoomState = {
     earnings: false
 };
 
-// Chart click handlers for drawing tools
-let chartClickHandlers = {
-    simulator: null,
-    gap: null,
-    events: null,
-    earnings: null
-};
+
 
 // Replay globals for Market Simulator
 let chartDataSimulator = null;
@@ -843,13 +831,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
 
 
             
-            // Set up any pending drawing tools
-            if (drawingTools[section].pendingTool) {
-                const pendingTool = drawingTools[section].pendingTool;
-                drawingTools[section].pendingTool = null;
-                setupDrawingClickHandler(section, pendingTool);
-                console.log(`Set up pending drawing tool: ${pendingTool} for ${section}`);
-            }
+
         }
     }
 
@@ -939,11 +921,8 @@ function destroyChart(section) {
     }
     // Clear indicators for this section
     indicatorSeries[section] = {};
-    drawingTools[section] = { active: null, lines: [], pendingTool: null };
     // Reset user zoom state
     userZoomState[section] = false;
-    // Clear click handlers
-    chartClickHandlers[section] = null;
 }
 
 // Setup chart zoom tracking to detect user interactions
@@ -1248,7 +1227,7 @@ function updateIndicatorsForReplay(section, candlestickData, volumeData) {
                     }
                     break;
                 case 'vwap':
-                    indicatorData = calculateVWAP(candlestickData, volumeData);
+                    indicatorData = calculateVWAP(candleData, volumeData);
                     console.log(`Calculated VWAP with ${indicatorData.length} points`);
                     break;
                 case 'rsi':
@@ -1432,35 +1411,7 @@ function calculateMACD(data, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9)
     return { macdLine, signalLine, histogram };
 }
 
-function calculateBollingerBands(data, period = 20, stdDev = 2) {
-    const sma = calculateSMA(data, period);
-    const bands = { upper: [], middle: [], lower: [] };
-    
-    for (let i = 0; i < sma.length; i++) {
-        const dataIndex = i + period - 1;
-        let sum = 0;
-        
-        // Calculate standard deviation
-        for (let j = 0; j < period; j++) {
-            sum += Math.pow(data[dataIndex - j].close - sma[i].value, 2);
-        }
-        const stdDeviation = Math.sqrt(sum / period);
-        
-        bands.upper.push({
-            time: sma[i].time,
-            value: sma[i].value + (stdDev * stdDeviation)
-        });
-        
-        bands.middle.push(sma[i]);
-        
-        bands.lower.push({
-            time: sma[i].time,
-            value: sma[i].value - (stdDev * stdDeviation)
-        });
-    }
-    
-    return bands;
-}
+
 
 function calculateStochastic(data, kPeriod = 14, dPeriod = 3) {
     const stochK = [];
@@ -1553,41 +1504,7 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
             
-        case 'bollinger':
-            // Skip Bollinger Bands if replay is active (they cause display issues during replay)
-            const config = getReplayConfig(section);
-            const isReplayActive = config && (config.replayIndex !== null && config.replayIndex >= 0 && config.replayIndex < config.totalCandles);
-            
-            if (isReplayActive) {
-                console.log(`Skipping Bollinger Bands during active replay for ${section}`);
-                return;
-            }
-            
-            const bbData = calculateBollingerBands(candleData, 20, 2);
-            // Add upper band
-            indicatorSeries[section][`${indicatorKey}_upper`] = chart.addLineSeries({
-                color: '#9e9e9e',
-                lineWidth: 1,
-                title: 'BB Upper'
-            });
-            indicatorSeries[section][`${indicatorKey}_upper`].setData(bbData.upper);
-            
-            // Add middle band (SMA)
-            indicatorSeries[section][`${indicatorKey}_middle`] = chart.addLineSeries({
-                color: '#607d8b',
-                lineWidth: 2,
-                title: 'BB Middle'
-            });
-            indicatorSeries[section][`${indicatorKey}_middle`].setData(bbData.middle);
-            
-            // Add lower band
-            indicatorSeries[section][`${indicatorKey}_lower`] = chart.addLineSeries({
-                color: '#9e9e9e',
-                lineWidth: 1,
-                title: 'BB Lower'
-            });
-            indicatorSeries[section][`${indicatorKey}_lower`].setData(bbData.lower);
-            return; // Don't set data again below
+
             
         case 'rsi':
             indicatorData = calculateRSI(candleData, 14);
@@ -1717,177 +1634,10 @@ function setupIndicatorListeners(section) {
         });
     });
 
-    // Add event listeners for drawing tools
-    const drawingButtons = indicatorPanel.querySelectorAll('.drawing-tool-btn');
-    drawingButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.preventDefault();
-            const tool = e.target.dataset.tool;
-            
-            if (tool === 'clear') {
-                clearAllDrawings(section);
-            } else {
-                activateDrawingTool(section, tool);
-            }
-        });
-    });
+
 }
 
-// Drawing Tools Functions (Enhanced)
-function activateDrawingTool(section, tool) {
-    // Temporarily disabled - drawing tools require complex overlay system
-    // Based on: https://github.com/tradingview/lightweight-charts/issues/1345
-    
-    const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
-    buttons.forEach(btn => btn.classList.remove('active'));
-    
-    // Show coming soon message
-    alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
-    
-    console.log(`Drawing tool ${tool} clicked for ${section} - showing coming soon message`);
-}
 
-function setupDrawingClickHandler(section, tool) {
-    if (!chartInstances[section]) {
-        console.log(`No chart instance for section: ${section}, deferring click handler setup`);
-        return;
-    }
-    
-    const chart = chartInstances[section].chart;
-    const chartContainerId = `chart-${section}`;
-    const chartContainer = document.getElementById(chartContainerId);
-    
-    if (!chartContainer) {
-        console.error(`Chart container not found: ${chartContainerId}`);
-        return;
-    }
-    
-    // Remove existing click handler
-    if (chartClickHandlers[section]) {
-        chartContainer.removeEventListener('click', chartClickHandlers[section]);
-        console.log(`Removed existing click handler for ${section}`);
-    }
-    
-    // Create new click handler
-    chartClickHandlers[section] = (event) => {
-        console.log(`Drawing click detected for ${section} with tool ${tool}`);
-        handleDrawingClick(section, tool, event);
-    };
-    
-    chartContainer.addEventListener('click', chartClickHandlers[section]);
-    console.log(`Drawing click handler set up for ${section} with tool ${tool}`);
-    
-    // Also try to set cursor immediately
-    chartContainer.style.cursor = 'crosshair';
-    console.log(`Set cursor to crosshair for ${section}`);
-}
-
-function handleDrawingClick(section, tool, event) {
-    if (!chartInstances[section]) return;
-    
-    const chart = chartInstances[section].chart;
-    const chartContainerId = `chart-${section}`;
-    const chartContainer = document.getElementById(chartContainerId);
-    
-    if (!chartContainer) {
-        console.error(`Chart container not found: ${chartContainerId}`);
-        return;
-    }
-    
-    const rect = chartContainer.getBoundingClientRect();
-    
-    // Get click coordinates relative to chart
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    // Convert to chart coordinates
-    const timeScale = chart.timeScale();
-    const priceScale = chart.priceScale();
-    
-    try {
-        const time = timeScale.coordinateToTime(x);
-        const price = priceScale.coordinateToPrice(y);
-        
-        if (time && price) {
-            drawingTools[section].lines.push({
-                tool: tool,
-                time: time,
-                price: price,
-                x: x,
-                y: y
-            });
-            
-            // For simplicity, just log the drawing action
-            console.log(`Drew ${tool} at time: ${time}, price: ${price.toFixed(2)}`);
-            
-            // Show visual feedback
-            showDrawingFeedback(section, tool, x, y);
-            
-            // Deactivate drawing tool after use
-            deactivateDrawingTool(section);
-        }
-    } catch (error) {
-        console.warn('Error handling drawing click:', error);
-    }
-}
-
-function showDrawingFeedback(section, tool, x, y) {
-    const chartContainerId = `chart-${section}`;
-    const chartContainer = document.getElementById(chartContainerId);
-    
-    if (!chartContainer) return;
-    
-    // Create visual feedback element
-    const feedback = document.createElement('div');
-    feedback.className = 'drawing-feedback';
-    feedback.style.cssText = `
-        position: absolute;
-        left: ${x}px;
-        top: ${y}px;
-        width: 8px;
-        height: 8px;
-        background: #2196f3;
-        border-radius: 50%;
-        pointer-events: none;
-        z-index: 1000;
-        animation: drawingPulse 1s ease-out;
-    `;
-    
-    chartContainer.appendChild(feedback);
-    
-    // Remove feedback after animation
-    setTimeout(() => {
-        if (feedback.parentNode) {
-            feedback.parentNode.removeChild(feedback);
-        }
-    }, 1000);
-}
-
-function deactivateDrawingTool(section) {
-    const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
-    buttons.forEach(btn => btn.classList.remove('active'));
-    
-    drawingTools[section].active = null;
-    
-    // Reset cursor
-    const chartContainerId = `chart-${section}`;
-    const chartContainer = document.getElementById(chartContainerId);
-    if (chartContainer) {
-        chartContainer.style.cursor = 'default';
-    }
-    
-    // Remove click handler
-    if (chartClickHandlers[section] && chartContainer) {
-        chartContainer.removeEventListener('click', chartClickHandlers[section]);
-        chartClickHandlers[section] = null;
-    }
-}
-
-function clearAllDrawings(section) {
-    // Show the same coming soon message
-    alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
-    console.log(`Clear drawings clicked for ${section} - showing coming soon message`);
-}
 
 function populateEarningsOutcomes() {
     const earningsBinSelect = document.getElementById('earnings-bin-select');
@@ -2681,13 +2431,13 @@ function updateTradeSummary() {
             const pnlClass = trade.pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
             
             row.innerHTML = `
-                <td>${trade.type.toUpperCase()}</td>
-                <td>$${trade.entryPrice.toFixed(2)}</td>
-                <td>$${trade.exitPrice.toFixed(2)}</td>
-                <td>${trade.shares}</td>
-                <td>${trade.timestamp.split(' ')[1]}</td>
-                <td class="${pnlClass}">$${trade.pnl.toFixed(2)}</td>
-                <td>${trade.closeReason || 'Manual'}</td>
+                <td data-label="Type">${trade.type.toUpperCase()}</td>
+                <td data-label="Entry">$${trade.entryPrice.toFixed(2)}</td>
+                <td data-label="Exit">$${trade.exitPrice.toFixed(2)}</td>
+                <td data-label="Shares">${trade.shares}</td>
+                <td data-label="Time">${trade.timestamp.split(' ')[1]}</td>
+                <td data-label="P&L" class="${pnlClass}">$${trade.pnl.toFixed(2)}</td>
+                <td data-label="Reason">${trade.closeReason || 'Manual'}</td>
             `;
             
             tradeHistoryTbody.appendChild(row);
@@ -3244,12 +2994,17 @@ function updateChartToIndex(section) {
             const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
             const slPrice = stopLossLine ? stopLossLine.options().price : null;
             
-            // Debug logging (temporarily enabled for testing)
-            if (true) { // Set to false to disable debug logs
-                console.log(`Price Check - Current: ${currentPrice.toFixed(2)}, High: ${currentHigh.toFixed(2)}, Low: ${currentLow.toFixed(2)}`);
-                console.log(`TP/SL Levels - TP: ${tpPrice ? tpPrice.toFixed(2) : 'N/A'}, SL: ${slPrice ? slPrice.toFixed(2) : 'N/A'}`);
-                console.log(`Position Type: ${openPosition.type}`);
-            }
+            // Enhanced debug logging for troubleshooting
+            console.log(`=== TP/SL CHECK ===`);
+            console.log(`Current Index: ${config.currentReplayIndex()}`);
+            console.log(`Current Price: ${currentPrice.toFixed(2)}`);
+            console.log(`Current High: ${currentHigh.toFixed(2)}`);
+            console.log(`Current Low: ${currentLow.toFixed(2)}`);
+            console.log(`TP Level: ${tpPrice ? tpPrice.toFixed(2) : 'N/A'}`);
+            console.log(`SL Level: ${slPrice ? slPrice.toFixed(2) : 'N/A'}`);
+            console.log(`Position Type: ${openPosition.type}`);
+            console.log(`Position Entry: ${openPosition.price.toFixed(2)}`);
+            console.log(`Position Shares: ${openPosition.shares}`);
             
             let shouldClose = false;
             let closeReason = '';
@@ -3261,14 +3016,14 @@ function updateChartToIndex(section) {
                     shouldClose = true;
                     closeReason = 'Take Profit Hit';
                     closePrice = tpPrice;
-                    console.log(`LONG TP HIT! High ${currentHigh.toFixed(2)} >= TP ${tpPrice.toFixed(2)}`);
+                    console.log(`🎯 LONG TP HIT! High ${currentHigh.toFixed(2)} >= TP ${tpPrice.toFixed(2)}`);
                 }
                 // Check Stop Loss (price goes below SL)
                 else if (slPrice && currentLow <= slPrice) {
                     shouldClose = true;
                     closeReason = 'Stop Loss Hit';
                     closePrice = slPrice;
-                    console.log(`LONG SL HIT! Low ${currentLow.toFixed(2)} <= SL ${slPrice.toFixed(2)}`);
+                    console.log(`🎯 LONG SL HIT! Low ${currentLow.toFixed(2)} <= SL ${slPrice.toFixed(2)}`);
                 }
             } else if (openPosition.type === 'sell') {
                 // Check Take Profit for SHORT (price goes below TP)
@@ -3276,14 +3031,14 @@ function updateChartToIndex(section) {
                     shouldClose = true;
                     closeReason = 'Take Profit Hit';
                     closePrice = tpPrice;
-                    console.log(`SHORT TP HIT! Low ${currentLow.toFixed(2)} <= TP ${tpPrice.toFixed(2)}`);
+                    console.log(`🎯 SHORT TP HIT! Low ${currentLow.toFixed(2)} <= TP ${tpPrice.toFixed(2)}`);
                 }
                 // Check Stop Loss for SHORT (price goes above SL)
                 else if (slPrice && currentHigh >= slPrice) {
                     shouldClose = true;
                     closeReason = 'Stop Loss Hit';
                     closePrice = slPrice;
-                    console.log(`SHORT SL HIT! High ${currentHigh.toFixed(2)} >= SL ${slPrice.toFixed(2)}`);
+                    console.log(`🎯 SHORT SL HIT! High ${currentHigh.toFixed(2)} >= SL ${slPrice.toFixed(2)}`);
                 }
             }
             
@@ -3292,6 +3047,10 @@ function updateChartToIndex(section) {
                 const pnl = openPosition.type === 'buy'
                     ? (closePrice - openPosition.price) * openPosition.shares
                     : (openPosition.price - closePrice) * openPosition.shares;
+                
+                console.log(`💰 CLOSING POSITION: ${closeReason}`);
+                console.log(`Exit Price: $${closePrice.toFixed(2)}`);
+                console.log(`P&L: $${pnl.toFixed(2)}`);
                 
                 // Show immediate user feedback
                 alert(`🎯 ${closeReason}!\n\nPosition: ${openPosition.type.toUpperCase()}\nExit Price: $${closePrice.toFixed(2)}\nP&L: $${pnl.toFixed(2)}`);
@@ -3342,8 +3101,11 @@ function updateChartToIndex(section) {
                     });
                 }
                 
-                console.log(`Position auto-closed: ${closeReason} at $${closePrice.toFixed(2)} with P/L: $${pnl.toFixed(2)}`);
+                console.log(`✅ Position auto-closed: ${closeReason} at $${closePrice.toFixed(2)} with P/L: $${pnl.toFixed(2)}`);
+            } else {
+                console.log(`No TP/SL hit detected`);
             }
+            console.log(`=== END TP/SL CHECK ===`);
         }
         
         updateTradeSummary();
