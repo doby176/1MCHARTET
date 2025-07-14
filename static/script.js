@@ -205,6 +205,9 @@ let timeframeSimulator = 1;
 // Trade simulator globals (Market Simulator only)
 let openPosition = null;
 let entryPriceLine = null;
+let takeProfitLine = null;
+let stopLossLine = null;
+let pnlOverlayElement = null;
 let tradeHistory = [];
 const POSITION_SIZE = 100;
 
@@ -365,7 +368,24 @@ function createChart(containerId, chartData, timeframe) {
     bgToggleBtn.setAttribute('data-section', containerId.replace('chart-', ''));
     container.appendChild(bgToggleBtn);
 
-
+    // Create P&L overlay for simulator charts
+    if (containerId === 'chart-simulator') {
+        pnlOverlayElement = document.createElement('div');
+        pnlOverlayElement.className = 'pnl-overlay';
+        pnlOverlayElement.style.cssText = 'position: absolute; top: 15px; right: 15px; background: rgba(0, 0, 0, 0.85); color: white; padding: 12px 16px; border-radius: 8px; font-family: "Courier New", monospace; font-size: 0.9em; font-weight: 600; z-index: 15; min-width: 220px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); display: none;';
+        
+        const positionInfo = document.createElement('div');
+        positionInfo.id = 'position-info';
+        positionInfo.style.cssText = 'margin-bottom: 6px; font-size: 0.85em; color: #cccccc;';
+        
+        const pnlInfo = document.createElement('div');
+        pnlInfo.id = 'pnl-info';
+        pnlInfo.style.cssText = 'font-size: 1em; font-weight: 700;';
+        
+        pnlOverlayElement.appendChild(positionInfo);
+        pnlOverlayElement.appendChild(pnlInfo);
+        container.appendChild(pnlOverlayElement);
+    }
 
     try {
         // Create chart with V4 API - simple config like old version
@@ -2306,6 +2326,28 @@ function placeBuyTrade() {
             axisLabelVisible: true,
             title: `LONG Entry: $${openPosition.price.toFixed(2)}`
         });
+        
+        // Add Take Profit line (draggable)
+        const tpPrice = openPosition.price * 1.02; // 2% above entry
+        takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
+            price: tpPrice,
+            color: '#00ff00',
+            lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            axisLabelVisible: true,
+            title: `TP: $${tpPrice.toFixed(2)}`
+        });
+        
+        // Add Stop Loss line (draggable)
+        const slPrice = openPosition.price * 0.98; // 2% below entry
+        stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
+            price: slPrice,
+            color: '#ff4444',
+            lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            axisLabelVisible: true,
+            title: `SL: $${slPrice.toFixed(2)}`
+        });
     }
     
     console.log(`Placed buy trade: ${JSON.stringify(openPosition)}`);
@@ -2333,10 +2375,20 @@ function placeSellTrade() {
             pnl: parseFloat(pnl.toFixed(2))
         });
         
-        // Remove entry price line
-        if (entryPriceLine && chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
-            chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
-            entryPriceLine = null;
+        // Remove all price lines
+        if (chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
+            if (entryPriceLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
+                entryPriceLine = null;
+            }
+            if (takeProfitLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(takeProfitLine);
+                takeProfitLine = null;
+            }
+            if (stopLossLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(stopLossLine);
+                stopLossLine = null;
+            }
         }
         
         openPosition = null;
@@ -2365,6 +2417,28 @@ function placeSellTrade() {
                 axisLabelVisible: true,
                 title: `SHORT Entry: $${openPosition.price.toFixed(2)}`
             });
+            
+            // Add Take Profit line for SHORT (below entry price)
+            const tpPrice = openPosition.price * 0.98; // 2% below entry
+            takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
+                price: tpPrice,
+                color: '#00ff00',
+                lineWidth: 1,
+                lineStyle: LightweightCharts.LineStyle.Dashed,
+                axisLabelVisible: true,
+                title: `TP: $${tpPrice.toFixed(2)}`
+            });
+            
+            // Add Stop Loss line for SHORT (above entry price)
+            const slPrice = openPosition.price * 1.02; // 2% above entry
+            stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
+                price: slPrice,
+                color: '#ff4444',
+                lineWidth: 1,
+                lineStyle: LightweightCharts.LineStyle.Dashed,
+                axisLabelVisible: true,
+                title: `SL: $${slPrice.toFixed(2)}`
+            });
         }
         
         console.log(`Placed sell trade: ${JSON.stringify(openPosition)}`);
@@ -2385,10 +2459,10 @@ function updateTradeSummary() {
     const buyButton = document.getElementById('buy-trade');
     const sellButton = document.getElementById('sell-trade');
     
-    // P&L Overlay elements (TradingView style)
-    const pnlOverlay = document.getElementById('pnl-overlay');
-    const positionInfo = document.getElementById('position-info');
-    const pnlInfo = document.getElementById('pnl-info');
+    // P&L Overlay elements (TradingView style) - use global elements
+    const pnlOverlay = pnlOverlayElement;
+    const positionInfo = pnlOverlayElement ? pnlOverlayElement.querySelector('#position-info') : null;
+    const pnlInfo = pnlOverlayElement ? pnlOverlayElement.querySelector('#pnl-info') : null;
 
     if (!positionStatus || !tradePnl || !tradeHistoryTable || !tradeHistoryTbody || !tradeHistoryEmpty || !buyButton || !sellButton) return;
 
@@ -2455,6 +2529,7 @@ function updateTradeSummary() {
                 <td>${trade.shares}</td>
                 <td>${trade.timestamp.split(' ')[1]}</td>
                 <td class="${pnlClass}">$${trade.pnl.toFixed(2)}</td>
+                <td>${trade.closeReason || 'Manual'}</td>
             `;
             
             tradeHistoryTbody.appendChild(row);
@@ -2851,6 +2926,8 @@ function startOverReplay(section) {
         // Reset trading state
         openPosition = null;
         entryPriceLine = null;
+        takeProfitLine = null;
+        stopLossLine = null;
         tradeHistory = [];
         
         buyButton.disabled = true;
@@ -2901,10 +2978,20 @@ function stopReplay(section) {
             pnl: parseFloat(pnl.toFixed(2))
         });
         
-        // Remove entry price line
-        if (entryPriceLine && chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
-            chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
-            entryPriceLine = null;
+        // Remove all price lines
+        if (chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
+            if (entryPriceLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
+                entryPriceLine = null;
+            }
+            if (takeProfitLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(takeProfitLine);
+                takeProfitLine = null;
+            }
+            if (stopLossLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(stopLossLine);
+                stopLossLine = null;
+            }
         }
         
         openPosition = null;
@@ -2988,6 +3075,82 @@ function updateChartToIndex(section) {
     if (config.hasTradeSimulator) {
         buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count || openPosition?.type === 'sell';
         sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
+        
+        // Check for TP/SL hits
+        if (openPosition && config.currentReplayIndex() > 0) {
+            const currentPrice = chartData.close[config.currentReplayIndex() - 1];
+            const currentHigh = chartData.high[config.currentReplayIndex() - 1];
+            const currentLow = chartData.low[config.currentReplayIndex() - 1];
+            
+            let shouldClose = false;
+            let closeReason = '';
+            let closePrice = currentPrice;
+            
+            if (openPosition.type === 'buy') {
+                // Check Take Profit (price goes above TP)
+                if (takeProfitLine && currentHigh >= takeProfitLine.options().price) {
+                    shouldClose = true;
+                    closeReason = 'Take Profit Hit';
+                    closePrice = takeProfitLine.options().price;
+                }
+                // Check Stop Loss (price goes below SL)
+                else if (stopLossLine && currentLow <= stopLossLine.options().price) {
+                    shouldClose = true;
+                    closeReason = 'Stop Loss Hit';
+                    closePrice = stopLossLine.options().price;
+                }
+            } else if (openPosition.type === 'sell') {
+                // Check Take Profit for SHORT (price goes below TP)
+                if (takeProfitLine && currentLow <= takeProfitLine.options().price) {
+                    shouldClose = true;
+                    closeReason = 'Take Profit Hit';
+                    closePrice = takeProfitLine.options().price;
+                }
+                // Check Stop Loss for SHORT (price goes above SL)
+                else if (stopLossLine && currentHigh >= stopLossLine.options().price) {
+                    shouldClose = true;
+                    closeReason = 'Stop Loss Hit';
+                    closePrice = stopLossLine.options().price;
+                }
+            }
+            
+            // Auto-close position if TP/SL hit
+            if (shouldClose) {
+                const pnl = openPosition.type === 'buy'
+                    ? (closePrice - openPosition.price) * openPosition.shares
+                    : (openPosition.price - closePrice) * openPosition.shares;
+                
+                tradeHistory.push({
+                    type: openPosition.type,
+                    entryPrice: openPosition.price,
+                    exitPrice: closePrice,
+                    shares: openPosition.shares,
+                    timestamp: chartData.timestamp[config.currentReplayIndex() - 1],
+                    pnl: parseFloat(pnl.toFixed(2)),
+                    closeReason: closeReason
+                });
+                
+                // Remove all price lines
+                if (chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
+                    if (entryPriceLine) {
+                        chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
+                        entryPriceLine = null;
+                    }
+                    if (takeProfitLine) {
+                        chartInstances.simulator.candlestickSeries.removePriceLine(takeProfitLine);
+                        takeProfitLine = null;
+                    }
+                    if (stopLossLine) {
+                        chartInstances.simulator.candlestickSeries.removePriceLine(stopLossLine);
+                        stopLossLine = null;
+                    }
+                }
+                
+                openPosition = null;
+                console.log(`Position auto-closed: ${closeReason} at $${closePrice.toFixed(2)} with P/L: $${pnl.toFixed(2)}`);
+            }
+        }
+        
         updateTradeSummary();
     }
 }
