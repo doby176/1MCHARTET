@@ -422,6 +422,7 @@ function createChart(containerId, chartData, timeframe) {
             fixRightEdge: false,
             lockVisibleTimeRangeOnResize: true,
             rightBarStaysOnScroll: true,
+            visible: true,  // Ensure time scale is visible
             tickMarkFormatter: (time) => {
                 const date = new Date(time * 1000);
                 return date.toLocaleTimeString('en-US', { 
@@ -486,6 +487,7 @@ function createChart(containerId, chartData, timeframe) {
             type: 'volume'
         },
         priceScaleId: 'volume',
+        visible: true,  // Ensure volume series is visible
         scaleMargins: {
             top: 0.75,
             bottom: 0
@@ -494,6 +496,7 @@ function createChart(containerId, chartData, timeframe) {
     
     // Configure volume price scale
     chart.priceScale('volume').applyOptions({
+        visible: true,  // Ensure volume price scale is visible
         scaleMargins: {
             top: 0.75,
             bottom: 0,
