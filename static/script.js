@@ -204,6 +204,7 @@ let aggregatedCandlesSimulator = [];
 let timeframeSimulator = 1;
 // Trade simulator globals (Market Simulator only)
 let openPosition = null;
+let entryPriceLine = null;
 let tradeHistory = [];
 const POSITION_SIZE = 100;
 
@@ -511,13 +512,24 @@ function createChart(containerId, chartData, timeframe) {
 
         console.log('Chart created successfully');
         
+        // Store chart instance for later access
+        const section = containerId.replace('chart-', '');
+        const chartInstance = {
+            chart,
+            candlestickSeries,
+            volumeSeries,
+            resizeObserver
+        };
+        
         // Set up background toggle functionality after chart is created
         const bgToggleBtn = container.querySelector('.bg-toggle-btn');
         if (bgToggleBtn) {
             let isDark = false;
             bgToggleBtn.onclick = () => {
+                console.log('Dark mode toggle clicked');
                 isDark = !isDark;
                 if (isDark) {
+                    console.log('Switching to dark mode');
                     chart.applyOptions({
                         layout: {
                             backgroundColor: '#000000',
@@ -527,6 +539,7 @@ function createChart(containerId, chartData, timeframe) {
                     bgToggleBtn.textContent = '☀️ Light';
                     bgToggleBtn.style.backgroundColor = '#333333';
                 } else {
+                    console.log('Switching to light mode');
                     chart.applyOptions({
                         layout: {
                             backgroundColor: '#ffffff',
@@ -2282,6 +2295,19 @@ function placeBuyTrade() {
         shares: POSITION_SIZE,
         timestamp: chartDataSimulator.timestamp[currentReplayIndexSimulator - 1]
     };
+    
+    // Add entry price line to chart
+    if (chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
+        entryPriceLine = chartInstances.simulator.candlestickSeries.createPriceLine({
+            price: openPosition.price,
+            color: '#00cc00',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Solid,
+            axisLabelVisible: true,
+            title: `LONG Entry: $${openPosition.price.toFixed(2)}`
+        });
+    }
+    
     console.log(`Placed buy trade: ${JSON.stringify(openPosition)}`);
     updateTradeSummary();
     gtag('event', 'trade_placed', {
@@ -2306,6 +2332,13 @@ function placeSellTrade() {
             timestamp: chartDataSimulator.timestamp[currentReplayIndexSimulator - 1],
             pnl: parseFloat(pnl.toFixed(2))
         });
+        
+        // Remove entry price line
+        if (entryPriceLine && chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
+            chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
+            entryPriceLine = null;
+        }
+        
         openPosition = null;
         console.log(`Closed position with P/L: $${pnl.toFixed(2)}`);
         updateTradeSummary();
@@ -2321,6 +2354,19 @@ function placeSellTrade() {
             shares: POSITION_SIZE,
             timestamp: chartDataSimulator.timestamp[currentReplayIndexSimulator - 1]
         };
+        
+        // Add entry price line to chart
+        if (chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
+            entryPriceLine = chartInstances.simulator.candlestickSeries.createPriceLine({
+                price: openPosition.price,
+                color: '#ff0000',
+                lineWidth: 2,
+                lineStyle: LightweightCharts.LineStyle.Solid,
+                axisLabelVisible: true,
+                title: `SHORT Entry: $${openPosition.price.toFixed(2)}`
+            });
+        }
+        
         console.log(`Placed sell trade: ${JSON.stringify(openPosition)}`);
         updateTradeSummary();
         gtag('event', 'trade_placed', {
@@ -2352,10 +2398,20 @@ function updateTradeSummary() {
             ? (currentPrice - openPosition.price) * openPosition.shares
             : (openPosition.price - currentPrice) * openPosition.shares;
         positionStatus.textContent = `Open ${openPosition.type.toUpperCase()} Position: ${openPosition.shares} shares @ $${openPosition.price.toFixed(2)}`;
-        tradePnl.textContent = `Unrealized P/L: $${unrealizedPnl.toFixed(2)}`;
+        
+        // Style P&L like TradingView (green for profit, red for loss)
+        const pnlText = `Unrealized P/L: $${unrealizedPnl.toFixed(2)} (${unrealizedPnl >= 0 ? '+' : ''}${((unrealizedPnl / (openPosition.price * openPosition.shares)) * 100).toFixed(2)}%)`;
+        tradePnl.textContent = pnlText;
+        tradePnl.style.color = unrealizedPnl >= 0 ? '#00cc00' : '#ff0000';
+        tradePnl.style.fontWeight = 'bold';
+        tradePnl.style.fontSize = '1.1em';
     } else {
+        const totalPnl = tradeHistory.reduce((sum, trade) => sum + trade.pnl, 0);
         positionStatus.textContent = 'No open position';
-        tradePnl.textContent = `Realized P/L: $${tradeHistory.reduce((sum, trade) => sum + trade.pnl, 0).toFixed(2)}`;
+        tradePnl.textContent = `Total Realized P/L: $${totalPnl.toFixed(2)}`;
+        tradePnl.style.color = totalPnl >= 0 ? '#00cc00' : '#ff0000';
+        tradePnl.style.fontWeight = 'bold';
+        tradePnl.style.fontSize = '1.1em';
     }
 
     // Update trade history table
@@ -2774,6 +2830,11 @@ function startOverReplay(section) {
     prevButton.disabled = true;
     nextButton.disabled = config.aggregatedCandles().length === 0;
     if (config.hasTradeSimulator) {
+        // Reset trading state
+        openPosition = null;
+        entryPriceLine = null;
+        tradeHistory = [];
+        
         buyButton.disabled = true;
         sellButton.disabled = true;
         updateTradeSummary();
@@ -2821,6 +2882,13 @@ function stopReplay(section) {
             timestamp: chartData.timestamp[config.currentReplayIndex() - 1],
             pnl: parseFloat(pnl.toFixed(2))
         });
+        
+        // Remove entry price line
+        if (entryPriceLine && chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
+            chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
+            entryPriceLine = null;
+        }
+        
         openPosition = null;
         console.log(`Closed position at replay end with P/L: $${pnl.toFixed(2)}`);
         gtag('event', 'trade_closed', {
