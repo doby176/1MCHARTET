@@ -338,9 +338,9 @@ function createChart(containerId, chartData, timeframe) {
     // Clear previous chart
     container.innerHTML = '';
 
-    // Ensure minimum dimensions - use fixed values like old working version
+    // Ensure minimum dimensions - use fixed values like old working version  
     const width = 800;
-    const height = 600;
+    const height = 650;
 
     // Create chart title
     const title = document.createElement('div');
@@ -352,7 +352,7 @@ function createChart(containerId, chartData, timeframe) {
     const autoZoomBtn = document.createElement('button');
     autoZoomBtn.className = 'auto-zoom-btn';
     autoZoomBtn.textContent = '🔍 Auto Fit';
-    autoZoomBtn.style.zIndex = '2000';
+    autoZoomBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 9999; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease;';
     autoZoomBtn.setAttribute('data-section', containerId.replace('chart-', ''));
     container.appendChild(autoZoomBtn);
 
@@ -360,7 +360,7 @@ function createChart(containerId, chartData, timeframe) {
     const bgToggleBtn = document.createElement('button');
     bgToggleBtn.className = 'bg-toggle-btn';
     bgToggleBtn.textContent = '🌙 Dark';
-    bgToggleBtn.style.cssText = 'position: absolute; top: 10px; right: 100px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 2000; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease;';
+    bgToggleBtn.style.cssText = 'position: absolute; top: 10px; right: 100px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 9999; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease;';
     bgToggleBtn.setAttribute('data-section', containerId.replace('chart-', ''));
     container.appendChild(bgToggleBtn);
 
@@ -410,7 +410,7 @@ function createChart(containerId, chartData, timeframe) {
             position: 'right',
             scaleMargins: {
                 top: 0.05,
-                bottom: 0.35
+                bottom: 0.15
             }
         },
         timeScale: {
@@ -438,7 +438,7 @@ function createChart(containerId, chartData, timeframe) {
             autoScale: true,
             scaleMargins: {
                 top: 0.05,
-                bottom: 0.35
+                bottom: 0.15
             }
         },
         leftPriceScale: {
@@ -488,7 +488,7 @@ function createChart(containerId, chartData, timeframe) {
         },
         priceScaleId: 'volume',
         scaleMargins: {
-            top: 0.65,
+            top: 0.85,
             bottom: 0
         }
     });
@@ -496,7 +496,7 @@ function createChart(containerId, chartData, timeframe) {
     // Configure volume price scale
     chart.priceScale('volume').applyOptions({
         scaleMargins: {
-            top: 0.65,
+            top: 0.85,
             bottom: 0,
         },
     });
@@ -569,7 +569,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                              autoScale: true,
                              scaleMargins: {
                                  top: 0.05,
-                                 bottom: 0.35
+                                 bottom: 0.15
                              }
                          });
                                      
@@ -585,7 +585,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                                      volumeScale.applyOptions({
                                          autoScale: true,
                                          scaleMargins: {
-                                             top: 0.65,
+                                             top: 0.85,
                                              bottom: 0
                                          }
                                      });
