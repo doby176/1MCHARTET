@@ -437,8 +437,8 @@ function createChart(containerId, chartData, timeframe) {
             borderColor: '#cccccc',
             autoScale: true,
             scaleMargins: {
-                top: 0.1,
-                bottom: 0.25
+                top: 0.05,
+                bottom: 0.3
             }
         },
         leftPriceScale: {
@@ -489,7 +489,7 @@ function createChart(containerId, chartData, timeframe) {
         priceScaleId: 'volume',
         visible: true,  // Ensure volume series is visible
         scaleMargins: {
-            top: 0.75,
+            top: 0.7,
             bottom: 0
         }
     });
@@ -497,8 +497,10 @@ function createChart(containerId, chartData, timeframe) {
     // Configure volume price scale
     chart.priceScale('volume').applyOptions({
         visible: true,  // Ensure volume price scale is visible
+        borderVisible: true,
+        borderColor: '#cccccc',
         scaleMargins: {
-            top: 0.75,
+            top: 0.7,
             bottom: 0,
         },
     });
@@ -668,7 +670,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
         return {
             time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
             value: parseFloat(volume),
-            color: candle.close >= candle.open ? '#00cc0040' : '#ff000040'
+            color: candle.close >= candle.open ? '#00cc0080' : '#ff000080'
         };
     }) : [];
 
