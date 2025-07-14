@@ -352,8 +352,17 @@ function createChart(containerId, chartData, timeframe) {
     const autoZoomBtn = document.createElement('button');
     autoZoomBtn.className = 'auto-zoom-btn';
     autoZoomBtn.textContent = '🔍 Auto Fit';
+    autoZoomBtn.style.zIndex = '2000';
     autoZoomBtn.setAttribute('data-section', containerId.replace('chart-', ''));
     container.appendChild(autoZoomBtn);
+
+    // Create background color toggle button
+    const bgToggleBtn = document.createElement('button');
+    bgToggleBtn.className = 'bg-toggle-btn';
+    bgToggleBtn.textContent = '🌙 Dark';
+    bgToggleBtn.style.cssText = 'position: absolute; top: 10px; right: 100px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 2000; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease;';
+    bgToggleBtn.setAttribute('data-section', containerId.replace('chart-', ''));
+    container.appendChild(bgToggleBtn);
 
 
 
@@ -370,12 +379,12 @@ function createChart(containerId, chartData, timeframe) {
             vertLines: {
                 color: '#e0e0e0',
                 style: LightweightCharts.LineStyle.Solid,
-                visible: true
+                visible: false
             },
             horzLines: {
                 color: '#e0e0e0',
                 style: LightweightCharts.LineStyle.Solid,
-                visible: true
+                visible: false
             }
         },
         crosshair: {
@@ -400,8 +409,8 @@ function createChart(containerId, chartData, timeframe) {
             borderVisible: true,
             position: 'right',
             scaleMargins: {
-                top: 0.1,
-                bottom: 0.25
+                top: 0.05,
+                bottom: 0.35
             }
         },
         timeScale: {
@@ -428,8 +437,8 @@ function createChart(containerId, chartData, timeframe) {
             borderColor: '#cccccc',
             autoScale: true,
             scaleMargins: {
-                top: 0.1,
-                bottom: 0.25
+                top: 0.05,
+                bottom: 0.35
             }
         },
         leftPriceScale: {
@@ -479,7 +488,7 @@ function createChart(containerId, chartData, timeframe) {
         },
         priceScaleId: 'volume',
         scaleMargins: {
-            top: 0.75,
+            top: 0.65,
             bottom: 0
         }
     });
@@ -487,7 +496,7 @@ function createChart(containerId, chartData, timeframe) {
     // Configure volume price scale
     chart.priceScale('volume').applyOptions({
         scaleMargins: {
-            top: 0.75,
+            top: 0.65,
             bottom: 0,
         },
     });
@@ -559,8 +568,8 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                          priceScale.applyOptions({
                              autoScale: true,
                              scaleMargins: {
-                                 top: 0.1,
-                                 bottom: 0.25
+                                 top: 0.05,
+                                 bottom: 0.35
                              }
                          });
                                      
@@ -576,7 +585,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                                      volumeScale.applyOptions({
                                          autoScale: true,
                                          scaleMargins: {
-                                             top: 0.75,
+                                             top: 0.65,
                                              bottom: 0
                                          }
                                      });
@@ -611,6 +620,33 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                 };
             }
 
+            // Set up background toggle button functionality
+            const bgToggleBtn = document.querySelector(`#${containerId} .bg-toggle-btn`);
+            if (bgToggleBtn) {
+                let isDark = false;
+                bgToggleBtn.onclick = () => {
+                    isDark = !isDark;
+                    if (isDark) {
+                        chart.applyOptions({
+                            layout: {
+                                backgroundColor: '#000000',
+                                textColor: '#ffffff'
+                            }
+                        });
+                        bgToggleBtn.textContent = '☀️ Light';
+                        bgToggleBtn.style.backgroundColor = '#333333';
+                    } else {
+                        chart.applyOptions({
+                            layout: {
+                                backgroundColor: '#ffffff',
+                                textColor: '#333333'
+                            }
+                        });
+                        bgToggleBtn.textContent = '🌙 Dark';
+                        bgToggleBtn.style.backgroundColor = '#153097';
+                    }
+                };
+            }
 
             
             // Set up any pending drawing tools
