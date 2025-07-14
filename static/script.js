@@ -2010,11 +2010,14 @@ async function loadChart(event, tabId) {
 
     console.log(`Loading chart for ticker=${ticker}, date=${date}, timeframe=${timeframe}, restrict_hours=${shouldRestrictHours}, tab=${tabId}`);
     
-    // Check if we're in sample mode and add sample_action parameter for Load Chart button
+    // Add action parameters for rate limiting
     const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
     let url = `/api/stock/chart?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}&timeframe=${encodeURIComponent(timeframe)}&replay_mode=${timeframe > 1}${shouldRestrictHours ? '&restrict_hours=true' : ''}`;
     if (isInSampleMode && tabId === 'market-simulator') {
         url += '&sample_action=load_chart';
+    } else if (!isInSampleMode) {
+        // Main site - add main_action parameter for Load Chart button
+        url += '&main_action=load_chart';
     }
     console.log('Fetching URL:', url);
     chartContainer.innerHTML = '<p>Loading chart...</p>';
@@ -2031,7 +2034,7 @@ async function loadChart(event, tabId) {
             const data = await response.json();
             console.error('Rate limit error:', data.error);
             
-            // Handle sample mode action limit vs regular rate limit differently
+            // Handle different types of limits
             if (data.limit_reached && isInSampleMode) {
                 // Sample action limit reached - show clear message with signup link
                 chartContainer.innerHTML = `
@@ -2046,6 +2049,28 @@ async function loadChart(event, tabId) {
                 button.textContent = 'Limit Reached - Sign Up for More';
                 inputs.forEach(input => input.disabled = true);
                 // Don't set timeout reset for sample limit - it's per session action
+            } else if (data.limit_reached && !isInSampleMode) {
+                // Main site action limit reached - show clear message
+                chartContainer.innerHTML = `
+                    <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
+                        <h4 style="color: #721c24; margin: 0 0 10px 0;">⏱️ Action Limit Reached</h4>
+                        <p style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">You've used all 10 free action buttons. Please wait 12 hours or upgrade your plan.</p>
+                        <p style="color: #6c757d; margin: 0; font-size: 14px;">Limit resets automatically in 12 hours from first use</p>
+                    </div>
+                `;
+                button.disabled = true;
+                button.textContent = 'Limit Reached - Wait 12 Hours';
+                inputs.forEach(input => input.disabled = true);
+                // Set timeout for 12 hours reset
+                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+                localStorage.setItem(`chartActionLimitReset_${tabId}`, resetTime);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Load Chart';
+                    inputs.forEach(input => input.disabled = false);
+                    localStorage.removeItem(`chartActionLimitReset_${tabId}`);
+                    chartContainer.innerHTML = '<p>Please select a ticker, date, and timeframe to generate a chart.</p>';
+                }, 12 * 60 * 60 * 1000);
             } else {
                 // Regular rate limit exceeded
                 chartContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
@@ -2880,11 +2905,14 @@ async function loadGapDates(event) {
 
     console.log(`Fetching gaps for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
     
-    // Check if we're in sample mode and add sample_action parameter for Find Gap Dates button
+    // Add action parameters for rate limiting
     const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
     let url = `/api/gaps?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
     if (isInSampleMode) {
         url += '&sample_action=find_gap_dates';
+    } else {
+        // Main site - add main_action parameter for Find Gap Dates button
+        url += '&main_action=find_gap_dates';
     }
     console.log('Fetching URL:', url);
     gapDatesContainer.innerHTML = '<p>Loading gap dates...</p>';
@@ -2901,7 +2929,7 @@ async function loadGapDates(event) {
             const data = await response.json();
             console.error('Rate limit error:', data.error);
             
-            // Handle sample mode action limit vs regular rate limit differently
+            // Handle different types of limits
             if (data.limit_reached && isInSampleMode) {
                 // Sample action limit reached - show clear message with signup link
                 gapDatesContainer.innerHTML = `
@@ -2916,6 +2944,28 @@ async function loadGapDates(event) {
                 button.textContent = 'Limit Reached - Sign Up for More';
                 selects.forEach(select => select.disabled = true);
                 // Don't set timeout reset for sample limit - it's per session action
+            } else if (data.limit_reached && !isInSampleMode) {
+                // Main site action limit reached - show clear message
+                gapDatesContainer.innerHTML = `
+                    <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
+                        <h4 style="color: #721c24; margin: 0 0 10px 0;">⏱️ Action Limit Reached</h4>
+                        <p style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">You've used all 10 free action buttons. Please wait 12 hours or upgrade your plan.</p>
+                        <p style="color: #6c757d; margin: 0; font-size: 14px;">Limit resets automatically in 12 hours from first use</p>
+                    </div>
+                `;
+                button.disabled = true;
+                button.textContent = 'Limit Reached - Wait 12 Hours';
+                selects.forEach(select => select.disabled = true);
+                // Set timeout for 12 hours reset
+                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+                localStorage.setItem('gapActionLimitReset', resetTime);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Find Gap Dates';
+                    selects.forEach(select => select.disabled = false);
+                    localStorage.removeItem('gapActionLimitReset');
+                    gapDatesContainer.innerHTML = '<p>Please select a gap size, day of the week, and gap direction to view gap dates.</p>';
+                }, 12 * 60 * 60 * 1000);
             } else {
                 // Regular rate limit exceeded
                 gapDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
@@ -3069,10 +3119,13 @@ async function loadEventDates(event) {
         url = `/api/economic_events?event_type=${encodeURIComponent(eventType)}&bin=${encodeURIComponent(bin)}`;
     }
 
-    // Check if we're in sample mode and add sample_action parameter for Find Event Dates button
+    // Add action parameters for rate limiting
     const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
     if (isInSampleMode && filterType === 'year') {
         url += '&sample_action=find_event_dates';
+    } else if (!isInSampleMode && filterType === 'year') {
+        // Main site - add main_action parameter for Find Event Dates button
+        url += '&main_action=find_event_dates';
     }
 
     console.log(`Fetching events for filterType=${filterType}, event_type=${eventType}, year=${year}, bin=${bin}`);
@@ -3091,7 +3144,7 @@ async function loadEventDates(event) {
             const data = await response.json();
             console.error('Rate limit error:', data.error);
             
-            // Handle sample mode action limit vs regular rate limit differently
+            // Handle different types of limits
             if (data.limit_reached && isInSampleMode) {
                 // Sample action limit reached - show clear message with signup link
                 eventDatesContainer.innerHTML = `
@@ -3106,6 +3159,28 @@ async function loadEventDates(event) {
                 button.textContent = 'Limit Reached - Sign Up for More';
                 selects.forEach(select => select.disabled = true);
                 // Don't set timeout reset for sample limit - it's per session action
+            } else if (data.limit_reached && !isInSampleMode) {
+                // Main site action limit reached - show clear message
+                eventDatesContainer.innerHTML = `
+                    <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
+                        <h4 style="color: #721c24; margin: 0 0 10px 0;">⏱️ Action Limit Reached</h4>
+                        <p style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">You've used all 10 free action buttons. Please wait 12 hours or upgrade your plan.</p>
+                        <p style="color: #6c757d; margin: 0; font-size: 14px;">Limit resets automatically in 12 hours from first use</p>
+                    </div>
+                `;
+                button.disabled = true;
+                button.textContent = 'Limit Reached - Wait 12 Hours';
+                selects.forEach(select => select.disabled = true);
+                // Set timeout for 12 hours reset
+                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+                localStorage.setItem('eventActionLimitReset', resetTime);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Find Event Dates';
+                    selects.forEach(select => select.disabled = false);
+                    localStorage.removeItem('eventActionLimitReset');
+                    eventDatesContainer.innerHTML = '<p>Select filters to view dates with events.</p>';
+                }, 12 * 60 * 60 * 1000);
             } else {
                 // Regular rate limit exceeded
                 eventDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
@@ -3212,6 +3287,13 @@ async function loadEarningsDates(event) {
         url = `/api/earnings?ticker=${encodeURIComponent(ticker)}`;
     }
 
+    // Add action parameters for rate limiting
+    const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
+    if (!isInSampleMode) {
+        // Main site - add main_action parameter for Find Earnings Dates button
+        url += url.includes('?') ? '&main_action=find_earnings_dates' : '?main_action=find_earnings_dates';
+    }
+
     console.log(`Fetching earnings for filterType=${filterType}, ticker=${ticker}, bin=${bin}`);
     console.log('Fetching URL:', url);
     earningsDatesContainer.innerHTML = '<p>Loading earnings dates...</p>';
@@ -3226,20 +3308,47 @@ async function loadEarningsDates(event) {
         console.log('Response status:', response.status);
         if (response.status === 429) {
             const data = await response.json();
-            earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
-            button.disabled = true;
-            button.textContent = 'Rate Limit Exceeded';
-            selects.forEach(select => select.disabled = true);
-            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
-            localStorage.setItem('earningsDatesRateLimitReset', resetTime);
-            setTimeout(() => {
-                button.disabled = false;
-                button.textContent = 'Find Earnings Dates';
-                selects.forEach(select => select.disabled = false);
-                localStorage.removeItem('earningsDatesRateLimitReset');
-                earningsDatesContainer.innerHTML = '<p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>';
-            }, 1000);
-            alert(data.error);
+            console.error('Rate limit error:', data.error);
+            
+            // Handle main site action limit
+            if (data.limit_reached && !isInSampleMode) {
+                // Main site action limit reached - show clear message
+                earningsDatesContainer.innerHTML = `
+                    <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
+                        <h4 style="color: #721c24; margin: 0 0 10px 0;">⏱️ Action Limit Reached</h4>
+                        <p style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">You've used all 10 free action buttons. Please wait 12 hours or upgrade your plan.</p>
+                        <p style="color: #6c757d; margin: 0; font-size: 14px;">Limit resets automatically in 12 hours from first use</p>
+                    </div>
+                `;
+                button.disabled = true;
+                button.textContent = 'Limit Reached - Wait 12 Hours';
+                selects.forEach(select => select.disabled = true);
+                // Set timeout for 12 hours reset
+                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+                localStorage.setItem('earningsActionLimitReset', resetTime);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Find Earnings Dates';
+                    selects.forEach(select => select.disabled = false);
+                    localStorage.removeItem('earningsActionLimitReset');
+                    earningsDatesContainer.innerHTML = '<p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>';
+                }, 12 * 60 * 60 * 1000);
+            } else {
+                // Regular rate limit exceeded
+                earningsDatesContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+                button.disabled = true;
+                button.textContent = 'Rate Limit Exceeded';
+                selects.forEach(select => select.disabled = true);
+                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+                localStorage.setItem('earningsDatesRateLimitReset', resetTime);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Find Earnings Dates';
+                    selects.forEach(select => select.disabled = false);
+                    localStorage.removeItem('earningsDatesRateLimitReset');
+                    earningsDatesContainer.innerHTML = '<p>Select a ticker and optionally an earnings outcome to view earnings dates.</p>';
+                }, 1000);
+            }
             return;
         }
         if (!response.ok) {
@@ -3316,7 +3425,14 @@ async function loadGapInsights(event) {
         return;
     }
     console.log(`Fetching gap insights for gap_size=${gapSize}, day=${day}, gap_direction=${gapDirection}`);
-    const url = `/api/gap_insights?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
+    
+    // Add action parameters for rate limiting
+    const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
+    let url = `/api/gap_insights?gap_size=${encodeURIComponent(gapSize)}&day=${encodeURIComponent(day)}&gap_direction=${encodeURIComponent(gapDirection)}`;
+    if (!isInSampleMode) {
+        // Main site - add main_action parameter for Get Insights button (separate 2-click limit)
+        url += '&main_action=get_insights';
+    }
     console.log('Fetching URL:', url);
     insightsContainer.innerHTML = '<p>Loading gap insights...</p>';
     try {
@@ -3330,20 +3446,47 @@ async function loadGapInsights(event) {
         console.log('Response status:', response.status);
         if (response.status === 429) {
             const data = await response.json();
-            insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
-            button.disabled = true;
-            button.textContent = 'Rate Limit Exceeded';
-            selects.forEach(select => select.disabled = true);
-            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
-            localStorage.setItem('gapInsightsRateLimitReset', resetTime);
-            setTimeout(() => {
-                button.disabled = false;
-                button.textContent = 'Get Insights';
-                selects.forEach(select => select.disabled = false);
-                localStorage.removeItem('gapInsightsRateLimitReset');
-                insightsContainer.innerHTML = '<p>Select a gap size, day of the week, and gap direction to view gap insights.</p>';
-            }, 1000);
-            alert(data.error);
+            console.error('Rate limit error:', data.error);
+            
+            // Handle gap insights action limit (separate 2-click limit)
+            if (data.limit_reached && !isInSampleMode) {
+                // Gap insights limit reached - show special message for 2-click limit
+                insightsContainer.innerHTML = `
+                    <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
+                        <h4 style="color: #721c24; margin: 0 0 10px 0;">📊 Gap Insights Limit Reached</h4>
+                        <p style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">You've used your 2 free Gap Insights requests. Please wait 12 hours or upgrade your plan.</p>
+                        <p style="color: #6c757d; margin: 0; font-size: 14px;">Gap Insights have a separate 2-request limit that resets in 12 hours</p>
+                    </div>
+                `;
+                button.disabled = true;
+                button.textContent = 'Insights Limit Reached';
+                selects.forEach(select => select.disabled = true);
+                // Set timeout for 12 hours reset
+                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+                localStorage.setItem('gapInsightsActionLimitReset', resetTime);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Get Insights';
+                    selects.forEach(select => select.disabled = false);
+                    localStorage.removeItem('gapInsightsActionLimitReset');
+                    insightsContainer.innerHTML = '<p>Select a gap size, day of the week, and gap direction to view gap insights.</p>';
+                }, 12 * 60 * 60 * 1000);
+            } else {
+                // Regular rate limit exceeded
+                insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
+                button.disabled = true;
+                button.textContent = 'Rate Limit Exceeded';
+                selects.forEach(select => select.disabled = true);
+                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+                localStorage.setItem('gapInsightsRateLimitReset', resetTime);
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Get Insights';
+                    selects.forEach(select => select.disabled = false);
+                    localStorage.removeItem('gapInsightsRateLimitReset');
+                    insightsContainer.innerHTML = '<p>Select a gap size, day of the week, and gap direction to view gap insights.</p>';
+                }, 1000);
+            }
             return;
         }
         if (!response.ok) {

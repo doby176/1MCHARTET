@@ -51,6 +51,118 @@ limiter = Limiter(
     headers_enabled=True
 )
 
+# Helper function to check and enforce main site action limits (shared 10 clicks)
+def check_main_action_limit():
+    """Check if user has exceeded 10 main action clicks per 12 hours (shared across load chart, gaps, events, earnings)"""
+    if is_sample_mode():
+        return True  # Sample mode uses different limiting
+    
+    user_id = session.get('user_id')
+    if not user_id:
+        return True  # No user session, allow
+    
+    current_time = int(time.time())
+    
+    # Get current action count for this user
+    call_key = f"main_actions_{user_id}"
+    
+    try:
+        # Try to get from Redis first
+        redis_client = redis.Redis.from_url(os.environ.get('REDIS_URL', 'redis://localhost:6379'))
+        calls_data = redis_client.get(call_key)
+        
+        if calls_data:
+            calls_info = json.loads(calls_data)
+            calls_count = calls_info.get('count', 0)
+            first_call_time = calls_info.get('first_call', current_time)
+        else:
+            calls_count = 0
+            first_call_time = current_time
+        
+        # Check if 12 hours have passed since first call
+        if current_time - first_call_time > 12 * 60 * 60:  # 12 hours in seconds
+            # Reset counter
+            calls_count = 0
+            first_call_time = current_time
+        
+        # Check if exceeded limit
+        if calls_count >= 10:
+            return False
+        
+        # Increment counter
+        calls_count += 1
+        calls_info = {
+            'count': calls_count,
+            'first_call': first_call_time
+        }
+        
+        # Store back to Redis with 12 hour expiration
+        redis_client.setex(call_key, 12 * 60 * 60, json.dumps(calls_info))
+        
+        logging.debug(f"Main action {calls_count}/10 for user {user_id}")
+        return True
+        
+    except Exception as e:
+        logging.error(f"Error checking main action limit: {str(e)}")
+        # Fallback to allowing the call if Redis is down
+        return True
+
+# Helper function to check and enforce gap insights limit (2 clicks)
+def check_gap_insights_limit():
+    """Check if user has exceeded 2 gap insights clicks per 12 hours"""
+    if is_sample_mode():
+        return True  # Sample mode uses different limiting
+    
+    user_id = session.get('user_id')
+    if not user_id:
+        return True  # No user session, allow
+    
+    current_time = int(time.time())
+    
+    # Get current action count for this user
+    call_key = f"gap_insights_{user_id}"
+    
+    try:
+        # Try to get from Redis first
+        redis_client = redis.Redis.from_url(os.environ.get('REDIS_URL', 'redis://localhost:6379'))
+        calls_data = redis_client.get(call_key)
+        
+        if calls_data:
+            calls_info = json.loads(calls_data)
+            calls_count = calls_info.get('count', 0)
+            first_call_time = calls_info.get('first_call', current_time)
+        else:
+            calls_count = 0
+            first_call_time = current_time
+        
+        # Check if 12 hours have passed since first call
+        if current_time - first_call_time > 12 * 60 * 60:  # 12 hours in seconds
+            # Reset counter
+            calls_count = 0
+            first_call_time = current_time
+        
+        # Check if exceeded limit
+        if calls_count >= 2:
+            return False
+        
+        # Increment counter
+        calls_count += 1
+        calls_info = {
+            'count': calls_count,
+            'first_call': first_call_time
+        }
+        
+        # Store back to Redis with 12 hour expiration
+        redis_client.setex(call_key, 12 * 60 * 60, json.dumps(calls_info))
+        
+        logging.debug(f"Gap insights action {calls_count}/2 for user {user_id}")
+        return True
+        
+    except Exception as e:
+        logging.error(f"Error checking gap insights limit: {str(e)}")
+        # Fallback to allowing the call if Redis is down
+        return True
+
 # Helper function to check and enforce sample mode limits ONLY for specific actions
 def check_sample_action_limit():
     """Check if sample mode user has exceeded 3 action button clicks per 12 hours"""
@@ -516,14 +628,25 @@ def get_valid_dates():
 @app.route('/api/stock/chart', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_chart():
-    # Check sample mode action limit only for Load Chart button clicks
+    # Check action limits for button clicks
     if is_sample_mode():
+        # Sample mode - check sample action limit
         sample_action = request.args.get('sample_action')
         if sample_action == 'load_chart':
             if not check_sample_action_limit():
                 logging.info(f"Sample mode action limit exceeded for session: {session.get('user_id')}")
                 return jsonify({
                     'error': 'Sample limit reached: You\'ve used your 3 free action buttons. Sign up FREE for unlimited access!',
+                    'limit_reached': True
+                }), 429
+    else:
+        # Main site - check main action limit
+        main_action = request.args.get('main_action')
+        if main_action == 'load_chart':
+            if not check_main_action_limit():
+                logging.info(f"Main action limit exceeded for user: {session.get('user_id')}")
+                return jsonify({
+                    'error': 'Action limit reached: You\'ve used your 10 free action buttons. Please wait 12 hours or upgrade your plan.',
                     'limit_reached': True
                 }), 429
     
@@ -620,14 +743,25 @@ def get_chart():
 @app.route('/api/gaps', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_gaps():
-    # Check sample mode action limit only for Find Gap Dates button clicks
+    # Check action limits for button clicks
     if is_sample_mode():
+        # Sample mode - check sample action limit
         sample_action = request.args.get('sample_action')
         if sample_action == 'find_gap_dates':
             if not check_sample_action_limit():
                 logging.info(f"Sample mode action limit exceeded for session: {session.get('user_id')}")
                 return jsonify({
                     'error': 'Sample limit reached: You\'ve used your 3 free action buttons. Sign up FREE for unlimited access!',
+                    'limit_reached': True
+                }), 429
+    else:
+        # Main site - check main action limit
+        main_action = request.args.get('main_action')
+        if main_action == 'find_gap_dates':
+            if not check_main_action_limit():
+                logging.info(f"Main action limit exceeded for user: {session.get('user_id')}")
+                return jsonify({
+                    'error': 'Action limit reached: You\'ve used your 10 free action buttons. Please wait 12 hours or upgrade your plan.',
                     'limit_reached': True
                 }), 429
     
@@ -673,6 +807,18 @@ def get_gaps():
 @app.route('/api/gap_insights', methods=['GET'])
 @limiter.limit("3 per 12 hours")
 def get_gap_insights():
+    # Check gap insights action limit (separate 2-click limit)
+    if not is_sample_mode():
+        # Main site - check gap insights limit
+        main_action = request.args.get('main_action')
+        if main_action == 'get_insights':
+            if not check_gap_insights_limit():
+                logging.info(f"Gap insights limit exceeded for user: {session.get('user_id')}")
+                return jsonify({
+                    'error': 'Gap Insights limit reached: You\'ve used your 2 free Gap Insights. Please wait 12 hours or upgrade your plan.',
+                    'limit_reached': True
+                }), 429
+    
     try:
         gap_size = request.args.get('gap_size')
         day = request.args.get('day')
@@ -821,14 +967,25 @@ def get_years():
 @app.route('/api/events', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_events():
-    # Check sample mode action limit only for Find Event Dates button clicks
+    # Check action limits for button clicks
     if is_sample_mode():
+        # Sample mode - check sample action limit
         sample_action = request.args.get('sample_action')
         if sample_action == 'find_event_dates':
             if not check_sample_action_limit():
                 logging.info(f"Sample mode action limit exceeded for session: {session.get('user_id')}")
                 return jsonify({
                     'error': 'Sample limit reached: You\'ve used your 3 free action buttons. Sign up FREE for unlimited access!',
+                    'limit_reached': True
+                }), 429
+    else:
+        # Main site - check main action limit
+        main_action = request.args.get('main_action')
+        if main_action == 'find_event_dates':
+            if not check_main_action_limit():
+                logging.info(f"Main action limit exceeded for user: {session.get('user_id')}")
+                return jsonify({
+                    'error': 'Action limit reached: You\'ve used your 10 free action buttons. Please wait 12 hours or upgrade your plan.',
                     'limit_reached': True
                 }), 429
     
@@ -921,6 +1078,18 @@ def get_economic_events():
 @app.route('/api/earnings', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_earnings():
+    # Check action limits for button clicks
+    if not is_sample_mode():
+        # Main site - check main action limit
+        main_action = request.args.get('main_action')
+        if main_action == 'find_earnings_dates':
+            if not check_main_action_limit():
+                logging.info(f"Main action limit exceeded for user: {session.get('user_id')}")
+                return jsonify({
+                    'error': 'Action limit reached: You\'ve used your 10 free action buttons. Please wait 12 hours or upgrade your plan.',
+                    'limit_reached': True
+                }), 429
+    
     try:
         ticker = request.args.get('ticker')
         logging.debug(f"Fetching earnings for ticker={ticker}")
