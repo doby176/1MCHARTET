@@ -370,14 +370,14 @@ function createChart(containerId, chartData, timeframe) {
         },
         grid: {
             vertLines: {
-                color: '#f5f5f5',
+                color: '#e0e0e0',
                 style: LightweightCharts.LineStyle.Solid,
-                visible: false
+                visible: true
             },
             horzLines: {
-                color: '#f5f5f5',
+                color: '#e0e0e0',
                 style: LightweightCharts.LineStyle.Solid,
-                visible: false
+                visible: true
             }
         },
         crosshair: {
@@ -402,8 +402,8 @@ function createChart(containerId, chartData, timeframe) {
             borderVisible: true,
             position: 'right',
             scaleMargins: {
-                top: 0.05,
-                bottom: 0.2
+                top: 0.1,
+                bottom: 0.25
             }
         },
         timeScale: {
@@ -416,7 +416,6 @@ function createChart(containerId, chartData, timeframe) {
             fixRightEdge: false,
             lockVisibleTimeRangeOnResize: true,
             rightBarStaysOnScroll: true,
-            visible: true,  // Ensure time scale is visible
             tickMarkFormatter: (time) => {
                 const date = new Date(time * 1000);
                 return date.toLocaleTimeString('en-US', { 
@@ -431,8 +430,8 @@ function createChart(containerId, chartData, timeframe) {
             borderColor: '#cccccc',
             autoScale: true,
             scaleMargins: {
-                top: 0.05,
-                bottom: 0.2
+                top: 0.1,
+                bottom: 0.25
             }
         },
         leftPriceScale: {
@@ -442,13 +441,10 @@ function createChart(containerId, chartData, timeframe) {
             mouseWheel: true,
             pressedMouseMove: true,
             horzTouchDrag: true,
-            vertTouchDrag: false
+            vertTouchDrag: true
         },
         handleScale: {
-            axisPressedMouseMove: {
-                time: true,
-                price: true
-            },
+            axisPressedMouseMove: true,
             mouseWheel: true,
             pinch: true
         }
@@ -484,21 +480,16 @@ function createChart(containerId, chartData, timeframe) {
             type: 'volume'
         },
         priceScaleId: 'volume',
-        visible: true,  // Ensure volume series is visible
         scaleMargins: {
-            top: 0.8,
+            top: 0.75,
             bottom: 0
         }
     });
     
     // Configure volume price scale
     chart.priceScale('volume').applyOptions({
-        visible: true,  // Ensure volume price scale is visible
-        borderVisible: true,
-        borderColor: '#cccccc',
-        autoScale: true,
         scaleMargins: {
-            top: 0.8,
+            top: 0.75,
             bottom: 0,
         },
     });
@@ -570,8 +561,8 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                          priceScale.applyOptions({
                              autoScale: true,
                              scaleMargins: {
-                                 top: 0.05,
-                                 bottom: 0.2
+                                 top: 0.1,
+                                 bottom: 0.25
                              }
                          });
                                      
@@ -587,7 +578,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                                      volumeScale.applyOptions({
                                          autoScale: true,
                                          scaleMargins: {
-                                             top: 0.8,
+                                             top: 0.75,
                                              bottom: 0
                                          }
                                      });
@@ -673,7 +664,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
         return {
             time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
             value: parseFloat(volume),
-            color: candle.close >= candle.open ? '#00cc0080' : '#ff000080'
+            color: candle.close >= candle.open ? '#00cc0040' : '#ff000040'
         };
     }) : [];
 

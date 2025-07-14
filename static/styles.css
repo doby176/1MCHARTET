@@ -430,18 +430,14 @@ form button:disabled::before {
 }
 
 /* Actual Chart Elements - CRITICAL: Fixed height to prevent infinite stretching */
-#chart-simulator, 
-#chart-gap, 
-#chart-events, 
-#chart-earnings {
+#chart-simulator, #chart-gap, #chart-events, #chart-earnings {
     width: 100%;
-    height: 700px;
-    max-height: 900px;
-    background: var(--white);
-    border-radius: var(--border-radius-md);
-    border: 1px solid var(--medium-grey);
-    position: relative;
+    height: 600px;
+    max-height: 800px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
     overflow: hidden;
+    position: relative;
 }
 
 .chart-title {
