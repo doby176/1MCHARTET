@@ -418,11 +418,7 @@ form button:disabled::before {
 #chart-container-gap, 
 #chart-container-events, 
 #chart-container-earnings, 
-#chart-container-simulator,
-#chart-simulator, 
-#chart-gap, 
-#chart-events, 
-#chart-earnings {
+#chart-container-simulator {
     background: var(--white);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-medium);
@@ -430,6 +426,20 @@ form button:disabled::before {
     margin: var(--spacing-lg) 0;
     border: 1px solid var(--medium-grey);
     min-height: 500px;
+    position: relative;
+}
+
+/* Actual Chart Elements - CRITICAL: Fixed height to prevent infinite stretching */
+#chart-simulator, 
+#chart-gap, 
+#chart-events, 
+#chart-earnings {
+    width: 100%;
+    height: 600px;
+    max-height: 800px;
+    background: var(--white);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--medium-grey);
     position: relative;
     overflow: hidden;
 }
@@ -1186,7 +1196,7 @@ footer {
 }
 
 .footer-logo {
-    max-width: 300px;
+    max-width: 100px;
     width: 100%;
     height: auto;
     margin: 0 auto var(--spacing-lg);
@@ -1315,15 +1325,28 @@ footer p {
         grid-template-columns: 1fr;
     }
     
-    .filter-toggle {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-}
+         .filter-toggle {
+         flex-direction: column;
+         align-items: flex-start;
+     }
+     
+     /* Mobile Chart Fixes */
+     #chart-simulator, 
+     #chart-gap, 
+     #chart-events, 
+     #chart-earnings {
+         height: 400px;
+         max-height: 500px;
+     }
+ }
 
 @media (max-width: 480px) {
     .logo {
         max-width: 300px;
+    }
+    
+    .footer-logo {
+        max-width: 80px;
     }
     
     .landing-header h1 {
@@ -1342,11 +1365,20 @@ footer p {
         font-size: 1.5rem;
     }
     
-    form#signup-form, form#login-form {
-        margin: var(--spacing-lg) auto;
-        padding: var(--spacing-lg);
-    }
-}
+         form#signup-form, form#login-form {
+         margin: var(--spacing-lg) auto;
+         padding: var(--spacing-lg);
+     }
+     
+     /* Smallest Screen Chart Fixes */
+     #chart-simulator, 
+     #chart-gap, 
+     #chart-events, 
+     #chart-earnings {
+         height: 300px;
+         max-height: 400px;
+     }
+ }
 
 /* Animation Classes */
 .fade-in {
