@@ -338,9 +338,9 @@ function createChart(containerId, chartData, timeframe) {
     // Clear previous chart
     container.innerHTML = '';
 
-    // Ensure minimum dimensions
-    const width = Math.max(container.clientWidth, 600);
-    const height = Math.max(container.clientHeight, 400);
+    // Ensure minimum dimensions - use fixed values like old working version
+    const width = 800;
+    const height = 600;
 
     // Create chart title
     const title = document.createElement('div');
@@ -358,15 +358,13 @@ function createChart(containerId, chartData, timeframe) {
 
 
     try {
-        // Create chart with V4 API
+        // Create chart with V4 API - simple config like old version
         const chart = LightweightCharts.createChart(container, {
         width: width,
         height: height,
         layout: {
             backgroundColor: '#ffffff',
-            textColor: '#333333',
-            fontSize: 12,
-            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            textColor: '#333333'
         },
         grid: {
             vertLines: {

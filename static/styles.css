@@ -414,19 +414,9 @@ form button:disabled::before {
 }
 
 /* Chart Containers */
-#chart-container, 
-#chart-container-gap, 
-#chart-container-events, 
-#chart-container-earnings, 
-#chart-container-simulator {
-    background: var(--white);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-medium);
-    padding: var(--spacing-lg);
-    margin: var(--spacing-lg) 0;
-    border: 1px solid var(--medium-grey);
-    min-height: 500px;
-    position: relative;
+#chart-container, #chart-container-gap, #chart-container-events, #chart-container-earnings, #chart-container-simulator {
+    margin-top: 20px;
+    width: 100%;
 }
 
 /* Actual Chart Elements - CRITICAL: Fixed height to prevent infinite stretching */
@@ -440,15 +430,19 @@ form button:disabled::before {
     position: relative;
 }
 
+/* Chart title styling for lightweight-charts */
 .chart-title {
-    font-size: 1.2rem;
-    font-weight: var(--font-weight-semibold);
-    color: var(--charcoal);
-    margin-bottom: var(--spacing-md);
-    text-align: center;
-    padding: var(--spacing-md);
-    background: var(--light-grey);
-    border-radius: var(--border-radius-md);
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #1a1b2f;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 8px 12px;
+    border-radius: 4px;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Professional Data Display */
