@@ -510,6 +510,35 @@ function createChart(containerId, chartData, timeframe) {
         resizeObserver.observe(container);
 
         console.log('Chart created successfully');
+        
+        // Set up background toggle functionality after chart is created
+        const bgToggleBtn = container.querySelector('.bg-toggle-btn');
+        if (bgToggleBtn) {
+            let isDark = false;
+            bgToggleBtn.onclick = () => {
+                isDark = !isDark;
+                if (isDark) {
+                    chart.applyOptions({
+                        layout: {
+                            backgroundColor: '#000000',
+                            textColor: '#ffffff'
+                        }
+                    });
+                    bgToggleBtn.textContent = '☀️ Light';
+                    bgToggleBtn.style.backgroundColor = '#333333';
+                } else {
+                    chart.applyOptions({
+                        layout: {
+                            backgroundColor: '#ffffff',
+                            textColor: '#333333'
+                        }
+                    });
+                    bgToggleBtn.textContent = '🌙 Dark';
+                    bgToggleBtn.style.backgroundColor = '#153097';
+                }
+            };
+        }
+        
         return {
             chart,
             candlestickSeries,
@@ -620,33 +649,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                 };
             }
 
-            // Set up background toggle button functionality
-            const bgToggleBtn = document.querySelector(`#${containerId} .bg-toggle-btn`);
-            if (bgToggleBtn) {
-                let isDark = false;
-                bgToggleBtn.onclick = () => {
-                    isDark = !isDark;
-                    if (isDark) {
-                        chart.applyOptions({
-                            layout: {
-                                backgroundColor: '#000000',
-                                textColor: '#ffffff'
-                            }
-                        });
-                        bgToggleBtn.textContent = '☀️ Light';
-                        bgToggleBtn.style.backgroundColor = '#333333';
-                    } else {
-                        chart.applyOptions({
-                            layout: {
-                                backgroundColor: '#ffffff',
-                                textColor: '#333333'
-                            }
-                        });
-                        bgToggleBtn.textContent = '🌙 Dark';
-                        bgToggleBtn.style.backgroundColor = '#153097';
-                    }
-                };
-            }
+
 
             
             // Set up any pending drawing tools
