@@ -1413,6 +1413,36 @@ function calculateMACD(data, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9)
 
 
 
+function calculateBollingerBands(data, period = 20, stdDev = 2) {
+    const sma = calculateSMA(data, period);
+    const bands = { upper: [], middle: [], lower: [] };
+    
+    for (let i = 0; i < sma.length; i++) {
+        const dataIndex = i + period - 1;
+        let sum = 0;
+        
+        // Calculate standard deviation
+        for (let j = 0; j < period; j++) {
+            sum += Math.pow(data[dataIndex - j].close - sma[i].value, 2);
+        }
+        const stdDeviation = Math.sqrt(sum / period);
+        
+        bands.upper.push({
+            time: sma[i].time,
+            value: sma[i].value + (stdDev * stdDeviation)
+        });
+        
+        bands.middle.push(sma[i]);
+        
+        bands.lower.push({
+            time: sma[i].time,
+            value: sma[i].value - (stdDev * stdDeviation)
+        });
+    }
+    
+    return bands;
+}
+
 function calculateStochastic(data, kPeriod = 14, dPeriod = 3) {
     const stochK = [];
     const stochD = [];
