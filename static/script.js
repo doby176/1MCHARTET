@@ -2733,6 +2733,128 @@ function startReplay(section) {
         if (config.hasTradeSimulator) {
             buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count || openPosition?.type === 'sell';
             sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
+            
+            // Check for TP/SL hits during replay progression
+            if (openPosition && config.currentReplayIndex() > 0 && (takeProfitLine || stopLossLine)) {
+                const currentPrice = chartData.close[config.currentReplayIndex() - 1];
+                const currentHigh = chartData.high[config.currentReplayIndex() - 1];
+                const currentLow = chartData.low[config.currentReplayIndex() - 1];
+                
+                // Get current TP/SL prices (they might have been dragged)
+                const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
+                const slPrice = stopLossLine ? stopLossLine.options().price : null;
+                
+                console.log(`=== REPLAY TP/SL CHECK ===`);
+                console.log(`Current Index: ${config.currentReplayIndex()}`);
+                console.log(`Current Price: ${currentPrice.toFixed(2)}`);
+                console.log(`Current High: ${currentHigh.toFixed(2)}`);
+                console.log(`Current Low: ${currentLow.toFixed(2)}`);
+                console.log(`TP Level: ${tpPrice ? tpPrice.toFixed(2) : 'N/A'}`);
+                console.log(`SL Level: ${slPrice ? slPrice.toFixed(2) : 'N/A'}`);
+                console.log(`Position Type: ${openPosition.type}`);
+                
+                let shouldClose = false;
+                let closeReason = '';
+                let closePrice = currentPrice;
+                
+                if (openPosition.type === 'buy') {
+                    // Check Take Profit (price goes above TP)
+                    if (tpPrice && currentHigh >= tpPrice) {
+                        shouldClose = true;
+                        closeReason = 'Take Profit Hit';
+                        closePrice = tpPrice;
+                        console.log(`🎯 LONG TP HIT! High ${currentHigh.toFixed(2)} >= TP ${tpPrice.toFixed(2)}`);
+                    }
+                    // Check Stop Loss (price goes below SL)
+                    else if (slPrice && currentLow <= slPrice) {
+                        shouldClose = true;
+                        closeReason = 'Stop Loss Hit';
+                        closePrice = slPrice;
+                        console.log(`🎯 LONG SL HIT! Low ${currentLow.toFixed(2)} <= SL ${slPrice.toFixed(2)}`);
+                    }
+                } else if (openPosition.type === 'sell') {
+                    // Check Take Profit for SHORT (price goes below TP)
+                    if (tpPrice && currentLow <= tpPrice) {
+                        shouldClose = true;
+                        closeReason = 'Take Profit Hit';
+                        closePrice = tpPrice;
+                        console.log(`🎯 SHORT TP HIT! Low ${currentLow.toFixed(2)} <= TP ${tpPrice.toFixed(2)}`);
+                    }
+                    // Check Stop Loss for SHORT (price goes above SL)
+                    else if (slPrice && currentHigh >= slPrice) {
+                        shouldClose = true;
+                        closeReason = 'Stop Loss Hit';
+                        closePrice = slPrice;
+                        console.log(`🎯 SHORT SL HIT! High ${currentHigh.toFixed(2)} >= SL ${slPrice.toFixed(2)}`);
+                    }
+                }
+                
+                // Auto-close position if TP/SL hit
+                if (shouldClose) {
+                    const pnl = openPosition.type === 'buy'
+                        ? (closePrice - openPosition.price) * openPosition.shares
+                        : (openPosition.price - closePrice) * openPosition.shares;
+                    
+                    console.log(`💰 CLOSING POSITION: ${closeReason}`);
+                    console.log(`Exit Price: $${closePrice.toFixed(2)}`);
+                    console.log(`P&L: $${pnl.toFixed(2)}`);
+                    
+                    // Show immediate user feedback
+                    alert(`🎯 ${closeReason}!\n\nPosition: ${openPosition.type.toUpperCase()}\nExit Price: $${closePrice.toFixed(2)}\nP&L: $${pnl.toFixed(2)}`);
+                    
+                    tradeHistory.push({
+                        type: openPosition.type,
+                        entryPrice: openPosition.price,
+                        exitPrice: closePrice,
+                        shares: openPosition.shares,
+                        timestamp: chartData.timestamp[config.currentReplayIndex() - 1],
+                        pnl: parseFloat(pnl.toFixed(2)),
+                        closeReason: closeReason
+                    });
+                    
+                    // Remove all price lines
+                    if (chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
+                        if (entryPriceLine) {
+                            chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
+                            entryPriceLine = null;
+                        }
+                        if (takeProfitLine) {
+                            chartInstances.simulator.candlestickSeries.removePriceLine(takeProfitLine);
+                            takeProfitLine = null;
+                        }
+                        if (stopLossLine) {
+                            chartInstances.simulator.candlestickSeries.removePriceLine(stopLossLine);
+                            stopLossLine = null;
+                        }
+                    }
+                    
+                    openPosition = null;
+                    
+                    // Make sure chart interactions are re-enabled after auto-close
+                    if (chartInstances.simulator?.chart) {
+                        chartInstances.simulator.chart.applyOptions({
+                            handleScroll: {
+                                mouseWheel: true,
+                                pressedMouseMove: true,
+                                horzTouchDrag: true,
+                                vertTouchDrag: true
+                            },
+                            handleScale: {
+                                mouseWheel: true,
+                                pinch: true,
+                                axisPressedMouseMove: true,
+                                axisDoubleClickReset: true
+                            }
+                        });
+                    }
+                    
+                    console.log(`✅ Position auto-closed: ${closeReason} at $${closePrice.toFixed(2)} with P/L: $${pnl.toFixed(2)}`);
+                } else {
+                    console.log(`No TP/SL hit detected during replay`);
+                }
+                console.log(`=== END REPLAY TP/SL CHECK ===`);
+            }
+            
             updateTradeSummary();
         }
 
