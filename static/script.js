@@ -2384,6 +2384,11 @@ function updateTradeSummary() {
     const tradeHistoryEmpty = document.getElementById('trade-history-empty');
     const buyButton = document.getElementById('buy-trade');
     const sellButton = document.getElementById('sell-trade');
+    
+    // P&L Overlay elements (TradingView style)
+    const pnlOverlay = document.getElementById('pnl-overlay');
+    const positionInfo = document.getElementById('position-info');
+    const pnlInfo = document.getElementById('pnl-info');
 
     if (!positionStatus || !tradePnl || !tradeHistoryTable || !tradeHistoryTbody || !tradeHistoryEmpty || !buyButton || !sellButton) return;
 
@@ -2405,6 +2410,14 @@ function updateTradeSummary() {
         tradePnl.style.color = unrealizedPnl >= 0 ? '#00cc00' : '#ff0000';
         tradePnl.style.fontWeight = 'bold';
         tradePnl.style.fontSize = '1.1em';
+        
+        // Update P&L overlay inside chart (TradingView style)
+        if (pnlOverlay && positionInfo && pnlInfo) {
+            pnlOverlay.style.display = 'block';
+            positionInfo.textContent = `${openPosition.type.toUpperCase()} ${openPosition.shares} @ $${openPosition.price.toFixed(2)}`;
+            pnlInfo.textContent = `$${unrealizedPnl.toFixed(2)} (${unrealizedPnl >= 0 ? '+' : ''}${((unrealizedPnl / (openPosition.price * openPosition.shares)) * 100).toFixed(2)}%)`;
+            pnlInfo.style.color = unrealizedPnl >= 0 ? '#00ff88' : '#ff4444';
+        }
     } else {
         const totalPnl = tradeHistory.reduce((sum, trade) => sum + trade.pnl, 0);
         positionStatus.textContent = 'No open position';
@@ -2412,6 +2425,11 @@ function updateTradeSummary() {
         tradePnl.style.color = totalPnl >= 0 ? '#00cc00' : '#ff0000';
         tradePnl.style.fontWeight = 'bold';
         tradePnl.style.fontSize = '1.1em';
+        
+        // Hide P&L overlay when no position
+        if (pnlOverlay) {
+            pnlOverlay.style.display = 'none';
+        }
     }
 
     // Update trade history table
