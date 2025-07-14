@@ -355,13 +355,7 @@ function createChart(containerId, chartData, timeframe) {
     autoZoomBtn.setAttribute('data-section', containerId.replace('chart-', ''));
     container.appendChild(autoZoomBtn);
 
-    // Create debug spacing button for testing
-    const debugSpacingBtn = document.createElement('button');
-    debugSpacingBtn.className = 'debug-spacing-btn';
-    debugSpacingBtn.textContent = '🔧 Fix Spacing';
-    debugSpacingBtn.style.cssText = 'position: absolute; top: 10px; left: 120px; z-index: 1000; background: #ff9800; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;';
-    debugSpacingBtn.setAttribute('data-section', containerId.replace('chart-', ''));
-    container.appendChild(debugSpacingBtn);
+
 
     try {
         // Create chart with V4 API
@@ -376,14 +370,14 @@ function createChart(containerId, chartData, timeframe) {
         },
         grid: {
             vertLines: {
-                color: '#e0e0e0',
+                color: '#f5f5f5',
                 style: LightweightCharts.LineStyle.Solid,
-                visible: true
+                visible: false
             },
             horzLines: {
-                color: '#e0e0e0',
+                color: '#f5f5f5',
                 style: LightweightCharts.LineStyle.Solid,
-                visible: true
+                visible: false
             }
         },
         crosshair: {
@@ -408,8 +402,8 @@ function createChart(containerId, chartData, timeframe) {
             borderVisible: true,
             position: 'right',
             scaleMargins: {
-                top: 0.1,
-                bottom: 0.25
+                top: 0.05,
+                bottom: 0.2
             }
         },
         timeScale: {
@@ -438,7 +432,7 @@ function createChart(containerId, chartData, timeframe) {
             autoScale: true,
             scaleMargins: {
                 top: 0.05,
-                bottom: 0.3
+                bottom: 0.2
             }
         },
         leftPriceScale: {
@@ -448,10 +442,13 @@ function createChart(containerId, chartData, timeframe) {
             mouseWheel: true,
             pressedMouseMove: true,
             horzTouchDrag: true,
-            vertTouchDrag: true
+            vertTouchDrag: false
         },
         handleScale: {
-            axisPressedMouseMove: true,
+            axisPressedMouseMove: {
+                time: true,
+                price: true
+            },
             mouseWheel: true,
             pinch: true
         }
@@ -489,7 +486,7 @@ function createChart(containerId, chartData, timeframe) {
         priceScaleId: 'volume',
         visible: true,  // Ensure volume series is visible
         scaleMargins: {
-            top: 0.7,
+            top: 0.8,
             bottom: 0
         }
     });
@@ -499,8 +496,9 @@ function createChart(containerId, chartData, timeframe) {
         visible: true,  // Ensure volume price scale is visible
         borderVisible: true,
         borderColor: '#cccccc',
+        autoScale: true,
         scaleMargins: {
-            top: 0.7,
+            top: 0.8,
             bottom: 0,
         },
     });
@@ -568,19 +566,31 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                              try {
                                  const priceScale = chart.priceScale('right');
                                  if (priceScale) {
-                                     // Method 1: Reset to auto-scale with default margins
-                                     priceScale.applyOptions({
-                                         autoScale: true,
-                                         scaleMargins: {
-                                             top: 0.1,
-                                             bottom: 0.25
-                                         }
-                                     });
+                                                              // Method 1: Reset to auto-scale with default margins
+                         priceScale.applyOptions({
+                             autoScale: true,
+                             scaleMargins: {
+                                 top: 0.05,
+                                 bottom: 0.2
+                             }
+                         });
                                      
                                      // Method 2: Try to fit content if method exists
                                      if (typeof priceScale.fitContent === 'function') {
                                          priceScale.fitContent();
                                      }
+                                 }
+                                 
+                                 // Also reset volume scale
+                                 const volumeScale = chart.priceScale('volume');
+                                 if (volumeScale) {
+                                     volumeScale.applyOptions({
+                                         autoScale: true,
+                                         scaleMargins: {
+                                             top: 0.8,
+                                             bottom: 0
+                                         }
+                                     });
                                  }
                                  
                                  // Also reset left price scale if it exists
@@ -612,14 +622,7 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                 };
             }
 
-            // Set up debug spacing button functionality
-            const debugSpacingBtn = document.querySelector(`#${containerId} .debug-spacing-btn`);
-            if (debugSpacingBtn) {
-                debugSpacingBtn.onclick = () => {
-                    console.log(`Manual spacing fix triggered for ${section}`);
-                    manualSpacingFix(section);
-                };
-            }
+
             
             // Set up any pending drawing tools
             if (drawingTools[section].pendingTool) {
