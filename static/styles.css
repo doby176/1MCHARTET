@@ -67,17 +67,19 @@
 }
 
 /* Base Typography */
-body {
-    font-family: var(--font-primary);
-    font-weight: var(--font-weight-normal);
-    line-height: 1.6;
-    color: var(--charcoal);
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    min-height: 100vh;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-}
+    body {
+        font-family: var(--font-primary);
+        font-weight: var(--font-weight-normal);
+        line-height: 1.6;
+        color: var(--charcoal);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100%;
+    }
 
 /* Professional Header */
 header {
@@ -1509,12 +1511,16 @@ footer p {
     }
     
     main {
-        padding: var(--spacing-lg) var(--spacing-md);
+        padding: var(--spacing-lg) 0;
+        max-width: 100% !important;
+        margin: 0 !important;
     }
     
     .card {
         padding: var(--spacing-lg);
-        margin: var(--spacing-md) auto;
+        margin: var(--spacing-md) 0;
+        width: 100%;
+        max-width: 100%;
     }
     
     .tabs {
@@ -1598,7 +1604,28 @@ footer p {
      #chart-earnings {
          height: 400px;
          max-height: 500px;
+         width: 100% !important;
+         max-width: 100% !important;
      }
+     
+         /* Ensure chart containers use full width */
+    #chart-container, 
+    #chart-container-gap, 
+    #chart-container-events, 
+    #chart-container-earnings, 
+    #chart-container-simulator {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Ensure full width for all containers on mobile */
+    html, body {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden;
+    }
  }
 
 @media (max-width: 480px) {
@@ -1637,6 +1664,9 @@ footer p {
      #chart-events, 
      #chart-earnings {
          height: 300px;
+         width: 100% !important;
+         max-width: 100% !important;
+     }
          max-height: 400px;
      }
  }
