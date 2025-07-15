@@ -67,7 +67,7 @@
 }
 
 /* Base Typography */
-    body {
+body {
     font-family: var(--font-primary);
     font-weight: var(--font-weight-normal);
     line-height: 1.6;
@@ -456,7 +456,7 @@ form button:disabled::before {
 .pnl-overlay {
     position: absolute;
     top: 15px;
-    left: 15px;
+    right: 15px;
     background: rgba(0, 0, 0, 0.85);
     color: white;
     padding: 12px 16px;
@@ -465,8 +465,7 @@ form button:disabled::before {
     font-size: 0.9em;
     font-weight: 600;
     z-index: 15;
-    width: auto;
-    max-width: 280px;
+    min-width: 220px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -1363,128 +1362,6 @@ footer p {
     border: 1px solid #e9ecef;
 }
 
-/* P&L Styling */
-.pnl-positive {
-    color: #00b386;
-    font-weight: var(--font-weight-semibold);
-}
-
-.pnl-negative {
-    color: #e74c3c;
-    font-weight: var(--font-weight-semibold);
-}
-
-/* Mobile Trade History Styles */
-@media (max-width: 768px) {
-    #trade-history-table {
-        display: none !important; /* Hide the table on mobile */
-    }
-    
-    #trade-history-container {
-        margin-top: var(--spacing-sm);
-    }
-    
-    #trade-history-container h5 {
-        font-size: 0.9rem;
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    /* Mobile Trade History Cards */
-    .mobile-trade-history {
-        display: block;
-    }
-}
-
-/* Desktop Trade History Styles */
-@media (min-width: 769px) {
-    .mobile-trade-history {
-        display: none !important; /* Hide mobile cards on desktop */
-    }
-    
-    #trade-history-table {
-        display: table; /* Show table on desktop */
-    }
-}
-    
-    .mobile-trade-card {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        margin-bottom: 12px;
-        padding: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .mobile-trade-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #dee2e6;
-    }
-    
-    .mobile-trade-type {
-        font-weight: bold;
-        font-size: 0.9rem;
-        padding: 4px 8px;
-        border-radius: 4px;
-        color: white;
-    }
-    
-    .mobile-trade-type.buy {
-        background: #28a745;
-    }
-    
-    .mobile-trade-type.sell {
-        background: #dc3545;
-    }
-    
-    .mobile-trade-pnl {
-        font-weight: bold;
-        font-size: 0.9rem;
-    }
-    
-    .mobile-trade-pnl.positive {
-        color: #28a745;
-    }
-    
-    .mobile-trade-pnl.negative {
-        color: #dc3545;
-    }
-    
-    .mobile-trade-details {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        font-size: 0.8rem;
-    }
-    
-    .mobile-trade-detail {
-        display: flex;
-        justify-content: space-between;
-    }
-    
-    .mobile-trade-label {
-        color: #6c757d;
-        font-weight: 500;
-    }
-    
-    .mobile-trade-value {
-        font-weight: 600;
-    }
-    
-    .mobile-trade-time {
-        grid-column: 1 / -1;
-        text-align: center;
-        margin-top: 8px;
-        padding-top: 8px;
-        border-top: 1px solid #dee2e6;
-        color: #6c757d;
-        font-size: 0.75rem;
-    }
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
     :root {
@@ -1591,14 +1468,14 @@ footer p {
          align-items: flex-start;
      }
      
-         /* Mobile Chart Fixes */
-    #chart-simulator, 
-    #chart-gap, 
-    #chart-events, 
-    #chart-earnings {
-        height: 400px;
-        max-height: 500px;
-    }
+     /* Mobile Chart Fixes */
+     #chart-simulator, 
+     #chart-gap, 
+     #chart-events, 
+     #chart-earnings {
+         height: 400px;
+         max-height: 500px;
+     }
  }
 
 @media (max-width: 480px) {
