@@ -1528,7 +1528,9 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: smaColor,
                 lineWidth: 2,
-                title: `SMA ${period}`
+                title: `SMA ${period}`,
+                priceScaleId: 'right',
+                priceLineVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1538,7 +1540,9 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: period === 20 ? '#e91e63' : '#9c27b0',
                 lineWidth: 2,
-                title: `EMA ${period}`
+                title: `EMA ${period}`,
+                priceScaleId: 'right',
+                priceLineVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1548,7 +1552,9 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#4caf50',
                 lineWidth: 3,
-                title: 'VWAP'
+                title: 'VWAP',
+                priceScaleId: 'right',
+                priceLineVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1568,7 +1574,9 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             indicatorSeries[section][`${indicatorKey}_upper`] = chart.addLineSeries({
                 color: '#9e9e9e',
                 lineWidth: 1,
-                title: 'BB Upper'
+                title: 'BB Upper',
+                priceScaleId: 'right',
+                priceLineVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_upper`].setData(bbData.upper);
             
@@ -1576,7 +1584,9 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             indicatorSeries[section][`${indicatorKey}_middle`] = chart.addLineSeries({
                 color: '#607d8b',
                 lineWidth: 2,
-                title: 'BB Middle'
+                title: 'BB Middle',
+                priceScaleId: 'right',
+                priceLineVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_middle`].setData(bbData.middle);
             
@@ -1584,7 +1594,9 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             indicatorSeries[section][`${indicatorKey}_lower`] = chart.addLineSeries({
                 color: '#9e9e9e',
                 lineWidth: 1,
-                title: 'BB Lower'
+                title: 'BB Lower',
+                priceScaleId: 'right',
+                priceLineVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_lower`].setData(bbData.lower);
             return; // Don't set data again below
@@ -1599,7 +1611,9 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#f44336',
                 lineWidth: 2,
-                title: 'RSI (scaled)'
+                title: 'RSI (scaled)',
+                priceScaleId: 'right',
+                priceLineVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1616,7 +1630,9 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#ff5722',
                 lineWidth: 2,
-                title: 'MACD (scaled)'
+                title: 'MACD (scaled)',
+                priceScaleId: 'right',
+                priceLineVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             indicatorData = scaledMacd;
@@ -1633,7 +1649,9 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#673ab7',
                 lineWidth: 2,
-                title: 'Stochastic %K (scaled)'
+                title: 'Stochastic %K (scaled)',
+                priceScaleId: 'right',
+                priceLineVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             indicatorData = scaledStochK;
@@ -2486,7 +2504,7 @@ function placeBuyTrade() {
         });
         
         // Add Take Profit line (draggable)
-        const tpPrice = openPosition.price * 1.02; // 2% above entry
+        const tpPrice = openPosition.price * 1.005; // 0.5% above entry
         takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
             price: tpPrice,
             color: '#00ff00',
@@ -2497,7 +2515,7 @@ function placeBuyTrade() {
         });
         
         // Add Stop Loss line (draggable)
-        const slPrice = openPosition.price * 0.98; // 2% below entry
+        const slPrice = openPosition.price * 0.995; // 0.5% below entry
         stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
             price: slPrice,
             color: '#ff4444',
@@ -2577,7 +2595,7 @@ function placeSellTrade() {
             });
             
             // Add Take Profit line for SHORT (below entry price)
-            const tpPrice = openPosition.price * 0.98; // 2% below entry
+            const tpPrice = openPosition.price * 0.995; // 0.5% below entry
             takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
                 price: tpPrice,
                 color: '#00ff00',
@@ -2588,7 +2606,7 @@ function placeSellTrade() {
             });
             
             // Add Stop Loss line for SHORT (above entry price)
-            const slPrice = openPosition.price * 1.02; // 2% above entry
+            const slPrice = openPosition.price * 1.005; // 0.5% above entry
             stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
                 price: slPrice,
                 color: '#ff4444',
