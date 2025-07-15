@@ -65,6 +65,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (formEarningsForm) formEarningsForm.addEventListener('submit', loadEarningsDates);
         if (formGapInsights) formGapInsights.addEventListener('submit', loadGapInsights);
         
+        // Initialize QQQ gap functionality
+        setupQQQGapRefresh();
+        loadQQQGap(); // Load initial QQQ gap data
+        
         // Replay control listeners (Market Simulator)
         const playSimulator = document.getElementById('play-replay-simulator');
         const pauseSimulator = document.getElementById('pause-replay-simulator');
@@ -4197,6 +4201,74 @@ async function loadGapInsights(event) {
         console.error('Error loading gap insights:', error.message);
         insightsContainer.innerHTML = '<p>Failed to load gap insights: ' + error.message + '. Please try again later.</p>';
         alert('Failed to load gap insights: ' + error.message);
+    }
+}
+
+// QQQ Gap functionality
+async function loadQQQGap() {
+    const qqqGapContent = document.getElementById('qqq-gap-content');
+    if (!qqqGapContent) return;
+    
+    try {
+        qqqGapContent.innerHTML = '<div class="qqq-gap-loading">Loading QQQ gap data...</div>';
+        
+        const response = await fetch('/api/qqq_gap', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('QQQ gap API response:', data);
+        
+        if (data.error) {
+            qqqGapContent.innerHTML = `<div class="qqq-gap-error">${data.error}</div>`;
+            return;
+        }
+        
+        if (data.gap_percentage === null) {
+            qqqGapContent.innerHTML = `<div class="qqq-gap-error">${data.message}</div>`;
+            return;
+        }
+        
+        // Display the gap data
+        const gapClass = data.gap_percentage > 0 ? 'positive' : 'negative';
+        const gapIcon = data.gap_percentage > 0 ? '📈' : '📉';
+        
+        qqqGapContent.innerHTML = `
+            <div class="qqq-gap-data">
+                <div class="qqq-gap-percentage ${gapClass}">
+                    ${gapIcon} ${data.gap_formatted}
+                </div>
+                <div class="qqq-gap-details">
+                    Previous Close: $${data.day_before_close.toFixed(2)}<br>
+                    Current Close: $${data.yesterday_close.toFixed(2)}
+                </div>
+                <div class="qqq-gap-date">
+                    Data for ${data.date}
+                </div>
+            </div>
+        `;
+        
+        console.log('QQQ gap data loaded successfully');
+        
+    } catch (error) {
+        console.error('Error loading QQQ gap:', error.message);
+        qqqGapContent.innerHTML = `<div class="qqq-gap-error">Failed to load QQQ gap data: ${error.message}</div>`;
+    }
+}
+
+function setupQQQGapRefresh() {
+    const refreshBtn = document.getElementById('refresh-qqq-gap');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', loadQQQGap);
     }
 }
 

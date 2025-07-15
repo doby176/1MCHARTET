@@ -286,6 +286,20 @@
             <div id="gap-insights" class="tab-content">
                 <h2>Nasdaq Gap Insights</h2>
                 <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
+                
+                <!-- Today's QQQ Gap Display -->
+                <div id="qqq-gap-display" class="qqq-gap-container">
+                    <div class="qqq-gap-header">
+                        <h3>📊 Today's QQQ Gap</h3>
+                        <button id="refresh-qqq-gap" class="refresh-btn">🔄 Refresh</button>
+                    </div>
+                    <div id="qqq-gap-content" class="qqq-gap-content">
+                        <div class="loading-spinner">Loading QQQ gap data...</div>
+                    </div>
+                    <div class="qqq-gap-note">
+                        <small>💡 <strong>Note:</strong> This feature uses a free API with rate limits. For unlimited access, get your own free API key from <a href="https://www.alphavantage.co/support/#api-key" target="_blank">Alpha Vantage</a>.</small>
+                    </div>
+                </div>
                 <form id="gap-insights-form">
                     <label for="gap-insights-size-select">Select Gap Size Bin:</label>
                     <select id="gap-insights-size-select" name="gap_size">

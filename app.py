@@ -3,6 +3,9 @@ import boto3
 import os
 import time
 import json
+import requests
+from datetime import datetime, timedelta
+import pytz
 from flask import Flask, render_template, request, jsonify, session, send_from_directory, redirect, url_for
 from flask_limiter import Limiter
 from flask_session import Session
@@ -1163,6 +1166,110 @@ def get_earnings_by_bin():
     except Exception as e:
         logging.error(f"Error processing earnings by bin: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/qqq_gap', methods=['GET'])
+@limiter.limit("10 per 12 hours")
+def get_qqq_gap():
+    """Get today's QQQ gap percentage using free API"""
+    try:
+        
+        # Get current date in EST (market timezone)
+        est = pytz.timezone('US/Eastern')
+        now = datetime.now(est)
+        
+        # Check if market is open (weekdays 9:30 AM - 4:00 PM EST)
+        market_open = now.replace(hour=9, minute=30, second=0, microsecond=0)
+        market_close = now.replace(hour=16, minute=0, second=0, microsecond=0)
+        
+        # If it's weekend or before market open, get yesterday's data
+        if now.weekday() >= 5:  # Saturday = 5, Sunday = 6
+            target_date = now - timedelta(days=1)
+            while target_date.weekday() >= 5:  # Go back to Friday
+                target_date = target_date - timedelta(days=1)
+        elif now < market_open:
+            # Before market open, use yesterday's data
+            target_date = now - timedelta(days=1)
+            while target_date.weekday() >= 5:  # Go back to Friday
+                target_date = target_date - timedelta(days=1)
+        else:
+            # Market is open, use today's data
+            target_date = now
+        
+        # Format date for API
+        date_str = target_date.strftime('%Y-%m-%d')
+        
+        # Use Alpha Vantage API (free tier) to get QQQ data
+        # Note: This is a demo API key, you should get your own free key from alphavantage.co
+        # Get your free API key at: https://www.alphavantage.co/support/#api-key
+        api_key = "demo"  # Replace with your free API key from alphavantage.co
+        url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=QQQ&apikey={api_key}"
+        
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            
+            if "Error Message" in data:
+                logging.error(f"Alpha Vantage API error: {data['Error Message']}")
+                return jsonify({'error': 'Failed to fetch QQQ data from API'}), 500
+            
+            if "Note" in data:
+                logging.warning(f"Alpha Vantage API note: {data['Note']}")
+                # If we hit the rate limit, return a fallback message
+                return jsonify({
+                    'gap_percentage': None,
+                    'message': 'API rate limit reached. Please try again later or get your own free API key from alphavantage.co',
+                    'date': date_str
+                })
+            
+            time_series = data.get("Time Series (Daily)")
+            if not time_series:
+                logging.error("No time series data found in API response")
+                return jsonify({'error': 'No QQQ data available'}), 500
+            
+            # Get the most recent 2 days of data
+            dates = sorted(time_series.keys(), reverse=True)
+            if len(dates) < 2:
+                logging.error("Insufficient data for gap calculation")
+                return jsonify({'error': 'Insufficient QQQ data for gap calculation'}), 500
+            
+            # Get yesterday's and day before yesterday's data
+            yesterday = dates[0]  # Most recent
+            day_before = dates[1]  # Second most recent
+            
+            yesterday_close = float(time_series[yesterday]["4. close"])
+            day_before_close = float(time_series[day_before]["4. close"])
+            
+            # Calculate gap percentage
+            gap_percentage = ((yesterday_close - day_before_close) / day_before_close) * 100
+            
+            # Determine gap direction
+            gap_direction = "up" if gap_percentage > 0 else "down"
+            gap_abs = abs(gap_percentage)
+            
+            # Format the gap for display
+            gap_formatted = f"{gap_percentage:.2f}%"
+            if gap_percentage > 0:
+                gap_formatted = f"+{gap_formatted}"
+            
+            return jsonify({
+                'gap_percentage': gap_percentage,
+                'gap_formatted': gap_formatted,
+                'gap_direction': gap_direction,
+                'gap_abs': gap_abs,
+                'yesterday_close': yesterday_close,
+                'day_before_close': day_before_close,
+                'date': yesterday,
+                'message': f"QQQ gap on {yesterday}: {gap_formatted}"
+            })
+            
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Request error fetching QQQ data: {str(e)}")
+            return jsonify({'error': 'Failed to fetch QQQ data from external API'}), 500
+            
+    except Exception as e:
+        logging.error(f"Error processing QQQ gap: {str(e)}")
+        return jsonify({'error': 'Server error calculating QQQ gap'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
