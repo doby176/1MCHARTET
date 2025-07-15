@@ -468,7 +468,8 @@ function createChart(containerId, chartData, timeframe) {
             scaleMargins: {
                 top: 0.05,
                 bottom: 0.15
-            }
+            },
+            entireTextOnly: true
         },
         leftPriceScale: {
             visible: false
@@ -572,174 +573,205 @@ function createChart(containerId, chartData, timeframe) {
 // TP/SL Dragging functionality
 function setupTPSLDragging(chart, container) {
     let isMouseDown = false;
+    let isTouchDown = false;
     let dragLine = null;
     
-    container.addEventListener('mousedown', (e) => {
+    // Helper function to get coordinates from event
+    function getEventCoordinates(e) {
+        const rect = container.getBoundingClientRect();
+        if (e.type.includes('touch')) {
+            return {
+                x: e.touches[0].clientX - rect.left,
+                y: e.touches[0].clientY - rect.top
+            };
+        } else {
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+    }
+    
+    // Helper function to check if near TP/SL line
+    function checkNearLine(y) {
         if (!openPosition || !takeProfitLine || !stopLossLine || !chartInstances.simulator?.candlestickSeries) {
-            return;
+            return null;
         }
         
-        const rect = container.getBoundingClientRect();
-        const y = e.clientY - rect.top;
-        
-        // Use SERIES coordinate conversion methods (correct API)
         const series = chartInstances.simulator.candlestickSeries;
-        
         const tpPrice = takeProfitLine.options().price;
         const slPrice = stopLossLine.options().price;
         
-        // Check if mouse is near TP or SL line (within 15 pixels tolerance)
         const tpY = series.priceToCoordinate(tpPrice);
         const slY = series.priceToCoordinate(slPrice);
         
         if (tpY !== null && Math.abs(y - tpY) < 15) {
-            isMouseDown = true;
-            dragLine = 'tp';
-            container.style.cursor = 'ns-resize';
-            
-            // CRITICAL: Disable chart interactions while dragging TP/SL
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: false,
-                    pressedMouseMove: false,
-                    horzTouchDrag: false,
-                    vertTouchDrag: false
-                },
-                handleScale: {
-                    mouseWheel: false,
-                    pinch: false,
-                    axisPressedMouseMove: false,
-                    axisDoubleClickReset: false
-                }
-            });
-            
-            e.preventDefault();
-            e.stopPropagation();
+            return 'tp';
         } else if (slY !== null && Math.abs(y - slY) < 15) {
+            return 'sl';
+        }
+        return null;
+    }
+    
+    // Helper function to disable chart interactions
+    function disableChartInteractions() {
+        chart.applyOptions({
+            handleScroll: {
+                mouseWheel: false,
+                pressedMouseMove: false,
+                horzTouchDrag: false,
+                vertTouchDrag: false
+            },
+            handleScale: {
+                mouseWheel: false,
+                pinch: false,
+                axisPressedMouseMove: false,
+                axisDoubleClickReset: false
+            }
+        });
+    }
+    
+    // Helper function to enable chart interactions
+    function enableChartInteractions() {
+        chart.applyOptions({
+            handleScroll: {
+                mouseWheel: true,
+                pressedMouseMove: true,
+                horzTouchDrag: true,
+                vertTouchDrag: true
+            },
+            handleScale: {
+                mouseWheel: true,
+                pinch: true,
+                axisPressedMouseMove: true,
+                axisDoubleClickReset: true
+            }
+        });
+    }
+    
+    // Mouse events
+    container.addEventListener('mousedown', (e) => {
+        const coords = getEventCoordinates(e);
+        const lineType = checkNearLine(coords.y);
+        
+        if (lineType) {
             isMouseDown = true;
-            dragLine = 'sl';
+            dragLine = lineType;
             container.style.cursor = 'ns-resize';
-            
-            // CRITICAL: Disable chart interactions while dragging TP/SL
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: false,
-                    pressedMouseMove: false,
-                    horzTouchDrag: false,
-                    vertTouchDrag: false
-                },
-                handleScale: {
-                    mouseWheel: false,
-                    pinch: false,
-                    axisPressedMouseMove: false,
-                    axisDoubleClickReset: false
-                }
-            });
-            
+            disableChartInteractions();
             e.preventDefault();
             e.stopPropagation();
         }
     });
     
-    container.addEventListener('mousemove', (e) => {
+    // Helper function to update line position
+    function updateLinePosition(y) {
         if (!openPosition || !takeProfitLine || !stopLossLine || !chartInstances.simulator?.candlestickSeries) return;
         
-        const rect = container.getBoundingClientRect();
-        const y = e.clientY - rect.top;
         const series = chartInstances.simulator.candlestickSeries;
+        const newPrice = series.coordinateToPrice(y);
+        
+        if (newPrice === null || newPrice === undefined) return;
+        
+        if (dragLine === 'tp') {
+            // Update Take Profit line
+            series.removePriceLine(takeProfitLine);
+            takeProfitLine = series.createPriceLine({
+                price: newPrice,
+                color: '#00ff00',
+                lineWidth: 1,
+                lineStyle: LightweightCharts.LineStyle.Dashed,
+                axisLabelVisible: true,
+                title: `TP: $${newPrice.toFixed(2)}`
+            });
+        } else if (dragLine === 'sl') {
+            // Update Stop Loss line
+            series.removePriceLine(stopLossLine);
+            stopLossLine = series.createPriceLine({
+                price: newPrice,
+                color: '#ff4444',
+                lineWidth: 1,
+                lineStyle: LightweightCharts.LineStyle.Dashed,
+                axisLabelVisible: true,
+                title: `SL: $${newPrice.toFixed(2)}`
+            });
+        }
+    }
+    
+    // Helper function to update cursor
+    function updateCursor(y) {
+        if (!openPosition || !takeProfitLine || !stopLossLine || !chartInstances.simulator?.candlestickSeries) return;
+        
+        const series = chartInstances.simulator.candlestickSeries;
+        const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
+        const slPrice = stopLossLine ? stopLossLine.options().price : null;
+        
+        const tpY = tpPrice ? series.priceToCoordinate(tpPrice) : null;
+        const slY = slPrice ? series.priceToCoordinate(slPrice) : null;
+        
+        if ((tpY !== null && Math.abs(y - tpY) < 15) || 
+            (slY !== null && Math.abs(y - slY) < 15)) {
+            container.style.cursor = 'ns-resize';
+        } else {
+            container.style.cursor = 'default';
+        }
+    }
+    
+    container.addEventListener('mousemove', (e) => {
+        const coords = getEventCoordinates(e);
         
         if (isMouseDown && dragLine) {
-            // Update line position while dragging
-            const newPrice = series.coordinateToPrice(y);
-            
-            if (newPrice === null || newPrice === undefined) return;
-            
-            if (dragLine === 'tp') {
-                // Update Take Profit line
-                series.removePriceLine(takeProfitLine);
-                takeProfitLine = series.createPriceLine({
-                    price: newPrice,
-                    color: '#00ff00',
-                    lineWidth: 1,
-                    lineStyle: LightweightCharts.LineStyle.Dashed,
-                    axisLabelVisible: true,
-                    title: `TP: $${newPrice.toFixed(2)}`
-                });
-            } else if (dragLine === 'sl') {
-                // Update Stop Loss line
-                series.removePriceLine(stopLossLine);
-                stopLossLine = series.createPriceLine({
-                    price: newPrice,
-                    color: '#ff4444',
-                    lineWidth: 1,
-                    lineStyle: LightweightCharts.LineStyle.Dashed,
-                    axisLabelVisible: true,
-                    title: `SL: $${newPrice.toFixed(2)}`
-                });
-            }
+            updateLinePosition(coords.y);
         } else {
-            // Change cursor when hovering over TP/SL lines
-            const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
-            const slPrice = stopLossLine ? stopLossLine.options().price : null;
-            
-            const tpY = tpPrice ? series.priceToCoordinate(tpPrice) : null;
-            const slY = slPrice ? series.priceToCoordinate(slPrice) : null;
-            
-            if ((tpY !== null && Math.abs(y - tpY) < 15) || 
-                (slY !== null && Math.abs(y - slY) < 15)) {
-                container.style.cursor = 'ns-resize';
-            } else {
-                container.style.cursor = 'default';
-            }
+            updateCursor(coords.y);
         }
     });
     
-    container.addEventListener('mouseup', () => {
-        if (isMouseDown) {
-            // Re-enable chart interactions when dragging stops
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: true,
-                    pressedMouseMove: true,
-                    horzTouchDrag: true,
-                    vertTouchDrag: true
-                },
-                handleScale: {
-                    mouseWheel: true,
-                    pinch: true,
-                    axisPressedMouseMove: true,
-                    axisDoubleClickReset: true
-                }
-            });
+    // Helper function to end dragging
+    function endDragging() {
+        if (isMouseDown || isTouchDown) {
+            enableChartInteractions();
         }
         
         isMouseDown = false;
+        isTouchDown = false;
         dragLine = null;
         container.style.cursor = 'default';
+    }
+    
+    container.addEventListener('mouseup', endDragging);
+    container.addEventListener('mouseleave', endDragging);
+    
+    // Touch events for mobile
+    container.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const coords = getEventCoordinates(e);
+        const lineType = checkNearLine(coords.y);
+        
+        if (lineType) {
+            isTouchDown = true;
+            dragLine = lineType;
+            disableChartInteractions();
+        }
     });
     
-    container.addEventListener('mouseleave', () => {
-        if (isMouseDown) {
-            // Re-enable chart interactions when dragging stops
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: true,
-                    pressedMouseMove: true,
-                    horzTouchDrag: true,
-                    vertTouchDrag: true
-                },
-                handleScale: {
-                    mouseWheel: true,
-                    pinch: true,
-                    axisPressedMouseMove: true,
-                    axisDoubleClickReset: true
-                }
-            });
-        }
+    container.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const coords = getEventCoordinates(e);
         
-        isMouseDown = false;
-        dragLine = null;
-        container.style.cursor = 'default';
+        if (isTouchDown && dragLine) {
+            updateLinePosition(coords.y);
+        }
+    });
+    
+    container.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        endDragging();
+    });
+    
+    container.addEventListener('touchcancel', (e) => {
+        e.preventDefault();
+        endDragging();
     });
 }
 
@@ -1530,7 +1562,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 lineWidth: 2,
                 title: `SMA ${period}`,
                 priceScaleId: 'right',
-                priceLineVisible: false
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1542,7 +1575,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 lineWidth: 2,
                 title: `EMA ${period}`,
                 priceScaleId: 'right',
-                priceLineVisible: false
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1554,7 +1588,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 lineWidth: 3,
                 title: 'VWAP',
                 priceScaleId: 'right',
-                priceLineVisible: false
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1576,7 +1611,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 lineWidth: 1,
                 title: 'BB Upper',
                 priceScaleId: 'right',
-                priceLineVisible: false
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null
             });
             indicatorSeries[section][`${indicatorKey}_upper`].setData(bbData.upper);
             
@@ -1586,7 +1622,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 lineWidth: 2,
                 title: 'BB Middle',
                 priceScaleId: 'right',
-                priceLineVisible: false
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null
             });
             indicatorSeries[section][`${indicatorKey}_middle`].setData(bbData.middle);
             
@@ -1596,7 +1633,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 lineWidth: 1,
                 title: 'BB Lower',
                 priceScaleId: 'right',
-                priceLineVisible: false
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null
             });
             indicatorSeries[section][`${indicatorKey}_lower`].setData(bbData.lower);
             return; // Don't set data again below
@@ -1613,7 +1651,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 lineWidth: 2,
                 title: 'RSI (scaled)',
                 priceScaleId: 'right',
-                priceLineVisible: false
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1632,7 +1671,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 lineWidth: 2,
                 title: 'MACD (scaled)',
                 priceScaleId: 'right',
-                priceLineVisible: false
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             indicatorData = scaledMacd;
@@ -1651,7 +1691,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 lineWidth: 2,
                 title: 'Stochastic %K (scaled)',
                 priceScaleId: 'right',
-                priceLineVisible: false
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             indicatorData = scaledStochK;
@@ -2504,7 +2545,7 @@ function placeBuyTrade() {
         });
         
         // Add Take Profit line (draggable)
-        const tpPrice = openPosition.price * 1.005; // 0.5% above entry
+        const tpPrice = openPosition.price * 1.003; // 0.3% above entry
         takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
             price: tpPrice,
             color: '#00ff00',
@@ -2515,7 +2556,7 @@ function placeBuyTrade() {
         });
         
         // Add Stop Loss line (draggable)
-        const slPrice = openPosition.price * 0.995; // 0.5% below entry
+        const slPrice = openPosition.price * 0.997; // 0.3% below entry
         stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
             price: slPrice,
             color: '#ff4444',
@@ -2595,7 +2636,7 @@ function placeSellTrade() {
             });
             
             // Add Take Profit line for SHORT (below entry price)
-            const tpPrice = openPosition.price * 0.995; // 0.5% below entry
+            const tpPrice = openPosition.price * 0.997; // 0.3% below entry
             takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
                 price: tpPrice,
                 color: '#00ff00',
@@ -2606,7 +2647,7 @@ function placeSellTrade() {
             });
             
             // Add Stop Loss line for SHORT (above entry price)
-            const slPrice = openPosition.price * 1.005; // 0.5% above entry
+            const slPrice = openPosition.price * 1.003; // 0.3% above entry
             stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
                 price: slPrice,
                 color: '#ff4444',

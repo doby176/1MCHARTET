@@ -1362,6 +1362,69 @@ footer p {
     border: 1px solid #e9ecef;
 }
 
+/* Mobile Trade History Styles */
+@media (max-width: 768px) {
+    #trade-history-table {
+        font-size: 0.8rem;
+        min-width: 100%;
+        overflow-x: auto;
+        display: block;
+    }
+    
+    #trade-history-table th,
+    #trade-history-table td {
+        padding: 0.4rem 0.3rem;
+        white-space: nowrap;
+        min-width: 60px;
+    }
+    
+    #trade-history-table th:nth-child(1),
+    #trade-history-table td:nth-child(1) {
+        min-width: 50px; /* Type */
+    }
+    
+    #trade-history-table th:nth-child(2),
+    #trade-history-table td:nth-child(2) {
+        min-width: 70px; /* Entry */
+    }
+    
+    #trade-history-table th:nth-child(3),
+    #trade-history-table td:nth-child(3) {
+        min-width: 70px; /* Exit */
+    }
+    
+    #trade-history-table th:nth-child(4),
+    #trade-history-table td:nth-child(4) {
+        min-width: 50px; /* Shares */
+    }
+    
+    #trade-history-table th:nth-child(5),
+    #trade-history-table td:nth-child(5) {
+        min-width: 80px; /* P&L */
+    }
+    
+    #trade-history-table th:nth-child(6),
+    #trade-history-table td:nth-child(6) {
+        min-width: 100px; /* Time */
+    }
+    
+    #trade-history-table th:nth-child(7),
+    #trade-history-table td:nth-child(7) {
+        min-width: 80px; /* Reason */
+    }
+    
+    #trade-history-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-top: var(--spacing-sm);
+    }
+    
+    #trade-history-container h5 {
+        font-size: 0.9rem;
+        margin-bottom: var(--spacing-xs);
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     :root {
