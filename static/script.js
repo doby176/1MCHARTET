@@ -180,6 +180,22 @@ let userZoomState = {
     earnings: false
 };
 
+// Drawing Tools State
+let drawingTools = {
+    simulator: { active: null, lines: [], pendingTool: null },
+    gap: { active: null, lines: [], pendingTool: null },
+    events: { active: null, lines: [], pendingTool: null },
+    earnings: { active: null, lines: [], pendingTool: null }
+};
+
+// Chart click handlers for drawing tools
+let chartClickHandlers = {
+    simulator: null,
+    gap: null,
+    events: null,
+    earnings: null
+};
+
 
 
 // Replay globals for Market Simulator
@@ -1664,10 +1680,114 @@ function setupIndicatorListeners(section) {
         });
     });
 
-
+    // Add event listeners for drawing tools
+    const drawingButtons = indicatorPanel.querySelectorAll('.drawing-tool-btn');
+    drawingButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tool = e.target.dataset.tool;
+            
+            if (tool === 'clear') {
+                clearAllDrawings(section);
+            } else {
+                activateDrawingTool(section, tool);
+            }
+        });
+    });
 }
 
+// Drawing Tools Functions (Enhanced)
+function activateDrawingTool(section, tool) {
+    // Temporarily disabled - drawing tools require complex overlay system
+    // Based on: https://github.com/tradingview/lightweight-charts/issues/1345
+    
+    const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Show coming soon message
+    alert('Drawing tools are coming soon! 📈\\n\\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
+    
+    console.log(`Drawing tool ${tool} clicked for ${section} - showing coming soon message`);
+}
 
+function setupDrawingClickHandler(section, tool) {
+    if (!chartInstances[section]) {
+        console.log(`No chart instance for section: ${section}, deferring click handler setup`);
+        return;
+    }
+    
+    const chart = chartInstances[section].chart;
+    const container = chartInstances[section].container;
+    
+    // Remove existing click handler
+    if (chartClickHandlers[section]) {
+        container.removeEventListener('click', chartClickHandlers[section]);
+        chartClickHandlers[section] = null;
+    }
+    
+    // Set up new click handler based on tool
+    chartClickHandlers[section] = (e) => {
+        handleDrawingClick(section, tool, e);
+    };
+    
+    container.addEventListener('click', chartClickHandlers[section]);
+    console.log(`Set up drawing click handler for ${tool} on ${section}`);
+}
+
+function handleDrawingClick(section, tool, event) {
+    // Placeholder for drawing tool click handling
+    console.log(`Drawing tool ${tool} clicked on ${section} at`, event);
+    showDrawingFeedback(section, tool);
+}
+
+function showDrawingFeedback(section, tool) {
+    // Show feedback for drawing tool usage
+    const feedback = document.createElement('div');
+    feedback.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        z-index: 1000;
+        font-size: 14px;
+    `;
+    feedback.textContent = `${tool} tool activated!`;
+    
+    const container = chartInstances[section].container;
+    container.appendChild(feedback);
+    
+    setTimeout(() => {
+        if (feedback.parentNode) {
+            feedback.parentNode.removeChild(feedback);
+        }
+    }, 2000);
+}
+
+function deactivateDrawingTool(section) {
+    if (chartClickHandlers[section]) {
+        const container = chartInstances[section].container;
+        container.removeEventListener('click', chartClickHandlers[section]);
+        chartClickHandlers[section] = null;
+    }
+    
+    const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
+    buttons.forEach(btn => btn.classList.remove('active'));
+}
+
+function clearAllDrawings(section) {
+    // Clear all drawing elements for the section
+    drawingTools[section].lines.forEach(line => {
+        if (line.element) {
+            line.element.remove();
+        }
+    });
+    drawingTools[section].lines = [];
+    console.log(`Cleared all drawings for ${section}`);
+}
 
 function populateEarningsOutcomes() {
     const earningsBinSelect = document.getElementById('earnings-bin-select');
