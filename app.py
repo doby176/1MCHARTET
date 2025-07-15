@@ -1229,66 +1229,69 @@ def get_qqq_gap():
             
             current_price = None
             previous_close = None
+            open_price = None
             
-            # Look for the current price - CNBC typically shows it prominently
-            price_elements = soup.find_all('span', {'class': 'QuoteStrip-lastPrice'})
-            if not price_elements:
-                # Try alternative selectors for current price
-                price_elements = soup.find_all('span', {'class': 'lastPrice'})
+            # Look for the KEY STATS section with precise selectors
+            # Find all Summary-stat elements
+            summary_stats = soup.find_all('li', class_='Summary-stat')
             
-            if not price_elements:
-                # Look for any span with price-like content
-                all_spans = soup.find_all('span')
-                for span in all_spans:
-                    text = span.get_text().strip()
-                    if '$' in text and '.' in text and len(text) < 20:  # Price-like text
-                        try:
-                            price_clean = text.replace('$', '').replace(',', '')
-                            test_price = float(price_clean)
-                            if 300 <= test_price <= 600:  # Reasonable QQQ price range
-                                current_price = test_price
-                                logging.debug(f"Found current price: {current_price}")
-                                break
-                        except:
-                            continue
+            for stat in summary_stats:
+                label_element = stat.find('span', class_='Summary-label')
+                value_element = stat.find('span', class_='Summary-value')
+                
+                if label_element and value_element:
+                    label = label_element.get_text().strip()
+                    value_text = value_element.get_text().strip()
+                    
+                    # Clean the value text (remove commas, etc.)
+                    value_clean = value_text.replace(',', '').replace('$', '').strip()
+                    
+                    try:
+                        value = float(value_clean)
+                        
+                        if label == 'Open':
+                            open_price = value
+                            logging.debug(f"Found Open price: {open_price}")
+                        elif label == 'Prev Close':
+                            previous_close = value
+                            logging.debug(f"Found Previous Close: {previous_close}")
+                            
+                    except ValueError:
+                        # Skip if not a valid number
+                        continue
+            
+            # Use Open price as current price for gap calculation
+            if open_price and previous_close:
+                current_price = open_price
+                logging.debug(f"Using Open price ({open_price}) as current price for gap calculation")
+            elif current_price and previous_close:
+                # We have current price and previous close, use current price
+                logging.debug(f"Using current price ({current_price}) for gap calculation")
+            else:
+                # If we don't have both values, try to find them in the page text
+                all_text = soup.get_text()
+                import re
+                
+                # Look for all price-like numbers in the text
+                all_prices = re.findall(r'(\d{3,4}\.\d{2})', all_text)
+                valid_prices = []
+                
+                for price_str in all_prices:
+                    try:
+                        price_val = float(price_str)
+                        if 300 <= price_val <= 600:
+                            valid_prices.append(price_val)
+                    except ValueError:
+                        continue
+                
+                # If we have multiple valid prices, use the first two as current and previous
+                if len(valid_prices) >= 2:
+                    current_price = valid_prices[0]
+                    previous_close = valid_prices[1]
+                    logging.debug(f"Using first two valid prices: Current={current_price}, Previous={previous_close}")
             
             if not current_price:
                 raise Exception("Could not find current price on CNBC page")
-            
-            # Look for "Open" and "Prev Close" in the KEY STATS section
-            all_divs = soup.find_all('div')
-            for div in all_divs:
-                text = div.get_text()
-                if 'Open' in text and 'Prev Close' in text:
-                    # Extract both Open and Prev Close values
-                    import re
-                    # Look for patterns like "Open 560.25" and "Prev Close 556.21"
-                    open_match = re.search(r'Open\s+(\d+\.\d+)', text)
-                    prev_close_match = re.search(r'Prev Close\s+(\d+\.\d+)', text)
-                    
-                    if open_match and prev_close_match:
-                        open_price = float(open_match.group(1))
-                        prev_close_price = float(prev_close_match.group(1))
-                        
-                        # Use open price as current price for gap calculation
-                        current_price = open_price
-                        previous_close = prev_close_price
-                        
-                        logging.debug(f"Found Open: {open_price}, Prev Close: {prev_close_price}")
-                        break
-            
-            # If we couldn't find the structured data, try alternative approach
-            if not previous_close:
-                # Look for "Prev Close" text specifically
-                for div in all_divs:
-                    text = div.get_text()
-                    if 'Prev Close' in text:
-                        import re
-                        matches = re.findall(r'Prev Close\s+(\d+\.\d+)', text)
-                        if matches:
-                            previous_close = float(matches[0])
-                            logging.debug(f"Found previous close: {previous_close}")
-                            break
             
             if not previous_close:
                 raise Exception("Could not find previous close on CNBC page")
