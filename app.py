@@ -16,6 +16,10 @@ import uuid
 import bcrypt
 from werkzeug.exceptions import TooManyRequests
 
+# Simple cache for QQQ data to reduce API calls
+qqq_cache = {}
+qqq_cache_timeout = 300  # 5 minutes
+
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
@@ -1173,6 +1177,14 @@ def get_qqq_gap():
     """Get today's QQQ gap percentage using free API"""
     try:
         
+        # Check cache first
+        cache_key = f"qqq_gap_{datetime.now().strftime('%Y-%m-%d')}"
+        if cache_key in qqq_cache:
+            cache_time, cache_data = qqq_cache[cache_key]
+            if time.time() - cache_time < qqq_cache_timeout:
+                logging.debug("Returning cached QQQ gap data")
+                return jsonify(cache_data)
+        
         # Get current date in EST (market timezone)
         est = pytz.timezone('US/Eastern')
         now = datetime.now(est)
@@ -1198,71 +1210,118 @@ def get_qqq_gap():
         # Format date for API
         date_str = target_date.strftime('%Y-%m-%d')
         
-        # Use Yahoo Finance API (free, no rate limits) to get QQQ data
-        # Calculate timestamps for the last 5 trading days to ensure we have 2 trading days
-        end_timestamp = int(target_date.timestamp())
-        start_timestamp = int((target_date - timedelta(days=5)).timestamp())
+        # Try multiple APIs for QQQ data
+        apis_to_try = [
+            # Yahoo Finance API
+            {
+                'url': f"https://query1.finance.yahoo.com/v8/finance/chart/QQQ?period1={int((target_date - timedelta(days=5)).timestamp())}&period2={int(target_date.timestamp())}&interval=1d",
+                'name': 'Yahoo Finance'
+            },
+            # Alternative: Alpha Vantage (with different key)
+            {
+                'url': f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=QQQ&apikey=demo",
+                'name': 'Alpha Vantage'
+            }
+        ]
         
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/QQQ?period1={start_timestamp}&period2={end_timestamp}&interval=1d"
+        # Try each API until one works
+        for api in apis_to_try:
+            try:
+                logging.debug(f"Trying {api['name']} API...")
+                response = requests.get(api['url'], timeout=10)
+                response.raise_for_status()
+                data = response.json()
+                logging.debug(f"{api['name']} API response keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+                
+                if api['name'] == 'Yahoo Finance':
+                    if "chart" not in data or "result" not in data["chart"] or not data["chart"]["result"]:
+                        logging.warning(f"No chart data found in {api['name']} API response")
+                        continue
+                    
+                    result = data["chart"]["result"][0]
+                    timestamps = result.get("timestamp", [])
+                    quotes = result.get("indicators", {}).get("quote", [{}])[0]
+                    closes = quotes.get("close", [])
+                    
+                    if len(timestamps) < 2 or len(closes) < 2:
+                        logging.warning(f"Insufficient data from {api['name']} API")
+                        continue
+                    
+                    # Get the most recent 2 days of data
+                    yesterday_close = closes[-1]  # Most recent close
+                    day_before_close = closes[-2]  # Second most recent close
+                    
+                    # Convert timestamps to dates for display
+                    yesterday_timestamp = timestamps[-1]
+                    day_before_timestamp = timestamps[-2]
+                    
+                    yesterday_date = datetime.fromtimestamp(yesterday_timestamp).strftime('%Y-%m-%d')
+                    day_before_date = datetime.fromtimestamp(day_before_timestamp).strftime('%Y-%m-%d')
+                    break
+                    
+                elif api['name'] == 'Alpha Vantage':
+                    if "Time Series (Daily)" not in data:
+                        logging.warning(f"No time series data found in {api['name']} API response")
+                        continue
+                    
+                    time_series = data["Time Series (Daily)"]
+                    dates = sorted(time_series.keys(), reverse=True)
+                    
+                    if len(dates) < 2:
+                        logging.warning(f"Insufficient data from {api['name']} API")
+                        continue
+                    
+                    yesterday = dates[0]
+                    day_before = dates[1]
+                    
+                    yesterday_close = float(time_series[yesterday]["4. close"])
+                    day_before_close = float(time_series[day_before]["4. close"])
+                    
+                    yesterday_date = yesterday
+                    day_before_date = day_before
+                    break
+                    
+            except requests.exceptions.RequestException as e:
+                logging.warning(f"Request error with {api['name']} API: {str(e)}")
+                continue
+            except Exception as e:
+                logging.warning(f"Error processing {api['name']} API response: {str(e)}")
+                continue
+        else:
+            # If all APIs failed, raise an exception to trigger fallback
+            raise requests.exceptions.RequestException("All APIs failed")
         
-        try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-            logging.debug(f"Yahoo Finance API response keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
-            
-            if "chart" not in data or "result" not in data["chart"] or not data["chart"]["result"]:
-                logging.error("No chart data found in Yahoo Finance API response")
-                logging.error(f"API response: {data}")
-                return jsonify({'error': 'Unable to fetch QQQ data. Please try again later.'}), 500
-            
-            result = data["chart"]["result"][0]
-            timestamps = result.get("timestamp", [])
-            quotes = result.get("indicators", {}).get("quote", [{}])[0]
-            closes = quotes.get("close", [])
-            
-            if len(timestamps) < 2 or len(closes) < 2:
-                logging.error("Insufficient data for gap calculation")
-                logging.error(f"Available timestamps: {len(timestamps)}, closes: {len(closes)}")
-                return jsonify({'error': 'Insufficient QQQ data for gap calculation. Please try again later.'}), 500
-            
-            # Get the most recent 2 days of data
-            yesterday_close = closes[-1]  # Most recent close
-            day_before_close = closes[-2]  # Second most recent close
-            
-            # Convert timestamps to dates for display
-            yesterday_timestamp = timestamps[-1]
-            day_before_timestamp = timestamps[-2]
-            
-            yesterday_date = datetime.fromtimestamp(yesterday_timestamp).strftime('%Y-%m-%d')
-            day_before_date = datetime.fromtimestamp(day_before_timestamp).strftime('%Y-%m-%d')
-            
-            # Calculate gap percentage
-            gap_percentage = ((yesterday_close - day_before_close) / day_before_close) * 100
-            
-            # Determine gap direction
-            gap_direction = "up" if gap_percentage > 0 else "down"
-            gap_abs = abs(gap_percentage)
-            
-            # Format the gap for display
-            gap_formatted = f"{gap_percentage:.2f}%"
-            if gap_percentage > 0:
-                gap_formatted = f"+{gap_formatted}"
-            
-            return jsonify({
-                'gap_percentage': gap_percentage,
-                'gap_formatted': gap_formatted,
-                'gap_direction': gap_direction,
-                'gap_abs': gap_abs,
-                'yesterday_close': yesterday_close,
-                'day_before_close': day_before_close,
-                'date': yesterday_date,
-                'message': f"QQQ gap on {yesterday_date}: {gap_formatted}"
-            })
-            
-        except requests.exceptions.RequestException as e:
-            logging.error(f"Request error fetching QQQ data: {str(e)}")
-            return jsonify({'error': 'Failed to fetch QQQ data from external API'}), 500
+        # Calculate gap percentage
+        gap_percentage = ((yesterday_close - day_before_close) / day_before_close) * 100
+        
+        # Determine gap direction
+        gap_direction = "up" if gap_percentage > 0 else "down"
+        gap_abs = abs(gap_percentage)
+        
+        # Format the gap for display
+        gap_formatted = f"{gap_percentage:.2f}%"
+        if gap_percentage > 0:
+            gap_formatted = f"+{gap_formatted}"
+        
+        result_data = {
+            'gap_percentage': gap_percentage,
+            'gap_formatted': gap_formatted,
+            'gap_direction': gap_direction,
+            'gap_abs': gap_abs,
+            'yesterday_close': yesterday_close,
+            'day_before_close': day_before_close,
+            'date': yesterday_date,
+            'message': f"QQQ gap on {yesterday_date}: {gap_formatted}"
+        }
+        
+        # Cache the result
+        qqq_cache[cache_key] = (time.time(), result_data)
+        
+        return jsonify(result_data)
+        
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Request error fetching QQQ data: {str(e)}")
+        return jsonify({'error': 'Unable to fetch QQQ data. All external APIs are currently unavailable. Please try again later.'}), 500
             
     except Exception as e:
         logging.error(f"Error processing QQQ gap: {str(e)}")
