@@ -1198,48 +1198,44 @@ def get_qqq_gap():
         # Format date for API
         date_str = target_date.strftime('%Y-%m-%d')
         
-        # Use Alpha Vantage API (free tier) to get QQQ data
-        api_key = "9K03GJJCB96AJCO3"  # Your Alpha Vantage API key
-        url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=QQQ&apikey={api_key}"
+        # Use Yahoo Finance API (free, no rate limits) to get QQQ data
+        # Calculate timestamps for the last 5 trading days to ensure we have 2 trading days
+        end_timestamp = int(target_date.timestamp())
+        start_timestamp = int((target_date - timedelta(days=5)).timestamp())
+        
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/QQQ?period1={start_timestamp}&period2={end_timestamp}&interval=1d"
         
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             data = response.json()
-            logging.debug(f"Alpha Vantage API response keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+            logging.debug(f"Yahoo Finance API response keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
             
-            if "Error Message" in data:
-                logging.error(f"Alpha Vantage API error: {data['Error Message']}")
-                return jsonify({'error': 'Failed to fetch QQQ data from API'}), 500
-            
-            if "Note" in data:
-                logging.warning(f"Alpha Vantage API note: {data['Note']}")
-                # If we hit the rate limit, return a fallback message
-                return jsonify({
-                    'gap_percentage': None,
-                    'message': 'API rate limit reached. Please try again later or get your own free API key from alphavantage.co',
-                    'date': date_str
-                })
-            
-            time_series = data.get("Time Series (Daily)")
-            if not time_series:
-                logging.error("No time series data found in API response")
+            if "chart" not in data or "result" not in data["chart"] or not data["chart"]["result"]:
+                logging.error("No chart data found in Yahoo Finance API response")
                 logging.error(f"API response: {data}")
                 return jsonify({'error': 'Unable to fetch QQQ data. Please try again later.'}), 500
             
-            # Get the most recent 2 days of data
-            dates = sorted(time_series.keys(), reverse=True)
-            if len(dates) < 2:
+            result = data["chart"]["result"][0]
+            timestamps = result.get("timestamp", [])
+            quotes = result.get("indicators", {}).get("quote", [{}])[0]
+            closes = quotes.get("close", [])
+            
+            if len(timestamps) < 2 or len(closes) < 2:
                 logging.error("Insufficient data for gap calculation")
-                logging.error(f"Available dates: {dates}")
+                logging.error(f"Available timestamps: {len(timestamps)}, closes: {len(closes)}")
                 return jsonify({'error': 'Insufficient QQQ data for gap calculation. Please try again later.'}), 500
             
-            # Get yesterday's and day before yesterday's data
-            yesterday = dates[0]  # Most recent
-            day_before = dates[1]  # Second most recent
+            # Get the most recent 2 days of data
+            yesterday_close = closes[-1]  # Most recent close
+            day_before_close = closes[-2]  # Second most recent close
             
-            yesterday_close = float(time_series[yesterday]["4. close"])
-            day_before_close = float(time_series[day_before]["4. close"])
+            # Convert timestamps to dates for display
+            yesterday_timestamp = timestamps[-1]
+            day_before_timestamp = timestamps[-2]
+            
+            yesterday_date = datetime.fromtimestamp(yesterday_timestamp).strftime('%Y-%m-%d')
+            day_before_date = datetime.fromtimestamp(day_before_timestamp).strftime('%Y-%m-%d')
             
             # Calculate gap percentage
             gap_percentage = ((yesterday_close - day_before_close) / day_before_close) * 100
@@ -1260,8 +1256,8 @@ def get_qqq_gap():
                 'gap_abs': gap_abs,
                 'yesterday_close': yesterday_close,
                 'day_before_close': day_before_close,
-                'date': yesterday,
-                'message': f"QQQ gap on {yesterday}: {gap_formatted}"
+                'date': yesterday_date,
+                'message': f"QQQ gap on {yesterday_date}: {gap_formatted}"
             })
             
         except requests.exceptions.RequestException as e:

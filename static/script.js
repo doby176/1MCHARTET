@@ -4206,17 +4206,11 @@ async function loadGapInsights(event) {
 
 // QQQ Gap functionality
 async function loadQQQGap() {
-    console.log('loadQQQGap called');
     const qqqGapContent = document.getElementById('qqq-gap-content');
-    console.log('qqq-gap-content element:', qqqGapContent);
-    if (!qqqGapContent) {
-        console.log('qqq-gap-content element not found, returning');
-        return;
-    }
+    if (!qqqGapContent) return;
     
     try {
         qqqGapContent.innerHTML = '<div class="qqq-gap-loading">Loading QQQ gap data...</div>';
-        console.log('Making API call to /api/qqq_gap');
         
         const response = await fetch('/api/qqq_gap', {
             method: 'GET',
@@ -4225,8 +4219,6 @@ async function loadQQQGap() {
                 'Content-Type': 'application/json'
             }
         });
-        
-        console.log('API response status:', response.status);
         
         if (!response.ok) {
             const errorText = await response.text();
@@ -4274,14 +4266,9 @@ async function loadQQQGap() {
 }
 
 function setupQQQGapRefresh() {
-    console.log('setupQQQGapRefresh called');
     const refreshBtn = document.getElementById('refresh-qqq-gap');
-    console.log('refresh-qqq-gap button:', refreshBtn);
     if (refreshBtn) {
         refreshBtn.addEventListener('click', loadQQQGap);
-        console.log('Refresh button event listener added');
-    } else {
-        console.log('Refresh button not found');
     }
 }
 
