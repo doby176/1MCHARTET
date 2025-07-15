@@ -598,29 +598,6 @@ form button:disabled::before {
     font-style: italic;
 }
 
-.qqq-gap-note {
-    margin-top: var(--spacing-md);
-    padding: var(--spacing-sm);
-    background: var(--light-grey);
-    border-radius: var(--border-radius-sm);
-    border-left: 3px solid var(--primary-blue);
-}
-
-.qqq-gap-note small {
-    color: var(--dark-grey);
-    line-height: 1.4;
-}
-
-.qqq-gap-note a {
-    color: var(--primary-blue);
-    text-decoration: none;
-    font-weight: var(--font-weight-medium);
-}
-
-.qqq-gap-note a:hover {
-    text-decoration: underline;
-}
-
 /* Mobile responsive styles for QQQ gap */
 @media (max-width: 768px) {
     .qqq-gap-header {

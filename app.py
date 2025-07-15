@@ -1199,15 +1199,14 @@ def get_qqq_gap():
         date_str = target_date.strftime('%Y-%m-%d')
         
         # Use Alpha Vantage API (free tier) to get QQQ data
-        # Note: This is a demo API key, you should get your own free key from alphavantage.co
-        # Get your free API key at: https://www.alphavantage.co/support/#api-key
-        api_key = "demo"  # Replace with your free API key from alphavantage.co
+        api_key = "9K03GJJCB96AJCO3"  # Your Alpha Vantage API key
         url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=QQQ&apikey={api_key}"
         
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             data = response.json()
+            logging.debug(f"Alpha Vantage API response keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
             
             if "Error Message" in data:
                 logging.error(f"Alpha Vantage API error: {data['Error Message']}")
@@ -1225,13 +1224,15 @@ def get_qqq_gap():
             time_series = data.get("Time Series (Daily)")
             if not time_series:
                 logging.error("No time series data found in API response")
-                return jsonify({'error': 'No QQQ data available'}), 500
+                logging.error(f"API response: {data}")
+                return jsonify({'error': 'Unable to fetch QQQ data. Please try again later.'}), 500
             
             # Get the most recent 2 days of data
             dates = sorted(time_series.keys(), reverse=True)
             if len(dates) < 2:
                 logging.error("Insufficient data for gap calculation")
-                return jsonify({'error': 'Insufficient QQQ data for gap calculation'}), 500
+                logging.error(f"Available dates: {dates}")
+                return jsonify({'error': 'Insufficient QQQ data for gap calculation. Please try again later.'}), 500
             
             # Get yesterday's and day before yesterday's data
             yesterday = dates[0]  # Most recent
