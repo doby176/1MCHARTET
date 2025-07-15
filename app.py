@@ -1289,74 +1289,74 @@ def get_qqq_gap():
         except Exception as e:
             logging.error(f"Error scraping Yahoo Finance history page: {str(e)}")
             
-                            # Try alternative method - Google Finance direct quote
-                try:
-                    logging.debug("Trying Google Finance direct quote as fallback...")
-                    google_url = "https://www.google.com/finance/quote/QQQ:NASDAQ"
-                    google_response = requests.get(google_url, headers=headers, timeout=15)
-                    google_response.raise_for_status()
-                    
-                    google_soup = BeautifulSoup(google_response.text, 'html.parser')
-                    
-                    # Look for current price in Google Finance
-                    current_price = None
-                    previous_close = None
-                    
-                    # Try to find current price
-                    price_elements = google_soup.find_all('div', {'class': 'YMlKec fxKbKc'})
-                    if price_elements:
-                        price_text = price_elements[0].text.strip()
-                        current_price = float(price_text.replace(',', '').replace('$', ''))
-                        logging.debug(f"Found current price: {current_price}")
-                    
-                    # Try to find previous close
-                    # Look for elements that might contain previous close data
-                    all_divs = google_soup.find_all('div')
-                    for div in all_divs:
-                        text = div.get_text()
-                        if 'Previous close' in text or 'Prev close' in text:
-                            # Extract the number after "Previous close"
+            # Try alternative method - Google Finance direct quote
+            try:
+                logging.debug("Trying Google Finance direct quote as fallback...")
+                google_url = "https://www.google.com/finance/quote/QQQ:NASDAQ"
+                google_response = requests.get(google_url, headers=headers, timeout=15)
+                google_response.raise_for_status()
+                
+                google_soup = BeautifulSoup(google_response.text, 'html.parser')
+                
+                # Look for current price in Google Finance
+                current_price = None
+                previous_close = None
+                
+                # Try to find current price
+                price_elements = google_soup.find_all('div', {'class': 'YMlKec fxKbKc'})
+                if price_elements:
+                    price_text = price_elements[0].text.strip()
+                    current_price = float(price_text.replace(',', '').replace('$', ''))
+                    logging.debug(f"Found current price: {current_price}")
+                
+                # Try to find previous close
+                # Look for elements that might contain previous close data
+                all_divs = google_soup.find_all('div')
+                for div in all_divs:
+                    text = div.get_text()
+                    if 'Previous close' in text or 'Prev close' in text:
+                        # Extract the number after "Previous close"
+                        import re
+                        matches = re.findall(r'[\$]?(\d+\.\d+)', text)
+                        if matches:
+                            previous_close = float(matches[0])
+                            logging.debug(f"Found previous close: {previous_close}")
+                            break
+                
+                # If we couldn't find previous close in the text, try alternative approach
+                if not previous_close:
+                    # Look for price data in the page structure
+                    price_data_elements = google_soup.find_all('div', {'class': 'P6K39c'})
+                    for element in price_data_elements:
+                        text = element.get_text()
+                        if '$' in text and '.' in text:
                             import re
-                            matches = re.findall(r'[\$]?(\d+\.\d+)', text)
-                            if matches:
-                                previous_close = float(matches[0])
-                                logging.debug(f"Found previous close: {previous_close}")
+                            price_match = re.search(r'\$(\d+\.\d+)', text)
+                            if price_match and not previous_close:
+                                previous_close = float(price_match.group(1))
+                                logging.debug(f"Found previous close in alternative: {previous_close}")
                                 break
+                
+                if current_price and previous_close:
+                    # Validate that prices are reasonable for QQQ (typically $300-600 range)
+                    if not (300 <= current_price <= 600) or not (300 <= previous_close <= 600):
+                        raise Exception(f"Invalid price values from Google Finance: Current={current_price}, Previous={previous_close}. QQQ should be in $300-600 range.")
                     
-                    # If we couldn't find previous close in the text, try alternative approach
-                    if not previous_close:
-                        # Look for price data in the page structure
-                        price_data_elements = google_soup.find_all('div', {'class': 'P6K39c'})
-                        for element in price_data_elements:
-                            text = element.get_text()
-                            if '$' in text and '.' in text:
-                                import re
-                                price_match = re.search(r'\$(\d+\.\d+)', text)
-                                if price_match and not previous_close:
-                                    previous_close = float(price_match.group(1))
-                                    logging.debug(f"Found previous close in alternative: {previous_close}")
-                                    break
+                    gap_percentage = ((current_price - previous_close) / previous_close) * 100
                     
-                    if current_price and previous_close:
-                        # Validate that prices are reasonable for QQQ (typically $300-600 range)
-                        if not (300 <= current_price <= 600) or not (300 <= previous_close <= 600):
-                            raise Exception(f"Invalid price values from Google Finance: Current={current_price}, Previous={previous_close}. QQQ should be in $300-600 range.")
-                        
-                        gap_percentage = ((current_price - previous_close) / previous_close) * 100
-                        
-                        # Validate that gap percentage is reasonable (should be within ±10% for normal trading)
-                        if abs(gap_percentage) > 10:
-                            raise Exception(f"Unreasonable gap percentage from Google Finance: {gap_percentage:.2f}%. This suggests data parsing error.")
-                        
-                        yesterday_date = target_date.strftime('%Y-%m-%d')
-                        day_before_date = (target_date - timedelta(days=1)).strftime('%Y-%m-%d')
-                        yesterday_close = current_price
-                        day_before_close = previous_close
-                        
-                        logging.debug(f"Used Google Finance direct quote: Current={current_price}, Previous={previous_close}, Gap={gap_percentage:.2f}%")
-                    else:
-                        raise Exception("Could not find price data in Google Finance direct quote")
+                    # Validate that gap percentage is reasonable (should be within ±10% for normal trading)
+                    if abs(gap_percentage) > 10:
+                        raise Exception(f"Unreasonable gap percentage from Google Finance: {gap_percentage:.2f}%. This suggests data parsing error.")
                     
+                    yesterday_date = target_date.strftime('%Y-%m-%d')
+                    day_before_date = (target_date - timedelta(days=1)).strftime('%Y-%m-%d')
+                    yesterday_close = current_price
+                    day_before_close = previous_close
+                    
+                    logging.debug(f"Used Google Finance direct quote: Current={current_price}, Previous={previous_close}, Gap={gap_percentage:.2f}%")
+                else:
+                    raise Exception("Could not find price data in Google Finance direct quote")
+                
             except Exception as google_e:
                 logging.error(f"Google Finance fallback also failed: {str(google_e)}")
                 
