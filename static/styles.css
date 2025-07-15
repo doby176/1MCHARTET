@@ -465,7 +465,8 @@ form button:disabled::before {
     font-size: 0.9em;
     font-weight: 600;
     z-index: 15;
-    min-width: 220px;
+    width: auto;
+    max-width: 280px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -1376,75 +1377,11 @@ footer p {
 /* Mobile Trade History Styles */
 @media (max-width: 768px) {
     #trade-history-table {
-        font-size: 0.75rem;
-        min-width: 100%;
-        overflow-x: auto;
-        display: block;
-        table-layout: fixed;
-        width: 100%;
-    }
-    
-    #trade-history-table th,
-    #trade-history-table td {
-        padding: 0.3rem 0.2rem;
-        white-space: nowrap;
-        text-align: center;
-        font-size: 0.7rem;
-    }
-    
-    #trade-history-table th:nth-child(1),
-    #trade-history-table td:nth-child(1) {
-        min-width: 40px; /* Type */
-        max-width: 40px;
-    }
-    
-    #trade-history-table th:nth-child(2),
-    #trade-history-table td:nth-child(2) {
-        min-width: 60px; /* Entry */
-        max-width: 60px;
-    }
-    
-    #trade-history-table th:nth-child(3),
-    #trade-history-table td:nth-child(3) {
-        min-width: 60px; /* Exit */
-        max-width: 60px;
-    }
-    
-    #trade-history-table th:nth-child(4),
-    #trade-history-table td:nth-child(4) {
-        min-width: 40px; /* Shares */
-        max-width: 40px;
-    }
-    
-    #trade-history-table th:nth-child(5),
-    #trade-history-table td:nth-child(5) {
-        min-width: 60px; /* P&L */
-        max-width: 60px;
-    }
-    
-    #trade-history-table th:nth-child(6),
-    #trade-history-table td:nth-child(6) {
-        min-width: 50px; /* % Gain */
-        max-width: 50px;
-    }
-    
-    #trade-history-table th:nth-child(7),
-    #trade-history-table td:nth-child(7) {
-        min-width: 60px; /* Time */
-        max-width: 60px;
-    }
-    
-    #trade-history-table th:nth-child(8),
-    #trade-history-table td:nth-child(8) {
-        min-width: 50px; /* Reason */
-        max-width: 50px;
+        display: none; /* Hide the table on mobile */
     }
     
     #trade-history-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
         margin-top: var(--spacing-sm);
-        max-width: 100%;
     }
     
     #trade-history-container h5 {
@@ -1452,13 +1389,94 @@ footer p {
         margin-bottom: var(--spacing-xs);
     }
     
-    /* Ensure table fits better on mobile */
-    #trade-history-table tbody tr {
-        border-bottom: 1px solid #eee;
+    /* Mobile Trade History Cards */
+    .mobile-trade-history {
+        display: block;
     }
     
-    #trade-history-table tbody tr:last-child {
-        border-bottom: none;
+    /* Hide mobile trade history on desktop */
+    @media (min-width: 769px) {
+        .mobile-trade-history {
+            display: none;
+        }
+    }
+    
+    .mobile-trade-card {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        padding: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .mobile-trade-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .mobile-trade-type {
+        font-weight: bold;
+        font-size: 0.9rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: white;
+    }
+    
+    .mobile-trade-type.buy {
+        background: #28a745;
+    }
+    
+    .mobile-trade-type.sell {
+        background: #dc3545;
+    }
+    
+    .mobile-trade-pnl {
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    
+    .mobile-trade-pnl.positive {
+        color: #28a745;
+    }
+    
+    .mobile-trade-pnl.negative {
+        color: #dc3545;
+    }
+    
+    .mobile-trade-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        font-size: 0.8rem;
+    }
+    
+    .mobile-trade-detail {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .mobile-trade-label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .mobile-trade-value {
+        font-weight: 600;
+    }
+    
+    .mobile-trade-time {
+        grid-column: 1 / -1;
+        text-align: center;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #dee2e6;
+        color: #6c757d;
+        font-size: 0.75rem;
     }
 }
 

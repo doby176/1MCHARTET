@@ -2736,6 +2736,12 @@ function updateTradeSummary() {
     if (tradeHistory.length === 0) {
         tradeHistoryTable.style.display = 'none';
         tradeHistoryEmpty.style.display = 'block';
+        
+        // Clear mobile trade history
+        const mobileTradeHistory = document.querySelector('.mobile-trade-history');
+        if (mobileTradeHistory) {
+            mobileTradeHistory.innerHTML = '';
+        }
     } else {
         tradeHistoryTable.style.display = 'table';
         tradeHistoryEmpty.style.display = 'none';
@@ -2743,7 +2749,13 @@ function updateTradeSummary() {
         // Clear existing rows
         tradeHistoryTbody.innerHTML = '';
         
-        // Add each trade as a table row
+        // Clear mobile trade history
+        const mobileTradeHistory = document.querySelector('.mobile-trade-history');
+        if (mobileTradeHistory) {
+            mobileTradeHistory.innerHTML = '';
+        }
+        
+        // Add each trade as a table row and mobile card
         tradeHistory.forEach((trade, index) => {
             const row = document.createElement('tr');
             const pnlClass = trade.pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
@@ -2764,6 +2776,45 @@ function updateTradeSummary() {
             `;
             
             tradeHistoryTbody.appendChild(row);
+            
+            // Create mobile trade card
+            if (mobileTradeHistory) {
+                const mobileCard = document.createElement('div');
+                mobileCard.className = 'mobile-trade-card';
+                
+                const pnlClassMobile = trade.pnl >= 0 ? 'positive' : 'negative';
+                const typeClass = trade.type.toLowerCase();
+                
+                mobileCard.innerHTML = `
+                    <div class="mobile-trade-header">
+                        <span class="mobile-trade-type ${typeClass}">${trade.type.toUpperCase()}</span>
+                        <span class="mobile-trade-pnl ${pnlClassMobile}">$${trade.pnl.toFixed(2)}</span>
+                    </div>
+                    <div class="mobile-trade-details">
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">Entry:</span>
+                            <span class="mobile-trade-value">$${trade.entryPrice.toFixed(2)}</span>
+                        </div>
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">Exit:</span>
+                            <span class="mobile-trade-value">$${trade.exitPrice.toFixed(2)}</span>
+                        </div>
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">Shares:</span>
+                            <span class="mobile-trade-value">${trade.shares}</span>
+                        </div>
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">% Gain:</span>
+                            <span class="mobile-trade-value ${percentGainClass}">${percentGain >= 0 ? '+' : ''}${percentGain.toFixed(2)}%</span>
+                        </div>
+                        <div class="mobile-trade-time">
+                            ${trade.timestamp.split(' ')[1]} - ${trade.closeReason || 'Manual'}
+                        </div>
+                    </div>
+                `;
+                
+                mobileTradeHistory.appendChild(mobileCard);
+            }
         });
     }
 }
