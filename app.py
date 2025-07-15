@@ -1210,12 +1210,12 @@ def get_qqq_gap():
         # Format date for API
         date_str = target_date.strftime('%Y-%m-%d')
         
-        # Web scraping from Yahoo Finance history page
+        # Web scraping from Google Finance (primary source)
         try:
-            logging.debug("Scraping QQQ data from Yahoo Finance history page...")
+            logging.debug("Scraping QQQ data from Google Finance...")
             
-            # Get the Yahoo Finance history page for QQQ
-            url = "https://finance.yahoo.com/quote/QQQ/history/"
+            # Get the Google Finance page for QQQ
+            url = "https://www.google.com/finance/quote/QQQ:NASDAQ"
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
@@ -1227,43 +1227,65 @@ def get_qqq_gap():
             from bs4 import BeautifulSoup
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            # Look for the current price in the page
-            price_elements = soup.find_all('fin-streamer', {'data-field': 'regularMarketPrice'})
+            current_price = None
+            previous_close = None
+            
+            # Try to find current price - look for the main price display
+            price_elements = soup.find_all('div', {'class': 'YMlKec fxKbKc'})
             if not price_elements:
                 # Try alternative selectors for current price
-                price_elements = soup.find_all('span', {'data-reactid': lambda x: x and 'regularMarketPrice' in x})
+                price_elements = soup.find_all('div', {'class': 'fxKbKc'})
             
             if not price_elements:
-                # Try to find price in the main quote area
-                price_elements = soup.find_all('fin-streamer', {'data-field': 'regularMarketPrice'})
-                if not price_elements:
-                    price_elements = soup.find_all('span', string=lambda text: text and '$' in text and '.' in text)
+                # Look for any div with price-like content
+                all_divs = soup.find_all('div')
+                for div in all_divs:
+                    text = div.get_text().strip()
+                    if '$' in text and '.' in text and len(text) < 20:  # Price-like text
+                        try:
+                            price_clean = text.replace('$', '').replace(',', '')
+                            test_price = float(price_clean)
+                            if 300 <= test_price <= 600:  # Reasonable QQQ price range
+                                current_price = test_price
+                                logging.debug(f"Found current price: {current_price}")
+                                break
+                        except:
+                            continue
             
-            if not price_elements:
-                raise Exception("Could not find current price on Yahoo Finance history page")
+            if not current_price:
+                raise Exception("Could not find current price on Google Finance page")
             
-            # Clean the price string (remove commas and convert to float)
-            price_text = price_elements[0].text.strip()
-            current_price = float(price_text.replace(',', '').replace('$', ''))
+            # Try to find previous close - look for "Previous close" text
+            all_divs = soup.find_all('div')
+            for div in all_divs:
+                text = div.get_text()
+                if 'Previous close' in text:
+                    # Extract the number after "Previous close"
+                    import re
+                    matches = re.findall(r'[\$]?(\d+\.\d+)', text)
+                    if matches:
+                        previous_close = float(matches[0])
+                        logging.debug(f"Found previous close: {previous_close}")
+                        break
             
-            # Get previous close from the page
-            prev_close_elements = soup.find_all('fin-streamer', {'data-field': 'regularMarketPreviousClose'})
-            if not prev_close_elements:
-                # Try alternative selectors for previous close
-                prev_close_elements = soup.find_all('span', {'data-reactid': lambda x: x and 'regularMarketPreviousClose' in x})
+            # If we couldn't find previous close in the text, try alternative approach
+            if not previous_close:
+                # Look for price data in the page structure
+                price_data_elements = soup.find_all('div', {'class': 'P6K39c'})
+                for element in price_data_elements:
+                    text = element.get_text()
+                    if '$' in text and '.' in text:
+                        import re
+                        price_match = re.search(r'\$(\d+\.\d+)', text)
+                        if price_match:
+                            test_price = float(price_match.group(1))
+                            if 300 <= test_price <= 600:  # Reasonable QQQ price range
+                                previous_close = test_price
+                                logging.debug(f"Found previous close in alternative: {previous_close}")
+                                break
             
-            if not prev_close_elements:
-                # Try to find previous close in the stats section
-                stats_section = soup.find('div', {'data-test': 'quote-summary-stats'})
-                if stats_section:
-                    prev_close_elements = stats_section.find_all('td', string=lambda text: text and '$' in text and '.' in text)
-            
-            if not prev_close_elements:
-                raise Exception("Could not find previous close on Yahoo Finance history page")
-            
-            # Clean the previous close string (remove commas and convert to float)
-            prev_close_text = prev_close_elements[0].text.strip()
-            previous_close = float(prev_close_text.replace(',', '').replace('$', ''))
+            if not previous_close:
+                raise Exception("Could not find previous close on Google Finance page")
             
             # Validate that prices are reasonable for QQQ (typically $300-600 range)
             if not (300 <= current_price <= 600) or not (300 <= previous_close <= 600):
@@ -1283,82 +1305,66 @@ def get_qqq_gap():
             yesterday_close = current_price
             day_before_close = previous_close
             
-            logging.debug(f"Successfully scraped QQQ data: Current={current_price}, Previous={previous_close}, Gap={gap_percentage:.2f}%")
-            logging.debug(f"Raw price text: '{price_text}', Raw prev close text: '{prev_close_text}'")
+            logging.debug(f"Successfully scraped QQQ data from Google Finance: Current={current_price}, Previous={previous_close}, Gap={gap_percentage:.2f}%")
             
         except Exception as e:
-            logging.error(f"Error scraping Yahoo Finance history page: {str(e)}")
+            logging.error(f"Error scraping Google Finance: {str(e)}")
             
-            # Try alternative method - Google Finance direct quote
+            # Try alternative method - Yahoo Finance
             try:
-                logging.debug("Trying Google Finance direct quote as fallback...")
-                google_url = "https://www.google.com/finance/quote/QQQ:NASDAQ"
-                google_response = requests.get(google_url, headers=headers, timeout=15)
-                google_response.raise_for_status()
+                logging.debug("Trying Yahoo Finance as fallback...")
+                yahoo_url = "https://finance.yahoo.com/quote/QQQ"
+                yahoo_response = requests.get(yahoo_url, headers=headers, timeout=15)
+                yahoo_response.raise_for_status()
                 
-                google_soup = BeautifulSoup(google_response.text, 'html.parser')
+                yahoo_soup = BeautifulSoup(yahoo_response.text, 'html.parser')
                 
-                # Look for current price in Google Finance
+                # Look for current price in Yahoo Finance
                 current_price = None
                 previous_close = None
                 
                 # Try to find current price
-                price_elements = google_soup.find_all('div', {'class': 'YMlKec fxKbKc'})
+                price_elements = yahoo_soup.find_all('fin-streamer', {'data-field': 'regularMarketPrice'})
+                if not price_elements:
+                    price_elements = yahoo_soup.find_all('span', {'data-reactid': lambda x: x and 'regularMarketPrice' in x})
+                
                 if price_elements:
                     price_text = price_elements[0].text.strip()
                     current_price = float(price_text.replace(',', '').replace('$', ''))
-                    logging.debug(f"Found current price: {current_price}")
+                    logging.debug(f"Found current price on Yahoo: {current_price}")
                 
                 # Try to find previous close
-                # Look for elements that might contain previous close data
-                all_divs = google_soup.find_all('div')
-                for div in all_divs:
-                    text = div.get_text()
-                    if 'Previous close' in text or 'Prev close' in text:
-                        # Extract the number after "Previous close"
-                        import re
-                        matches = re.findall(r'[\$]?(\d+\.\d+)', text)
-                        if matches:
-                            previous_close = float(matches[0])
-                            logging.debug(f"Found previous close: {previous_close}")
-                            break
+                prev_close_elements = yahoo_soup.find_all('fin-streamer', {'data-field': 'regularMarketPreviousClose'})
+                if not prev_close_elements:
+                    prev_close_elements = yahoo_soup.find_all('span', {'data-reactid': lambda x: x and 'regularMarketPreviousClose' in x})
                 
-                # If we couldn't find previous close in the text, try alternative approach
-                if not previous_close:
-                    # Look for price data in the page structure
-                    price_data_elements = google_soup.find_all('div', {'class': 'P6K39c'})
-                    for element in price_data_elements:
-                        text = element.get_text()
-                        if '$' in text and '.' in text:
-                            import re
-                            price_match = re.search(r'\$(\d+\.\d+)', text)
-                            if price_match and not previous_close:
-                                previous_close = float(price_match.group(1))
-                                logging.debug(f"Found previous close in alternative: {previous_close}")
-                                break
+                if prev_close_elements:
+                    prev_close_text = prev_close_elements[0].text.strip()
+                    previous_close = float(prev_close_text.replace(',', '').replace('$', ''))
+                    logging.debug(f"Found previous close on Yahoo: {previous_close}")
                 
                 if current_price and previous_close:
                     # Validate that prices are reasonable for QQQ (typically $300-600 range)
                     if not (300 <= current_price <= 600) or not (300 <= previous_close <= 600):
-                        raise Exception(f"Invalid price values from Google Finance: Current={current_price}, Previous={previous_close}. QQQ should be in $300-600 range.")
+                        raise Exception(f"Invalid price values from Yahoo: Current={current_price}, Previous={previous_close}. QQQ should be in $300-600 range.")
                     
                     gap_percentage = ((current_price - previous_close) / previous_close) * 100
                     
                     # Validate that gap percentage is reasonable (should be within ±10% for normal trading)
                     if abs(gap_percentage) > 10:
-                        raise Exception(f"Unreasonable gap percentage from Google Finance: {gap_percentage:.2f}%. This suggests data parsing error.")
+                        raise Exception(f"Unreasonable gap percentage from Yahoo: {gap_percentage:.2f}%. This suggests data parsing error.")
                     
                     yesterday_date = target_date.strftime('%Y-%m-%d')
                     day_before_date = (target_date - timedelta(days=1)).strftime('%Y-%m-%d')
                     yesterday_close = current_price
                     day_before_close = previous_close
                     
-                    logging.debug(f"Used Google Finance direct quote: Current={current_price}, Previous={previous_close}, Gap={gap_percentage:.2f}%")
+                    logging.debug(f"Used Yahoo Finance fallback: Current={current_price}, Previous={previous_close}, Gap={gap_percentage:.2f}%")
                 else:
-                    raise Exception("Could not find price data in Google Finance direct quote")
+                    raise Exception("Could not find price data in Yahoo Finance")
                 
-            except Exception as google_e:
-                logging.error(f"Google Finance fallback also failed: {str(google_e)}")
+            except Exception as yahoo_e:
+                logging.error(f"Yahoo Finance fallback also failed: {str(yahoo_e)}")
                 
                 # Try third fallback - MarketWatch
                 try:
@@ -1404,7 +1410,7 @@ def get_qqq_gap():
                         
                 except Exception as marketwatch_e:
                     logging.error(f"MarketWatch fallback also failed: {str(marketwatch_e)}")
-                    raise requests.exceptions.RequestException(f"Failed to scrape QQQ data from Yahoo Finance, Google Finance, and MarketWatch: {str(e)}")
+                    raise requests.exceptions.RequestException(f"Failed to scrape QQQ data from Google Finance, Yahoo Finance, and MarketWatch: {str(e)}")
         
         # Calculate gap percentage (only if not already calculated)
         if 'gap_percentage' not in locals():
