@@ -358,7 +358,7 @@ function createChart(containerId, chartData, timeframe) {
     const autoZoomBtn = document.createElement('button');
     autoZoomBtn.className = 'auto-zoom-btn';
     autoZoomBtn.textContent = '🔍 Auto Fit';
-    autoZoomBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 9999; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease;';
+    autoZoomBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 9999; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease; min-height: 44px; min-width: 44px; touch-action: manipulation;';
     autoZoomBtn.setAttribute('data-section', containerId.replace('chart-', ''));
     container.appendChild(autoZoomBtn);
 
@@ -468,7 +468,8 @@ function createChart(containerId, chartData, timeframe) {
             scaleMargins: {
                 top: 0.05,
                 bottom: 0.15
-            }
+            },
+            entireTextOnly: true
         },
         leftPriceScale: {
             visible: false
@@ -572,174 +573,205 @@ function createChart(containerId, chartData, timeframe) {
 // TP/SL Dragging functionality
 function setupTPSLDragging(chart, container) {
     let isMouseDown = false;
+    let isTouchDown = false;
     let dragLine = null;
     
-    container.addEventListener('mousedown', (e) => {
+    // Helper function to get coordinates from event
+    function getEventCoordinates(e) {
+        const rect = container.getBoundingClientRect();
+        if (e.type.includes('touch')) {
+            return {
+                x: e.touches[0].clientX - rect.left,
+                y: e.touches[0].clientY - rect.top
+            };
+        } else {
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+    }
+    
+    // Helper function to check if near TP/SL line
+    function checkNearLine(y) {
         if (!openPosition || !takeProfitLine || !stopLossLine || !chartInstances.simulator?.candlestickSeries) {
-            return;
+            return null;
         }
         
-        const rect = container.getBoundingClientRect();
-        const y = e.clientY - rect.top;
-        
-        // Use SERIES coordinate conversion methods (correct API)
         const series = chartInstances.simulator.candlestickSeries;
-        
         const tpPrice = takeProfitLine.options().price;
         const slPrice = stopLossLine.options().price;
         
-        // Check if mouse is near TP or SL line (within 15 pixels tolerance)
         const tpY = series.priceToCoordinate(tpPrice);
         const slY = series.priceToCoordinate(slPrice);
         
         if (tpY !== null && Math.abs(y - tpY) < 15) {
-            isMouseDown = true;
-            dragLine = 'tp';
-            container.style.cursor = 'ns-resize';
-            
-            // CRITICAL: Disable chart interactions while dragging TP/SL
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: false,
-                    pressedMouseMove: false,
-                    horzTouchDrag: false,
-                    vertTouchDrag: false
-                },
-                handleScale: {
-                    mouseWheel: false,
-                    pinch: false,
-                    axisPressedMouseMove: false,
-                    axisDoubleClickReset: false
-                }
-            });
-            
-            e.preventDefault();
-            e.stopPropagation();
+            return 'tp';
         } else if (slY !== null && Math.abs(y - slY) < 15) {
+            return 'sl';
+        }
+        return null;
+    }
+    
+    // Helper function to disable chart interactions
+    function disableChartInteractions() {
+        chart.applyOptions({
+            handleScroll: {
+                mouseWheel: false,
+                pressedMouseMove: false,
+                horzTouchDrag: false,
+                vertTouchDrag: false
+            },
+            handleScale: {
+                mouseWheel: false,
+                pinch: false,
+                axisPressedMouseMove: false,
+                axisDoubleClickReset: false
+            }
+        });
+    }
+    
+    // Helper function to enable chart interactions
+    function enableChartInteractions() {
+        chart.applyOptions({
+            handleScroll: {
+                mouseWheel: true,
+                pressedMouseMove: true,
+                horzTouchDrag: true,
+                vertTouchDrag: true
+            },
+            handleScale: {
+                mouseWheel: true,
+                pinch: true,
+                axisPressedMouseMove: true,
+                axisDoubleClickReset: true
+            }
+        });
+    }
+    
+    // Mouse events
+    container.addEventListener('mousedown', (e) => {
+        const coords = getEventCoordinates(e);
+        const lineType = checkNearLine(coords.y);
+        
+        if (lineType) {
             isMouseDown = true;
-            dragLine = 'sl';
+            dragLine = lineType;
             container.style.cursor = 'ns-resize';
-            
-            // CRITICAL: Disable chart interactions while dragging TP/SL
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: false,
-                    pressedMouseMove: false,
-                    horzTouchDrag: false,
-                    vertTouchDrag: false
-                },
-                handleScale: {
-                    mouseWheel: false,
-                    pinch: false,
-                    axisPressedMouseMove: false,
-                    axisDoubleClickReset: false
-                }
-            });
-            
+            disableChartInteractions();
             e.preventDefault();
             e.stopPropagation();
         }
     });
     
-    container.addEventListener('mousemove', (e) => {
+    // Helper function to update line position
+    function updateLinePosition(y) {
         if (!openPosition || !takeProfitLine || !stopLossLine || !chartInstances.simulator?.candlestickSeries) return;
         
-        const rect = container.getBoundingClientRect();
-        const y = e.clientY - rect.top;
         const series = chartInstances.simulator.candlestickSeries;
+        const newPrice = series.coordinateToPrice(y);
+        
+        if (newPrice === null || newPrice === undefined) return;
+        
+        if (dragLine === 'tp') {
+            // Update Take Profit line
+            series.removePriceLine(takeProfitLine);
+            takeProfitLine = series.createPriceLine({
+                price: newPrice,
+                color: '#00ff00',
+                lineWidth: 1,
+                lineStyle: LightweightCharts.LineStyle.Dashed,
+                axisLabelVisible: true,
+                title: `TP: $${newPrice.toFixed(2)}`
+            });
+        } else if (dragLine === 'sl') {
+            // Update Stop Loss line
+            series.removePriceLine(stopLossLine);
+            stopLossLine = series.createPriceLine({
+                price: newPrice,
+                color: '#ff4444',
+                lineWidth: 1,
+                lineStyle: LightweightCharts.LineStyle.Dashed,
+                axisLabelVisible: true,
+                title: `SL: $${newPrice.toFixed(2)}`
+            });
+        }
+    }
+    
+    // Helper function to update cursor
+    function updateCursor(y) {
+        if (!openPosition || !takeProfitLine || !stopLossLine || !chartInstances.simulator?.candlestickSeries) return;
+        
+        const series = chartInstances.simulator.candlestickSeries;
+        const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
+        const slPrice = stopLossLine ? stopLossLine.options().price : null;
+        
+        const tpY = tpPrice ? series.priceToCoordinate(tpPrice) : null;
+        const slY = slPrice ? series.priceToCoordinate(slPrice) : null;
+        
+        if ((tpY !== null && Math.abs(y - tpY) < 15) || 
+            (slY !== null && Math.abs(y - slY) < 15)) {
+            container.style.cursor = 'ns-resize';
+        } else {
+            container.style.cursor = 'default';
+        }
+    }
+    
+    container.addEventListener('mousemove', (e) => {
+        const coords = getEventCoordinates(e);
         
         if (isMouseDown && dragLine) {
-            // Update line position while dragging
-            const newPrice = series.coordinateToPrice(y);
-            
-            if (newPrice === null || newPrice === undefined) return;
-            
-            if (dragLine === 'tp') {
-                // Update Take Profit line
-                series.removePriceLine(takeProfitLine);
-                takeProfitLine = series.createPriceLine({
-                    price: newPrice,
-                    color: '#00ff00',
-                    lineWidth: 1,
-                    lineStyle: LightweightCharts.LineStyle.Dashed,
-                    axisLabelVisible: true,
-                    title: `TP: $${newPrice.toFixed(2)}`
-                });
-            } else if (dragLine === 'sl') {
-                // Update Stop Loss line
-                series.removePriceLine(stopLossLine);
-                stopLossLine = series.createPriceLine({
-                    price: newPrice,
-                    color: '#ff4444',
-                    lineWidth: 1,
-                    lineStyle: LightweightCharts.LineStyle.Dashed,
-                    axisLabelVisible: true,
-                    title: `SL: $${newPrice.toFixed(2)}`
-                });
-            }
+            updateLinePosition(coords.y);
         } else {
-            // Change cursor when hovering over TP/SL lines
-            const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
-            const slPrice = stopLossLine ? stopLossLine.options().price : null;
-            
-            const tpY = tpPrice ? series.priceToCoordinate(tpPrice) : null;
-            const slY = slPrice ? series.priceToCoordinate(slPrice) : null;
-            
-            if ((tpY !== null && Math.abs(y - tpY) < 15) || 
-                (slY !== null && Math.abs(y - slY) < 15)) {
-                container.style.cursor = 'ns-resize';
-            } else {
-                container.style.cursor = 'default';
-            }
+            updateCursor(coords.y);
         }
     });
     
-    container.addEventListener('mouseup', () => {
-        if (isMouseDown) {
-            // Re-enable chart interactions when dragging stops
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: true,
-                    pressedMouseMove: true,
-                    horzTouchDrag: true,
-                    vertTouchDrag: true
-                },
-                handleScale: {
-                    mouseWheel: true,
-                    pinch: true,
-                    axisPressedMouseMove: true,
-                    axisDoubleClickReset: true
-                }
-            });
+    // Helper function to end dragging
+    function endDragging() {
+        if (isMouseDown || isTouchDown) {
+            enableChartInteractions();
         }
         
         isMouseDown = false;
+        isTouchDown = false;
         dragLine = null;
         container.style.cursor = 'default';
+    }
+    
+    container.addEventListener('mouseup', endDragging);
+    container.addEventListener('mouseleave', endDragging);
+    
+    // Touch events for mobile
+    container.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const coords = getEventCoordinates(e);
+        const lineType = checkNearLine(coords.y);
+        
+        if (lineType) {
+            isTouchDown = true;
+            dragLine = lineType;
+            disableChartInteractions();
+        }
     });
     
-    container.addEventListener('mouseleave', () => {
-        if (isMouseDown) {
-            // Re-enable chart interactions when dragging stops
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: true,
-                    pressedMouseMove: true,
-                    horzTouchDrag: true,
-                    vertTouchDrag: true
-                },
-                handleScale: {
-                    mouseWheel: true,
-                    pinch: true,
-                    axisPressedMouseMove: true,
-                    axisDoubleClickReset: true
-                }
-            });
-        }
+    container.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const coords = getEventCoordinates(e);
         
-        isMouseDown = false;
-        dragLine = null;
-        container.style.cursor = 'default';
+        if (isTouchDown && dragLine) {
+            updateLinePosition(coords.y);
+        }
+    });
+    
+    container.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        endDragging();
+    });
+    
+    container.addEventListener('touchcancel', (e) => {
+        e.preventDefault();
+        endDragging();
     });
 }
 
@@ -769,7 +801,8 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
             // Set up auto-zoom button functionality
             const autoZoomBtn = document.querySelector(`#${containerId} .auto-zoom-btn`);
             if (autoZoomBtn) {
-                autoZoomBtn.onclick = () => {
+                // Add both click and touch events for mobile compatibility
+                const handleAutoFit = () => {
                     if (chartInstances[section] && chartInstances[section].chart) {
                         const chart = chartInstances[section].chart;
                         
@@ -838,6 +871,13 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                         console.log(`Auto-fit completed for ${section} - both X and Y axes reset`);
                     }
                 };
+                
+                // Add both click and touch events for mobile compatibility
+                autoZoomBtn.addEventListener('click', handleAutoFit);
+                autoZoomBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault(); // Prevent default touch behavior
+                    handleAutoFit();
+                });
             }
 
 
@@ -1528,7 +1568,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: smaColor,
                 lineWidth: 2,
-                title: `SMA ${period}`
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1538,7 +1582,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: period === 20 ? '#e91e63' : '#9c27b0',
                 lineWidth: 2,
-                title: `EMA ${period}`
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1548,7 +1596,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#4caf50',
                 lineWidth: 3,
-                title: 'VWAP'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1568,7 +1620,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             indicatorSeries[section][`${indicatorKey}_upper`] = chart.addLineSeries({
                 color: '#9e9e9e',
                 lineWidth: 1,
-                title: 'BB Upper'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_upper`].setData(bbData.upper);
             
@@ -1576,7 +1632,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             indicatorSeries[section][`${indicatorKey}_middle`] = chart.addLineSeries({
                 color: '#607d8b',
                 lineWidth: 2,
-                title: 'BB Middle'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_middle`].setData(bbData.middle);
             
@@ -1584,7 +1644,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             indicatorSeries[section][`${indicatorKey}_lower`] = chart.addLineSeries({
                 color: '#9e9e9e',
                 lineWidth: 1,
-                title: 'BB Lower'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_lower`].setData(bbData.lower);
             return; // Don't set data again below
@@ -1599,7 +1663,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#f44336',
                 lineWidth: 2,
-                title: 'RSI (scaled)'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1616,7 +1684,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#ff5722',
                 lineWidth: 2,
-                title: 'MACD (scaled)'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             indicatorData = scaledMacd;
@@ -1633,7 +1705,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#673ab7',
                 lineWidth: 2,
-                title: 'Stochastic %K (scaled)'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             indicatorData = scaledStochK;
@@ -2486,7 +2562,7 @@ function placeBuyTrade() {
         });
         
         // Add Take Profit line (draggable)
-        const tpPrice = openPosition.price * 1.02; // 2% above entry
+        const tpPrice = openPosition.price * 1.005; // 0.5% above entry
         takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
             price: tpPrice,
             color: '#00ff00',
@@ -2497,7 +2573,7 @@ function placeBuyTrade() {
         });
         
         // Add Stop Loss line (draggable)
-        const slPrice = openPosition.price * 0.98; // 2% below entry
+        const slPrice = openPosition.price * 0.995; // 0.5% below entry
         stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
             price: slPrice,
             color: '#ff4444',
@@ -2577,7 +2653,7 @@ function placeSellTrade() {
             });
             
             // Add Take Profit line for SHORT (below entry price)
-            const tpPrice = openPosition.price * 0.98; // 2% below entry
+            const tpPrice = openPosition.price * 0.995; // 0.5% below entry
             takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
                 price: tpPrice,
                 color: '#00ff00',
@@ -2588,7 +2664,7 @@ function placeSellTrade() {
             });
             
             // Add Stop Loss line for SHORT (above entry price)
-            const slPrice = openPosition.price * 1.02; // 2% above entry
+            const slPrice = openPosition.price * 1.005; // 0.5% above entry
             stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
                 price: slPrice,
                 color: '#ff4444',
@@ -2668,6 +2744,12 @@ function updateTradeSummary() {
     if (tradeHistory.length === 0) {
         tradeHistoryTable.style.display = 'none';
         tradeHistoryEmpty.style.display = 'block';
+        
+        // Clear mobile trade history
+        const mobileTradeHistory = document.querySelector('.mobile-trade-history');
+        if (mobileTradeHistory) {
+            mobileTradeHistory.innerHTML = '';
+        }
     } else {
         tradeHistoryTable.style.display = 'table';
         tradeHistoryEmpty.style.display = 'none';
@@ -2675,22 +2757,72 @@ function updateTradeSummary() {
         // Clear existing rows
         tradeHistoryTbody.innerHTML = '';
         
-        // Add each trade as a table row
+        // Clear mobile trade history
+        const mobileTradeHistory = document.querySelector('.mobile-trade-history');
+        if (mobileTradeHistory) {
+            mobileTradeHistory.innerHTML = '';
+        }
+        
+        // Add each trade as a table row and mobile card
         tradeHistory.forEach((trade, index) => {
             const row = document.createElement('tr');
             const pnlClass = trade.pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
+            
+            // Calculate percentage gain
+            const percentGain = ((trade.exitPrice - trade.entryPrice) / trade.entryPrice) * 100;
+            const percentGainClass = percentGain >= 0 ? 'pnl-positive' : 'pnl-negative';
             
             row.innerHTML = `
                 <td>${trade.type.toUpperCase()}</td>
                 <td>$${trade.entryPrice.toFixed(2)}</td>
                 <td>$${trade.exitPrice.toFixed(2)}</td>
                 <td>${trade.shares}</td>
-                <td>${trade.timestamp.split(' ')[1]}</td>
                 <td class="${pnlClass}">$${trade.pnl.toFixed(2)}</td>
+                <td class="${percentGainClass}">${percentGain >= 0 ? '+' : ''}${percentGain.toFixed(2)}%</td>
+                <td>${trade.timestamp.split(' ')[1]}</td>
                 <td>${trade.closeReason || 'Manual'}</td>
             `;
             
             tradeHistoryTbody.appendChild(row);
+            
+            // Create mobile trade card
+            if (mobileTradeHistory) {
+                const mobileCard = document.createElement('div');
+                mobileCard.className = 'mobile-trade-card';
+                
+                const pnlClassMobile = trade.pnl >= 0 ? 'positive' : 'negative';
+                const typeClass = trade.type.toLowerCase();
+                
+                mobileCard.innerHTML = `
+                    <div class="mobile-trade-header">
+                        <span class="mobile-trade-type ${typeClass}">${trade.type.toUpperCase()}</span>
+                        <span class="mobile-trade-pnl ${pnlClassMobile}">$${trade.pnl.toFixed(2)}</span>
+                    </div>
+                    <div class="mobile-trade-details">
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">Entry:</span>
+                            <span class="mobile-trade-value">$${trade.entryPrice.toFixed(2)}</span>
+                        </div>
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">Exit:</span>
+                            <span class="mobile-trade-value">$${trade.exitPrice.toFixed(2)}</span>
+                        </div>
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">Shares:</span>
+                            <span class="mobile-trade-value">${trade.shares}</span>
+                        </div>
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">% Gain:</span>
+                            <span class="mobile-trade-value ${percentGainClass}">${percentGain >= 0 ? '+' : ''}${percentGain.toFixed(2)}%</span>
+                        </div>
+                        <div class="mobile-trade-time">
+                            ${trade.timestamp.split(' ')[1]} - ${trade.closeReason || 'Manual'}
+                        </div>
+                    </div>
+                `;
+                
+                mobileTradeHistory.appendChild(mobileCard);
+            }
         });
     }
 }
@@ -2983,6 +3115,10 @@ function startReplay(section) {
         if (config.hasTradeSimulator) {
             buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count || openPosition?.type === 'sell';
             sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
+            
+            // Check for TP/SL hits during replay
+            checkPositionForTPSL(config.currentReplayIndex());
+            
             updateTradeSummary();
         }
 
@@ -3206,6 +3342,125 @@ function nextCandle(section) {
     updateChartToIndex(section);
 }
 
+function checkPositionForTPSL(currentIndex) {
+    // Only check if we have an open position and TP/SL lines
+    if (!openPosition || currentIndex <= 0 || (!takeProfitLine && !stopLossLine)) {
+        return;
+    }
+    
+    const config = getReplayConfig('simulator');
+    const chartData = config.chartData();
+    
+    const currentPrice = chartData.close[currentIndex - 1];
+    const currentHigh = chartData.high[currentIndex - 1];
+    const currentLow = chartData.low[currentIndex - 1];
+    
+    // Get current TP/SL prices (they might have been dragged)
+    const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
+    const slPrice = stopLossLine ? stopLossLine.options().price : null;
+    
+    // Debug logging (temporarily enabled for testing)
+    if (true) { // Set to false to disable debug logs
+        console.log(`Price Check - Current: ${currentPrice.toFixed(2)}, High: ${currentHigh.toFixed(2)}, Low: ${currentLow.toFixed(2)}`);
+        console.log(`TP/SL Levels - TP: ${tpPrice ? tpPrice.toFixed(2) : 'N/A'}, SL: ${slPrice ? slPrice.toFixed(2) : 'N/A'}`);
+        console.log(`Position Type: ${openPosition.type}`);
+    }
+    
+    let shouldClose = false;
+    let closeReason = '';
+    let closePrice = currentPrice;
+    
+    if (openPosition.type === 'buy') {
+        // Check Take Profit (price goes above TP)
+        if (tpPrice && currentHigh >= tpPrice) {
+            shouldClose = true;
+            closeReason = 'Take Profit Hit';
+            closePrice = tpPrice;
+            console.log(`LONG TP HIT! High ${currentHigh.toFixed(2)} >= TP ${tpPrice.toFixed(2)}`);
+        }
+        // Check Stop Loss (price goes below SL)
+        else if (slPrice && currentLow <= slPrice) {
+            shouldClose = true;
+            closeReason = 'Stop Loss Hit';
+            closePrice = slPrice;
+            console.log(`LONG SL HIT! Low ${currentLow.toFixed(2)} <= SL ${slPrice.toFixed(2)}`);
+        }
+    } else if (openPosition.type === 'sell') {
+        // Check Take Profit for SHORT (price goes below TP)
+        if (tpPrice && currentLow <= tpPrice) {
+            shouldClose = true;
+            closeReason = 'Take Profit Hit';
+            closePrice = tpPrice;
+            console.log(`SHORT TP HIT! Low ${currentLow.toFixed(2)} <= TP ${tpPrice.toFixed(2)}`);
+        }
+        // Check Stop Loss for SHORT (price goes above SL)
+        else if (slPrice && currentHigh >= slPrice) {
+            shouldClose = true;
+            closeReason = 'Stop Loss Hit';
+            closePrice = slPrice;
+            console.log(`SHORT SL HIT! High ${currentHigh.toFixed(2)} >= SL ${slPrice.toFixed(2)}`);
+        }
+    }
+    
+    // Auto-close position if TP/SL hit
+    if (shouldClose) {
+        const pnl = openPosition.type === 'buy'
+            ? (closePrice - openPosition.price) * openPosition.shares
+            : (openPosition.price - closePrice) * openPosition.shares;
+        
+        // Remove alert popup - just close position silently
+        console.log(`🎯 ${closeReason}! Position: ${openPosition.type.toUpperCase()}, Exit Price: $${closePrice.toFixed(2)}, P&L: $${pnl.toFixed(2)}`);
+        
+        tradeHistory.push({
+            type: openPosition.type,
+            entryPrice: openPosition.price,
+            exitPrice: closePrice,
+            shares: openPosition.shares,
+            timestamp: chartData.timestamp[currentIndex - 1],
+            pnl: parseFloat(pnl.toFixed(2)),
+            closeReason: closeReason
+        });
+        
+        // Remove all price lines
+        if (chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
+            if (entryPriceLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
+                entryPriceLine = null;
+            }
+            if (takeProfitLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(takeProfitLine);
+                takeProfitLine = null;
+            }
+            if (stopLossLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(stopLossLine);
+                stopLossLine = null;
+            }
+        }
+        
+        openPosition = null;
+        
+        // Make sure chart interactions are re-enabled after auto-close
+        if (chartInstances.simulator?.chart) {
+            chartInstances.simulator.chart.applyOptions({
+                handleScroll: {
+                    mouseWheel: true,
+                    pressedMouseMove: true,
+                    horzTouchDrag: true,
+                    vertTouchDrag: true
+                },
+                handleScale: {
+                    mouseWheel: true,
+                    pinch: true,
+                    axisPressedMouseMove: true,
+                    axisDoubleClickReset: true
+                }
+            });
+        }
+        
+        console.log(`Position auto-closed: ${closeReason} at $${closePrice.toFixed(2)} with P/L: $${pnl.toFixed(2)}`);
+    }
+}
+
 function updateChartToIndex(section) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
@@ -3235,116 +3490,7 @@ function updateChartToIndex(section) {
         sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
         
         // Check for TP/SL hits
-        if (openPosition && config.currentReplayIndex() > 0 && (takeProfitLine || stopLossLine)) {
-            const currentPrice = chartData.close[config.currentReplayIndex() - 1];
-            const currentHigh = chartData.high[config.currentReplayIndex() - 1];
-            const currentLow = chartData.low[config.currentReplayIndex() - 1];
-            
-            // Get current TP/SL prices (they might have been dragged)
-            const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
-            const slPrice = stopLossLine ? stopLossLine.options().price : null;
-            
-            // Debug logging (temporarily enabled for testing)
-            if (true) { // Set to false to disable debug logs
-                console.log(`Price Check - Current: ${currentPrice.toFixed(2)}, High: ${currentHigh.toFixed(2)}, Low: ${currentLow.toFixed(2)}`);
-                console.log(`TP/SL Levels - TP: ${tpPrice ? tpPrice.toFixed(2) : 'N/A'}, SL: ${slPrice ? slPrice.toFixed(2) : 'N/A'}`);
-                console.log(`Position Type: ${openPosition.type}`);
-            }
-            
-            let shouldClose = false;
-            let closeReason = '';
-            let closePrice = currentPrice;
-            
-            if (openPosition.type === 'buy') {
-                // Check Take Profit (price goes above TP)
-                if (tpPrice && currentHigh >= tpPrice) {
-                    shouldClose = true;
-                    closeReason = 'Take Profit Hit';
-                    closePrice = tpPrice;
-                    console.log(`LONG TP HIT! High ${currentHigh.toFixed(2)} >= TP ${tpPrice.toFixed(2)}`);
-                }
-                // Check Stop Loss (price goes below SL)
-                else if (slPrice && currentLow <= slPrice) {
-                    shouldClose = true;
-                    closeReason = 'Stop Loss Hit';
-                    closePrice = slPrice;
-                    console.log(`LONG SL HIT! Low ${currentLow.toFixed(2)} <= SL ${slPrice.toFixed(2)}`);
-                }
-            } else if (openPosition.type === 'sell') {
-                // Check Take Profit for SHORT (price goes below TP)
-                if (tpPrice && currentLow <= tpPrice) {
-                    shouldClose = true;
-                    closeReason = 'Take Profit Hit';
-                    closePrice = tpPrice;
-                    console.log(`SHORT TP HIT! Low ${currentLow.toFixed(2)} <= TP ${tpPrice.toFixed(2)}`);
-                }
-                // Check Stop Loss for SHORT (price goes above SL)
-                else if (slPrice && currentHigh >= slPrice) {
-                    shouldClose = true;
-                    closeReason = 'Stop Loss Hit';
-                    closePrice = slPrice;
-                    console.log(`SHORT SL HIT! High ${currentHigh.toFixed(2)} >= SL ${slPrice.toFixed(2)}`);
-                }
-            }
-            
-            // Auto-close position if TP/SL hit
-            if (shouldClose) {
-                const pnl = openPosition.type === 'buy'
-                    ? (closePrice - openPosition.price) * openPosition.shares
-                    : (openPosition.price - closePrice) * openPosition.shares;
-                
-                // Show immediate user feedback
-                alert(`🎯 ${closeReason}!\n\nPosition: ${openPosition.type.toUpperCase()}\nExit Price: $${closePrice.toFixed(2)}\nP&L: $${pnl.toFixed(2)}`);
-                
-                tradeHistory.push({
-                    type: openPosition.type,
-                    entryPrice: openPosition.price,
-                    exitPrice: closePrice,
-                    shares: openPosition.shares,
-                    timestamp: chartData.timestamp[config.currentReplayIndex() - 1],
-                    pnl: parseFloat(pnl.toFixed(2)),
-                    closeReason: closeReason
-                });
-                
-                // Remove all price lines
-                if (chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
-                    if (entryPriceLine) {
-                        chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
-                        entryPriceLine = null;
-                    }
-                    if (takeProfitLine) {
-                        chartInstances.simulator.candlestickSeries.removePriceLine(takeProfitLine);
-                        takeProfitLine = null;
-                    }
-                    if (stopLossLine) {
-                        chartInstances.simulator.candlestickSeries.removePriceLine(stopLossLine);
-                        stopLossLine = null;
-                    }
-                }
-                
-                openPosition = null;
-                
-                // Make sure chart interactions are re-enabled after auto-close
-                if (chartInstances.simulator?.chart) {
-                    chartInstances.simulator.chart.applyOptions({
-                        handleScroll: {
-                            mouseWheel: true,
-                            pressedMouseMove: true,
-                            horzTouchDrag: true,
-                            vertTouchDrag: true
-                        },
-                        handleScale: {
-                            mouseWheel: true,
-                            pinch: true,
-                            axisPressedMouseMove: true,
-                            axisDoubleClickReset: true
-                        }
-                    });
-                }
-                
-                console.log(`Position auto-closed: ${closeReason} at $${closePrice.toFixed(2)} with P/L: $${pnl.toFixed(2)}`);
-            }
-        }
+        checkPositionForTPSL(config.currentReplayIndex());
         
         updateTradeSummary();
     }
