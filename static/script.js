@@ -1,6 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing app...');
     
+    // Initialize QQQ gap functionality (always available)
+    setupQQQGapRefresh();
+    loadQQQGap(); // Load initial QQQ gap data
+    
     // Check if this page has chart containers (only check library on pages that need charts)
     const hasChartContainers = !!(
         document.getElementById('chart-simulator') ||
@@ -64,10 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (formEventsForm) formEventsForm.addEventListener('submit', loadEventDates);
         if (formEarningsForm) formEarningsForm.addEventListener('submit', loadEarningsDates);
         if (formGapInsights) formGapInsights.addEventListener('submit', loadGapInsights);
-        
-        // Initialize QQQ gap functionality
-        setupQQQGapRefresh();
-        loadQQQGap(); // Load initial QQQ gap data
         
         // Replay control listeners (Market Simulator)
         const playSimulator = document.getElementById('play-replay-simulator');
@@ -4206,11 +4206,17 @@ async function loadGapInsights(event) {
 
 // QQQ Gap functionality
 async function loadQQQGap() {
+    console.log('loadQQQGap called');
     const qqqGapContent = document.getElementById('qqq-gap-content');
-    if (!qqqGapContent) return;
+    console.log('qqq-gap-content element:', qqqGapContent);
+    if (!qqqGapContent) {
+        console.log('qqq-gap-content element not found, returning');
+        return;
+    }
     
     try {
         qqqGapContent.innerHTML = '<div class="qqq-gap-loading">Loading QQQ gap data...</div>';
+        console.log('Making API call to /api/qqq_gap');
         
         const response = await fetch('/api/qqq_gap', {
             method: 'GET',
@@ -4219,6 +4225,8 @@ async function loadQQQGap() {
                 'Content-Type': 'application/json'
             }
         });
+        
+        console.log('API response status:', response.status);
         
         if (!response.ok) {
             const errorText = await response.text();
@@ -4266,9 +4274,14 @@ async function loadQQQGap() {
 }
 
 function setupQQQGapRefresh() {
+    console.log('setupQQQGapRefresh called');
     const refreshBtn = document.getElementById('refresh-qqq-gap');
+    console.log('refresh-qqq-gap button:', refreshBtn);
     if (refreshBtn) {
         refreshBtn.addEventListener('click', loadQQQGap);
+        console.log('Refresh button event listener added');
+    } else {
+        console.log('Refresh button not found');
     }
 }
 
