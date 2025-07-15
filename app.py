@@ -1236,7 +1236,9 @@ def get_qqq_gap():
             if not price_elements:
                 raise Exception("Could not find current price on Yahoo Finance page")
             
-            current_price = float(price_elements[0].text.strip())
+            # Clean the price string (remove commas and convert to float)
+            price_text = price_elements[0].text.strip()
+            current_price = float(price_text.replace(',', ''))
             
             # Get previous close from the page
             prev_close_elements = soup.find_all('fin-streamer', {'data-field': 'regularMarketPreviousClose'})
@@ -1247,7 +1249,9 @@ def get_qqq_gap():
             if not prev_close_elements:
                 raise Exception("Could not find previous close on Yahoo Finance page")
             
-            previous_close = float(prev_close_elements[0].text.strip())
+            # Clean the previous close string (remove commas and convert to float)
+            prev_close_text = prev_close_elements[0].text.strip()
+            previous_close = float(prev_close_text.replace(',', ''))
             
             # Calculate gap percentage
             gap_percentage = ((current_price - previous_close) / previous_close) * 100
@@ -1260,6 +1264,7 @@ def get_qqq_gap():
             day_before_close = previous_close
             
             logging.debug(f"Successfully scraped QQQ data: Current={current_price}, Previous={previous_close}, Gap={gap_percentage:.2f}%")
+            logging.debug(f"Raw price text: '{price_text}', Raw prev close text: '{prev_close_text}'")
             
         except Exception as e:
             logging.error(f"Error scraping Yahoo Finance: {str(e)}")
@@ -1276,7 +1281,8 @@ def get_qqq_gap():
                 # Look for price data in mobile page
                 price_text = mobile_soup.find('span', string=lambda text: text and '$' in text and '.' in text)
                 if price_text:
-                    current_price = float(price_text.text.strip().replace('$', ''))
+                    price_clean = price_text.text.strip().replace('$', '').replace(',', '')
+                    current_price = float(price_clean)
                     
                     # For mobile, we'll use a simple calculation or get from a different source
                     # For now, let's use a reasonable estimate based on typical QQQ movement
