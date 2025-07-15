@@ -1377,7 +1377,7 @@ footer p {
 /* Mobile Trade History Styles */
 @media (max-width: 768px) {
     #trade-history-table {
-        display: none; /* Hide the table on mobile */
+        display: none !important; /* Hide the table on mobile */
     }
     
     #trade-history-container {
@@ -1393,13 +1393,18 @@ footer p {
     .mobile-trade-history {
         display: block;
     }
-    
-    /* Hide mobile trade history on desktop */
-    @media (min-width: 769px) {
-        .mobile-trade-history {
-            display: none;
-        }
+}
+
+/* Desktop Trade History Styles */
+@media (min-width: 769px) {
+    .mobile-trade-history {
+        display: none !important; /* Hide mobile cards on desktop */
     }
+    
+    #trade-history-table {
+        display: table; /* Show table on desktop */
+    }
+}
     
     .mobile-trade-card {
         background: #f8f9fa;

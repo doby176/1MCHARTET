@@ -358,7 +358,7 @@ function createChart(containerId, chartData, timeframe) {
     const autoZoomBtn = document.createElement('button');
     autoZoomBtn.className = 'auto-zoom-btn';
     autoZoomBtn.textContent = '🔍 Auto Fit';
-    autoZoomBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 9999; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease;';
+    autoZoomBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 9999; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease; min-height: 44px; min-width: 44px; touch-action: manipulation;';
     autoZoomBtn.setAttribute('data-section', containerId.replace('chart-', ''));
     container.appendChild(autoZoomBtn);
 
@@ -801,7 +801,8 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
             // Set up auto-zoom button functionality
             const autoZoomBtn = document.querySelector(`#${containerId} .auto-zoom-btn`);
             if (autoZoomBtn) {
-                autoZoomBtn.onclick = () => {
+                // Add both click and touch events for mobile compatibility
+                const handleAutoFit = () => {
                     if (chartInstances[section] && chartInstances[section].chart) {
                         const chart = chartInstances[section].chart;
                         
@@ -870,6 +871,13 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                         console.log(`Auto-fit completed for ${section} - both X and Y axes reset`);
                     }
                 };
+                
+                // Add both click and touch events for mobile compatibility
+                autoZoomBtn.addEventListener('click', handleAutoFit);
+                autoZoomBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault(); // Prevent default touch behavior
+                    handleAutoFit();
+                });
             }
 
 
