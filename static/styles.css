@@ -1362,6 +1362,17 @@ footer p {
     border: 1px solid #e9ecef;
 }
 
+/* P&L Styling */
+.pnl-positive {
+    color: #00b386;
+    font-weight: var(--font-weight-semibold);
+}
+
+.pnl-negative {
+    color: #e74c3c;
+    font-weight: var(--font-weight-semibold);
+}
+
 /* Mobile Trade History Styles */
 @media (max-width: 768px) {
     #trade-history-table {
@@ -1400,17 +1411,22 @@ footer p {
     
     #trade-history-table th:nth-child(5),
     #trade-history-table td:nth-child(5) {
-        min-width: 80px; /* P&L */
+        min-width: 70px; /* P&L */
     }
     
     #trade-history-table th:nth-child(6),
     #trade-history-table td:nth-child(6) {
-        min-width: 100px; /* Time */
+        min-width: 60px; /* % Gain */
     }
     
     #trade-history-table th:nth-child(7),
     #trade-history-table td:nth-child(7) {
-        min-width: 80px; /* Reason */
+        min-width: 80px; /* Time */
+    }
+    
+    #trade-history-table th:nth-child(8),
+    #trade-history-table td:nth-child(8) {
+        min-width: 70px; /* Reason */
     }
     
     #trade-history-container {

@@ -1563,7 +1563,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 title: `SMA ${period}`,
                 priceScaleId: 'right',
                 priceLineVisible: false,
-                autoscaleInfoProvider: () => null
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1576,7 +1577,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 title: `EMA ${period}`,
                 priceScaleId: 'right',
                 priceLineVisible: false,
-                autoscaleInfoProvider: () => null
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1589,7 +1591,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 title: 'VWAP',
                 priceScaleId: 'right',
                 priceLineVisible: false,
-                autoscaleInfoProvider: () => null
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1612,7 +1615,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 title: 'BB Upper',
                 priceScaleId: 'right',
                 priceLineVisible: false,
-                autoscaleInfoProvider: () => null
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_upper`].setData(bbData.upper);
             
@@ -1623,7 +1627,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 title: 'BB Middle',
                 priceScaleId: 'right',
                 priceLineVisible: false,
-                autoscaleInfoProvider: () => null
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_middle`].setData(bbData.middle);
             
@@ -1634,7 +1639,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 title: 'BB Lower',
                 priceScaleId: 'right',
                 priceLineVisible: false,
-                autoscaleInfoProvider: () => null
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_lower`].setData(bbData.lower);
             return; // Don't set data again below
@@ -1652,7 +1658,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 title: 'RSI (scaled)',
                 priceScaleId: 'right',
                 priceLineVisible: false,
-                autoscaleInfoProvider: () => null
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1672,7 +1679,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 title: 'MACD (scaled)',
                 priceScaleId: 'right',
                 priceLineVisible: false,
-                autoscaleInfoProvider: () => null
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             indicatorData = scaledMacd;
@@ -1692,7 +1700,8 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
                 title: 'Stochastic %K (scaled)',
                 priceScaleId: 'right',
                 priceLineVisible: false,
-                autoscaleInfoProvider: () => null
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             indicatorData = scaledStochK;
@@ -2739,13 +2748,18 @@ function updateTradeSummary() {
             const row = document.createElement('tr');
             const pnlClass = trade.pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
             
+            // Calculate percentage gain
+            const percentGain = ((trade.exitPrice - trade.entryPrice) / trade.entryPrice) * 100;
+            const percentGainClass = percentGain >= 0 ? 'pnl-positive' : 'pnl-negative';
+            
             row.innerHTML = `
                 <td>${trade.type.toUpperCase()}</td>
                 <td>$${trade.entryPrice.toFixed(2)}</td>
                 <td>$${trade.exitPrice.toFixed(2)}</td>
                 <td>${trade.shares}</td>
-                <td>${trade.timestamp.split(' ')[1]}</td>
                 <td class="${pnlClass}">$${trade.pnl.toFixed(2)}</td>
+                <td class="${percentGainClass}">${percentGain >= 0 ? '+' : ''}${percentGain.toFixed(2)}%</td>
+                <td>${trade.timestamp.split(' ')[1]}</td>
                 <td>${trade.closeReason || 'Manual'}</td>
             `;
             
