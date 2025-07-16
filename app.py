@@ -1202,66 +1202,52 @@ def get_real_time_gap_data(ticker, date):
         
         logging.debug(f"Found {len(price_candidates)} price candidates: {price_candidates[:5]}")
         
-        # Look for the current price - try multiple approaches
+        # Look for the current price and previous close using the correct CNBC selectors
         current_price = None
         prev_close = None
         
-        # Method 1: Look for specific CNBC selectors
-        price_element = soup.find('span', {'data-testid': 'QuoteStrip-lastPrice'})
-        if not price_element:
-            price_element = soup.find('span', {'class': 'QuoteStrip-lastPrice'})
-        if not price_element:
-            price_element = soup.find('div', {'class': 'QuoteStrip-lastPrice'})
+        # Find all Summary-stat elements (these contain the key stats)
+        summary_stats = soup.find_all('li', {'class': 'Summary-stat'})
+        logging.debug(f"Found {len(summary_stats)} summary stats")
         
-        if price_element:
-            current_price_text = price_element.text.strip()
-            current_price = float(current_price_text.replace('$', '').replace(',', ''))
-            logging.debug(f"Found current price via selector: {current_price}")
+        for stat in summary_stats:
+            label_element = stat.find('span', {'class': 'Summary-label'})
+            value_element = stat.find('span', {'class': 'Summary-value'})
+            
+            if label_element and value_element:
+                label = label_element.text.strip()
+                value = value_element.text.strip()
+                logging.debug(f"Found stat: {label} = {value}")
+                
+                # Look for Open (current price)
+                if label == 'Open':
+                    try:
+                        current_price = float(value.replace(',', ''))
+                        logging.debug(f"Found current price (Open): {current_price}")
+                    except:
+                        pass
+                
+                # Look for Prev Close (previous close)
+                elif label == 'Prev Close':
+                    try:
+                        prev_close = float(value.replace(',', ''))
+                        logging.debug(f"Found previous close: {prev_close}")
+                    except:
+                        pass
         
-        # Method 2: Look for the largest price number (likely current price)
-        if not current_price and price_candidates:
-            # Sort by length and try to find the most prominent price
-            price_candidates.sort(key=lambda x: len(x['text']), reverse=True)
-            for candidate in price_candidates:
-                try:
-                    price_text = candidate['text']
-                    if '$' in price_text and '.' in price_text:
-                        price_value = float(price_text.replace('$', '').replace(',', ''))
-                        if 100 < price_value < 1000:  # QQQ is typically in this range
-                            current_price = price_value
-                            logging.debug(f"Found current price via pattern: {current_price}")
-                            break
-                except:
-                    continue
-        
-        # Look for previous close
-        prev_close_element = soup.find('span', {'data-testid': 'QuoteStrip-previousClose'})
-        if not prev_close_element:
-            prev_close_element = soup.find('span', {'class': 'QuoteStrip-previousClose'})
-        if not prev_close_element:
-            # Try finding by text pattern
-            prev_close_element = soup.find('td', text=lambda x: x and 'Previous Close' in x)
-            if prev_close_element:
-                prev_close_element = prev_close_element.find_next_sibling('td')
-        
-        if prev_close_element:
-            prev_close_text = prev_close_element.text.strip()
-            prev_close = float(prev_close_text.replace('$', '').replace(',', ''))
-            logging.debug(f"Found previous close via selector: {prev_close}")
-        
-        # Method 2: Look for second largest price number (likely previous close)
-        if not prev_close and len(price_candidates) > 1:
-            for candidate in price_candidates[1:]:  # Skip the first one (current price)
-                try:
-                    price_text = candidate['text']
-                    if '$' in price_text and '.' in price_text:
-                        price_value = float(price_text.replace('$', '').replace(',', ''))
-                        if 100 < price_value < 1000:  # QQQ is typically in this range
-                            prev_close = price_value
-                            logging.debug(f"Found previous close via pattern: {prev_close}")
-                            break
-                except:
-                    continue
+        # Fallback: If we didn't find Open, try to find the current price elsewhere
+        if not current_price:
+            # Look for the main quote price (usually the largest number on the page)
+            price_element = soup.find('span', {'data-testid': 'QuoteStrip-lastPrice'})
+            if not price_element:
+                price_element = soup.find('span', {'class': 'QuoteStrip-lastPrice'})
+            if not price_element:
+                price_element = soup.find('div', {'class': 'QuoteStrip-lastPrice'})
+            
+            if price_element:
+                current_price_text = price_element.text.strip()
+                current_price = float(current_price_text.replace('$', '').replace(',', ''))
+                logging.debug(f"Found current price via fallback selector: {current_price}")
         
         if not current_price:
             logging.error("Could not find current price on CNBC page")
