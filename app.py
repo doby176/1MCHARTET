@@ -1202,7 +1202,7 @@ def get_real_time_gap_data(ticker, date):
             return {'error': f'No data available for {ticker} from Alpha Vantage.'}
 
         # Extract the daily time series data
-        time_series_data = data['Time Series (Daily)']
+        daily_data = data['Time Series (Daily)']
         
         # Get today's date and yesterday's date
         today = datetime.now()
@@ -1216,32 +1216,31 @@ def get_real_time_gap_data(ticker, date):
         today_str = today.strftime('%Y-%m-%d')
         yesterday_str = yesterday.strftime('%Y-%m-%d')
         
-        # Get available dates from the API response
-        available_dates = list(time_series_data.keys())
-        available_dates.sort(reverse=True)  # Sort in descending order (most recent first)
+        logging.debug(f"Looking for data - Today: {today_str}, Yesterday: {yesterday_str}")
+        logging.debug(f"Available dates: {list(daily_data.keys())[:5]}")
         
-        logging.debug(f"Available dates for {ticker}: {available_dates[:5]}")  # Show first 5 dates
-        
-        # Find yesterday's data (most recent trading day)
-        yesterday_data = None
+        # Get yesterday's close price (most recent available data)
+        yesterday_close = None
         yesterday_date_str = None
         
-        # Look for yesterday's data first
-        if yesterday_str in time_series_data:
-            yesterday_data = time_series_data[yesterday_str]
+        # First try to get yesterday's data
+        if yesterday_str in daily_data:
+            yesterday_close = float(daily_data[yesterday_str]['4. close'])
             yesterday_date_str = yesterday_str
+            logging.debug(f"Found yesterday's data: {yesterday_str} - Close: {yesterday_close}")
         else:
             # If yesterday's data is not available, use the most recent available date
+            available_dates = list(daily_data.keys())
+            available_dates.sort(reverse=True)  # Sort in descending order (most recent first)
+            
             if available_dates:
                 yesterday_date_str = available_dates[0]
-                yesterday_data = time_series_data[yesterday_date_str]
+                yesterday_close = float(daily_data[yesterday_date_str]['4. close'])
+                logging.debug(f"Using most recent available data: {yesterday_date_str} - Close: {yesterday_close}")
         
-        if not yesterday_data:
-            logging.error(f"Could not find yesterday's data for {ticker}")
+        if yesterday_close is None:
+            logging.error(f"Could not find any data for {ticker}")
             return {'error': f'No data available for {ticker} from Alpha Vantage.'}
-        
-        # Get yesterday's close price
-        yesterday_close = float(yesterday_data['4. close'])
         
         # Check if today's data is available (market is open)
         today_open = None
@@ -1252,8 +1251,8 @@ def get_real_time_gap_data(ticker, date):
         gap_pct = None
         gap_direction = None
         
-        if today_str in time_series_data:
-            today_data = time_series_data[today_str]
+        if today_str in daily_data:
+            today_data = daily_data[today_str]
             today_open = float(today_data['1. open'])
             today_high = float(today_data['2. high'])
             today_low = float(today_data['3. low'])
@@ -1263,6 +1262,10 @@ def get_real_time_gap_data(ticker, date):
             # Calculate gap percentage
             gap_pct = ((today_open - yesterday_close) / yesterday_close) * 100
             gap_direction = 'Up' if gap_pct > 0 else 'Down'
+            
+            logging.debug(f"Found today's data: {today_str} - Open: {today_open}, Gap: {gap_pct:.2f}%")
+        else:
+            logging.debug(f"No data found for today ({today_str}) - market may not be open yet")
         
         return {
             'ticker': ticker,
@@ -1298,13 +1301,59 @@ def get_real_time_gap():
         return jsonify({'error': 'Invalid ticker'}), 400
     
     try:
+        logging.debug(f"Calling get_real_time_gap_data for {ticker}")
         gap_data = get_real_time_gap_data(ticker, None)  # No date parameter needed
+        logging.debug(f"Received gap data: {gap_data}")
+        
         if 'error' in gap_data:
+            logging.error(f"Error in gap data: {gap_data['error']}")
             return jsonify(gap_data), 404
         return jsonify(gap_data)
     except Exception as e:
         logging.error(f"Error processing real-time gap request: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/test_alpha_vantage', methods=['GET'])
+def test_alpha_vantage():
+    """Test endpoint to verify Alpha Vantage API is working"""
+    try:
+        params = {
+            'function': 'TIME_SERIES_DAILY',
+            'symbol': 'QQQ',
+            'apikey': ALPHA_VANTAGE_API_KEY,
+            'outputsize': 'compact'
+        }
+        
+        response = requests.get(ALPHA_VANTAGE_BASE_URL, params=params)
+        logging.debug(f"Alpha Vantage test response status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if 'Time Series (Daily)' in data:
+                available_dates = list(data['Time Series (Daily)'].keys())[:5]
+                return jsonify({
+                    'status': 'success',
+                    'available_dates': available_dates,
+                    'api_key': ALPHA_VANTAGE_API_KEY[:10] + '...'  # Show first 10 chars
+                })
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'No time series data in response',
+                    'response': data
+                })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': f'HTTP {response.status_code}',
+                'response': response.text
+            })
+    except Exception as e:
+        logging.error(f"Error testing Alpha Vantage: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        })
 
 if __name__ == '__main__':
     app.run(debug=True)
