@@ -1167,7 +1167,7 @@ def get_earnings_by_bin():
         return jsonify({'error': 'Server error'}), 500
 
 # Alpha Vantage API configuration
-ALPHA_VANTAGE_API_KEY = os.environ.get('ALPHA_VANTAGE_API_KEY', "9K03GJJCB96AJCO3")
+ALPHA_VANTAGE_API_KEY = "9K03GJJCB96AJCO3"
 ALPHA_VANTAGE_BASE_URL = "https://www.alphavantage.co/query"
 
 def get_real_time_gap_data(ticker, date):
@@ -1195,15 +1195,10 @@ def get_real_time_gap_data(ticker, date):
         
         if 'Note' in data:
             logging.error(f"Alpha Vantage API note: {data['Note']}")
-            # Handle rate limit gracefully - don't show error to user
-            if 'rate limit' in data['Note'].lower():
-                logging.warning("Alpha Vantage API rate limit reached - skipping real-time gap data")
-                return {'error': 'Real-time data temporarily unavailable due to API rate limit'}
             return {'error': f'Alpha Vantage API note: {data["Note"]}'}
 
         if 'Time Series (Daily)' not in data:
             logging.error(f"Alpha Vantage API returned no data for {ticker}")
-            logging.error(f"Full API response: {data}")
             return {'error': f'No data available for {ticker} from Alpha Vantage.'}
 
         # Extract the daily time series data
@@ -1222,8 +1217,7 @@ def get_real_time_gap_data(ticker, date):
         yesterday_str = yesterday.strftime('%Y-%m-%d')
         
         logging.debug(f"Looking for data - Today: {today_str}, Yesterday: {yesterday_str}")
-        logging.debug(f"Available dates: {list(daily_data.keys())[:10]}")
-        logging.debug(f"Total available dates: {len(daily_data.keys())}")
+        logging.debug(f"Available dates: {list(daily_data.keys())[:5]}")
         
         # Get yesterday's close price (most recent available data)
         yesterday_close = None
@@ -1246,7 +1240,6 @@ def get_real_time_gap_data(ticker, date):
         
         if yesterday_close is None:
             logging.error(f"Could not find any data for {ticker}")
-            logging.error(f"Available dates: {list(daily_data.keys())}")
             return {'error': f'No data available for {ticker} from Alpha Vantage.'}
         
         # Check if today's data is available (market is open)
@@ -1274,7 +1267,7 @@ def get_real_time_gap_data(ticker, date):
         else:
             logging.debug(f"No data found for today ({today_str}) - market may not be open yet")
         
-        result = {
+        return {
             'ticker': ticker,
             'yesterday_date': yesterday_date_str,
             'yesterday_close': round(yesterday_close, 2),
@@ -1289,9 +1282,6 @@ def get_real_time_gap_data(ticker, date):
             'market_status': 'Open' if today_open else 'Closed',
             'message': f"{ticker} yesterday close: ${yesterday_close:.2f}" + (f" | Today open: ${today_open:.2f} | Gap: {gap_direction} {abs(round(gap_pct, 2))}%" if today_open else " | Market not yet open")
         }
-        
-        logging.debug(f"Returning gap data: {result}")
-        return result
         
     except requests.exceptions.RequestException as e:
         logging.error(f"Error fetching real-time gap data from Alpha Vantage: {str(e)}")
@@ -1308,7 +1298,6 @@ def get_real_time_gap():
     if not ticker:
         return jsonify({'error': 'Ticker is required for real-time gap data.'}), 400
     if ticker not in TICKERS:
-        logging.error(f"Invalid ticker: {ticker}, valid tickers: {TICKERS}")
         return jsonify({'error': 'Invalid ticker'}), 400
     
     try:
@@ -1319,8 +1308,6 @@ def get_real_time_gap():
         if 'error' in gap_data:
             logging.error(f"Error in gap data: {gap_data['error']}")
             return jsonify(gap_data), 404
-        
-        logging.debug(f"Returning successful gap data: {gap_data}")
         return jsonify(gap_data)
     except Exception as e:
         logging.error(f"Error processing real-time gap request: {str(e)}")

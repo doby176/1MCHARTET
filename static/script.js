@@ -2280,7 +2280,7 @@ async function loadChart(event, tabId) {
                 // Main site action limit reached - show clear message
                 chartContainer.innerHTML = `
                     <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
-                        <h4 style="color: #721c24; margin: 0 0 10px 0;">⏱️ Action Limit Reached</h4>
+                        <h4 style="color: #721c24; margin: 0 0 10px 0;"⏱️ Action Limit Reached</h4>
                         <p style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">You've used all 10 free action buttons. Please wait 12 hours or upgrade your plan.</p>
                         <p style="color: #6c757d; margin: 0; font-size: 14px;">Limit resets automatically in 12 hours from first use</p>
                     </div>
@@ -4020,20 +4020,17 @@ async function loadGapInsights(event) {
                     }
                 } else {
                     console.error('API returned error:', realTimeData.error);
-                    // Don't show error to user - just skip the real-time gap section
-                    realTimeGapHtml = '';
+                    realTimeGapHtml = `<div class="realtime-gap-box" style="background:#fff3e0;padding:12px 16px;margin-bottom:16px;border-radius:8px;"><strong>Today's QQQ Gap:</strong> <span style="color:#d32f2f;">${realTimeData.error}</span></div>`;
                 }
             } else {
                 console.error('HTTP error:', realTimeResp.status);
                 const errorText = await realTimeResp.text();
                 console.error('Error response:', errorText);
-                // Don't show error to user - just skip the real-time gap section
-                realTimeGapHtml = '';
+                realTimeGapHtml = `<div class="realtime-gap-box" style="background:#fff3e0;padding:12px 16px;margin-bottom:16px;border-radius:8px;"><strong>Today's QQQ Gap:</strong> <span style="color:#d32f2f;">HTTP ${realTimeResp.status} error</span></div>`;
             }
         } catch (err) {
             console.error('Fetch error:', err);
-            // Don't show error to user - just skip the real-time gap section
-            realTimeGapHtml = '';
+            realTimeGapHtml = `<div class="realtime-gap-box" style="background:#fff3e0;padding:12px 16px;margin-bottom:16px;border-radius:8px;"><strong>Today's QQQ Gap:</strong> <span style="color:#d32f2f;">Failed to fetch real-time gap data: ${err.message}</span></div>`;
         }
 
         const insights = data.insights;
