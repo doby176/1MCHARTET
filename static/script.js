@@ -4219,7 +4219,7 @@ async function loadRealTimeQQQGap() {
                             </div>
                             <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e9ecef;">
                                 <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Open Price</div>
-                                <div style="font-size:1.3em;font-weight:700;color:#495057;">$${data.current_price}</div>
+                                <div style="font-size:1.3em;font-weight:700;color:#495057;">$${data.open_price}</div>
                             </div>
                         </div>
                         <div style="text-align:center;">
