@@ -155,16 +155,14 @@
                                         <th>Entry</th>
                                         <th>Exit</th>
                                         <th>Shares</th>
-                                        <th>P/L</th>
-                                        <th>% Gain</th>
                                         <th>Time</th>
+                                        <th>P/L</th>
                                         <th>Exit Reason</th>
                                     </tr>
                                 </thead>
                                 <tbody id="trade-history-tbody">
                                 </tbody>
                             </table>
-                            <div class="mobile-trade-history"></div>
                             <p id="trade-history-empty">No trades yet</p>
                         </div>
                     </div>
@@ -286,18 +284,6 @@
             <div id="gap-insights" class="tab-content">
                 <h2>Nasdaq Gap Insights</h2>
                 <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
-                
-                <!-- Today's QQQ Gap Display -->
-                <div id="qqq-gap-display" class="qqq-gap-container">
-                    <div class="qqq-gap-header">
-                        <h3>📊 Today's QQQ Gap</h3>
-                        <button id="refresh-qqq-gap" class="refresh-btn">🔄 Refresh</button>
-                    </div>
-                    <div id="qqq-gap-content" class="qqq-gap-content">
-                        <div class="loading-spinner">Loading QQQ gap data...</div>
-                    </div>
-
-                </div>
                 <form id="gap-insights-form">
                     <label for="gap-insights-size-select">Select Gap Size Bin:</label>
                     <select id="gap-insights-size-select" name="gap_size">
@@ -615,6 +601,6 @@
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
     </script>
-    <script src="/static/script.js?v=76"></script>
+    <script src="/static/script.js?v=77"></script>
 </body>
 </html>
