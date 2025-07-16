@@ -29,7 +29,7 @@
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-            <link rel="stylesheet" href="/static/styles.css?v=20250716">
+    <link rel="stylesheet" href="/static/styles.css?v=74">
     <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
     <script>
         // Fallback CDN if primary fails
@@ -155,14 +155,16 @@
                                         <th>Entry</th>
                                         <th>Exit</th>
                                         <th>Shares</th>
-                                        <th>Time</th>
                                         <th>P/L</th>
+                                        <th>% Gain</th>
+                                        <th>Time</th>
                                         <th>Exit Reason</th>
                                     </tr>
                                 </thead>
                                 <tbody id="trade-history-tbody">
                                 </tbody>
                             </table>
+                            <div class="mobile-trade-history"></div>
                             <p id="trade-history-empty">No trades yet</p>
                         </div>
                     </div>
@@ -284,9 +286,6 @@
             <div id="gap-insights" class="tab-content">
                 <h2>Nasdaq Gap Insights</h2>
                 <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
-                
-
-                
                 <form id="gap-insights-form">
                     <label for="gap-insights-size-select">Select Gap Size Bin:</label>
                     <select id="gap-insights-size-select" name="gap_size">
@@ -604,6 +603,6 @@
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
     </script>
-    <script src="/static/script.js?v=20250716_simple"></script>
+    <script src="/static/script.js?v=76"></script>
 </body>
 </html>

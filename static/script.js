@@ -46,23 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof loadBinOptions === 'function') loadBinOptions();
     if (typeof populateEarningsOutcomes === 'function') populateEarningsOutcomes();
     
-    // Load real-time QQQ gap data automatically
-    console.log('About to call loadRealTimeQQQGap');
-    setTimeout(() => {
-        console.log('Calling loadRealTimeQQQGap with delay');
-        loadRealTimeQQQGap();
-    }, 100);
-    
-    // Also try calling it immediately
-    console.log('Calling loadRealTimeQQQGap immediately');
-    loadRealTimeQQQGap();
-    
-    // Add refresh button functionality
-    const refreshButton = document.getElementById('refresh-qqq-gap');
-    if (refreshButton) {
-        refreshButton.addEventListener('click', loadRealTimeQQQGap);
-    }
-    
     // Initialize chart-related event listeners only on pages that have chart containers
     if (hasChartContainers) {
         // Initialize stock forms for all tabs
@@ -375,7 +358,7 @@ function createChart(containerId, chartData, timeframe) {
     const autoZoomBtn = document.createElement('button');
     autoZoomBtn.className = 'auto-zoom-btn';
     autoZoomBtn.textContent = '🔍 Auto Fit';
-    autoZoomBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 9999; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease;';
+    autoZoomBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; background-color: #153097; color: white; border: none; border-radius: 4px; padding: 8px 12px; font-size: 0.8em; font-weight: 500; cursor: pointer; z-index: 9999; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.3s ease; min-height: 44px; min-width: 44px; touch-action: manipulation;';
     autoZoomBtn.setAttribute('data-section', containerId.replace('chart-', ''));
     container.appendChild(autoZoomBtn);
 
@@ -485,7 +468,8 @@ function createChart(containerId, chartData, timeframe) {
             scaleMargins: {
                 top: 0.05,
                 bottom: 0.15
-            }
+            },
+            entireTextOnly: true
         },
         leftPriceScale: {
             visible: false
@@ -589,174 +573,205 @@ function createChart(containerId, chartData, timeframe) {
 // TP/SL Dragging functionality
 function setupTPSLDragging(chart, container) {
     let isMouseDown = false;
+    let isTouchDown = false;
     let dragLine = null;
     
-    container.addEventListener('mousedown', (e) => {
+    // Helper function to get coordinates from event
+    function getEventCoordinates(e) {
+        const rect = container.getBoundingClientRect();
+        if (e.type.includes('touch')) {
+            return {
+                x: e.touches[0].clientX - rect.left,
+                y: e.touches[0].clientY - rect.top
+            };
+        } else {
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+    }
+    
+    // Helper function to check if near TP/SL line
+    function checkNearLine(y) {
         if (!openPosition || !takeProfitLine || !stopLossLine || !chartInstances.simulator?.candlestickSeries) {
-            return;
+            return null;
         }
         
-        const rect = container.getBoundingClientRect();
-        const y = e.clientY - rect.top;
-        
-        // Use SERIES coordinate conversion methods (correct API)
         const series = chartInstances.simulator.candlestickSeries;
-        
         const tpPrice = takeProfitLine.options().price;
         const slPrice = stopLossLine.options().price;
         
-        // Check if mouse is near TP or SL line (within 15 pixels tolerance)
         const tpY = series.priceToCoordinate(tpPrice);
         const slY = series.priceToCoordinate(slPrice);
         
         if (tpY !== null && Math.abs(y - tpY) < 15) {
-            isMouseDown = true;
-            dragLine = 'tp';
-            container.style.cursor = 'ns-resize';
-            
-            // CRITICAL: Disable chart interactions while dragging TP/SL
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: false,
-                    pressedMouseMove: false,
-                    horzTouchDrag: false,
-                    vertTouchDrag: false
-                },
-                handleScale: {
-                    mouseWheel: false,
-                    pinch: false,
-                    axisPressedMouseMove: false,
-                    axisDoubleClickReset: false
-                }
-            });
-            
-            e.preventDefault();
-            e.stopPropagation();
+            return 'tp';
         } else if (slY !== null && Math.abs(y - slY) < 15) {
+            return 'sl';
+        }
+        return null;
+    }
+    
+    // Helper function to disable chart interactions
+    function disableChartInteractions() {
+        chart.applyOptions({
+            handleScroll: {
+                mouseWheel: false,
+                pressedMouseMove: false,
+                horzTouchDrag: false,
+                vertTouchDrag: false
+            },
+            handleScale: {
+                mouseWheel: false,
+                pinch: false,
+                axisPressedMouseMove: false,
+                axisDoubleClickReset: false
+            }
+        });
+    }
+    
+    // Helper function to enable chart interactions
+    function enableChartInteractions() {
+        chart.applyOptions({
+            handleScroll: {
+                mouseWheel: true,
+                pressedMouseMove: true,
+                horzTouchDrag: true,
+                vertTouchDrag: true
+            },
+            handleScale: {
+                mouseWheel: true,
+                pinch: true,
+                axisPressedMouseMove: true,
+                axisDoubleClickReset: true
+            }
+        });
+    }
+    
+    // Mouse events
+    container.addEventListener('mousedown', (e) => {
+        const coords = getEventCoordinates(e);
+        const lineType = checkNearLine(coords.y);
+        
+        if (lineType) {
             isMouseDown = true;
-            dragLine = 'sl';
+            dragLine = lineType;
             container.style.cursor = 'ns-resize';
-            
-            // CRITICAL: Disable chart interactions while dragging TP/SL
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: false,
-                    pressedMouseMove: false,
-                    horzTouchDrag: false,
-                    vertTouchDrag: false
-                },
-                handleScale: {
-                    mouseWheel: false,
-                    pinch: false,
-                    axisPressedMouseMove: false,
-                    axisDoubleClickReset: false
-                }
-            });
-            
+            disableChartInteractions();
             e.preventDefault();
             e.stopPropagation();
         }
     });
     
-    container.addEventListener('mousemove', (e) => {
+    // Helper function to update line position
+    function updateLinePosition(y) {
         if (!openPosition || !takeProfitLine || !stopLossLine || !chartInstances.simulator?.candlestickSeries) return;
         
-        const rect = container.getBoundingClientRect();
-        const y = e.clientY - rect.top;
         const series = chartInstances.simulator.candlestickSeries;
+        const newPrice = series.coordinateToPrice(y);
+        
+        if (newPrice === null || newPrice === undefined) return;
+        
+        if (dragLine === 'tp') {
+            // Update Take Profit line
+            series.removePriceLine(takeProfitLine);
+            takeProfitLine = series.createPriceLine({
+                price: newPrice,
+                color: '#00ff00',
+                lineWidth: 1,
+                lineStyle: LightweightCharts.LineStyle.Dashed,
+                axisLabelVisible: true,
+                title: `TP: $${newPrice.toFixed(2)}`
+            });
+        } else if (dragLine === 'sl') {
+            // Update Stop Loss line
+            series.removePriceLine(stopLossLine);
+            stopLossLine = series.createPriceLine({
+                price: newPrice,
+                color: '#ff4444',
+                lineWidth: 1,
+                lineStyle: LightweightCharts.LineStyle.Dashed,
+                axisLabelVisible: true,
+                title: `SL: $${newPrice.toFixed(2)}`
+            });
+        }
+    }
+    
+    // Helper function to update cursor
+    function updateCursor(y) {
+        if (!openPosition || !takeProfitLine || !stopLossLine || !chartInstances.simulator?.candlestickSeries) return;
+        
+        const series = chartInstances.simulator.candlestickSeries;
+        const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
+        const slPrice = stopLossLine ? stopLossLine.options().price : null;
+        
+        const tpY = tpPrice ? series.priceToCoordinate(tpPrice) : null;
+        const slY = slPrice ? series.priceToCoordinate(slPrice) : null;
+        
+        if ((tpY !== null && Math.abs(y - tpY) < 15) || 
+            (slY !== null && Math.abs(y - slY) < 15)) {
+            container.style.cursor = 'ns-resize';
+        } else {
+            container.style.cursor = 'default';
+        }
+    }
+    
+    container.addEventListener('mousemove', (e) => {
+        const coords = getEventCoordinates(e);
         
         if (isMouseDown && dragLine) {
-            // Update line position while dragging
-            const newPrice = series.coordinateToPrice(y);
-            
-            if (newPrice === null || newPrice === undefined) return;
-            
-            if (dragLine === 'tp') {
-                // Update Take Profit line
-                series.removePriceLine(takeProfitLine);
-                takeProfitLine = series.createPriceLine({
-                    price: newPrice,
-                    color: '#00ff00',
-                    lineWidth: 1,
-                    lineStyle: LightweightCharts.LineStyle.Dashed,
-                    axisLabelVisible: true,
-                    title: `TP: $${newPrice.toFixed(2)}`
-                });
-            } else if (dragLine === 'sl') {
-                // Update Stop Loss line
-                series.removePriceLine(stopLossLine);
-                stopLossLine = series.createPriceLine({
-                    price: newPrice,
-                    color: '#ff4444',
-                    lineWidth: 1,
-                    lineStyle: LightweightCharts.LineStyle.Dashed,
-                    axisLabelVisible: true,
-                    title: `SL: $${newPrice.toFixed(2)}`
-                });
-            }
+            updateLinePosition(coords.y);
         } else {
-            // Change cursor when hovering over TP/SL lines
-            const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
-            const slPrice = stopLossLine ? stopLossLine.options().price : null;
-            
-            const tpY = tpPrice ? series.priceToCoordinate(tpPrice) : null;
-            const slY = slPrice ? series.priceToCoordinate(slPrice) : null;
-            
-            if ((tpY !== null && Math.abs(y - tpY) < 15) || 
-                (slY !== null && Math.abs(y - slY) < 15)) {
-                container.style.cursor = 'ns-resize';
-            } else {
-                container.style.cursor = 'default';
-            }
+            updateCursor(coords.y);
         }
     });
     
-    container.addEventListener('mouseup', () => {
-        if (isMouseDown) {
-            // Re-enable chart interactions when dragging stops
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: true,
-                    pressedMouseMove: true,
-                    horzTouchDrag: true,
-                    vertTouchDrag: true
-                },
-                handleScale: {
-                    mouseWheel: true,
-                    pinch: true,
-                    axisPressedMouseMove: true,
-                    axisDoubleClickReset: true
-                }
-            });
+    // Helper function to end dragging
+    function endDragging() {
+        if (isMouseDown || isTouchDown) {
+            enableChartInteractions();
         }
         
         isMouseDown = false;
+        isTouchDown = false;
         dragLine = null;
         container.style.cursor = 'default';
+    }
+    
+    container.addEventListener('mouseup', endDragging);
+    container.addEventListener('mouseleave', endDragging);
+    
+    // Touch events for mobile
+    container.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const coords = getEventCoordinates(e);
+        const lineType = checkNearLine(coords.y);
+        
+        if (lineType) {
+            isTouchDown = true;
+            dragLine = lineType;
+            disableChartInteractions();
+        }
     });
     
-    container.addEventListener('mouseleave', () => {
-        if (isMouseDown) {
-            // Re-enable chart interactions when dragging stops
-            chart.applyOptions({
-                handleScroll: {
-                    mouseWheel: true,
-                    pressedMouseMove: true,
-                    horzTouchDrag: true,
-                    vertTouchDrag: true
-                },
-                handleScale: {
-                    mouseWheel: true,
-                    pinch: true,
-                    axisPressedMouseMove: true,
-                    axisDoubleClickReset: true
-                }
-            });
-        }
+    container.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const coords = getEventCoordinates(e);
         
-        isMouseDown = false;
-        dragLine = null;
-        container.style.cursor = 'default';
+        if (isTouchDown && dragLine) {
+            updateLinePosition(coords.y);
+        }
+    });
+    
+    container.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        endDragging();
+    });
+    
+    container.addEventListener('touchcancel', (e) => {
+        e.preventDefault();
+        endDragging();
     });
 }
 
@@ -786,7 +801,8 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
             // Set up auto-zoom button functionality
             const autoZoomBtn = document.querySelector(`#${containerId} .auto-zoom-btn`);
             if (autoZoomBtn) {
-                autoZoomBtn.onclick = () => {
+                // Add both click and touch events for mobile compatibility
+                const handleAutoFit = () => {
                     if (chartInstances[section] && chartInstances[section].chart) {
                         const chart = chartInstances[section].chart;
                         
@@ -855,6 +871,13 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                         console.log(`Auto-fit completed for ${section} - both X and Y axes reset`);
                     }
                 };
+                
+                // Add both click and touch events for mobile compatibility
+                autoZoomBtn.addEventListener('click', handleAutoFit);
+                autoZoomBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault(); // Prevent default touch behavior
+                    handleAutoFit();
+                });
             }
 
 
@@ -1545,7 +1568,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: smaColor,
                 lineWidth: 2,
-                title: `SMA ${period}`
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1555,7 +1582,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: period === 20 ? '#e91e63' : '#9c27b0',
                 lineWidth: 2,
-                title: `EMA ${period}`
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1565,7 +1596,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#4caf50',
                 lineWidth: 3,
-                title: 'VWAP'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1585,7 +1620,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             indicatorSeries[section][`${indicatorKey}_upper`] = chart.addLineSeries({
                 color: '#9e9e9e',
                 lineWidth: 1,
-                title: 'BB Upper'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_upper`].setData(bbData.upper);
             
@@ -1593,7 +1632,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             indicatorSeries[section][`${indicatorKey}_middle`] = chart.addLineSeries({
                 color: '#607d8b',
                 lineWidth: 2,
-                title: 'BB Middle'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_middle`].setData(bbData.middle);
             
@@ -1601,7 +1644,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             indicatorSeries[section][`${indicatorKey}_lower`] = chart.addLineSeries({
                 color: '#9e9e9e',
                 lineWidth: 1,
-                title: 'BB Lower'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             });
             indicatorSeries[section][`${indicatorKey}_lower`].setData(bbData.lower);
             return; // Don't set data again below
@@ -1616,7 +1663,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#f44336',
                 lineWidth: 2,
-                title: 'RSI (scaled)'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             break;
@@ -1633,7 +1684,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#ff5722',
                 lineWidth: 2,
-                title: 'MACD (scaled)'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             indicatorData = scaledMacd;
@@ -1650,7 +1705,11 @@ function addIndicatorToChart(section, indicator, period, candleData, volumeData)
             seriesOptions = {
                 color: '#673ab7',
                 lineWidth: 2,
-                title: 'Stochastic %K (scaled)'
+                title: '',
+                priceScaleId: 'right',
+                priceLineVisible: false,
+                autoscaleInfoProvider: () => null,
+                lastValueVisible: false
             };
             indicatorSeries[section][indicatorKey] = chart.addLineSeries(seriesOptions);
             indicatorData = scaledStochK;
@@ -2503,7 +2562,7 @@ function placeBuyTrade() {
         });
         
         // Add Take Profit line (draggable)
-        const tpPrice = openPosition.price * 1.02; // 2% above entry
+        const tpPrice = openPosition.price * 1.005; // 0.5% above entry
         takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
             price: tpPrice,
             color: '#00ff00',
@@ -2514,7 +2573,7 @@ function placeBuyTrade() {
         });
         
         // Add Stop Loss line (draggable)
-        const slPrice = openPosition.price * 0.98; // 2% below entry
+        const slPrice = openPosition.price * 0.995; // 0.5% below entry
         stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
             price: slPrice,
             color: '#ff4444',
@@ -2594,7 +2653,7 @@ function placeSellTrade() {
             });
             
             // Add Take Profit line for SHORT (below entry price)
-            const tpPrice = openPosition.price * 0.98; // 2% below entry
+            const tpPrice = openPosition.price * 0.995; // 0.5% below entry
             takeProfitLine = chartInstances.simulator.candlestickSeries.createPriceLine({
                 price: tpPrice,
                 color: '#00ff00',
@@ -2605,7 +2664,7 @@ function placeSellTrade() {
             });
             
             // Add Stop Loss line for SHORT (above entry price)
-            const slPrice = openPosition.price * 1.02; // 2% above entry
+            const slPrice = openPosition.price * 1.005; // 0.5% above entry
             stopLossLine = chartInstances.simulator.candlestickSeries.createPriceLine({
                 price: slPrice,
                 color: '#ff4444',
@@ -2685,6 +2744,12 @@ function updateTradeSummary() {
     if (tradeHistory.length === 0) {
         tradeHistoryTable.style.display = 'none';
         tradeHistoryEmpty.style.display = 'block';
+        
+        // Clear mobile trade history
+        const mobileTradeHistory = document.querySelector('.mobile-trade-history');
+        if (mobileTradeHistory) {
+            mobileTradeHistory.innerHTML = '';
+        }
     } else {
         tradeHistoryTable.style.display = 'table';
         tradeHistoryEmpty.style.display = 'none';
@@ -2692,22 +2757,72 @@ function updateTradeSummary() {
         // Clear existing rows
         tradeHistoryTbody.innerHTML = '';
         
-        // Add each trade as a table row
+        // Clear mobile trade history
+        const mobileTradeHistory = document.querySelector('.mobile-trade-history');
+        if (mobileTradeHistory) {
+            mobileTradeHistory.innerHTML = '';
+        }
+        
+        // Add each trade as a table row and mobile card
         tradeHistory.forEach((trade, index) => {
             const row = document.createElement('tr');
             const pnlClass = trade.pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
+            
+            // Calculate percentage gain
+            const percentGain = ((trade.exitPrice - trade.entryPrice) / trade.entryPrice) * 100;
+            const percentGainClass = percentGain >= 0 ? 'pnl-positive' : 'pnl-negative';
             
             row.innerHTML = `
                 <td>${trade.type.toUpperCase()}</td>
                 <td>$${trade.entryPrice.toFixed(2)}</td>
                 <td>$${trade.exitPrice.toFixed(2)}</td>
                 <td>${trade.shares}</td>
-                <td>${trade.timestamp.split(' ')[1]}</td>
                 <td class="${pnlClass}">$${trade.pnl.toFixed(2)}</td>
+                <td class="${percentGainClass}">${percentGain >= 0 ? '+' : ''}${percentGain.toFixed(2)}%</td>
+                <td>${trade.timestamp.split(' ')[1]}</td>
                 <td>${trade.closeReason || 'Manual'}</td>
             `;
             
             tradeHistoryTbody.appendChild(row);
+            
+            // Create mobile trade card
+            if (mobileTradeHistory) {
+                const mobileCard = document.createElement('div');
+                mobileCard.className = 'mobile-trade-card';
+                
+                const pnlClassMobile = trade.pnl >= 0 ? 'positive' : 'negative';
+                const typeClass = trade.type.toLowerCase();
+                
+                mobileCard.innerHTML = `
+                    <div class="mobile-trade-header">
+                        <span class="mobile-trade-type ${typeClass}">${trade.type.toUpperCase()}</span>
+                        <span class="mobile-trade-pnl ${pnlClassMobile}">$${trade.pnl.toFixed(2)}</span>
+                    </div>
+                    <div class="mobile-trade-details">
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">Entry:</span>
+                            <span class="mobile-trade-value">$${trade.entryPrice.toFixed(2)}</span>
+                        </div>
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">Exit:</span>
+                            <span class="mobile-trade-value">$${trade.exitPrice.toFixed(2)}</span>
+                        </div>
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">Shares:</span>
+                            <span class="mobile-trade-value">${trade.shares}</span>
+                        </div>
+                        <div class="mobile-trade-detail">
+                            <span class="mobile-trade-label">% Gain:</span>
+                            <span class="mobile-trade-value ${percentGainClass}">${percentGain >= 0 ? '+' : ''}${percentGain.toFixed(2)}%</span>
+                        </div>
+                        <div class="mobile-trade-time">
+                            ${trade.timestamp.split(' ')[1]} - ${trade.closeReason || 'Manual'}
+                        </div>
+                    </div>
+                `;
+                
+                mobileTradeHistory.appendChild(mobileCard);
+            }
         });
     }
 }
@@ -3000,6 +3115,10 @@ function startReplay(section) {
         if (config.hasTradeSimulator) {
             buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count || openPosition?.type === 'sell';
             sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
+            
+            // Check for TP/SL hits during replay
+            checkPositionForTPSL(config.currentReplayIndex());
+            
             updateTradeSummary();
         }
 
@@ -3223,6 +3342,125 @@ function nextCandle(section) {
     updateChartToIndex(section);
 }
 
+function checkPositionForTPSL(currentIndex) {
+    // Only check if we have an open position and TP/SL lines
+    if (!openPosition || currentIndex <= 0 || (!takeProfitLine && !stopLossLine)) {
+        return;
+    }
+    
+    const config = getReplayConfig('simulator');
+    const chartData = config.chartData();
+    
+    const currentPrice = chartData.close[currentIndex - 1];
+    const currentHigh = chartData.high[currentIndex - 1];
+    const currentLow = chartData.low[currentIndex - 1];
+    
+    // Get current TP/SL prices (they might have been dragged)
+    const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
+    const slPrice = stopLossLine ? stopLossLine.options().price : null;
+    
+    // Debug logging (temporarily enabled for testing)
+    if (true) { // Set to false to disable debug logs
+        console.log(`Price Check - Current: ${currentPrice.toFixed(2)}, High: ${currentHigh.toFixed(2)}, Low: ${currentLow.toFixed(2)}`);
+        console.log(`TP/SL Levels - TP: ${tpPrice ? tpPrice.toFixed(2) : 'N/A'}, SL: ${slPrice ? slPrice.toFixed(2) : 'N/A'}`);
+        console.log(`Position Type: ${openPosition.type}`);
+    }
+    
+    let shouldClose = false;
+    let closeReason = '';
+    let closePrice = currentPrice;
+    
+    if (openPosition.type === 'buy') {
+        // Check Take Profit (price goes above TP)
+        if (tpPrice && currentHigh >= tpPrice) {
+            shouldClose = true;
+            closeReason = 'Take Profit Hit';
+            closePrice = tpPrice;
+            console.log(`LONG TP HIT! High ${currentHigh.toFixed(2)} >= TP ${tpPrice.toFixed(2)}`);
+        }
+        // Check Stop Loss (price goes below SL)
+        else if (slPrice && currentLow <= slPrice) {
+            shouldClose = true;
+            closeReason = 'Stop Loss Hit';
+            closePrice = slPrice;
+            console.log(`LONG SL HIT! Low ${currentLow.toFixed(2)} <= SL ${slPrice.toFixed(2)}`);
+        }
+    } else if (openPosition.type === 'sell') {
+        // Check Take Profit for SHORT (price goes below TP)
+        if (tpPrice && currentLow <= tpPrice) {
+            shouldClose = true;
+            closeReason = 'Take Profit Hit';
+            closePrice = tpPrice;
+            console.log(`SHORT TP HIT! Low ${currentLow.toFixed(2)} <= TP ${tpPrice.toFixed(2)}`);
+        }
+        // Check Stop Loss for SHORT (price goes above SL)
+        else if (slPrice && currentHigh >= slPrice) {
+            shouldClose = true;
+            closeReason = 'Stop Loss Hit';
+            closePrice = slPrice;
+            console.log(`SHORT SL HIT! High ${currentHigh.toFixed(2)} >= SL ${slPrice.toFixed(2)}`);
+        }
+    }
+    
+    // Auto-close position if TP/SL hit
+    if (shouldClose) {
+        const pnl = openPosition.type === 'buy'
+            ? (closePrice - openPosition.price) * openPosition.shares
+            : (openPosition.price - closePrice) * openPosition.shares;
+        
+        // Remove alert popup - just close position silently
+        console.log(`🎯 ${closeReason}! Position: ${openPosition.type.toUpperCase()}, Exit Price: $${closePrice.toFixed(2)}, P&L: $${pnl.toFixed(2)}`);
+        
+        tradeHistory.push({
+            type: openPosition.type,
+            entryPrice: openPosition.price,
+            exitPrice: closePrice,
+            shares: openPosition.shares,
+            timestamp: chartData.timestamp[currentIndex - 1],
+            pnl: parseFloat(pnl.toFixed(2)),
+            closeReason: closeReason
+        });
+        
+        // Remove all price lines
+        if (chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
+            if (entryPriceLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
+                entryPriceLine = null;
+            }
+            if (takeProfitLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(takeProfitLine);
+                takeProfitLine = null;
+            }
+            if (stopLossLine) {
+                chartInstances.simulator.candlestickSeries.removePriceLine(stopLossLine);
+                stopLossLine = null;
+            }
+        }
+        
+        openPosition = null;
+        
+        // Make sure chart interactions are re-enabled after auto-close
+        if (chartInstances.simulator?.chart) {
+            chartInstances.simulator.chart.applyOptions({
+                handleScroll: {
+                    mouseWheel: true,
+                    pressedMouseMove: true,
+                    horzTouchDrag: true,
+                    vertTouchDrag: true
+                },
+                handleScale: {
+                    mouseWheel: true,
+                    pinch: true,
+                    axisPressedMouseMove: true,
+                    axisDoubleClickReset: true
+                }
+            });
+        }
+        
+        console.log(`Position auto-closed: ${closeReason} at $${closePrice.toFixed(2)} with P/L: $${pnl.toFixed(2)}`);
+    }
+}
+
 function updateChartToIndex(section) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
@@ -3252,116 +3490,7 @@ function updateChartToIndex(section) {
         sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
         
         // Check for TP/SL hits
-        if (openPosition && config.currentReplayIndex() > 0 && (takeProfitLine || stopLossLine)) {
-            const currentPrice = chartData.close[config.currentReplayIndex() - 1];
-            const currentHigh = chartData.high[config.currentReplayIndex() - 1];
-            const currentLow = chartData.low[config.currentReplayIndex() - 1];
-            
-            // Get current TP/SL prices (they might have been dragged)
-            const tpPrice = takeProfitLine ? takeProfitLine.options().price : null;
-            const slPrice = stopLossLine ? stopLossLine.options().price : null;
-            
-            // Debug logging (temporarily enabled for testing)
-            if (true) { // Set to false to disable debug logs
-                console.log(`Price Check - Current: ${currentPrice.toFixed(2)}, High: ${currentHigh.toFixed(2)}, Low: ${currentLow.toFixed(2)}`);
-                console.log(`TP/SL Levels - TP: ${tpPrice ? tpPrice.toFixed(2) : 'N/A'}, SL: ${slPrice ? slPrice.toFixed(2) : 'N/A'}`);
-                console.log(`Position Type: ${openPosition.type}`);
-            }
-            
-            let shouldClose = false;
-            let closeReason = '';
-            let closePrice = currentPrice;
-            
-            if (openPosition.type === 'buy') {
-                // Check Take Profit (price goes above TP)
-                if (tpPrice && currentHigh >= tpPrice) {
-                    shouldClose = true;
-                    closeReason = 'Take Profit Hit';
-                    closePrice = tpPrice;
-                    console.log(`LONG TP HIT! High ${currentHigh.toFixed(2)} >= TP ${tpPrice.toFixed(2)}`);
-                }
-                // Check Stop Loss (price goes below SL)
-                else if (slPrice && currentLow <= slPrice) {
-                    shouldClose = true;
-                    closeReason = 'Stop Loss Hit';
-                    closePrice = slPrice;
-                    console.log(`LONG SL HIT! Low ${currentLow.toFixed(2)} <= SL ${slPrice.toFixed(2)}`);
-                }
-            } else if (openPosition.type === 'sell') {
-                // Check Take Profit for SHORT (price goes below TP)
-                if (tpPrice && currentLow <= tpPrice) {
-                    shouldClose = true;
-                    closeReason = 'Take Profit Hit';
-                    closePrice = tpPrice;
-                    console.log(`SHORT TP HIT! Low ${currentLow.toFixed(2)} <= TP ${tpPrice.toFixed(2)}`);
-                }
-                // Check Stop Loss for SHORT (price goes above SL)
-                else if (slPrice && currentHigh >= slPrice) {
-                    shouldClose = true;
-                    closeReason = 'Stop Loss Hit';
-                    closePrice = slPrice;
-                    console.log(`SHORT SL HIT! High ${currentHigh.toFixed(2)} >= SL ${slPrice.toFixed(2)}`);
-                }
-            }
-            
-            // Auto-close position if TP/SL hit
-            if (shouldClose) {
-                const pnl = openPosition.type === 'buy'
-                    ? (closePrice - openPosition.price) * openPosition.shares
-                    : (openPosition.price - closePrice) * openPosition.shares;
-                
-                // Show immediate user feedback
-                alert(`🎯 ${closeReason}!\n\nPosition: ${openPosition.type.toUpperCase()}\nExit Price: $${closePrice.toFixed(2)}\nP&L: $${pnl.toFixed(2)}`);
-                
-                tradeHistory.push({
-                    type: openPosition.type,
-                    entryPrice: openPosition.price,
-                    exitPrice: closePrice,
-                    shares: openPosition.shares,
-                    timestamp: chartData.timestamp[config.currentReplayIndex() - 1],
-                    pnl: parseFloat(pnl.toFixed(2)),
-                    closeReason: closeReason
-                });
-                
-                // Remove all price lines
-                if (chartInstances.simulator && chartInstances.simulator.candlestickSeries) {
-                    if (entryPriceLine) {
-                        chartInstances.simulator.candlestickSeries.removePriceLine(entryPriceLine);
-                        entryPriceLine = null;
-                    }
-                    if (takeProfitLine) {
-                        chartInstances.simulator.candlestickSeries.removePriceLine(takeProfitLine);
-                        takeProfitLine = null;
-                    }
-                    if (stopLossLine) {
-                        chartInstances.simulator.candlestickSeries.removePriceLine(stopLossLine);
-                        stopLossLine = null;
-                    }
-                }
-                
-                openPosition = null;
-                
-                // Make sure chart interactions are re-enabled after auto-close
-                if (chartInstances.simulator?.chart) {
-                    chartInstances.simulator.chart.applyOptions({
-                        handleScroll: {
-                            mouseWheel: true,
-                            pressedMouseMove: true,
-                            horzTouchDrag: true,
-                            vertTouchDrag: true
-                        },
-                        handleScale: {
-                            mouseWheel: true,
-                            pinch: true,
-                            axisPressedMouseMove: true,
-                            axisDoubleClickReset: true
-                        }
-                    });
-                }
-                
-                console.log(`Position auto-closed: ${closeReason} at $${closePrice.toFixed(2)} with P/L: $${pnl.toFixed(2)}`);
-            }
-        }
+        checkPositionForTPSL(config.currentReplayIndex());
         
         updateTradeSummary();
     }
@@ -4004,122 +4133,10 @@ async function loadGapInsights(event) {
         }
         console.log('Rendering gap insights:', data.insights);
 
-        // Fetch real-time QQQ gap data from Alpha Vantage
-        let realTimeGapHtml = '';
-        try {
-            console.log('Fetching real-time QQQ gap data...');
-            const realTimeResp = await fetch('/api/real_time_gap?ticker=QQQ');
-            console.log('Response status:', realTimeResp.status);
-            
-            if (realTimeResp.ok) {
-                const realTimeData = await realTimeResp.json();
-                console.log('Real-time data received:', realTimeData);
-                
-                if (!realTimeData.error) {
-                    if (realTimeData.current_price !== null) {
-                        // Market is open, show gap data
-                        const gapDirection = realTimeData.gap_direction;
-                        const gapPercent = Math.abs(realTimeData.gap_pct);
-                        const gapColor = gapDirection === 'UP' ? '#388e3c' : '#d32f2f';
-                        
-                        // Check if this is yesterday's data
-                        const isYesterday = realTimeData.is_yesterday || false;
-                        const titleText = isYesterday ? "Yesterday's QQQ Gap" : "Today's QQQ Gap";
-                        const titleColor = isYesterday ? "#ff9800" : "#495057";
-                        const boxStyle = isYesterday ? 
-                            "background:linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);border:1px solid #ff9800;" : 
-                            "background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border:1px solid #dee2e6;";
-                        
-                        realTimeGapHtml = `
-                            <div class="realtime-gap-box" style="${boxStyle}padding:16px 20px;margin-bottom:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                                <div style="text-align:center;margin-bottom:12px;">
-                                    <h3 style="margin:0;color:${titleColor};font-size:1.2em;font-weight:600;">${titleText}</h3>
-                                </div>
-                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-                                    <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e9ecef;">
-                                        <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Previous Close</div>
-                                        <div style="font-size:1.3em;font-weight:700;color:#495057;">$${realTimeData.yesterday_close}</div>
-                                    </div>
-                                    <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e9ecef;">
-                                        <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Open Price</div>
-                                        <div style="font-size:1.3em;font-weight:700;color:#495057;">$${realTimeData.current_price}</div>
-                                    </div>
-                                </div>
-                                <div style="text-align:center;">
-                                    <div style="font-size:0.9em;color:#6c757d;margin-bottom:8px;">Gap</div>
-                                    <button onclick="setGapFilters(${gapPercent}, '${gapDirection.toLowerCase()}')" style="background:${gapColor};color:white;border:none;padding:12px 24px;border-radius:8px;font-size:1.2em;font-weight:700;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.2);transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                                        ${gapDirection} ${gapPercent}%
-                                    </button>
-                                </div>
-                                ${realTimeData.cached_at ? `<div style="text-align:center;margin-top:8px;font-size:0.8em;color:#6c757d;">Cached at ${new Date(realTimeData.cached_at).toLocaleTimeString()}</div>` : ''}
-                                ${isYesterday ? `<div style="text-align:center;margin-top:8px;font-size:0.8em;color:#ff9800;">Yesterday's data - Today's data available after 9:31 AM ET</div>` : ''}
-                            </div>
-                        `;
-                    } else {
-                        // Market is closed, show yesterday's close only
-                        realTimeGapHtml = `
-                            <div class="realtime-gap-box" style="background:linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);padding:16px 20px;margin-bottom:20px;border-radius:12px;border:1px solid #ffcc02;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                                <div style="text-align:center;margin-bottom:12px;">
-                                    <h3 style="margin:0;color:#e65100;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
-                                </div>
-                                <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #ffcc02;">
-                                    <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Previous Close</div>
-                                    <div style="font-size:1.3em;font-weight:700;color:#495057;">$${realTimeData.yesterday_close}</div>
-                                </div>
-                                <div style="text-align:center;margin-top:12px;">
-                                    <div style="font-size:0.9em;color:#e65100;">Market opens at 9:30 AM ET</div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                } else {
-                                    // Handle specific error messages
-                if (realTimeData.error.includes('9:31 AM ET')) {
-                    realTimeGapHtml = `
-                        <div class="realtime-gap-box" style="background:linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);padding:16px 20px;margin-bottom:20px;border-radius:12px;border:1px solid #2196f3;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                            <div style="text-align:center;margin-bottom:12px;">
-                                <h3 style="margin:0;color:#1976d2;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
-                            </div>
-                            <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #2196f3;">
-                                <div style="font-size:1.1em;color:#1976d2;margin-bottom:8px;">⏰ Data Not Yet Available</div>
-                                <div style="font-size:0.9em;color:#6c757d;">Today's gap data will be available after 9:31 AM ET</div>
-                                <div style="font-size:0.8em;color:#6c757d;margin-top:8px;">Current time: ${realTimeData.current_time_et ? new Date(realTimeData.current_time_et).toLocaleTimeString() : 'N/A'}</div>
-                            </div>
-                        </div>
-                    `;
-                    } else {
-                        realTimeGapHtml = `
-                            <div class="realtime-gap-box" style="background:linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);padding:16px 20px;margin-bottom:20px;border-radius:12px;border:1px solid #f44336;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                                <div style="text-align:center;margin-bottom:12px;">
-                                    <h3 style="margin:0;color:#d32f2f;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
-                                </div>
-                                <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #f44336;">
-                                    <div style="font-size:1.1em;color:#d32f2f;margin-bottom:8px;">⚠️ Error Loading Data</div>
-                                    <div style="font-size:0.9em;color:#6c757d;">${realTimeData.error}</div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                }
-                } else {
-                    console.error('API returned error:', realTimeData.error);
-                    realTimeGapHtml = `<div class="realtime-gap-box" style="background:#fff3e0;padding:12px 16px;margin-bottom:16px;border-radius:8px;"><strong>Today's QQQ Gap:</strong> <span style="color:#d32f2f;">${realTimeData.error}</span></div>`;
-                }
-            } else {
-                console.error('HTTP error:', realTimeResp.status);
-                const errorText = await realTimeResp.text();
-                console.error('Error response:', errorText);
-                realTimeGapHtml = `<div class="realtime-gap-box" style="background:#fff3e0;padding:12px 16px;margin-bottom:16px;border-radius:8px;"><strong>Today's QQQ Gap:</strong> <span style="color:#d32f2f;">HTTP ${realTimeResp.status} error</span></div>`;
-            }
-        } catch (err) {
-            console.error('Fetch error:', err);
-            realTimeGapHtml = `<div class="realtime-gap-box" style="background:#fff3e0;padding:12px 16px;margin-bottom:16px;border-radius:8px;"><strong>Today's QQQ Gap:</strong> <span style="color:#d32f2f;">Failed to fetch real-time gap data: ${err.message}</span></div>`;
-        }
-
         const insights = data.insights;
         const container = document.createElement('div');
         container.className = 'insights-container';
-        container.innerHTML = realTimeGapHtml + `<h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>`;
+        container.innerHTML = `<h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>`;
 
         // First row: 4 metrics
         const row1 = document.createElement('div');
@@ -4183,178 +4200,6 @@ async function loadGapInsights(event) {
     }
 }
 
-async function loadRealTimeQQQGap() {
-    console.log('=== loadRealTimeQQQGap called ===');
-    const qqqGapContent = document.getElementById('qqq-gap-content');
-    console.log('qqq-gap-content element:', qqqGapContent);
-    if (!qqqGapContent) {
-        console.log('❌ qqq-gap-content element not found, returning early');
-        return;
-    }
-    console.log('✅ qqq-gap-content element found, proceeding with API call');
-    
-    try {
-        console.log('Loading real-time QQQ gap data...');
-        console.log('Making API call to: /api/real_time_gap?ticker=QQQ');
-        const response = await fetch('/api/real_time_gap?ticker=QQQ');
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Real-time data received:', data);
-            
-            if (!data.error) {
-                const gapDirection = data.gap_direction;
-                const gapPercent = Math.abs(data.gap_pct);
-                const gapColor = gapDirection === 'UP' ? '#388e3c' : '#d32f2f';
-                
-                qqqGapContent.innerHTML = `
-                    <div class="qqq-gap-data" style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);padding:16px 20px;border-radius:12px;border:1px solid #dee2e6;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                        <div style="text-align:center;margin-bottom:12px;">
-                            <h3 style="margin:0;color:#495057;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
-                        </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-                            <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e9ecef;">
-                                <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Previous Close</div>
-                                <div style="font-size:1.3em;font-weight:700;color:#495057;">$${data.yesterday_close}</div>
-                            </div>
-                            <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e9ecef;">
-                                <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Open Price</div>
-                                <div style="font-size:1.3em;font-weight:700;color:#495057;">$${data.open_price}</div>
-                            </div>
-                        </div>
-                        <div style="text-align:center;">
-                            <div style="font-size:0.9em;color:#6c757d;margin-bottom:8px;">Gap</div>
-                            <button onclick="setGapFilters(${gapPercent}, '${gapDirection.toLowerCase()}')" style="background:${gapColor};color:white;border:none;padding:12px 24px;border-radius:8px;font-size:1.2em;font-weight:700;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.2);transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                                ${gapDirection} ${gapPercent}%
-                            </button>
-                        </div>
-                        ${data.cached_at ? `<div style="text-align:center;margin-top:8px;font-size:0.8em;color:#6c757d;">Cached at ${new Date(data.cached_at).toLocaleTimeString()}</div>` : ''}
-                    </div>
-                `;
-            } else {
-                console.error('API returned error:', data.error);
-                qqqGapContent.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
-            }
-        } else {
-            console.error('HTTP error:', response.status);
-            const errorText = await response.text();
-            console.error('Error response:', errorText);
-            qqqGapContent.innerHTML = `<div class="error-message">HTTP ${response.status} error</div>`;
-        }
-    } catch (err) {
-        console.error('Fetch error:', err);
-        qqqGapContent.innerHTML = `<div class="error-message">Failed to fetch data: ${err.message}</div>`;
-    }
-}
-
-function setGapFilters(gapPercent, gapDirection) {
-    console.log(`Setting gap filters: ${gapPercent}% ${gapDirection}`);
-    
-    // Check if gap is too small for trading opportunity
-    if (gapPercent < 0.15) {
-        const warningNotification = document.createElement('div');
-        warningNotification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #ff9800;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 1000;
-            font-weight: 600;
-            max-width: 300px;
-        `;
-        warningNotification.innerHTML = `
-            <div style="margin-bottom:8px;">⚠️ Gap Too Small</div>
-            <div style="font-size:0.9em;">Today's gap (${gapPercent}%) is below 0.15% and may not provide sufficient trading opportunity.</div>
-        `;
-        document.body.appendChild(warningNotification);
-        
-        // Remove warning after 5 seconds
-        setTimeout(() => {
-            if (warningNotification.parentNode) {
-                warningNotification.parentNode.removeChild(warningNotification);
-            }
-        }, 5000);
-        
-        return; // Don't set filters for very small gaps
-    }
-    
-    // First, switch to the Gap tab
-    openTab('gap');
-    
-    // Set the ticker to QQQ
-    const tickerSelect = document.getElementById('ticker-gap');
-    if (tickerSelect) {
-        tickerSelect.value = 'QQQ';
-    }
-    
-    // Set the gap size based on the percentage using the correct filter options
-    const gapSizeSelect = document.getElementById('gap-size');
-    if (gapSizeSelect) {
-        let gapSize = '';
-        if (gapPercent < 0.35) gapSize = '0.15-0.35%';
-        else if (gapPercent < 0.5) gapSize = '0.35-0.5%';
-        else if (gapPercent < 1.0) gapSize = '0.5-1%';
-        else if (gapPercent < 1.5) gapSize = '1-1.5%';
-        else gapSize = '1.5%+';
-        
-        gapSizeSelect.value = gapSize;
-        console.log(`Set gap size to: ${gapSize}`);
-    }
-    
-    // Set the gap direction
-    const gapDirectionSelect = document.getElementById('gap-direction');
-    if (gapDirectionSelect) {
-        gapDirectionSelect.value = gapDirection;
-        console.log(`Set gap direction to: ${gapDirection}`);
-    }
-    
-    // Set the day of week
-    const daySelect = document.getElementById('day-gap');
-    if (daySelect) {
-        const today = new Date();
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const todayName = days[today.getDay()];
-        daySelect.value = todayName;
-        console.log(`Set day to: ${todayName}`);
-    }
-    
-    // Show a notification that filters are set
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #4caf50;
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        z-index: 1000;
-        font-weight: 600;
-    `;
-    notification.textContent = `Filters set for ${gapPercent}% ${gapDirection} gap! Click "Get Insights" to analyze.`;
-    document.body.appendChild(notification);
-    
-    // Remove notification after 3 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-        }
-    }, 3000);
-    
-    // Track the event
-    gtag('event', 'gap_filter_auto_set', {
-        'event_category': 'Gap Analysis',
-        'event_label': `${gapPercent}%_${gapDirection}`
-    });
-}
-
 function openTab(tabName) {
     console.log(`Opening tab: ${tabName}`);
     const tabs = document.getElementsByClassName('tab-content');
@@ -4373,55 +4218,3 @@ function openTab(tabName) {
         'event_label': tabName
     });
 }
-
-// Simple QQQ Gap Loading
-async function loadQQQGapSimple() {
-    console.log('Loading QQQ gap data...');
-    const gapContainer = document.getElementById('qqq-gap-simple');
-    if (!gapContainer) {
-        console.log('QQQ gap container not found');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/qqq-gap-simple');
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-            const gapColor = data.gap_direction === 'UP' ? '#28a745' : '#dc3545';
-            
-            gapContainer.innerHTML = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h6 class="text-muted">Previous Close</h6>
-                            <h4 class="mb-0">$${data.prev_close}</h4>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h6 class="text-muted">Open Price</h6>
-                            <h4 class="mb-0">$${data.open_price}</h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-center mt-3">
-                    <h6 class="text-muted">Gap</h6>
-                    <button class="btn btn-lg" style="background-color: ${gapColor}; color: white; font-weight: bold;">
-                        ${data.gap_direction} ${data.gap_pct.toFixed(2)}%
-                    </button>
-                </div>
-            `;
-        } else {
-            gapContainer.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
-        }
-    } catch (error) {
-        console.error('Error loading QQQ gap:', error);
-        gapContainer.innerHTML = `<div class="alert alert-danger">Failed to load gap data</div>`;
-    }
-}
-
-// Load QQQ gap when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    loadQQQGapSimple();
-});
