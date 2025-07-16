@@ -14,6 +14,7 @@ import sqlite3
 import uuid
 import bcrypt
 from werkzeug.exceptions import TooManyRequests
+from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -1166,130 +1167,73 @@ def get_earnings_by_bin():
         logging.error(f"Error processing earnings by bin: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
-# Alpha Vantage API configuration
-ALPHA_VANTAGE_API_KEY = "9K03GJJCB96AJCO3"
-ALPHA_VANTAGE_BASE_URL = "https://www.alphavantage.co/query"
-
 def get_real_time_gap_data(ticker, date):
     """
-    Fetches real-time gap data for QQQ using Alpha Vantage API.
+    Fetches real-time gap data for QQQ by scraping CNBC.
     Returns yesterday's close and today's open (if available) to calculate gap.
     """
     try:
-        # Construct the Alpha Vantage API URL for daily time series
-        params = {
-            'function': 'TIME_SERIES_DAILY',
-            'symbol': ticker,
-            'apikey': ALPHA_VANTAGE_API_KEY,
-            'outputsize': 'compact'  # Get last 100 days of data
+        # Scrape QQQ data from CNBC
+        url = "https://www.cnbc.com/quotes/QQQ"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-
-        response = requests.get(ALPHA_VANTAGE_BASE_URL, params=params)
-        response.raise_for_status()  # Raise an exception for HTTP errors
-        data = response.json()
-
-        # Check for API errors
-        if 'Error Message' in data:
-            logging.error(f"Alpha Vantage API error: {data['Error Message']}")
-            return {'error': f'Alpha Vantage API error: {data["Error Message"]}'}
         
-        if 'Note' in data:
-            logging.error(f"Alpha Vantage API note: {data['Note']}")
-            return {'error': f'Alpha Vantage API note: {data["Note"]}'}
-
-        if 'Time Series (Daily)' not in data:
-            logging.error(f"Alpha Vantage API returned no data for {ticker}")
-            return {'error': f'No data available for {ticker} from Alpha Vantage.'}
-
-        daily_data = data['Time Series (Daily)']
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
         
-        # Get today's date
-        today = datetime.now()
+        # Parse the HTML content
+        soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Find the most recent trading day (skip weekends and holidays)
-        recent_trading_day = today
-        while recent_trading_day.strftime("%Y-%m-%d") not in daily_data:
-            if recent_trading_day.weekday() >= 5:  # Skip Saturday (5) or Sunday (6)
-                recent_trading_day -= timedelta(days=1)
-            else:
-                # Likely a holiday or data not yet available
-                recent_trading_day -= timedelta(days=1)
-            if (today - recent_trading_day).days > 10:  # Prevent infinite loop
-                logging.error("No recent trading data found in the last 10 days.")
-                return {'error': 'No recent trading data found in the last 10 days.'}
-
-        # Find the previous trading day
-        prev_trading_day = recent_trading_day - timedelta(days=1)
-        while prev_trading_day.strftime("%Y-%m-%d") not in daily_data:
-            if prev_trading_day.weekday() >= 5:  # Skip Saturday (5) or Sunday (6)
-                prev_trading_day -= timedelta(days=1)
-            else:
-                prev_trading_day -= timedelta(days=1)
-            if (today - prev_trading_day).days > 10:  # Prevent infinite loop
-                logging.error("No previous trading data found in the last 10 days.")
-                return {'error': 'No previous trading data found in the last 10 days.'}
-
-        # Format dates as YYYY-MM-DD
-        recent_trading_day_str = recent_trading_day.strftime("%Y-%m-%d")
-        prev_trading_day_str = prev_trading_day.strftime("%Y-%m-%d")
+        # Look for the stock price data
+        # CNBC typically has the current price in a specific element
+        price_element = soup.find('span', {'class': 'QuoteStrip-lastPrice'})
+        if not price_element:
+            price_element = soup.find('span', {'class': 'QuoteStrip-price'})
+        if not price_element:
+            price_element = soup.find('div', {'class': 'QuoteStrip-price'})
         
-        logging.debug(f"Found trading days - Recent: {recent_trading_day_str}, Previous: {prev_trading_day_str}")
-        logging.debug(f"Available dates: {list(daily_data.keys())[:10]}")
-
-        # Fetch open price for the most recent trading day
-        recent_open = float(daily_data[recent_trading_day_str]["1. open"])
-        recent_high = float(daily_data[recent_trading_day_str]["2. high"])
-        recent_low = float(daily_data[recent_trading_day_str]["3. low"])
-        recent_close = float(daily_data[recent_trading_day_str]["4. close"])
-        recent_volume = int(daily_data[recent_trading_day_str]["5. volume"])
-
-        # Fetch close price for the previous trading day
-        prev_close = float(daily_data[prev_trading_day_str]["4. close"])
-
+        if not price_element:
+            logging.error("Could not find price element on CNBC page")
+            return {'error': 'Could not find price data on CNBC page'}
+        
+        current_price = float(price_element.text.strip().replace('$', '').replace(',', ''))
+        
+        # Look for previous close
+        prev_close_element = soup.find('span', {'class': 'QuoteStrip-previousClose'})
+        if not prev_close_element:
+            # Try alternative selectors
+            prev_close_element = soup.find('td', text=lambda x: x and 'Previous Close' in x)
+            if prev_close_element:
+                prev_close_element = prev_close_element.find_next_sibling('td')
+        
+        if not prev_close_element:
+            logging.error("Could not find previous close on CNBC page")
+            return {'error': 'Could not find previous close data on CNBC page'}
+        
+        prev_close = float(prev_close_element.text.strip().replace('$', '').replace(',', ''))
+        
         # Calculate gap percentage
-        gap_pct = ((recent_open - prev_close) / prev_close) * 100
+        gap_pct = ((current_price - prev_close) / prev_close) * 100
         gap_direction = "UP" if gap_pct > 0 else "DOWN"
-
-        # Check if today's data is available
-        today_str = today.strftime("%Y-%m-%d")
-        today_open = None
-        today_high = None
-        today_low = None
-        today_close = None
-        today_volume = None
         
-        if today_str in daily_data:
-            today_open = float(daily_data[today_str]["1. open"])
-            today_high = float(daily_data[today_str]["2. high"])
-            today_low = float(daily_data[today_str]["3. low"])
-            today_close = float(daily_data[today_str]["4. close"])
-            today_volume = int(daily_data[today_str]["5. volume"])
-
+        # Get current time to determine if market is open
+        now = datetime.now()
+        market_open = now.hour >= 9 and now.hour < 16  # Simplified market hours check
+        
         return {
             'ticker': ticker,
-            'yesterday_date': prev_trading_day_str,
             'yesterday_close': round(prev_close, 2),
-            'today_date': today_str,
-            'today_open': round(today_open, 2) if today_open else None,
-            'today_high': round(today_high, 2) if today_high else None,
-            'today_low': round(today_low, 2) if today_low else None,
-            'today_close': round(today_close, 2) if today_close else None,
-            'today_volume': int(today_volume) if today_volume else None,
-            'recent_trading_day': recent_trading_day_str,
-            'recent_open': round(recent_open, 2),
-            'recent_high': round(recent_high, 2),
-            'recent_low': round(recent_low, 2),
-            'recent_close': round(recent_close, 2),
-            'recent_volume': int(recent_volume),
+            'current_price': round(current_price, 2),
             'gap_pct': round(gap_pct, 2),
             'gap_direction': gap_direction,
-            'market_status': 'Open' if today_open else 'Closed',
-            'message': f"{ticker} previous close: ${prev_close:.2f}" + (f" | Recent open: ${recent_open:.2f} | Gap: {gap_direction} {abs(round(gap_pct, 2))}%" if recent_open else " | Market not yet open")
+            'market_status': 'Open' if market_open else 'Closed',
+            'message': f"{ticker} previous close: ${prev_close:.2f} | Current: ${current_price:.2f} | Gap: {gap_direction} {abs(round(gap_pct, 2))}%"
         }
         
     except requests.exceptions.RequestException as e:
-        logging.error(f"Error fetching real-time gap data from Alpha Vantage: {str(e)}")
-        return {'error': f'Failed to fetch real-time gap data from Alpha Vantage: {str(e)}'}
+        logging.error(f"Error fetching data from CNBC: {str(e)}")
+        return {'error': f'Failed to fetch data from CNBC: {str(e)}'}
     except Exception as e:
         logging.error(f"Unexpected error in get_real_time_gap_data: {str(e)}")
         return {'error': 'Server error'}
@@ -1317,43 +1261,23 @@ def get_real_time_gap():
         logging.error(f"Error processing real-time gap request: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
-@app.route('/api/test_alpha_vantage', methods=['GET'])
-def test_alpha_vantage():
-    """Test endpoint to verify Alpha Vantage API is working"""
+@app.route('/api/test_cnbc_scraping', methods=['GET'])
+def test_cnbc_scraping():
+    """Test endpoint to verify CNBC scraping is working"""
     try:
-        params = {
-            'function': 'TIME_SERIES_DAILY',
-            'symbol': 'QQQ',
-            'apikey': ALPHA_VANTAGE_API_KEY,
-            'outputsize': 'compact'
-        }
-        
-        response = requests.get(ALPHA_VANTAGE_BASE_URL, params=params)
-        logging.debug(f"Alpha Vantage test response status: {response.status_code}")
-        
-        if response.status_code == 200:
-            data = response.json()
-            if 'Time Series (Daily)' in data:
-                available_dates = list(data['Time Series (Daily)'].keys())[:5]
-                return jsonify({
-                    'status': 'success',
-                    'available_dates': available_dates,
-                    'api_key': ALPHA_VANTAGE_API_KEY[:10] + '...'  # Show first 10 chars
-                })
-            else:
-                return jsonify({
-                    'status': 'error',
-                    'message': 'No time series data in response',
-                    'response': data
-                })
+        result = get_real_time_gap_data('QQQ', None)
+        if 'error' not in result:
+            return jsonify({
+                'status': 'success',
+                'data': result
+            })
         else:
             return jsonify({
                 'status': 'error',
-                'message': f'HTTP {response.status_code}',
-                'response': response.text
+                'message': result['error']
             })
     except Exception as e:
-        logging.error(f"Error testing Alpha Vantage: {str(e)}")
+        logging.error(f"Error testing CNBC scraping: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e)
