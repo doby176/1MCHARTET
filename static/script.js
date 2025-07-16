@@ -47,7 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof populateEarningsOutcomes === 'function') populateEarningsOutcomes();
     
     // Load real-time QQQ gap data automatically
-    loadRealTimeQQQGap();
+    setTimeout(() => {
+        console.log('Calling loadRealTimeQQQGap with delay');
+        loadRealTimeQQQGap();
+    }, 100);
     
     // Add refresh button functionality
     const refreshButton = document.getElementById('refresh-qqq-gap');
@@ -4176,8 +4179,13 @@ async function loadGapInsights(event) {
 }
 
 async function loadRealTimeQQQGap() {
+    console.log('loadRealTimeQQQGap called');
     const qqqGapContent = document.getElementById('qqq-gap-content');
-    if (!qqqGapContent) return;
+    console.log('qqq-gap-content element:', qqqGapContent);
+    if (!qqqGapContent) {
+        console.log('qqq-gap-content element not found, returning early');
+        return;
+    }
     
     try {
         console.log('Loading real-time QQQ gap data...');
