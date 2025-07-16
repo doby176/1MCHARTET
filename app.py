@@ -1315,5 +1315,76 @@ def test_cnbc_scraping():
             'message': str(e)
         })
 
+@app.route('/api/qqq-gap-simple')
+def get_qqq_gap_simple():
+    """Simple QQQ gap calculation from CNBC"""
+    try:
+        logging.debug("Scraping QQQ gap data from CNBC...")
+        
+        url = "https://www.cnbc.com/quotes/QQQ"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Find all Summary-stat elements (KEY STATS section)
+        summary_stats = soup.find_all('li', {'class': 'Summary-stat'})
+        logging.debug(f"Found {len(summary_stats)} summary stats")
+        
+        open_price = None
+        prev_close = None
+        
+        for stat in summary_stats:
+            label_element = stat.find('span', {'class': 'Summary-label'})
+            value_element = stat.find('span', {'class': 'Summary-value'})
+            
+            if label_element and value_element:
+                label = label_element.text.strip()
+                value = value_element.text.strip()
+                logging.debug(f"Found stat: {label} = {value}")
+                
+                if label == 'Open':
+                    try:
+                        open_price = float(value.replace(',', ''))
+                        logging.debug(f"Found OPEN price: {open_price}")
+                    except:
+                        logging.error(f"Could not parse open price: {value}")
+                
+                elif label == 'Prev Close':
+                    try:
+                        prev_close = float(value.replace(',', ''))
+                        logging.debug(f"Found PREV CLOSE: {prev_close}")
+                    except:
+                        logging.error(f"Could not parse prev close: {value}")
+        
+        if open_price and prev_close:
+            # Calculate gap
+            gap_pct = ((open_price - prev_close) / prev_close) * 100
+            gap_direction = "UP" if gap_pct > 0 else "DOWN"
+            
+            return jsonify({
+                'open_price': open_price,
+                'prev_close': prev_close,
+                'gap_pct': abs(gap_pct),
+                'gap_direction': gap_direction,
+                'status': 'success'
+            })
+        else:
+            return jsonify({
+                'error': f"Could not find required data. Open: {open_price}, Prev Close: {prev_close}",
+                'status': 'error'
+            })
+            
+    except Exception as e:
+        logging.error(f"Error scraping QQQ gap: {str(e)}")
+        return jsonify({
+            'error': f"Failed to scrape QQQ data: {str(e)}",
+            'status': 'error'
+        })
+
 if __name__ == '__main__':
     app.run(debug=True)

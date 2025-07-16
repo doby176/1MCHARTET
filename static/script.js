@@ -4373,3 +4373,55 @@ function openTab(tabName) {
         'event_label': tabName
     });
 }
+
+// Simple QQQ Gap Loading
+async function loadQQQGapSimple() {
+    console.log('Loading QQQ gap data...');
+    const gapContainer = document.getElementById('qqq-gap-simple');
+    if (!gapContainer) {
+        console.log('QQQ gap container not found');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/qqq-gap-simple');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const gapColor = data.gap_direction === 'UP' ? '#28a745' : '#dc3545';
+            
+            gapContainer.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h6 class="text-muted">Previous Close</h6>
+                            <h4 class="mb-0">$${data.prev_close}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h6 class="text-muted">Open Price</h6>
+                            <h4 class="mb-0">$${data.open_price}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <h6 class="text-muted">Gap</h6>
+                    <button class="btn btn-lg" style="background-color: ${gapColor}; color: white; font-weight: bold;">
+                        ${data.gap_direction} ${data.gap_pct.toFixed(2)}%
+                    </button>
+                </div>
+            `;
+        } else {
+            gapContainer.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+        }
+    } catch (error) {
+        console.error('Error loading QQQ gap:', error);
+        gapContainer.innerHTML = `<div class="alert alert-danger">Failed to load gap data</div>`;
+    }
+}
+
+// Load QQQ gap when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadQQQGapSimple();
+});
