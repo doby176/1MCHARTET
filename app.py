@@ -15,6 +15,8 @@ from werkzeug.exceptions import TooManyRequests
 import requests
 from bs4 import BeautifulSoup
 import re
+from datetime import datetime, timezone, timedelta
+import pytz
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -1171,26 +1173,65 @@ def get_earnings_by_bin():
 qqq_data_cache = {
     'data': None,
     'timestamp': None,
-    'cache_duration': 86400  # 24 hours cache - market data doesn't change during trading day
+    'market_date': None  # Store the market date the data represents
 }
 
+def is_market_open():
+    """Check if US market is currently open (9:31 AM - 4:00 PM ET, Mon-Fri)"""
+    et_tz = pytz.timezone('US/Eastern')
+    now_et = datetime.now(et_tz)
+    
+    # Check if it's a weekday (Monday = 0, Sunday = 6)
+    if now_et.weekday() >= 5:  # Saturday or Sunday
+        return False
+    
+    # Check if it's within market hours (9:31 AM - 4:00 PM ET)
+    # We use 9:31 AM to ensure market data is updated
+    market_open = now_et.replace(hour=9, minute=31, second=0, microsecond=0)
+    market_close = now_et.replace(hour=16, minute=0, second=0, microsecond=0)
+    
+    return market_open <= now_et <= market_close
+
+def get_market_date():
+    """Get the current market date (today if market is open, previous trading day if closed)"""
+    et_tz = pytz.timezone('US/Eastern')
+    now_et = datetime.now(et_tz)
+    
+    # If market is closed, we need yesterday's data
+    if not is_market_open():
+        # Go back to previous trading day
+        days_back = 1
+        while days_back <= 7:  # Look back up to 7 days
+            prev_day = now_et - timedelta(days=days_back)
+            if prev_day.weekday() < 5:  # Monday-Friday
+                return prev_day.strftime('%Y-%m-%d')
+            days_back += 1
+        return now_et.strftime('%Y-%m-%d')  # Fallback
+    
+    return now_et.strftime('%Y-%m-%d')
+
+def should_refresh_qqq_data():
+    """Determine if we need to refresh QQQ data - once per day at 9:31 AM ET"""
+    current_market_date = get_market_date()
+    
+    # If we don't have cached data, we need to scrape
+    if not qqq_data_cache['data'] or not qqq_data_cache['market_date']:
+        return True
+    
+    # If the cached data is for a different market date, we need fresh data
+    if qqq_data_cache['market_date'] != current_market_date:
+        return True
+    
+    # If we already have today's data, don't scrape again
+    return False
+
 def scrape_qqq_data():
-    """Scrape QQQ data from CNBC website with caching"""
+    """Scrape QQQ data from CNBC website with market-aware caching"""
     global qqq_data_cache
     
-    current_time = time.time()
-    
-    # Check if we have cached data that's still valid
-    if (qqq_data_cache['data'] and 
-        qqq_data_cache['timestamp'] and 
-        current_time - qqq_data_cache['timestamp'] < qqq_data_cache['cache_duration']):
-        logging.info("Returning cached QQQ data")
-        return qqq_data_cache['data']
-    
-    # Only scrape once per day maximum (market data is static during trading day)
-    if (qqq_data_cache['timestamp'] and 
-        current_time - qqq_data_cache['timestamp'] < 86400):  # 24 hours minimum between scrapes
-        logging.info("QQQ data was recently scraped, returning cached data")
+    # Check if we need to refresh based on market conditions
+    if not should_refresh_qqq_data():
+        logging.info("Returning cached QQQ data (market-aware cache)")
         return qqq_data_cache['data']
     
     try:
@@ -1247,11 +1288,12 @@ def scrape_qqq_data():
                 data['Gap %'] = "N/A"
                 data['Gap Value'] = None
         
-        # Cache the data
+        # Cache the data with market date
         qqq_data_cache['data'] = data
-        qqq_data_cache['timestamp'] = current_time
+        qqq_data_cache['timestamp'] = time.time()
+        qqq_data_cache['market_date'] = get_market_date()
         
-        logging.info("QQQ data scraped and cached successfully")
+        logging.info(f"QQQ data scraped and cached successfully for market date: {qqq_data_cache['market_date']}")
         return data
         
     except Exception as e:
