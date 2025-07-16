@@ -1171,7 +1171,7 @@ def get_earnings_by_bin():
 qqq_data_cache = {
     'data': None,
     'timestamp': None,
-    'cache_duration': 3600  # 1 hour cache
+    'cache_duration': 86400  # 24 hours cache - market data doesn't change during trading day
 }
 
 def scrape_qqq_data():
@@ -1187,9 +1187,9 @@ def scrape_qqq_data():
         logging.info("Returning cached QQQ data")
         return qqq_data_cache['data']
     
-    # Only scrape once per hour maximum
+    # Only scrape once per day maximum (market data is static during trading day)
     if (qqq_data_cache['timestamp'] and 
-        current_time - qqq_data_cache['timestamp'] < 3600):  # 1 hour minimum between scrapes
+        current_time - qqq_data_cache['timestamp'] < 86400):  # 24 hours minimum between scrapes
         logging.info("QQQ data was recently scraped, returning cached data")
         return qqq_data_cache['data']
     

@@ -4301,7 +4301,7 @@ function displayQQQData(data) {
             
             item.innerHTML = `
                 <div class="qqq-data-label">${metric.label}</div>
-                <div class="qqq-data-value ${valueClass}">${value}</div>
+                <div class="qqq-data-value ${valueClass} ${metric.key === 'Gap %' ? 'gap-percentage' : metric.key === 'Open' ? 'open-price' : 'prev-close'}" data-metric="${metric.key}">${value}</div>
                 <div class="qqq-data-description">${description}</div>
             `;
             
@@ -4336,7 +4336,7 @@ function displayQQQData(data) {
 function populateGapFilters(gapValue) {
     // Check if gap is too small (under 0.15%)
     if (Math.abs(gapValue) < 0.15) {
-        alert('Gap is too small (under 0.15%) - no actionable data available for such small gaps to exploit.');
+        showSmallGapMessage();
         return;
     }
     
@@ -4374,19 +4374,92 @@ function populateGapFilters(gapValue) {
     if (directionSelect) directionSelect.value = gapDirection;
     
     // Show success message
-    const message = `Filters populated with today's gap data:\n` +
-                   `• Gap Size: ${gapSizeBin}\n` +
-                   `• Day: ${dayOfWeek}\n` +
-                   `• Direction: ${gapDirection === 'up' ? 'Gap Up' : 'Gap Down'}\n\n` +
-                   `Click "Get Insights" to view historical data for similar gaps.`;
-    
-    alert(message);
+    showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection);
     
     // Track the event
     gtag('event', 'gap_filters_populated', {
         'event_category': 'Gap Filters',
         'event_label': `${gapSizeBin}_${dayOfWeek}_${gapDirection}`
     });
+}
+
+function showSmallGapMessage() {
+    const displayContainer = document.getElementById('qqq-data-display');
+    if (!displayContainer) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'small-gap-message';
+    messageDiv.innerHTML = `
+        <div class="small-gap-icon">⚠️</div>
+        <div class="small-gap-content">
+            <h4>Small Gap Detected</h4>
+            <p>Gap is under 0.15% - no actionable data available for such small gaps to exploit.</p>
+            <p class="small-gap-note">Consider waiting for larger gaps or using different trading strategies.</p>
+        </div>
+    `;
+    
+    // Clear existing content and show message
+    displayContainer.innerHTML = '';
+    displayContainer.appendChild(messageDiv);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        if (displayContainer.contains(messageDiv)) {
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+                if (displayContainer.contains(messageDiv)) {
+                    displayContainer.removeChild(messageDiv);
+                    loadQQQData(); // Reload the original data
+                }
+            }, 500);
+        }
+    }, 5000);
+}
+
+function showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection) {
+    const displayContainer = document.getElementById('qqq-data-display');
+    if (!displayContainer) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'gap-filters-message';
+    messageDiv.innerHTML = `
+        <div class="gap-filters-icon">✅</div>
+        <div class="gap-filters-content">
+            <h4>Filters Populated Successfully</h4>
+            <div class="gap-filters-details">
+                <div class="filter-item">
+                    <span class="filter-label">Gap Size:</span>
+                    <span class="filter-value">${gapSizeBin}</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-label">Day:</span>
+                    <span class="filter-value">${dayOfWeek}</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-label">Direction:</span>
+                    <span class="filter-value">${gapDirection === 'up' ? 'Gap Up' : 'Gap Down'}</span>
+                </div>
+            </div>
+            <p class="gap-filters-note">Click "Get Insights" to view historical data for similar gaps.</p>
+        </div>
+    `;
+    
+    // Clear existing content and show message
+    displayContainer.innerHTML = '';
+    displayContainer.appendChild(messageDiv);
+    
+    // Auto-hide after 4 seconds
+    setTimeout(() => {
+        if (displayContainer.contains(messageDiv)) {
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+                if (displayContainer.contains(messageDiv)) {
+                    displayContainer.removeChild(messageDiv);
+                    loadQQQData(); // Reload the original data
+                }
+            }, 500);
+        }
+    }, 4000);
 }
 
 // Initialize QQQ data functionality

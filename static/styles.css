@@ -1814,6 +1814,18 @@ footer p {
     margin-bottom: var(--spacing-xs);
 }
 
+/* Make gap percentage larger than other values */
+.qqq-data-value.gap-percentage {
+    font-size: 2.2rem !important;
+    font-weight: var(--font-weight-bold);
+}
+
+/* Make open and previous close smaller */
+.qqq-data-value.open-price,
+.qqq-data-value.prev-close {
+    font-size: 1.3rem !important;
+}
+
 .qqq-data-value.gap-positive {
     color: var(--accent-green);
     transition: all 0.3s ease;
@@ -1856,6 +1868,91 @@ footer p {
     color: var(--accent-red);
     text-align: center;
     font-weight: var(--font-weight-medium);
+}
+
+/* Styled Messages */
+.small-gap-message,
+.gap-filters-message {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    margin: var(--spacing-md) 0;
+    transition: opacity 0.5s ease;
+}
+
+.small-gap-message {
+    background: linear-gradient(145deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 1px solid #ffc107;
+    color: #856404;
+}
+
+.gap-filters-message {
+    background: linear-gradient(145deg, #d4edda 0%, #c3e6cb 100%);
+    border: 1px solid #28a745;
+    color: #155724;
+}
+
+.small-gap-icon,
+.gap-filters-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.small-gap-content,
+.gap-filters-content {
+    flex: 1;
+}
+
+.small-gap-content h4,
+.gap-filters-content h4 {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: 1.1rem;
+    font-weight: var(--font-weight-semibold);
+}
+
+.small-gap-content p,
+.gap-filters-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.small-gap-note,
+.gap-filters-note {
+    font-style: italic;
+    opacity: 0.8;
+    margin-top: var(--spacing-xs) !important;
+}
+
+.gap-filters-details {
+    margin: var(--spacing-sm) 0;
+}
+
+.filter-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+    padding: var(--spacing-xs) 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.filter-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.filter-label {
+    font-weight: var(--font-weight-medium);
+    font-size: 0.85rem;
+}
+
+.filter-value {
+    font-weight: var(--font-weight-bold);
+    font-size: 0.9rem;
+    color: var(--primary-blue);
 }
 
 @media (max-width: 768px) {
