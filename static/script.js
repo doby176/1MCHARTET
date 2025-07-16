@@ -4014,10 +4014,18 @@ async function loadGapInsights(event) {
                         const gapPercent = Math.abs(realTimeData.gap_pct);
                         const gapColor = gapDirection === 'UP' ? '#388e3c' : '#d32f2f';
                         
+                        // Check if this is yesterday's data
+                        const isYesterday = realTimeData.is_yesterday || false;
+                        const titleText = isYesterday ? "Yesterday's QQQ Gap" : "Today's QQQ Gap";
+                        const titleColor = isYesterday ? "#ff9800" : "#495057";
+                        const boxStyle = isYesterday ? 
+                            "background:linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);border:1px solid #ff9800;" : 
+                            "background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border:1px solid #dee2e6;";
+                        
                         realTimeGapHtml = `
-                            <div class="realtime-gap-box" style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);padding:16px 20px;margin-bottom:20px;border-radius:12px;border:1px solid #dee2e6;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                            <div class="realtime-gap-box" style="${boxStyle}padding:16px 20px;margin-bottom:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
                                 <div style="text-align:center;margin-bottom:12px;">
-                                    <h3 style="margin:0;color:#495057;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
+                                    <h3 style="margin:0;color:${titleColor};font-size:1.2em;font-weight:600;">${titleText}</h3>
                                 </div>
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
                                     <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e9ecef;">
@@ -4035,6 +4043,8 @@ async function loadGapInsights(event) {
                                         ${gapDirection} ${gapPercent}%
                                     </button>
                                 </div>
+                                ${realTimeData.cached_at ? `<div style="text-align:center;margin-top:8px;font-size:0.8em;color:#6c757d;">Cached at ${new Date(realTimeData.cached_at).toLocaleTimeString()}</div>` : ''}
+                                ${isYesterday ? `<div style="text-align:center;margin-top:8px;font-size:0.8em;color:#ff9800;">Yesterday's data - Today's data available after 9:31 AM ET</div>` : ''}
                             </div>
                         `;
                     } else {
@@ -4054,6 +4064,35 @@ async function loadGapInsights(event) {
                             </div>
                         `;
                     }
+                } else {
+                                    // Handle specific error messages
+                if (realTimeData.error.includes('9:31 AM ET')) {
+                    realTimeGapHtml = `
+                        <div class="realtime-gap-box" style="background:linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);padding:16px 20px;margin-bottom:20px;border-radius:12px;border:1px solid #2196f3;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="text-align:center;margin-bottom:12px;">
+                                <h3 style="margin:0;color:#1976d2;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
+                            </div>
+                            <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #2196f3;">
+                                <div style="font-size:1.1em;color:#1976d2;margin-bottom:8px;">⏰ Data Not Yet Available</div>
+                                <div style="font-size:0.9em;color:#6c757d;">Today's gap data will be available after 9:31 AM ET</div>
+                                <div style="font-size:0.8em;color:#6c757d;margin-top:8px;">Current time: ${realTimeData.current_time_et ? new Date(realTimeData.current_time_et).toLocaleTimeString() : 'N/A'}</div>
+                            </div>
+                        </div>
+                    `;
+                    } else {
+                        realTimeGapHtml = `
+                            <div class="realtime-gap-box" style="background:linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);padding:16px 20px;margin-bottom:20px;border-radius:12px;border:1px solid #f44336;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="text-align:center;margin-bottom:12px;">
+                                    <h3 style="margin:0;color:#d32f2f;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
+                                </div>
+                                <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #f44336;">
+                                    <div style="font-size:1.1em;color:#d32f2f;margin-bottom:8px;">⚠️ Error Loading Data</div>
+                                    <div style="font-size:0.9em;color:#6c757d;">${realTimeData.error}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
                 } else {
                     console.error('API returned error:', realTimeData.error);
                     realTimeGapHtml = `<div class="realtime-gap-box" style="background:#fff3e0;padding:12px 16px;margin-bottom:16px;border-radius:8px;"><strong>Today's QQQ Gap:</strong> <span style="color:#d32f2f;">${realTimeData.error}</span></div>`;
@@ -4156,10 +4195,18 @@ async function loadRealTimeQQQGap() {
                     const gapPercent = Math.abs(data.gap_pct);
                     const gapColor = gapDirection === 'UP' ? '#388e3c' : '#d32f2f';
                     
+                    // Check if this is yesterday's data
+                    const isYesterday = data.is_yesterday || false;
+                    const titleText = isYesterday ? "Yesterday's QQQ Gap" : "Today's QQQ Gap";
+                    const titleColor = isYesterday ? "#ff9800" : "#495057";
+                    const boxStyle = isYesterday ? 
+                        "background:linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);border:1px solid #ff9800;" : 
+                        "background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border:1px solid #dee2e6;";
+                    
                     qqqGapContent.innerHTML = `
-                        <div class="qqq-gap-data" style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);padding:16px 20px;border-radius:12px;border:1px solid #dee2e6;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                        <div class="qqq-gap-data" style="${boxStyle}padding:16px 20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
                             <div style="text-align:center;margin-bottom:12px;">
-                                <h3 style="margin:0;color:#495057;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
+                                <h3 style="margin:0;color:${titleColor};font-size:1.2em;font-weight:600;">${titleText}</h3>
                             </div>
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
                                 <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e9ecef;">
@@ -4177,6 +4224,8 @@ async function loadRealTimeQQQGap() {
                                     ${gapDirection} ${gapPercent}%
                                 </button>
                             </div>
+                            ${data.cached_at ? `<div style="text-align:center;margin-top:8px;font-size:0.8em;color:#6c757d;">Cached at ${new Date(data.cached_at).toLocaleTimeString()}</div>` : ''}
+                            ${isYesterday ? `<div style="text-align:center;margin-top:8px;font-size:0.8em;color:#ff9800;">Yesterday's data - Today's data available after 9:31 AM ET</div>` : ''}
                         </div>
                     `;
                 } else {
@@ -4197,6 +4246,35 @@ async function loadRealTimeQQQGap() {
                     `;
                 }
             } else {
+                // Handle specific error messages
+                if (data.error.includes('9:31 AM ET')) {
+                    qqqGapContent.innerHTML = `
+                        <div class="qqq-gap-data" style="background:linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);padding:16px 20px;border-radius:12px;border:1px solid #2196f3;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="text-align:center;margin-bottom:12px;">
+                                <h3 style="margin:0;color:#1976d2;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
+                            </div>
+                            <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #2196f3;">
+                                <div style="font-size:1.1em;color:#1976d2;margin-bottom:8px;">⏰ Data Not Yet Available</div>
+                                <div style="font-size:0.9em;color:#6c757d;">Today's gap data will be available after 9:31 AM ET</div>
+                                <div style="font-size:0.8em;color:#6c757d;margin-top:8px;">Current time: ${data.current_time_et ? new Date(data.current_time_et).toLocaleTimeString() : 'N/A'}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    qqqGapContent.innerHTML = `
+                        <div class="qqq-gap-data" style="background:linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);padding:16px 20px;border-radius:12px;border:1px solid #f44336;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="text-align:center;margin-bottom:12px;">
+                                <h3 style="margin:0;color:#d32f2f;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
+                            </div>
+                            <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #f44336;">
+                                <div style="font-size:1.1em;color:#d32f2f;margin-bottom:8px;">⚠️ Error Loading Data</div>
+                                <div style="font-size:0.9em;color:#6c757d;">${data.error}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            } else {
                 console.error('API returned error:', data.error);
                 qqqGapContent.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
             }
@@ -4216,7 +4294,7 @@ function setGapFilters(gapPercent, gapDirection) {
     console.log(`Setting gap filters: ${gapPercent}% ${gapDirection}`);
     
     // Check if gap is too small for trading opportunity
-    if (gapPercent < 0.14) {
+    if (gapPercent < 0.15) {
         const warningNotification = document.createElement('div');
         warningNotification.style.cssText = `
             position: fixed;
@@ -4233,7 +4311,7 @@ function setGapFilters(gapPercent, gapDirection) {
         `;
         warningNotification.innerHTML = `
             <div style="margin-bottom:8px;">⚠️ Gap Too Small</div>
-            <div style="font-size:0.9em;">Today's gap (${gapPercent}%) is below 0.14% and may not provide sufficient trading opportunity.</div>
+            <div style="font-size:0.9em;">Today's gap (${gapPercent}%) is below 0.15% and may not provide sufficient trading opportunity.</div>
         `;
         document.body.appendChild(warningNotification);
         
