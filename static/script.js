@@ -4010,20 +4010,47 @@ async function loadGapInsights(event) {
                 if (!realTimeData.error) {
                     if (realTimeData.current_price !== null) {
                         // Market is open, show gap data
+                        const gapDirection = realTimeData.gap_direction;
+                        const gapPercent = Math.abs(realTimeData.gap_pct);
+                        const gapColor = gapDirection === 'UP' ? '#388e3c' : '#d32f2f';
+                        
                         realTimeGapHtml = `
-                            <div class="realtime-gap-box" style="background:#e3f2fd;padding:12px 16px;margin-bottom:16px;border-radius:8px;">
-                                <strong>Today's QQQ Gap:</strong><br>
-                                <span style="font-size:1.1em;">Previous Close: <b>$${realTimeData.yesterday_close}</b> | Current Price: <b>$${realTimeData.current_price}</b> | Gap: <b style="color:${realTimeData.gap_direction==='UP'?'#388e3c':'#d32f2f'}">${realTimeData.gap_direction} ${Math.abs(realTimeData.gap_pct)}%</b></span><br>
-                                <span style="font-size:0.95em;">Market Status: ${realTimeData.market_status}</span>
+                            <div class="realtime-gap-box" style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);padding:16px 20px;margin-bottom:20px;border-radius:12px;border:1px solid #dee2e6;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="text-align:center;margin-bottom:12px;">
+                                    <h3 style="margin:0;color:#495057;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                                    <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e9ecef;">
+                                        <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Previous Close</div>
+                                        <div style="font-size:1.3em;font-weight:700;color:#495057;">$${realTimeData.yesterday_close}</div>
+                                    </div>
+                                    <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e9ecef;">
+                                        <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Open Price</div>
+                                        <div style="font-size:1.3em;font-weight:700;color:#495057;">$${realTimeData.current_price}</div>
+                                    </div>
+                                </div>
+                                <div style="text-align:center;">
+                                    <div style="font-size:0.9em;color:#6c757d;margin-bottom:8px;">Gap</div>
+                                    <button onclick="setGapFilters(${gapPercent}, '${gapDirection.toLowerCase()}')" style="background:${gapColor};color:white;border:none;padding:12px 24px;border-radius:8px;font-size:1.2em;font-weight:700;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.2);transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                        ${gapDirection} ${gapPercent}%
+                                    </button>
+                                </div>
                             </div>
                         `;
                     } else {
                         // Market is closed, show yesterday's close only
                         realTimeGapHtml = `
-                            <div class="realtime-gap-box" style="background:#fff3e0;padding:12px 16px;margin-bottom:16px;border-radius:8px;">
-                                <strong>Today's QQQ Gap:</strong><br>
-                                <span style="font-size:1.1em;">Previous Close: <b>$${realTimeData.yesterday_close}</b> | Market Status: <b style="color:#ff9800;">Closed</b></span><br>
-                                <span style="font-size:0.95em;">Market opens at 9:30 AM ET. Gap will be calculated once today's open is available.</span>
+                            <div class="realtime-gap-box" style="background:linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);padding:16px 20px;margin-bottom:20px;border-radius:12px;border:1px solid #ffcc02;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                                <div style="text-align:center;margin-bottom:12px;">
+                                    <h3 style="margin:0;color:#e65100;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
+                                </div>
+                                <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #ffcc02;">
+                                    <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Previous Close</div>
+                                    <div style="font-size:1.3em;font-weight:700;color:#495057;">$${realTimeData.yesterday_close}</div>
+                                </div>
+                                <div style="text-align:center;margin-top:12px;">
+                                    <div style="font-size:0.9em;color:#e65100;">Market opens at 9:30 AM ET</div>
+                                </div>
                             </div>
                         `;
                     }
@@ -4125,41 +4152,46 @@ async function loadRealTimeQQQGap() {
             if (!data.error) {
                 if (data.current_price !== null) {
                     // Market is open, show gap data
+                    const gapDirection = data.gap_direction;
+                    const gapPercent = Math.abs(data.gap_pct);
+                    const gapColor = gapDirection === 'UP' ? '#388e3c' : '#d32f2f';
+                    
                     qqqGapContent.innerHTML = `
-                        <div class="qqq-gap-data">
-                            <div class="gap-info">
-                                <span class="label">Previous Close:</span>
-                                <span class="value">$${data.yesterday_close}</span>
+                        <div class="qqq-gap-data" style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);padding:16px 20px;border-radius:12px;border:1px solid #dee2e6;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="text-align:center;margin-bottom:12px;">
+                                <h3 style="margin:0;color:#495057;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
                             </div>
-                            <div class="gap-info">
-                                <span class="label">Current Price:</span>
-                                <span class="value">$${data.current_price}</span>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                                <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e9ecef;">
+                                    <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Previous Close</div>
+                                    <div style="font-size:1.3em;font-weight:700;color:#495057;">$${data.yesterday_close}</div>
+                                </div>
+                                <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #e9ecef;">
+                                    <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Open Price</div>
+                                    <div style="font-size:1.3em;font-weight:700;color:#495057;">$${data.current_price}</div>
+                                </div>
                             </div>
-                            <div class="gap-info">
-                                <span class="label">Gap:</span>
-                                <span class="value gap-${data.gap_direction.toLowerCase()}">${data.gap_direction} ${Math.abs(data.gap_pct)}%</span>
-                            </div>
-                            <div class="gap-info">
-                                <span class="label">Market Status:</span>
-                                <span class="value">${data.market_status}</span>
+                            <div style="text-align:center;">
+                                <div style="font-size:0.9em;color:#6c757d;margin-bottom:8px;">Gap</div>
+                                <button onclick="setGapFilters(${gapPercent}, '${gapDirection.toLowerCase()}')" style="background:${gapColor};color:white;border:none;padding:12px 24px;border-radius:8px;font-size:1.2em;font-weight:700;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,0.2);transition:all 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                    ${gapDirection} ${gapPercent}%
+                                </button>
                             </div>
                         </div>
                     `;
                 } else {
                     // Market is closed, show yesterday's close only
                     qqqGapContent.innerHTML = `
-                        <div class="qqq-gap-data">
-                            <div class="gap-info">
-                                <span class="label">Previous Close:</span>
-                                <span class="value">$${data.yesterday_close}</span>
+                        <div class="qqq-gap-data" style="background:linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);padding:16px 20px;border-radius:12px;border:1px solid #ffcc02;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                            <div style="text-align:center;margin-bottom:12px;">
+                                <h3 style="margin:0;color:#e65100;font-size:1.2em;font-weight:600;">Today's QQQ Gap</h3>
                             </div>
-                            <div class="gap-info">
-                                <span class="label">Market Status:</span>
-                                <span class="value market-closed">Closed</span>
+                            <div style="text-align:center;padding:12px;background:#ffffff;border-radius:8px;border:1px solid #ffcc02;">
+                                <div style="font-size:0.9em;color:#6c757d;margin-bottom:4px;">Previous Close</div>
+                                <div style="font-size:1.3em;font-weight:700;color:#495057;">$${data.yesterday_close}</div>
                             </div>
-                            <div class="gap-info">
-                                <span class="label">Note:</span>
-                                <span class="value">Market opens at 9:30 AM ET</span>
+                            <div style="text-align:center;margin-top:12px;">
+                                <div style="font-size:0.9em;color:#e65100;">Market opens at 9:30 AM ET</div>
                             </div>
                         </div>
                     `;
@@ -4178,6 +4210,112 @@ async function loadRealTimeQQQGap() {
         console.error('Fetch error:', err);
         qqqGapContent.innerHTML = `<div class="error-message">Failed to fetch data: ${err.message}</div>`;
     }
+}
+
+function setGapFilters(gapPercent, gapDirection) {
+    console.log(`Setting gap filters: ${gapPercent}% ${gapDirection}`);
+    
+    // Check if gap is too small for trading opportunity
+    if (gapPercent < 0.14) {
+        const warningNotification = document.createElement('div');
+        warningNotification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff9800;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-weight: 600;
+            max-width: 300px;
+        `;
+        warningNotification.innerHTML = `
+            <div style="margin-bottom:8px;">⚠️ Gap Too Small</div>
+            <div style="font-size:0.9em;">Today's gap (${gapPercent}%) is below 0.14% and may not provide sufficient trading opportunity.</div>
+        `;
+        document.body.appendChild(warningNotification);
+        
+        // Remove warning after 5 seconds
+        setTimeout(() => {
+            if (warningNotification.parentNode) {
+                warningNotification.parentNode.removeChild(warningNotification);
+            }
+        }, 5000);
+        
+        return; // Don't set filters for very small gaps
+    }
+    
+    // First, switch to the Gap tab
+    openTab('gap');
+    
+    // Set the ticker to QQQ
+    const tickerSelect = document.getElementById('ticker-gap');
+    if (tickerSelect) {
+        tickerSelect.value = 'QQQ';
+    }
+    
+    // Set the gap size based on the percentage using the correct filter options
+    const gapSizeSelect = document.getElementById('gap-size');
+    if (gapSizeSelect) {
+        let gapSize = '';
+        if (gapPercent < 0.35) gapSize = '0.15-0.35%';
+        else if (gapPercent < 0.5) gapSize = '0.35-0.5%';
+        else if (gapPercent < 1.0) gapSize = '0.5-1%';
+        else if (gapPercent < 1.5) gapSize = '1-1.5%';
+        else gapSize = '1.5%+';
+        
+        gapSizeSelect.value = gapSize;
+        console.log(`Set gap size to: ${gapSize}`);
+    }
+    
+    // Set the gap direction
+    const gapDirectionSelect = document.getElementById('gap-direction');
+    if (gapDirectionSelect) {
+        gapDirectionSelect.value = gapDirection;
+        console.log(`Set gap direction to: ${gapDirection}`);
+    }
+    
+    // Set the day of week
+    const daySelect = document.getElementById('day-gap');
+    if (daySelect) {
+        const today = new Date();
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const todayName = days[today.getDay()];
+        daySelect.value = todayName;
+        console.log(`Set day to: ${todayName}`);
+    }
+    
+    // Show a notification that filters are set
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4caf50;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 1000;
+        font-weight: 600;
+    `;
+    notification.textContent = `Filters set for ${gapPercent}% ${gapDirection} gap! Click "Get Insights" to analyze.`;
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+    
+    // Track the event
+    gtag('event', 'gap_filter_auto_set', {
+        'event_category': 'Gap Analysis',
+        'event_label': `${gapPercent}%_${gapDirection}`
+    });
 }
 
 function openTab(tabName) {
