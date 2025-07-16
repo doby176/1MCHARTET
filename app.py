@@ -1171,11 +1171,11 @@ def get_earnings_by_bin():
 def get_real_time_gap_data(ticker, date):
     """
     Fetches real-time gap data for QQQ by scraping CNBC.
-    Returns yesterday's close and today's open (if available) to calculate gap.
-    Uses caching to avoid repeated scraping and only scrapes after 9:30 AM ET.
+    Returns yesterday's close and today's open to calculate gap.
+    Uses simple caching to avoid repeated scraping.
     """
     try:
-        # Check current time in Eastern Time
+        # Get current time in Eastern Time
         from datetime import timezone
         import pytz
         
@@ -1183,44 +1183,20 @@ def get_real_time_gap_data(ticker, date):
         now_et = datetime.now(eastern)
         today_et = now_et.strftime('%Y-%m-%d')
         
-        # Check if it's before 9:31 AM ET - if so, show yesterday's data
-        market_open_time = now_et.replace(hour=9, minute=31, second=0, microsecond=0)
-        if now_et < market_open_time:
-            # Show yesterday's cached data if available
-            yesterday_et = (now_et - timedelta(days=1)).strftime('%Y-%m-%d')
-            yesterday_cache_file = f'qqq_gap_cache_{yesterday_et}.json'
-            
-            if os.path.exists(yesterday_cache_file):
-                try:
-                    with open(yesterday_cache_file, 'r') as f:
-                        yesterday_data = json.load(f)
-                        # Update the message to indicate it's yesterday's data
-                        yesterday_data['message'] = f"Yesterday's {yesterday_data['ticker']} gap data (showing until 9:31 AM ET)"
-                        yesterday_data['is_yesterday'] = True
-                        yesterday_data['current_time_et'] = now_et.isoformat()
-                        yesterday_data['next_update'] = market_open_time.isoformat()
-                        logging.debug(f"Showing yesterday's cached QQQ gap data for {yesterday_et}")
-                        return yesterday_data
-                except Exception as e:
-                    logging.error(f"Error loading yesterday's cached data: {e}")
-            
-            # If no yesterday data, return a message
-            return {
-                'error': 'Yesterday\'s gap data not available. Today\'s data will be available after 9:31 AM ET.',
-                'next_update': market_open_time.isoformat(),
-                'current_time_et': now_et.isoformat()
-            }
-        
         # Check if we have cached data for today
         cache_file = f'qqq_gap_cache_{today_et}.json'
         
-        # Try to load cached data
+        # Try to load cached data (but only if it's from today and not too old)
         if os.path.exists(cache_file):
             try:
                 with open(cache_file, 'r') as f:
                     cached_data = json.load(f)
-                    logging.debug(f"Using cached QQQ gap data for {today_et}")
-                    return cached_data
+                    # Check if cache is from today and not older than 1 hour
+                    if cached_data.get('cache_date') == today_et:
+                        cache_time = datetime.fromisoformat(cached_data.get('cached_at', '').replace('Z', '+00:00'))
+                        if (now_et - cache_time).total_seconds() < 3600:  # 1 hour
+                            logging.debug(f"Using cached QQQ gap data for {today_et}")
+                            return cached_data
             except Exception as e:
                 logging.error(f"Error loading cached data: {e}")
         
@@ -1315,9 +1291,6 @@ def get_real_time_gap_data(ticker, date):
         gap_pct = ((current_price - prev_close) / prev_close) * 100
         gap_direction = "UP" if gap_pct > 0 else "DOWN"
         
-        # Get current time to determine if market is open
-        market_open = now_et.hour >= 9 and now_et.hour < 16  # Simplified market hours check
-        
         # Prepare the result
         result = {
             'ticker': ticker,
@@ -1325,7 +1298,7 @@ def get_real_time_gap_data(ticker, date):
             'current_price': round(current_price, 2),
             'gap_pct': round(gap_pct, 2),
             'gap_direction': gap_direction,
-            'market_status': 'Open' if market_open else 'Closed',
+            'market_status': 'Open',
             'message': f"{ticker} previous close: ${prev_close:.2f} | Current: ${current_price:.2f} | Gap: {gap_direction} {abs(round(gap_pct, 2))}%",
             'cached_at': now_et.isoformat(),
             'cache_date': today_et
