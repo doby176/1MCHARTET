@@ -5,7 +5,6 @@ import time
 import json
 import requests
 from datetime import datetime, timedelta
-import pytz
 from flask import Flask, render_template, request, jsonify, session, send_from_directory, redirect, url_for
 from flask_limiter import Limiter
 from flask_session import Session
@@ -15,10 +14,6 @@ import sqlite3
 import uuid
 import bcrypt
 from werkzeug.exceptions import TooManyRequests
-
-# Simple cache for QQQ data to reduce API calls
-qqq_cache = {}
-qqq_cache_timeout = 300  # 5 minutes
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -1171,305 +1166,145 @@ def get_earnings_by_bin():
         logging.error(f"Error processing earnings by bin: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
-@app.route('/api/qqq_gap', methods=['GET'])
-@limiter.limit("10 per 12 hours")
-def get_qqq_gap():
-    """Get today's QQQ gap percentage using free API"""
+# Alpha Vantage API configuration
+ALPHA_VANTAGE_API_KEY = "9K03GJJCB96AJCO3"
+ALPHA_VANTAGE_BASE_URL = "https://www.alphavantage.co/query"
+
+def get_real_time_gap_data(ticker, date):
+    """
+    Fetches real-time gap data for QQQ using Alpha Vantage API.
+    Returns yesterday's close and today's open (if available) to calculate gap.
+    """
     try:
+        # Construct the Alpha Vantage API URL for daily time series
+        params = {
+            'function': 'TIME_SERIES_DAILY',
+            'symbol': ticker,
+            'apikey': ALPHA_VANTAGE_API_KEY,
+            'outputsize': 'compact'  # Get last 100 days of data
+        }
+
+        response = requests.get(ALPHA_VANTAGE_BASE_URL, params=params)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        data = response.json()
+
+        # Check for API errors
+        if 'Error Message' in data:
+            logging.error(f"Alpha Vantage API error: {data['Error Message']}")
+            return {'error': f'Alpha Vantage API error: {data["Error Message"]}'}
         
-        # Check cache first
-        cache_key = f"qqq_gap_{datetime.now().strftime('%Y-%m-%d')}"
-        if cache_key in qqq_cache:
-            cache_time, cache_data = qqq_cache[cache_key]
-            if time.time() - cache_time < qqq_cache_timeout:
-                logging.debug("Returning cached QQQ gap data")
-                return jsonify(cache_data)
+        if 'Note' in data:
+            logging.error(f"Alpha Vantage API note: {data['Note']}")
+            return {'error': f'Alpha Vantage API note: {data["Note"]}'}
+
+        if 'Time Series (Daily)' not in data:
+            logging.error(f"Alpha Vantage API returned no data for {ticker}")
+            return {'error': f'No data available for {ticker} from Alpha Vantage.'}
+
+        # Extract the daily time series data
+        time_series_data = data['Time Series (Daily)']
         
-        # Get current date in EST (market timezone)
-        est = pytz.timezone('US/Eastern')
-        now = datetime.now(est)
+        # Get today's date and yesterday's date
+        today = datetime.now()
+        yesterday = today - timedelta(days=1)
         
-        # Check if market is open (weekdays 9:30 AM - 4:00 PM EST)
-        market_open = now.replace(hour=9, minute=30, second=0, microsecond=0)
-        market_close = now.replace(hour=16, minute=0, second=0, microsecond=0)
+        # Adjust for weekends (skip Saturday and Sunday)
+        while yesterday.weekday() >= 5:  # Saturday (5) or Sunday (6)
+            yesterday -= timedelta(days=1)
         
-        # If it's weekend or before market open, get yesterday's data
-        if now.weekday() >= 5:  # Saturday = 5, Sunday = 6
-            target_date = now - timedelta(days=1)
-            while target_date.weekday() >= 5:  # Go back to Friday
-                target_date = target_date - timedelta(days=1)
-        elif now < market_open:
-            # Before market open, use yesterday's data
-            target_date = now - timedelta(days=1)
-            while target_date.weekday() >= 5:  # Go back to Friday
-                target_date = target_date - timedelta(days=1)
+        # Format dates as YYYY-MM-DD (Alpha Vantage format)
+        today_str = today.strftime('%Y-%m-%d')
+        yesterday_str = yesterday.strftime('%Y-%m-%d')
+        
+        # Get available dates from the API response
+        available_dates = list(time_series_data.keys())
+        available_dates.sort(reverse=True)  # Sort in descending order (most recent first)
+        
+        logging.debug(f"Available dates for {ticker}: {available_dates[:5]}")  # Show first 5 dates
+        
+        # Find yesterday's data (most recent trading day)
+        yesterday_data = None
+        yesterday_date_str = None
+        
+        # Look for yesterday's data first
+        if yesterday_str in time_series_data:
+            yesterday_data = time_series_data[yesterday_str]
+            yesterday_date_str = yesterday_str
         else:
-            # Market is open, use today's data
-            target_date = now
+            # If yesterday's data is not available, use the most recent available date
+            if available_dates:
+                yesterday_date_str = available_dates[0]
+                yesterday_data = time_series_data[yesterday_date_str]
         
-        # Format date for API
-        date_str = target_date.strftime('%Y-%m-%d')
+        if not yesterday_data:
+            logging.error(f"Could not find yesterday's data for {ticker}")
+            return {'error': f'No data available for {ticker} from Alpha Vantage.'}
         
-        # Web scraping from CNBC (primary source)
-        try:
-            logging.debug("Scraping QQQ data from CNBC...")
-            
-            # Get the CNBC page for QQQ
-            url = "https://www.cnbc.com/quotes/QQQ"
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-            
-            response = requests.get(url, headers=headers, timeout=15)
-            response.raise_for_status()
-            
-            # Parse the HTML to extract price data
-            from bs4 import BeautifulSoup
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            current_price = None
-            previous_close = None
-            open_price = None
-            
-            # Look for the KEY STATS section with precise selectors
-            # Find all Summary-stat elements
-            summary_stats = soup.find_all('li', class_='Summary-stat')
-            
-            for stat in summary_stats:
-                label_element = stat.find('span', class_='Summary-label')
-                value_element = stat.find('span', class_='Summary-value')
-                
-                if label_element and value_element:
-                    label = label_element.get_text().strip()
-                    value_text = value_element.get_text().strip()
-                    
-                    # Clean the value text (remove commas, etc.)
-                    value_clean = value_text.replace(',', '').replace('$', '').strip()
-                    
-                    try:
-                        value = float(value_clean)
-                        
-                        if label == 'Open':
-                            open_price = value
-                            logging.debug(f"Found Open price: {open_price}")
-                        elif label == 'Prev Close':
-                            previous_close = value
-                            logging.debug(f"Found Previous Close: {previous_close}")
-                            
-                    except ValueError:
-                        # Skip if not a valid number
-                        continue
-            
-            # Use Open price as current price for gap calculation
-            if open_price and previous_close:
-                current_price = open_price
-                logging.debug(f"Using Open price ({open_price}) as current price for gap calculation")
-            elif current_price and previous_close:
-                # We have current price and previous close, use current price
-                logging.debug(f"Using current price ({current_price}) for gap calculation")
-            else:
-                # If we don't have both values, try to find them in the page text
-                all_text = soup.get_text()
-                import re
-                
-                # Look for all price-like numbers in the text
-                all_prices = re.findall(r'(\d{3,4}\.\d{2})', all_text)
-                valid_prices = []
-                
-                for price_str in all_prices:
-                    try:
-                        price_val = float(price_str)
-                        if 300 <= price_val <= 600:
-                            valid_prices.append(price_val)
-                    except ValueError:
-                        continue
-                
-                # If we have multiple valid prices, use the first two as current and previous
-                if len(valid_prices) >= 2:
-                    current_price = valid_prices[0]
-                    previous_close = valid_prices[1]
-                    logging.debug(f"Using first two valid prices: Current={current_price}, Previous={previous_close}")
-            
-            if not current_price:
-                raise Exception("Could not find current price on CNBC page")
-            
-            if not previous_close:
-                raise Exception("Could not find previous close on CNBC page")
-            
-            # Validate that prices are reasonable for QQQ (typically $300-600 range)
-            if not (300 <= current_price <= 600) or not (300 <= previous_close <= 600):
-                raise Exception(f"Invalid price values: Current={current_price}, Previous={previous_close}. QQQ should be in $300-600 range.")
+        # Get yesterday's close price
+        yesterday_close = float(yesterday_data['4. close'])
+        
+        # Check if today's data is available (market is open)
+        today_open = None
+        today_high = None
+        today_low = None
+        today_close = None
+        today_volume = None
+        gap_pct = None
+        gap_direction = None
+        
+        if today_str in time_series_data:
+            today_data = time_series_data[today_str]
+            today_open = float(today_data['1. open'])
+            today_high = float(today_data['2. high'])
+            today_low = float(today_data['3. low'])
+            today_close = float(today_data['4. close'])
+            today_volume = float(today_data['5. volume'])
             
             # Calculate gap percentage
-            gap_percentage = ((current_price - previous_close) / previous_close) * 100
-            
-            # Validate that gap percentage is reasonable (should be within ±10% for normal trading)
-            if abs(gap_percentage) > 10:
-                raise Exception(f"Unreasonable gap percentage: {gap_percentage:.2f}%. This suggests data parsing error.")
-            
-            # Use today's date for display
-            yesterday_date = target_date.strftime('%Y-%m-%d')
-            day_before_date = (target_date - timedelta(days=1)).strftime('%Y-%m-%d')
-            
-            yesterday_close = current_price
-            day_before_close = previous_close
-            
-            logging.debug(f"Successfully scraped QQQ data from CNBC: Current={current_price}, Previous={previous_close}, Gap={gap_percentage:.2f}%")
-            
-        except Exception as e:
-            logging.error(f"Error scraping CNBC: {str(e)}")
-            
-            # Try alternative method - Google Finance
-            try:
-                logging.debug("Trying Google Finance as fallback...")
-                google_url = "https://www.google.com/finance/quote/QQQ:NASDAQ"
-                google_response = requests.get(google_url, headers=headers, timeout=15)
-                google_response.raise_for_status()
-                
-                google_soup = BeautifulSoup(google_response.text, 'html.parser')
-                
-                # Look for current price in Google Finance
-                current_price = None
-                previous_close = None
-                
-                # Try to find current price
-                price_elements = google_soup.find_all('div', {'class': 'YMlKec fxKbKc'})
-                if not price_elements:
-                    price_elements = google_soup.find_all('div', {'class': 'fxKbKc'})
-                
-                if price_elements:
-                    price_text = price_elements[0].text.strip()
-                    current_price = float(price_text.replace(',', '').replace('$', ''))
-                    logging.debug(f"Found current price on Google: {current_price}")
-                
-                # Try to find previous close
-                all_divs = google_soup.find_all('div')
-                for div in all_divs:
-                    text = div.get_text()
-                    if 'Previous close' in text:
-                        import re
-                        matches = re.findall(r'[\$]?(\d+\.\d+)', text)
-                        if matches:
-                            previous_close = float(matches[0])
-                            logging.debug(f"Found previous close on Google: {previous_close}")
-                            break
-                
-                if current_price and previous_close:
-                    # Validate that prices are reasonable for QQQ (typically $300-600 range)
-                    if not (300 <= current_price <= 600) or not (300 <= previous_close <= 600):
-                        raise Exception(f"Invalid price values from Google: Current={current_price}, Previous={previous_close}. QQQ should be in $300-600 range.")
-                    
-                    gap_percentage = ((current_price - previous_close) / previous_close) * 100
-                    
-                    # Validate that gap percentage is reasonable (should be within ±10% for normal trading)
-                    if abs(gap_percentage) > 10:
-                        raise Exception(f"Unreasonable gap percentage from Google: {gap_percentage:.2f}%. This suggests data parsing error.")
-                    
-                    yesterday_date = target_date.strftime('%Y-%m-%d')
-                    day_before_date = (target_date - timedelta(days=1)).strftime('%Y-%m-%d')
-                    yesterday_close = current_price
-                    day_before_close = previous_close
-                    
-                    logging.debug(f"Used Google Finance fallback: Current={current_price}, Previous={previous_close}, Gap={gap_percentage:.2f}%")
-                else:
-                    raise Exception("Could not find price data in Google Finance")
-                
-            except Exception as google_e:
-                logging.error(f"Google Finance fallback also failed: {str(google_e)}")
-                
-                # Try third fallback - Yahoo Finance
-                try:
-                    logging.debug("Trying Yahoo Finance as third fallback...")
-                    yahoo_url = "https://finance.yahoo.com/quote/QQQ"
-                    yahoo_response = requests.get(yahoo_url, headers=headers, timeout=15)
-                    yahoo_response.raise_for_status()
-                    
-                    yahoo_soup = BeautifulSoup(yahoo_response.text, 'html.parser')
-                    
-                    # Look for current price in Yahoo Finance
-                    current_price = None
-                    previous_close = None
-                    
-                    # Try to find current price
-                    price_elements = yahoo_soup.find_all('fin-streamer', {'data-field': 'regularMarketPrice'})
-                    if not price_elements:
-                        price_elements = yahoo_soup.find_all('span', {'data-reactid': lambda x: x and 'regularMarketPrice' in x})
-                    
-                    if price_elements:
-                        price_text = price_elements[0].text.strip()
-                        current_price = float(price_text.replace(',', '').replace('$', ''))
-                        logging.debug(f"Found current price on Yahoo: {current_price}")
-                    
-                    # Try to find previous close
-                    prev_close_elements = yahoo_soup.find_all('fin-streamer', {'data-field': 'regularMarketPreviousClose'})
-                    if not prev_close_elements:
-                        prev_close_elements = yahoo_soup.find_all('span', {'data-reactid': lambda x: x and 'regularMarketPreviousClose' in x})
-                    
-                    if prev_close_elements:
-                        prev_close_text = prev_close_elements[0].text.strip()
-                        previous_close = float(prev_close_text.replace(',', '').replace('$', ''))
-                        logging.debug(f"Found previous close on Yahoo: {previous_close}")
-                    
-                    if current_price and previous_close:
-                        # Validate that prices are reasonable for QQQ (typically $300-600 range)
-                        if not (300 <= current_price <= 600) or not (300 <= previous_close <= 600):
-                            raise Exception(f"Invalid price values from Yahoo: Current={current_price}, Previous={previous_close}. QQQ should be in $300-600 range.")
-                        
-                        gap_percentage = ((current_price - previous_close) / previous_close) * 100
-                        
-                        # Validate that gap percentage is reasonable (should be within ±10% for normal trading)
-                        if abs(gap_percentage) > 10:
-                            raise Exception(f"Unreasonable gap percentage from Yahoo: {gap_percentage:.2f}%. This suggests data parsing error.")
-                        
-                        yesterday_date = target_date.strftime('%Y-%m-%d')
-                        day_before_date = (target_date - timedelta(days=1)).strftime('%Y-%m-%d')
-                        yesterday_close = current_price
-                        day_before_close = previous_close
-                        
-                        logging.debug(f"Used Yahoo Finance fallback: Current={current_price}, Previous={previous_close}, Gap={gap_percentage:.2f}%")
-                    else:
-                        raise Exception("Could not find price data in Yahoo Finance")
-                        
-                except Exception as yahoo_e:
-                    logging.error(f"Yahoo Finance fallback also failed: {str(yahoo_e)}")
-                    raise requests.exceptions.RequestException(f"Failed to scrape QQQ data from CNBC, Google Finance, and Yahoo Finance: {str(e)}")
+            gap_pct = ((today_open - yesterday_close) / yesterday_close) * 100
+            gap_direction = 'Up' if gap_pct > 0 else 'Down'
         
-        # Calculate gap percentage (only if not already calculated)
-        if 'gap_percentage' not in locals():
-            gap_percentage = ((yesterday_close - day_before_close) / day_before_close) * 100
-        
-        # Determine gap direction
-        gap_direction = "up" if gap_percentage > 0 else "down"
-        gap_abs = abs(gap_percentage)
-        
-        # Format the gap for display
-        gap_formatted = f"{gap_percentage:.2f}%"
-        if gap_percentage > 0:
-            gap_formatted = f"+{gap_formatted}"
-        
-        result_data = {
-            'gap_percentage': gap_percentage,
-            'gap_formatted': gap_formatted,
+        return {
+            'ticker': ticker,
+            'yesterday_date': yesterday_date_str,
+            'yesterday_close': round(yesterday_close, 2),
+            'today_date': today_str,
+            'today_open': round(today_open, 2) if today_open else None,
+            'today_high': round(today_high, 2) if today_high else None,
+            'today_low': round(today_low, 2) if today_low else None,
+            'today_close': round(today_close, 2) if today_close else None,
+            'today_volume': int(today_volume) if today_volume else None,
+            'gap_pct': round(gap_pct, 2) if gap_pct else None,
             'gap_direction': gap_direction,
-            'gap_abs': gap_abs,
-            'yesterday_close': yesterday_close,
-            'day_before_close': day_before_close,
-            'date': yesterday_date,
-            'message': f"QQQ gap on {yesterday_date}: {gap_formatted}"
+            'market_status': 'Open' if today_open else 'Closed',
+            'message': f"{ticker} yesterday close: ${yesterday_close:.2f}" + (f" | Today open: ${today_open:.2f} | Gap: {gap_direction} {abs(round(gap_pct, 2))}%" if today_open else " | Market not yet open")
         }
         
-        # Cache the result
-        qqq_cache[cache_key] = (time.time(), result_data)
-        
-        return jsonify(result_data)
-        
     except requests.exceptions.RequestException as e:
-        logging.error(f"Request error fetching QQQ data: {str(e)}")
-        return jsonify({'error': f'Unable to fetch QQQ data: {str(e)}. Please try again later.'}), 500
-            
+        logging.error(f"Error fetching real-time gap data from Alpha Vantage: {str(e)}")
+        return {'error': f'Failed to fetch real-time gap data from Alpha Vantage: {str(e)}'}
     except Exception as e:
-        logging.error(f"Error processing QQQ gap: {str(e)}")
-        return jsonify({'error': 'Server error calculating QQQ gap'}), 500
+        logging.error(f"Unexpected error in get_real_time_gap_data: {str(e)}")
+        return {'error': 'Server error'}
+
+@app.route('/api/real_time_gap', methods=['GET'])
+@limiter.limit("10 per 12 hours")
+def get_real_time_gap():
+    ticker = request.args.get('ticker')
+    logging.debug(f"Fetching real-time gap for ticker={ticker}")
+    if not ticker:
+        return jsonify({'error': 'Ticker is required for real-time gap data.'}), 400
+    if ticker not in TICKERS:
+        return jsonify({'error': 'Invalid ticker'}), 400
+    
+    try:
+        gap_data = get_real_time_gap_data(ticker, None)  # No date parameter needed
+        if 'error' in gap_data:
+            return jsonify(gap_data), 404
+        return jsonify(gap_data)
+    except Exception as e:
+        logging.error(f"Error processing real-time gap request: {str(e)}")
+        return jsonify({'error': 'Server error'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
