@@ -4289,10 +4289,10 @@ function displayQQQData(data) {
                 if (!isNaN(gapValue)) {
                     if (gapValue > 0) {
                         valueClass = 'gap-positive';
-                        description = 'Positive gap (opened higher than previous close)';
+                        description = 'Positive gap (opened higher than previous close) - Click to populate filters';
                     } else if (gapValue < 0) {
                         valueClass = 'gap-negative';
-                        description = 'Negative gap (opened lower than previous close)';
+                        description = 'Negative gap (opened lower than previous close) - Click to populate filters';
                     } else {
                         description = 'No gap (opened at previous close)';
                     }
@@ -4304,6 +4304,15 @@ function displayQQQData(data) {
                 <div class="qqq-data-value ${valueClass}">${value}</div>
                 <div class="qqq-data-description">${description}</div>
             `;
+            
+            // Make gap percentage clickable
+            if (metric.key === 'Gap %' && data['Gap Value'] !== null && data['Gap Value'] !== undefined) {
+                const gapValue = data['Gap Value'];
+                const gapValueElement = item.querySelector('.qqq-data-value');
+                gapValueElement.style.cursor = 'pointer';
+                gapValueElement.title = 'Click to populate gap insights filters';
+                gapValueElement.addEventListener('click', () => populateGapFilters(gapValue));
+            }
             
             grid.appendChild(item);
         }
@@ -4322,6 +4331,62 @@ function displayQQQData(data) {
     
     displayContainer.innerHTML = '';
     displayContainer.appendChild(grid);
+}
+
+function populateGapFilters(gapValue) {
+    // Check if gap is too small (under 0.15%)
+    if (Math.abs(gapValue) < 0.15) {
+        alert('Gap is too small (under 0.15%) - no actionable data available for such small gaps to exploit.');
+        return;
+    }
+    
+    // Determine gap size bin
+    let gapSizeBin = '';
+    const absGap = Math.abs(gapValue);
+    
+    if (absGap >= 0.15 && absGap < 0.35) {
+        gapSizeBin = '0.15-0.35%';
+    } else if (absGap >= 0.35 && absGap < 0.5) {
+        gapSizeBin = '0.35-0.5%';
+    } else if (absGap >= 0.5 && absGap < 1.0) {
+        gapSizeBin = '0.5-1%';
+    } else if (absGap >= 1.0 && absGap < 1.5) {
+        gapSizeBin = '1-1.5%';
+    } else if (absGap >= 1.5) {
+        gapSizeBin = '1.5%+';
+    }
+    
+    // Determine gap direction
+    const gapDirection = gapValue > 0 ? 'up' : 'down';
+    
+    // Get current day of week
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const today = new Date();
+    const dayOfWeek = days[today.getDay()];
+    
+    // Populate the filters
+    const gapSizeSelect = document.getElementById('gap-insights-size-select');
+    const daySelect = document.getElementById('gap-insights-day-select');
+    const directionSelect = document.getElementById('gap-insights-direction-select');
+    
+    if (gapSizeSelect) gapSizeSelect.value = gapSizeBin;
+    if (daySelect) daySelect.value = dayOfWeek;
+    if (directionSelect) directionSelect.value = gapDirection;
+    
+    // Show success message
+    const message = `Filters populated with today's gap data:\n` +
+                   `• Gap Size: ${gapSizeBin}\n` +
+                   `• Day: ${dayOfWeek}\n` +
+                   `• Direction: ${gapDirection === 'up' ? 'Gap Up' : 'Gap Down'}\n\n` +
+                   `Click "Get Insights" to view historical data for similar gaps.`;
+    
+    alert(message);
+    
+    // Track the event
+    gtag('event', 'gap_filters_populated', {
+        'event_category': 'Gap Filters',
+        'event_label': `${gapSizeBin}_${dayOfWeek}_${gapDirection}`
+    });
 }
 
 // Initialize QQQ data functionality

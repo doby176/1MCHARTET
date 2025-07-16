@@ -1167,9 +1167,34 @@ def get_earnings_by_bin():
         logging.error(f"Error processing earnings by bin: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
+# Global cache for QQQ data to prevent multiple scraping
+qqq_data_cache = {
+    'data': None,
+    'timestamp': None,
+    'cache_duration': 3600  # 1 hour cache
+}
+
 def scrape_qqq_data():
-    """Scrape QQQ data from CNBC website"""
+    """Scrape QQQ data from CNBC website with caching"""
+    global qqq_data_cache
+    
+    current_time = time.time()
+    
+    # Check if we have cached data that's still valid
+    if (qqq_data_cache['data'] and 
+        qqq_data_cache['timestamp'] and 
+        current_time - qqq_data_cache['timestamp'] < qqq_data_cache['cache_duration']):
+        logging.info("Returning cached QQQ data")
+        return qqq_data_cache['data']
+    
+    # Only scrape once per hour maximum
+    if (qqq_data_cache['timestamp'] and 
+        current_time - qqq_data_cache['timestamp'] < 3600):  # 1 hour minimum between scrapes
+        logging.info("QQQ data was recently scraped, returning cached data")
+        return qqq_data_cache['data']
+    
     try:
+        logging.info("Performing single QQQ data scrape from CNBC")
         url = "https://www.cnbc.com/quotes/QQQ"
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -1217,9 +1242,16 @@ def scrape_qqq_data():
                 prev_close = float(data['Prev Close'])
                 gap_percentage = ((open_price - prev_close) / prev_close) * 100
                 data['Gap %'] = f"{gap_percentage:.2f}%"
+                data['Gap Value'] = gap_percentage  # Store numeric value for calculations
             except (ValueError, ZeroDivisionError):
                 data['Gap %'] = "N/A"
+                data['Gap Value'] = None
         
+        # Cache the data
+        qqq_data_cache['data'] = data
+        qqq_data_cache['timestamp'] = current_time
+        
+        logging.info("QQQ data scraped and cached successfully")
         return data
         
     except Exception as e:

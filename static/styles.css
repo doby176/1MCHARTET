@@ -1816,10 +1816,34 @@ footer p {
 
 .qqq-data-value.gap-positive {
     color: var(--accent-green);
+    transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .qqq-data-value.gap-negative {
     color: var(--accent-red);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.qqq-data-value.gap-positive:hover,
+.qqq-data-value.gap-negative:hover {
+    transform: scale(1.05);
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+}
+
+.qqq-data-value.gap-positive:hover {
+    color: #45a049;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+.qqq-data-value.gap-negative:hover {
+    color: #d32f2f;
+    background: rgba(244, 67, 54, 0.1);
+    border-radius: 4px;
+    padding: 2px 6px;
 }
 
 .qqq-data-description {
