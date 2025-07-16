@@ -1170,42 +1170,9 @@ def get_earnings_by_bin():
         return jsonify({'error': 'Server error'}), 500
 
 def get_real_time_gap_data(ticker, date):
-    """
-    Fetches real-time gap data for QQQ by scraping CNBC.
-    Returns yesterday's close and today's open to calculate gap.
-    Uses simple caching to avoid repeated scraping.
-    """
+    """Get real-time gap data for QQQ from CNBC - NO CACHING"""
     try:
-        # Get current time in Eastern Time
-        from datetime import timezone
-        import pytz
-        
-        eastern = pytz.timezone('America/New_York')
-        now_et = datetime.now(eastern)
-        today_et = now_et.strftime('%Y-%m-%d')
-        
-        # Check if we have cached data for today
-        cache_file = f'qqq_gap_cache_{today_et}.json'
-        
-        # Check if force refresh is requested
-        force_refresh = request.args.get('force_refresh', '0') == '1'
-        
-        # Try to load cached data (but only if it's from today and not too old, and no force refresh)
-        if not force_refresh and os.path.exists(cache_file):
-            try:
-                with open(cache_file, 'r') as f:
-                    cached_data = json.load(f)
-                    # Check if cache is from today and not older than 1 hour
-                    if cached_data.get('cache_date') == today_et:
-                        cache_time = datetime.fromisoformat(cached_data.get('cached_at', '').replace('Z', '+00:00'))
-                        if (now_et - cache_time).total_seconds() < 3600:  # 1 hour
-                            logging.debug(f"Using cached QQQ gap data for {today_et}")
-                            return cached_data
-            except Exception as e:
-                logging.error(f"Error loading cached data: {e}")
-        
-        # If no cache exists, scrape the data
-        logging.debug("No cached data found, scraping CNBC...")
+        logging.debug("Scraping fresh QQQ gap data from CNBC...")
         
         # Scrape QQQ data from CNBC
         url = "https://www.cnbc.com/quotes/QQQ"
@@ -1219,30 +1186,12 @@ def get_real_time_gap_data(ticker, date):
         # Parse the HTML content
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Debug: Let's see what elements are available
-        logging.debug("Searching for price elements on CNBC page...")
-        
-        # Look for any elements that might contain price data
-        all_spans = soup.find_all('span')
-        price_candidates = []
-        for span in all_spans:
-            text = span.get_text().strip()
-            if '$' in text and any(char.isdigit() for char in text):
-                price_candidates.append({
-                    'text': text,
-                    'class': span.get('class', []),
-                    'data-testid': span.get('data-testid', '')
-                })
-        
-        logging.debug(f"Found {len(price_candidates)} price candidates: {price_candidates[:5]}")
-        
-        # Look for the current price and previous close using the correct CNBC selectors
-        current_price = None
-        prev_close = None
-        
-        # Only use KEY STATS (Summary-stat) section
+        # Look for KEY STATS (Summary-stat) section
         summary_stats = soup.find_all('li', {'class': 'Summary-stat'})
         logging.debug(f"Found {len(summary_stats)} summary stats")
+        
+        open_price = None
+        prev_close = None
         
         for stat in summary_stats:
             label_element = stat.find('span', {'class': 'Summary-label'})
@@ -1280,19 +1229,10 @@ def get_real_time_gap_data(ticker, date):
             'gap_pct': round(gap_pct, 2),
             'gap_direction': gap_direction,
             'market_status': 'Open',
-            'message': f"{ticker} previous close: ${prev_close:.2f} | Open: ${open_price:.2f} | Gap: {gap_direction} {abs(round(gap_pct, 2))}%",
-            'cached_at': now_et.isoformat(),
-            'cache_date': today_et
+            'message': f"{ticker} previous close: ${prev_close:.2f} | Open: ${open_price:.2f} | Gap: {gap_direction} {abs(round(gap_pct, 2))}%"
         }
         
-        # Cache the result for today
-        try:
-            with open(cache_file, 'w') as f:
-                json.dump(result, f, indent=2)
-            logging.debug(f"Cached QQQ gap data for {today_et}")
-        except Exception as e:
-            logging.error(f"Error caching data: {e}")
-        
+        logging.debug(f"Returning gap data: {result}")
         return result
         
     except requests.exceptions.RequestException as e:

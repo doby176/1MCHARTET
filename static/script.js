@@ -4195,8 +4195,10 @@ async function loadRealTimeQQQGap() {
     
     try {
         console.log('Loading real-time QQQ gap data...');
+        console.log('Making API call to: /api/real_time_gap?ticker=QQQ');
         const response = await fetch('/api/real_time_gap?ticker=QQQ');
         console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
         
         if (response.ok) {
             const data = await response.json();
