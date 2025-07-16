@@ -4008,13 +4008,13 @@ async function loadGapInsights(event) {
                 console.log('Real-time data received:', realTimeData);
                 
                 if (!realTimeData.error) {
-                    if (realTimeData.today_open !== null) {
+                    if (realTimeData.recent_open !== null) {
                         // Market is open, show gap data
                         realTimeGapHtml = `
                             <div class="realtime-gap-box" style="background:#e3f2fd;padding:12px 16px;margin-bottom:16px;border-radius:8px;">
                                 <strong>Today's QQQ Gap:</strong><br>
-                                <span style="font-size:1.1em;">Yesterday Close: <b>$${realTimeData.yesterday_close}</b> | Today Open: <b>$${realTimeData.today_open}</b> | Gap: <b style="color:${realTimeData.gap_direction==='Up'?'#388e3c':'#d32f2f'}">${realTimeData.gap_direction} ${Math.abs(realTimeData.gap_pct)}%</b></span><br>
-                                <span style="font-size:0.95em;">High: $${realTimeData.today_high} | Low: $${realTimeData.today_low} | Volume: ${realTimeData.today_volume.toLocaleString()}</span>
+                                <span style="font-size:1.1em;">Previous Close: <b>$${realTimeData.yesterday_close}</b> | Recent Open: <b>$${realTimeData.recent_open}</b> | Gap: <b style="color:${realTimeData.gap_direction==='UP'?'#388e3c':'#d32f2f'}">${realTimeData.gap_direction} ${Math.abs(realTimeData.gap_pct)}%</b></span><br>
+                                <span style="font-size:0.95em;">High: $${realTimeData.recent_high} | Low: $${realTimeData.recent_low} | Volume: ${realTimeData.recent_volume.toLocaleString()}</span>
                             </div>
                         `;
                     } else {
@@ -4022,7 +4022,7 @@ async function loadGapInsights(event) {
                         realTimeGapHtml = `
                             <div class="realtime-gap-box" style="background:#fff3e0;padding:12px 16px;margin-bottom:16px;border-radius:8px;">
                                 <strong>Today's QQQ Gap:</strong><br>
-                                <span style="font-size:1.1em;">Yesterday Close: <b>$${realTimeData.yesterday_close}</b> | Market Status: <b style="color:#ff9800;">Closed</b></span><br>
+                                <span style="font-size:1.1em;">Previous Close: <b>$${realTimeData.yesterday_close}</b> | Market Status: <b style="color:#ff9800;">Closed</b></span><br>
                                 <span style="font-size:0.95em;">Market opens at 9:30 AM ET. Gap will be calculated once today's open is available.</span>
                             </div>
                         `;
@@ -4123,17 +4123,17 @@ async function loadRealTimeQQQGap() {
             console.log('Real-time data received:', data);
             
             if (!data.error) {
-                if (data.today_open !== null) {
+                if (data.recent_open !== null) {
                     // Market is open, show gap data
                     qqqGapContent.innerHTML = `
                         <div class="qqq-gap-data">
                             <div class="gap-info">
-                                <span class="label">Yesterday Close:</span>
+                                <span class="label">Previous Close:</span>
                                 <span class="value">$${data.yesterday_close}</span>
                             </div>
                             <div class="gap-info">
-                                <span class="label">Today Open:</span>
-                                <span class="value">$${data.today_open}</span>
+                                <span class="label">Recent Open:</span>
+                                <span class="value">$${data.recent_open}</span>
                             </div>
                             <div class="gap-info">
                                 <span class="label">Gap:</span>
@@ -4141,15 +4141,15 @@ async function loadRealTimeQQQGap() {
                             </div>
                             <div class="gap-info">
                                 <span class="label">High:</span>
-                                <span class="value">$${data.today_high}</span>
+                                <span class="value">$${data.recent_high}</span>
                             </div>
                             <div class="gap-info">
                                 <span class="label">Low:</span>
-                                <span class="value">$${data.today_low}</span>
+                                <span class="value">$${data.recent_low}</span>
                             </div>
                             <div class="gap-info">
                                 <span class="label">Volume:</span>
-                                <span class="value">${data.today_volume.toLocaleString()}</span>
+                                <span class="value">${data.recent_volume.toLocaleString()}</span>
                             </div>
                         </div>
                     `;
@@ -4158,7 +4158,7 @@ async function loadRealTimeQQQGap() {
                     qqqGapContent.innerHTML = `
                         <div class="qqq-gap-data">
                             <div class="gap-info">
-                                <span class="label">Yesterday Close:</span>
+                                <span class="label">Previous Close:</span>
                                 <span class="value">$${data.yesterday_close}</span>
                             </div>
                             <div class="gap-info">

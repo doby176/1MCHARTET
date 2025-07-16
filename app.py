@@ -1201,86 +1201,90 @@ def get_real_time_gap_data(ticker, date):
             logging.error(f"Alpha Vantage API returned no data for {ticker}")
             return {'error': f'No data available for {ticker} from Alpha Vantage.'}
 
-        # Extract the daily time series data
         daily_data = data['Time Series (Daily)']
         
-        # Get today's date and yesterday's date
+        # Get today's date
         today = datetime.now()
-        yesterday = today - timedelta(days=1)
         
-        # Adjust for weekends (skip Saturday and Sunday)
-        while yesterday.weekday() >= 5:  # Saturday (5) or Sunday (6)
-            yesterday -= timedelta(days=1)
+        # Find the most recent trading day (skip weekends and holidays)
+        recent_trading_day = today
+        while recent_trading_day.strftime("%Y-%m-%d") not in daily_data:
+            if recent_trading_day.weekday() >= 5:  # Skip Saturday (5) or Sunday (6)
+                recent_trading_day -= timedelta(days=1)
+            else:
+                # Likely a holiday or data not yet available
+                recent_trading_day -= timedelta(days=1)
+            if (today - recent_trading_day).days > 10:  # Prevent infinite loop
+                logging.error("No recent trading data found in the last 10 days.")
+                return {'error': 'No recent trading data found in the last 10 days.'}
+
+        # Find the previous trading day
+        prev_trading_day = recent_trading_day - timedelta(days=1)
+        while prev_trading_day.strftime("%Y-%m-%d") not in daily_data:
+            if prev_trading_day.weekday() >= 5:  # Skip Saturday (5) or Sunday (6)
+                prev_trading_day -= timedelta(days=1)
+            else:
+                prev_trading_day -= timedelta(days=1)
+            if (today - prev_trading_day).days > 10:  # Prevent infinite loop
+                logging.error("No previous trading data found in the last 10 days.")
+                return {'error': 'No previous trading data found in the last 10 days.'}
+
+        # Format dates as YYYY-MM-DD
+        recent_trading_day_str = recent_trading_day.strftime("%Y-%m-%d")
+        prev_trading_day_str = prev_trading_day.strftime("%Y-%m-%d")
         
-        # Format dates as YYYY-MM-DD (Alpha Vantage format)
-        today_str = today.strftime('%Y-%m-%d')
-        yesterday_str = yesterday.strftime('%Y-%m-%d')
-        
-        logging.debug(f"Looking for data - Today: {today_str}, Yesterday: {yesterday_str}")
-        logging.debug(f"Available dates: {list(daily_data.keys())[:5]}")
-        
-        # Get yesterday's close price (most recent available data)
-        yesterday_close = None
-        yesterday_date_str = None
-        
-        # First try to get yesterday's data
-        if yesterday_str in daily_data:
-            yesterday_close = float(daily_data[yesterday_str]['4. close'])
-            yesterday_date_str = yesterday_str
-            logging.debug(f"Found yesterday's data: {yesterday_str} - Close: {yesterday_close}")
-        else:
-            # If yesterday's data is not available, use the most recent available date
-            available_dates = list(daily_data.keys())
-            available_dates.sort(reverse=True)  # Sort in descending order (most recent first)
-            
-            if available_dates:
-                yesterday_date_str = available_dates[0]
-                yesterday_close = float(daily_data[yesterday_date_str]['4. close'])
-                logging.debug(f"Using most recent available data: {yesterday_date_str} - Close: {yesterday_close}")
-        
-        if yesterday_close is None:
-            logging.error(f"Could not find any data for {ticker}")
-            return {'error': f'No data available for {ticker} from Alpha Vantage.'}
-        
-        # Check if today's data is available (market is open)
+        logging.debug(f"Found trading days - Recent: {recent_trading_day_str}, Previous: {prev_trading_day_str}")
+        logging.debug(f"Available dates: {list(daily_data.keys())[:10]}")
+
+        # Fetch open price for the most recent trading day
+        recent_open = float(daily_data[recent_trading_day_str]["1. open"])
+        recent_high = float(daily_data[recent_trading_day_str]["2. high"])
+        recent_low = float(daily_data[recent_trading_day_str]["3. low"])
+        recent_close = float(daily_data[recent_trading_day_str]["4. close"])
+        recent_volume = int(daily_data[recent_trading_day_str]["5. volume"])
+
+        # Fetch close price for the previous trading day
+        prev_close = float(daily_data[prev_trading_day_str]["4. close"])
+
+        # Calculate gap percentage
+        gap_pct = ((recent_open - prev_close) / prev_close) * 100
+        gap_direction = "UP" if gap_pct > 0 else "DOWN"
+
+        # Check if today's data is available
+        today_str = today.strftime("%Y-%m-%d")
         today_open = None
         today_high = None
         today_low = None
         today_close = None
         today_volume = None
-        gap_pct = None
-        gap_direction = None
         
         if today_str in daily_data:
-            today_data = daily_data[today_str]
-            today_open = float(today_data['1. open'])
-            today_high = float(today_data['2. high'])
-            today_low = float(today_data['3. low'])
-            today_close = float(today_data['4. close'])
-            today_volume = float(today_data['5. volume'])
-            
-            # Calculate gap percentage
-            gap_pct = ((today_open - yesterday_close) / yesterday_close) * 100
-            gap_direction = 'Up' if gap_pct > 0 else 'Down'
-            
-            logging.debug(f"Found today's data: {today_str} - Open: {today_open}, Gap: {gap_pct:.2f}%")
-        else:
-            logging.debug(f"No data found for today ({today_str}) - market may not be open yet")
-        
+            today_open = float(daily_data[today_str]["1. open"])
+            today_high = float(daily_data[today_str]["2. high"])
+            today_low = float(daily_data[today_str]["3. low"])
+            today_close = float(daily_data[today_str]["4. close"])
+            today_volume = int(daily_data[today_str]["5. volume"])
+
         return {
             'ticker': ticker,
-            'yesterday_date': yesterday_date_str,
-            'yesterday_close': round(yesterday_close, 2),
+            'yesterday_date': prev_trading_day_str,
+            'yesterday_close': round(prev_close, 2),
             'today_date': today_str,
             'today_open': round(today_open, 2) if today_open else None,
             'today_high': round(today_high, 2) if today_high else None,
             'today_low': round(today_low, 2) if today_low else None,
             'today_close': round(today_close, 2) if today_close else None,
             'today_volume': int(today_volume) if today_volume else None,
-            'gap_pct': round(gap_pct, 2) if gap_pct else None,
+            'recent_trading_day': recent_trading_day_str,
+            'recent_open': round(recent_open, 2),
+            'recent_high': round(recent_high, 2),
+            'recent_low': round(recent_low, 2),
+            'recent_close': round(recent_close, 2),
+            'recent_volume': int(recent_volume),
+            'gap_pct': round(gap_pct, 2),
             'gap_direction': gap_direction,
             'market_status': 'Open' if today_open else 'Closed',
-            'message': f"{ticker} yesterday close: ${yesterday_close:.2f}" + (f" | Today open: ${today_open:.2f} | Gap: {gap_direction} {abs(round(gap_pct, 2))}%" if today_open else " | Market not yet open")
+            'message': f"{ticker} previous close: ${prev_close:.2f}" + (f" | Recent open: ${recent_open:.2f} | Gap: {gap_direction} {abs(round(gap_pct, 2))}%" if recent_open else " | Market not yet open")
         }
         
     except requests.exceptions.RequestException as e:
