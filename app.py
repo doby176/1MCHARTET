@@ -1185,33 +1185,91 @@ def get_real_time_gap_data(ticker, date):
         # Parse the HTML content
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Look for the stock price data
-        # CNBC typically has the current price in a specific element
-        price_element = soup.find('span', {'class': 'QuoteStrip-lastPrice'})
-        if not price_element:
-            price_element = soup.find('span', {'class': 'QuoteStrip-price'})
-        if not price_element:
-            price_element = soup.find('div', {'class': 'QuoteStrip-price'})
+        # Debug: Let's see what elements are available
+        logging.debug("Searching for price elements on CNBC page...")
         
-        if not price_element:
-            logging.error("Could not find price element on CNBC page")
-            return {'error': 'Could not find price data on CNBC page'}
+        # Look for any elements that might contain price data
+        all_spans = soup.find_all('span')
+        price_candidates = []
+        for span in all_spans:
+            text = span.get_text().strip()
+            if '$' in text and any(char.isdigit() for char in text):
+                price_candidates.append({
+                    'text': text,
+                    'class': span.get('class', []),
+                    'data-testid': span.get('data-testid', '')
+                })
         
-        current_price = float(price_element.text.strip().replace('$', '').replace(',', ''))
+        logging.debug(f"Found {len(price_candidates)} price candidates: {price_candidates[:5]}")
+        
+        # Look for the current price - try multiple approaches
+        current_price = None
+        prev_close = None
+        
+        # Method 1: Look for specific CNBC selectors
+        price_element = soup.find('span', {'data-testid': 'QuoteStrip-lastPrice'})
+        if not price_element:
+            price_element = soup.find('span', {'class': 'QuoteStrip-lastPrice'})
+        if not price_element:
+            price_element = soup.find('div', {'class': 'QuoteStrip-lastPrice'})
+        
+        if price_element:
+            current_price_text = price_element.text.strip()
+            current_price = float(current_price_text.replace('$', '').replace(',', ''))
+            logging.debug(f"Found current price via selector: {current_price}")
+        
+        # Method 2: Look for the largest price number (likely current price)
+        if not current_price and price_candidates:
+            # Sort by length and try to find the most prominent price
+            price_candidates.sort(key=lambda x: len(x['text']), reverse=True)
+            for candidate in price_candidates:
+                try:
+                    price_text = candidate['text']
+                    if '$' in price_text and '.' in price_text:
+                        price_value = float(price_text.replace('$', '').replace(',', ''))
+                        if 100 < price_value < 1000:  # QQQ is typically in this range
+                            current_price = price_value
+                            logging.debug(f"Found current price via pattern: {current_price}")
+                            break
+                except:
+                    continue
         
         # Look for previous close
-        prev_close_element = soup.find('span', {'class': 'QuoteStrip-previousClose'})
+        prev_close_element = soup.find('span', {'data-testid': 'QuoteStrip-previousClose'})
         if not prev_close_element:
-            # Try alternative selectors
+            prev_close_element = soup.find('span', {'class': 'QuoteStrip-previousClose'})
+        if not prev_close_element:
+            # Try finding by text pattern
             prev_close_element = soup.find('td', text=lambda x: x and 'Previous Close' in x)
             if prev_close_element:
                 prev_close_element = prev_close_element.find_next_sibling('td')
         
-        if not prev_close_element:
+        if prev_close_element:
+            prev_close_text = prev_close_element.text.strip()
+            prev_close = float(prev_close_text.replace('$', '').replace(',', ''))
+            logging.debug(f"Found previous close via selector: {prev_close}")
+        
+        # Method 2: Look for second largest price number (likely previous close)
+        if not prev_close and len(price_candidates) > 1:
+            for candidate in price_candidates[1:]:  # Skip the first one (current price)
+                try:
+                    price_text = candidate['text']
+                    if '$' in price_text and '.' in price_text:
+                        price_value = float(price_text.replace('$', '').replace(',', ''))
+                        if 100 < price_value < 1000:  # QQQ is typically in this range
+                            prev_close = price_value
+                            logging.debug(f"Found previous close via pattern: {prev_close}")
+                            break
+                except:
+                    continue
+        
+        if not current_price:
+            logging.error("Could not find current price on CNBC page")
+            return {'error': 'Could not find current price data on CNBC page'}
+        
+        if not prev_close:
             logging.error("Could not find previous close on CNBC page")
             return {'error': 'Could not find previous close data on CNBC page'}
-        
-        prev_close = float(prev_close_element.text.strip().replace('$', '').replace(',', ''))
         
         # Calculate gap percentage
         gap_pct = ((current_price - prev_close) / prev_close) * 100
@@ -1265,17 +1323,45 @@ def get_real_time_gap():
 def test_cnbc_scraping():
     """Test endpoint to verify CNBC scraping is working"""
     try:
-        result = get_real_time_gap_data('QQQ', None)
-        if 'error' not in result:
-            return jsonify({
-                'status': 'success',
-                'data': result
-            })
-        else:
-            return jsonify({
-                'status': 'error',
-                'message': result['error']
-            })
+        # First, let's test the scraping directly
+        url = "https://www.cnbc.com/quotes/QQQ"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Find all spans with price-like content
+        all_spans = soup.find_all('span')
+        price_candidates = []
+        for span in all_spans:
+            text = span.get_text().strip()
+            if '$' in text and any(char.isdigit() for char in text):
+                price_candidates.append({
+                    'text': text,
+                    'class': span.get('class', []),
+                    'data-testid': span.get('data-testid', '')
+                })
+        
+        # Also look for specific CNBC elements
+        cnbc_elements = {
+            'QuoteStrip-lastPrice': soup.find('span', {'data-testid': 'QuoteStrip-lastPrice'}),
+            'QuoteStrip-previousClose': soup.find('span', {'data-testid': 'QuoteStrip-previousClose'}),
+            'QuoteStrip-lastPrice-class': soup.find('span', {'class': 'QuoteStrip-lastPrice'}),
+            'QuoteStrip-previousClose-class': soup.find('span', {'class': 'QuoteStrip-previousClose'})
+        }
+        
+        return jsonify({
+            'status': 'debug',
+            'price_candidates_count': len(price_candidates),
+            'price_candidates': price_candidates[:10],  # First 10
+            'cnbc_elements': {k: v.text.strip() if v else None for k, v in cnbc_elements.items()},
+            'page_title': soup.title.text if soup.title else 'No title'
+        })
+        
     except Exception as e:
         logging.error(f"Error testing CNBC scraping: {str(e)}")
         return jsonify({
