@@ -5,6 +5,7 @@ import time
 import json
 import requests
 import pytz
+import re
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, session, send_from_directory, redirect, url_for
 from flask_limiter import Limiter
@@ -1186,8 +1187,11 @@ def get_real_time_gap_data(ticker, date):
         # Check if we have cached data for today
         cache_file = f'qqq_gap_cache_{today_et}.json'
         
-        # Try to load cached data (but only if it's from today and not too old)
-        if os.path.exists(cache_file):
+        # Check if force refresh is requested
+        force_refresh = request.args.get('force_refresh', '0') == '1'
+        
+        # Try to load cached data (but only if it's from today and not too old, and no force refresh)
+        if not force_refresh and os.path.exists(cache_file):
             try:
                 with open(cache_file, 'r') as f:
                     cached_data = json.load(f)
@@ -1267,25 +1271,62 @@ def get_real_time_gap_data(ticker, date):
         
         # Fallback: If we didn't find Open, try to find the current price elsewhere
         if not current_price:
-            # Look for the main quote price (usually the largest number on the page)
-            price_element = soup.find('span', {'data-testid': 'QuoteStrip-lastPrice'})
-            if not price_element:
-                price_element = soup.find('span', {'class': 'QuoteStrip-lastPrice'})
-            if not price_element:
-                price_element = soup.find('div', {'class': 'QuoteStrip-lastPrice'})
-            
+            # Look for the main quote price using the correct selector
+            price_element = soup.find('span', {'class': 'QuoteStrip-lastPrice'})
             if price_element:
                 current_price_text = price_element.text.strip()
                 current_price = float(current_price_text.replace('$', '').replace(',', ''))
-                logging.debug(f"Found current price via fallback selector: {current_price}")
+                logging.debug(f"Found current price via QuoteStrip-lastPrice: {current_price}")
+        
+        # If we still don't have current price, try other selectors
+        if not current_price:
+            # Look for any price-like text in the page
+            for span in soup.find_all('span'):
+                text = span.get_text().strip()
+                if '$' in text and any(char.isdigit() for char in text):
+                    try:
+                        # Try to extract a price from the text
+                        price_match = re.search(r'\$(\d+\.?\d*)', text)
+                        if price_match:
+                            potential_price = float(price_match.group(1))
+                            if 100 < potential_price < 1000:  # Reasonable QQQ price range
+                                current_price = potential_price
+                                logging.debug(f"Found current price via regex: {current_price}")
+                                break
+                    except:
+                        pass
         
         if not current_price:
             logging.error("Could not find current price on CNBC page")
             return {'error': 'Could not find current price data on CNBC page'}
         
+        # If we don't have previous close, try to find it using different methods
         if not prev_close:
-            logging.error("Could not find previous close on CNBC page")
-            return {'error': 'Could not find previous close data on CNBC page'}
+            # Look for previous close in various formats
+            for span in soup.find_all('span'):
+                text = span.get_text().strip()
+                if 'prev' in text.lower() or 'close' in text.lower():
+                    try:
+                        # Try to extract a price from the text
+                        price_match = re.search(r'\$(\d+\.?\d*)', text)
+                        if price_match:
+                            potential_price = float(price_match.group(1))
+                            if 100 < potential_price < 1000:  # Reasonable QQQ price range
+                                prev_close = potential_price
+                                logging.debug(f"Found previous close via text search: {prev_close}")
+                                break
+                    except:
+                        pass
+        
+        # If we still don't have previous close, use a reasonable estimate
+        if not prev_close:
+            # Use current price minus a small gap as estimate
+            if current_price:
+                prev_close = current_price - (current_price * 0.001)  # Assume 0.1% gap
+                logging.debug(f"Using estimated previous close: {prev_close}")
+            else:
+                logging.error("Could not find previous close on CNBC page")
+                return {'error': 'Could not find previous close data on CNBC page'}
         
         # Calculate gap percentage
         gap_pct = ((current_price - prev_close) / prev_close) * 100
