@@ -4141,16 +4141,6 @@ async function loadGapInsights(event) {
         // Add market data summary if available
         let marketDataHtml = '';
         if (insights.market_data && insights.market_data.current_open) {
-            const nqInfo = insights.market_data.nq_last ? 
-                `<div class="market-data-item">
-                    <span class="market-data-label">NQ Price:</span>
-                    <span class="market-data-value">${insights.market_data.nq_last}</span>
-                </div>
-                <div class="market-data-item">
-                    <span class="market-data-label">NQ/QQQ Ratio:</span>
-                    <span class="market-data-value">${insights.market_data.nq_qqq_ratio}</span>
-                </div>` : '';
-            
             marketDataHtml = `
                 <div class="market-data-summary">
                     <h4>Current Market Data</h4>
@@ -4167,7 +4157,6 @@ async function loadGapInsights(event) {
                             <span class="market-data-label">Gap Direction:</span>
                             <span class="market-data-value ${insights.market_data.gap_direction}">${insights.market_data.gap_direction.toUpperCase()}</span>
                         </div>
-                        ${nqInfo}
                     </div>
                 </div>
             `;
@@ -4188,14 +4177,11 @@ async function loadGapInsights(event) {
             let priceInfo = '';
             if (insights[key].average_price !== undefined && insights[key].average_price !== null) {
                 const zoneTitle = insights[key].zone_title || '';
-                const nqPrice = insights[key].average_price_nq;
-                const nqDisplay = nqPrice ? `<div class="metric-price-nq">NQ: ${nqPrice}</div>` : '';
                 
                 priceInfo = `
                     <div class="metric-price-info">
                         <div class="metric-zone-title">${zoneTitle}</div>
                         <div class="metric-price-average">QQQ: $${insights[key].average_price}</div>
-                        ${nqDisplay}
                         <div class="metric-price-description">${insights[key].price_description}</div>
                     </div>
                 `;
@@ -4227,14 +4213,11 @@ async function loadGapInsights(event) {
             let priceInfo = '';
             if (insights[key].average_price !== undefined && insights[key].average_price !== null) {
                 const zoneTitle = insights[key].zone_title || '';
-                const nqPrice = insights[key].average_price_nq;
-                const nqDisplay = nqPrice ? `<div class="metric-price-nq">NQ: ${nqPrice}</div>` : '';
                 
                 priceInfo = `
                     <div class="metric-price-info">
                         <div class="metric-zone-title">${zoneTitle}</div>
                         <div class="metric-price-average">QQQ: $${insights[key].average_price}</div>
-                        ${nqDisplay}
                         <div class="metric-price-description">${insights[key].price_description}</div>
                     </div>
                 `;
