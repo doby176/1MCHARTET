@@ -948,7 +948,7 @@ def get_gap_insights():
                 today_gap_size_bin = '0.5-1%'
             elif abs_gap >= 1.0 and abs_gap < 1.5:
                 today_gap_size_bin = '1-1.5%'
-                        elif abs_gap >= 1.5:
+            elif abs_gap >= 1.5:
                 today_gap_size_bin = '1.5%+'
         
         # Get current day of week
