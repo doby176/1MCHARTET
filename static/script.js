@@ -4177,11 +4177,23 @@ async function loadGapInsights(event) {
             let priceInfo = '';
             if (insights[key].average_price !== undefined && insights[key].average_price !== null) {
                 const zoneTitle = insights[key].zone_title || '';
+                const medianPrice = insights[key].median_price;
+                const averagePrice = insights[key].average_price;
+                
+                let priceDisplay = '';
+                if (medianPrice !== undefined && medianPrice !== null) {
+                    priceDisplay = `
+                        <div class="metric-price-median">QQQ Median: $${medianPrice}</div>
+                        <div class="metric-price-average">QQQ Average: $${averagePrice}</div>
+                    `;
+                } else {
+                    priceDisplay = `<div class="metric-price-average">QQQ: $${averagePrice}</div>`;
+                }
                 
                 priceInfo = `
                     <div class="metric-price-info">
                         <div class="metric-zone-title">${zoneTitle}</div>
-                        <div class="metric-price-average">QQQ: $${insights[key].average_price}</div>
+                        ${priceDisplay}
                         <div class="metric-price-description">${insights[key].price_description}</div>
                     </div>
                 `;
@@ -4213,11 +4225,23 @@ async function loadGapInsights(event) {
             let priceInfo = '';
             if (insights[key].average_price !== undefined && insights[key].average_price !== null) {
                 const zoneTitle = insights[key].zone_title || '';
+                const medianPrice = insights[key].median_price;
+                const averagePrice = insights[key].average_price;
+                
+                let priceDisplay = '';
+                if (medianPrice !== undefined && medianPrice !== null) {
+                    priceDisplay = `
+                        <div class="metric-price-median">QQQ Median: $${medianPrice}</div>
+                        <div class="metric-price-average">QQQ Average: $${averagePrice}</div>
+                    `;
+                } else {
+                    priceDisplay = `<div class="metric-price-average">QQQ: $${averagePrice}</div>`;
+                }
                 
                 priceInfo = `
                     <div class="metric-price-info">
                         <div class="metric-zone-title">${zoneTitle}</div>
-                        <div class="metric-price-average">QQQ: $${insights[key].average_price}</div>
+                        ${priceDisplay}
                         <div class="metric-price-description">${insights[key].price_description}</div>
                     </div>
                 `;

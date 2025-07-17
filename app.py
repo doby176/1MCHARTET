@@ -981,6 +981,7 @@ def get_gap_insights():
                 'median': round(median_move_before_fill_pct, 2) if not pd.isna(median_move_before_fill_pct) else 0,
                 'average': round(average_move_before_fill_pct, 2) if not pd.isna(average_move_before_fill_pct) else 0,
                 'description': 'Percentage move before gap closes',
+                'median_price': round(median_move_before_fill_price, 2) if (median_move_before_fill_price and filters_match_today) else None,
                 'average_price': round(average_move_before_fill_price, 2) if (average_move_before_fill_price and filters_match_today) else None,
                 'price_description': f'Price level from today\'s open (${current_open_price})' if (current_open_price and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
                 'zone_title': 'SHORT ZONE' if gap_direction == 'up' else 'LONG ZONE'
@@ -989,6 +990,7 @@ def get_gap_insights():
                 'median': round(median_max_move_unfilled_pct, 2) if not pd.isna(median_max_move_unfilled_pct) else 0,
                 'average': round(average_max_move_unfilled_pct, 2) if not pd.isna(average_max_move_unfilled_pct) else 0,
                 'description': '% move in gap direction when price does not close the gap',
+                'median_price': round(median_max_move_unfilled_price, 2) if (median_max_move_unfilled_price and filters_match_today) else None,
                 'average_price': round(average_max_move_unfilled_price, 2) if (average_max_move_unfilled_price and filters_match_today) else None,
                 'price_description': f'Price level from today\'s open (${current_open_price})' if (current_open_price and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
                 'zone_title': 'STOP OUT Zone'
@@ -1016,6 +1018,7 @@ def get_gap_insights():
                 'median': round(median_move_before_reversal_pct, 2) if not pd.isna(median_move_before_reversal_pct) else 0,
                 'average': round(average_move_before_reversal_pct, 2) if not pd.isna(average_move_before_reversal_pct) else 0,
                 'description': 'Median move in gap fill direction before reversal',
+                'median_price': round(median_move_before_reversal_price, 2) if (median_move_before_reversal_price and filters_match_today) else None,
                 'average_price': round(average_move_before_reversal_price, 2) if (average_move_before_reversal_price and filters_match_today) else None,
                 'price_description': f'Price level from yesterday\'s close (${current_prev_close})' if (current_prev_close and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
                 'zone_title': 'LONG ZONE' if gap_direction == 'up' else 'SHORT ZONE'
