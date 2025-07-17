@@ -930,27 +930,37 @@ def get_gap_insights():
         median_move_before_reversal_price = calculate_price_levels(median_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
         average_move_before_reversal_price = calculate_price_levels(average_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
 
+        # NQ Conversion: QQQ to NQ futures conversion
+        # NQ futures typically trade at approximately 20x the QQQ price
+        # This is a rough approximation as the exact ratio varies
+        def convert_qqq_to_nq(qqq_price):
+            """Convert QQQ price to approximate NQ futures price"""
+            if not qqq_price:
+                return None
+            # NQ futures are typically around 20x QQQ price
+            # This is an approximation and may vary based on market conditions
+            return round(qqq_price * 20, 1)
+
         insights = {
             'gap_fill_rate': {
-                'median': round(gap_fill_rate, 2),
                 'average': round(gap_fill_rate, 2),
                 'description': 'Percentage of gaps that close'
             },
             'median_move_before_fill': {
-                'median': round(median_move_before_fill_pct, 2) if not pd.isna(median_move_before_fill_pct) else 0,
                 'average': round(average_move_before_fill_pct, 2) if not pd.isna(average_move_before_fill_pct) else 0,
                 'description': 'Percentage move before gap closes',
-                'median_price': round(median_move_before_fill_price, 2) if median_move_before_fill_price else None,
                 'average_price': round(average_move_before_fill_price, 2) if average_move_before_fill_price else None,
-                'price_description': f'Price level from today\'s open (${current_open_price})' if current_open_price else 'Price level from today\'s open (data unavailable)'
+                'average_price_nq': convert_qqq_to_nq(average_move_before_fill_price),
+                'price_description': f'Price level from today\'s open (${current_open_price})' if current_open_price else 'Price level from today\'s open (data unavailable)',
+                'zone_title': 'Long Zone' if gap_direction == 'up' else 'Short Zone'
             },
             'median_max_move_unfilled': {
-                'median': round(median_max_move_unfilled_pct, 2) if not pd.isna(median_max_move_unfilled_pct) else 0,
                 'average': round(average_max_move_unfilled_pct, 2) if not pd.isna(average_max_move_unfilled_pct) else 0,
                 'description': '% move in gap direction when price does not close the gap',
-                'median_price': round(median_max_move_unfilled_price, 2) if median_max_move_unfilled_price else None,
                 'average_price': round(average_max_move_unfilled_price, 2) if average_max_move_unfilled_price else None,
-                'price_description': f'Price level from today\'s open (${current_open_price})' if current_open_price else 'Price level from today\'s open (data unavailable)'
+                'average_price_nq': convert_qqq_to_nq(average_max_move_unfilled_price),
+                'price_description': f'Price level from today\'s open (${current_open_price})' if current_open_price else 'Price level from today\'s open (data unavailable)',
+                'zone_title': 'STOP OUT Zone'
             },
             'median_time_to_fill': {
                 'median': round(median_time_to_fill, 2) if not pd.isna(median_time_to_fill) else 0,
@@ -968,17 +978,16 @@ def get_gap_insights():
                 'description': 'Median time of the day’s high'
             },
             'reversal_after_fill_rate': {
-                'median': round(reversal_after_fill_rate, 2),
                 'average': round(reversal_after_fill_rate, 2),
                 'description': '% of time price reverses after gap is filled'
             },
             'median_move_before_reversal': {
-                'median': round(median_move_before_reversal_pct, 2) if not pd.isna(median_move_before_reversal_pct) else 0,
                 'average': round(average_move_before_reversal_pct, 2) if not pd.isna(average_move_before_reversal_pct) else 0,
                 'description': 'Median move in gap fill direction before reversal',
-                'median_price': round(median_move_before_reversal_price, 2) if median_move_before_reversal_price else None,
                 'average_price': round(average_move_before_reversal_price, 2) if average_move_before_reversal_price else None,
-                'price_description': f'Price level from yesterday\'s close (${current_prev_close})' if current_prev_close else 'Price level from yesterday\'s close (data unavailable)'
+                'average_price_nq': convert_qqq_to_nq(average_move_before_reversal_price),
+                'price_description': f'Price level from yesterday\'s close (${current_prev_close})' if current_prev_close else 'Price level from yesterday\'s close (data unavailable)',
+                'zone_title': 'Long Zone' if gap_direction == 'up' else 'Short Zone'
             },
             'market_data': {
                 'current_open': current_open_price,

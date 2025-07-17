@@ -897,6 +897,20 @@ form button:disabled::before {
     padding: var(--spacing-sm);
 }
 
+.metric-zone-title {
+    font-size: 1rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--charcoal);
+    margin-bottom: 6px;
+    text-align: center;
+    background: var(--primary-blue);
+    color: white;
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .metric-price-median {
     font-size: 1.2rem;
     font-weight: var(--font-weight-bold);
@@ -907,6 +921,13 @@ form button:disabled::before {
 .metric-price-average {
     font-size: 0.9rem;
     color: var(--dark-grey);
+    margin-bottom: 4px;
+}
+
+.metric-price-nq {
+    font-size: 0.9rem;
+    color: var(--accent-green);
+    font-weight: var(--font-weight-semibold);
     margin-bottom: 4px;
 }
 

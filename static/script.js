@@ -4175,20 +4175,30 @@ async function loadGapInsights(event) {
             metric.className = 'insight-metric';
             
             let priceInfo = '';
-            if (insights[key].median_price !== undefined && insights[key].median_price !== null) {
+            if (insights[key].average_price !== undefined && insights[key].average_price !== null) {
+                const zoneTitle = insights[key].zone_title || '';
+                const nqPrice = insights[key].average_price_nq;
+                const nqDisplay = nqPrice ? `<div class="metric-price-nq">NQ: ${nqPrice}</div>` : '';
+                
                 priceInfo = `
                     <div class="metric-price-info">
-                        <div class="metric-price-median">$${insights[key].median_price}</div>
-                        <div class="metric-price-average">Avg: $${insights[key].average_price}</div>
+                        <div class="metric-zone-title">${zoneTitle}</div>
+                        <div class="metric-price-average">QQQ: $${insights[key].average_price}</div>
+                        ${nqDisplay}
                         <div class="metric-price-description">${insights[key].price_description}</div>
                     </div>
                 `;
             }
             
+            // Handle metrics that only have average (no median)
+            const valueDisplay = insights[key].median !== undefined ? 
+                `<div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>` :
+                `<div class="metric-average">${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>`;
+            
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                ${valueDisplay}
                 <div class="metric-description">${insights[key].description}</div>
                 ${priceInfo}
             `;
@@ -4204,20 +4214,30 @@ async function loadGapInsights(event) {
             metric.className = 'insight-metric';
             
             let priceInfo = '';
-            if (insights[key].median_price !== undefined && insights[key].median_price !== null) {
+            if (insights[key].average_price !== undefined && insights[key].average_price !== null) {
+                const zoneTitle = insights[key].zone_title || '';
+                const nqPrice = insights[key].average_price_nq;
+                const nqDisplay = nqPrice ? `<div class="metric-price-nq">NQ: ${nqPrice}</div>` : '';
+                
                 priceInfo = `
                     <div class="metric-price-info">
-                        <div class="metric-price-median">$${insights[key].median_price}</div>
-                        <div class="metric-price-average">Avg: $${insights[key].average_price}</div>
+                        <div class="metric-zone-title">${zoneTitle}</div>
+                        <div class="metric-price-average">QQQ: $${insights[key].average_price}</div>
+                        ${nqDisplay}
                         <div class="metric-price-description">${insights[key].price_description}</div>
                     </div>
                 `;
             }
             
+            // Handle metrics that only have average (no median)
+            const valueDisplay = insights[key].median !== undefined ? 
+                `<div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>` :
+                `<div class="metric-average">${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>`;
+            
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                ${valueDisplay}
                 <div class="metric-description">${insights[key].description}</div>
                 ${priceInfo}
             `;
