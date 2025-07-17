@@ -888,6 +888,85 @@ form button:disabled::before {
     font-style: italic;
 }
 
+.metric-price-info {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--medium-grey);
+    background: #e8f4fd;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm);
+}
+
+.metric-price-median {
+    font-size: 1.2rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-blue);
+    margin-bottom: 2px;
+}
+
+.metric-price-average {
+    font-size: 0.9rem;
+    color: var(--dark-grey);
+    margin-bottom: 4px;
+}
+
+.metric-price-description {
+    font-size: 0.75rem;
+    color: var(--dark-grey);
+    font-style: italic;
+}
+
+.market-data-summary {
+    background: var(--light-grey);
+    border: 1px solid var(--medium-grey);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.market-data-summary h4 {
+    font-size: 1.1rem;
+    font-weight: var(--font-weight-semibold);
+    color: var(--charcoal);
+    margin-bottom: var(--spacing-sm);
+    text-align: center;
+}
+
+.market-data-grid {
+    display: flex;
+    justify-content: space-around;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.market-data-item {
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+}
+
+.market-data-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--dark-grey);
+    margin-bottom: 4px;
+}
+
+.market-data-value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-blue);
+}
+
+.market-data-value.up {
+    color: var(--accent-green);
+}
+
+.market-data-value.down {
+    color: #dc3545;
+}
+
 /* Sample/Upgrade Notices */
 .sample-notice {
     background: linear-gradient(135deg, #fff3cd 0%, #fdf2b3 100%);
@@ -1924,6 +2003,17 @@ footer p {
     font-style: italic;
     opacity: 0.8;
     margin-top: var(--spacing-xs) !important;
+}
+
+.gap-filters-test-note {
+    font-size: 0.85rem;
+    color: #856404;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+    font-style: italic;
 }
 
 .gap-filters-details {

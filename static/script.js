@@ -4137,7 +4137,35 @@ async function loadGapInsights(event) {
         const insights = data.insights;
         const container = document.createElement('div');
         container.className = 'insights-container';
-        container.innerHTML = `<h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>`;
+        
+        // Add market data summary if available
+        let marketDataHtml = '';
+        if (insights.market_data && insights.market_data.current_open) {
+            marketDataHtml = `
+                <div class="market-data-summary">
+                    <h4>Current Market Data</h4>
+                    <div class="market-data-grid">
+                        <div class="market-data-item">
+                            <span class="market-data-label">Today's Open:</span>
+                            <span class="market-data-value">$${insights.market_data.current_open}</span>
+                        </div>
+                        <div class="market-data-item">
+                            <span class="market-data-label">Yesterday's Close:</span>
+                            <span class="market-data-value">$${insights.market_data.current_prev_close}</span>
+                        </div>
+                        <div class="market-data-item">
+                            <span class="market-data-label">Gap Direction:</span>
+                            <span class="market-data-value ${insights.market_data.gap_direction}">${insights.market_data.gap_direction.toUpperCase()}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = `
+            <h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>
+            ${marketDataHtml}
+        `;
 
         // First row: 4 metrics
         const row1 = document.createElement('div');
@@ -4145,11 +4173,24 @@ async function loadGapInsights(event) {
         ['gap_fill_rate', 'median_move_before_fill', 'median_max_move_unfilled', 'median_time_to_fill'].forEach(key => {
             const metric = document.createElement('div');
             metric.className = 'insight-metric';
+            
+            let priceInfo = '';
+            if (insights[key].median_price !== undefined && insights[key].median_price !== null) {
+                priceInfo = `
+                    <div class="metric-price-info">
+                        <div class="metric-price-median">$${insights[key].median_price}</div>
+                        <div class="metric-price-average">Avg: $${insights[key].average_price}</div>
+                        <div class="metric-price-description">${insights[key].price_description}</div>
+                    </div>
+                `;
+            }
+            
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
                 <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
                 <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
                 <div class="metric-description">${insights[key].description}</div>
+                ${priceInfo}
             `;
             row1.appendChild(metric);
         });
@@ -4161,11 +4202,24 @@ async function loadGapInsights(event) {
         ['reversal_after_fill_rate', 'median_move_before_reversal'].forEach(key => {
             const metric = document.createElement('div');
             metric.className = 'insight-metric';
+            
+            let priceInfo = '';
+            if (insights[key].median_price !== undefined && insights[key].median_price !== null) {
+                priceInfo = `
+                    <div class="metric-price-info">
+                        <div class="metric-price-median">$${insights[key].median_price}</div>
+                        <div class="metric-price-average">Avg: $${insights[key].average_price}</div>
+                        <div class="metric-price-description">${insights[key].price_description}</div>
+                    </div>
+                `;
+            }
+            
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
                 <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
                 <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
                 <div class="metric-description">${insights[key].description}</div>
+                ${priceInfo}
             `;
             row2.appendChild(metric);
         });
@@ -4334,17 +4388,19 @@ function displayQQQData(data) {
 }
 
 function populateGapFilters(gapValue) {
-    // Check if gap is too small (under 0.15%)
-    if (Math.abs(gapValue) < 0.15) {
-        showSmallGapMessage();
-        return;
-    }
+    // Temporarily allow gaps under 0.15% for testing
+    // if (Math.abs(gapValue) < 0.15) {
+    //     showSmallGapMessage();
+    //     return;
+    // }
     
     // Determine gap size bin
     let gapSizeBin = '';
     const absGap = Math.abs(gapValue);
     
-    if (absGap >= 0.15 && absGap < 0.35) {
+    if (absGap < 0.15) {
+        gapSizeBin = '0.15-0.35%'; // Temporarily map small gaps to this bin for testing
+    } else if (absGap >= 0.15 && absGap < 0.35) {
         gapSizeBin = '0.15-0.35%';
     } else if (absGap >= 0.35 && absGap < 0.5) {
         gapSizeBin = '0.35-0.5%';
@@ -4374,7 +4430,7 @@ function populateGapFilters(gapValue) {
     if (directionSelect) directionSelect.value = gapDirection;
     
     // Show success message
-    showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection);
+    showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection, gapValue);
     
     // Track the event
     gtag('event', 'gap_filters_populated', {
@@ -4416,19 +4472,26 @@ function showSmallGapMessage() {
     }, 5000);
 }
 
-function showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection) {
+function showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection, gapValue) {
     const displayContainer = document.getElementById('qqq-data-display');
     if (!displayContainer) return;
     
     const messageDiv = document.createElement('div');
     messageDiv.className = 'gap-filters-message';
+    const isSmallGap = Math.abs(gapValue) < 0.15;
+    const testNote = isSmallGap ? '<p class="gap-filters-test-note">⚠️ Testing mode: Small gap mapped to nearest bin for price calculation testing</p>' : '';
+    
     messageDiv.innerHTML = `
         <div class="gap-filters-icon">✅</div>
         <div class="gap-filters-content">
             <h4>Filters Populated Successfully</h4>
             <div class="gap-filters-details">
                 <div class="filter-item">
-                    <span class="filter-label">Gap Size:</span>
+                    <span class="filter-label">Actual Gap:</span>
+                    <span class="filter-value">${gapValue.toFixed(2)}%</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-label">Gap Size Bin:</span>
                     <span class="filter-value">${gapSizeBin}</span>
                 </div>
                 <div class="filter-item">
@@ -4440,7 +4503,8 @@ function showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection) {
                     <span class="filter-value">${gapDirection === 'up' ? 'Gap Up' : 'Gap Down'}</span>
                 </div>
             </div>
-            <p class="gap-filters-note">Click "Get Insights" to view historical data for similar gaps.</p>
+            ${testNote}
+            <p class="gap-filters-note">Click "Get Insights" to view historical data and price calculations for similar gaps.</p>
         </div>
     `;
     

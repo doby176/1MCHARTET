@@ -829,6 +829,19 @@ def get_gap_insights():
         day = request.args.get('day')
         gap_direction = request.args.get('gap_direction')
         logging.debug(f"Fetching gap insights for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
+        
+        # Get current QQQ market data for price calculations
+        qqq_data = scrape_qqq_data()
+        current_open_price = None
+        current_prev_close = None
+        
+        if qqq_data and 'Open' in qqq_data and 'Prev Close' in qqq_data:
+            try:
+                current_open_price = float(qqq_data['Open'])
+                current_prev_close = float(qqq_data['Prev Close'])
+                logging.debug(f"Current QQQ Open: ${current_open_price}, Prev Close: ${current_prev_close}")
+            except (ValueError, TypeError) as e:
+                logging.warning(f"Could not parse QQQ prices: {e}")
         if not os.path.exists(GAP_DATA_PATH):
             logging.error(f"Gap data file not found: {GAP_DATA_PATH}")
             return jsonify({'error': 'Gap data file not found. Please contact support.'}), 404
@@ -885,6 +898,38 @@ def get_gap_insights():
         median_high_minutes = filtered_df['time_of_high_minutes'].median()
         average_high_minutes = filtered_df['time_of_high_minutes'].mean()
 
+        # Calculate price-based metrics
+        def calculate_price_levels(percentage, base_price, direction='up'):
+            """Calculate price levels from percentage moves"""
+            if not base_price or pd.isna(percentage):
+                return None
+            
+            if direction == 'up':
+                return base_price + (percentage / 100 * base_price)
+            else:
+                return base_price - (percentage / 100 * base_price)
+
+        # Get the key metrics for price calculations
+        median_move_before_fill_pct = filled_df['move_before_reversal_fill_direction_pct'].median() if not filled_df.empty else 0
+        average_move_before_fill_pct = filled_df['move_before_reversal_fill_direction_pct'].mean() if not filled_df.empty else 0
+        median_max_move_unfilled_pct = unfilled_df['max_move_gap_direction_first_30min_pct'].median() if not unfilled_df.empty else 0
+        average_max_move_unfilled_pct = unfilled_df['max_move_gap_direction_first_30min_pct'].mean() if not unfilled_df.empty else 0
+        median_move_before_reversal_pct = filtered_df['move_before_reversal_fill_direction_pct'].median() if not filtered_df.empty else 0
+        average_move_before_reversal_pct = filtered_df['move_before_reversal_fill_direction_pct'].mean() if not filtered_df.empty else 0
+
+        # Calculate price levels from Open Price
+        median_move_before_fill_price = calculate_price_levels(median_move_before_fill_pct, current_open_price, gap_direction) if current_open_price else None
+        average_move_before_fill_price = calculate_price_levels(average_move_before_fill_pct, current_open_price, gap_direction) if current_open_price else None
+        median_max_move_unfilled_price = calculate_price_levels(median_max_move_unfilled_pct, current_open_price, gap_direction) if current_open_price else None
+        average_max_move_unfilled_price = calculate_price_levels(average_max_move_unfilled_pct, current_open_price, gap_direction) if current_open_price else None
+
+        # Calculate price levels from Yesterday Close (for reversal)
+        # For gap up: reversal = yesterday close - percentage
+        # For gap down: reversal = yesterday close + percentage
+        reversal_direction = 'down' if gap_direction == 'up' else 'up'
+        median_move_before_reversal_price = calculate_price_levels(median_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
+        average_move_before_reversal_price = calculate_price_levels(average_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
+
         insights = {
             'gap_fill_rate': {
                 'median': round(gap_fill_rate, 2),
@@ -892,14 +937,20 @@ def get_gap_insights():
                 'description': 'Percentage of gaps that close'
             },
             'median_move_before_fill': {
-                'median': round(filled_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filled_df.empty else 0,
-                'average': round(filled_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filled_df.empty else 0,
-                'description': 'Percentage move before gap closes'
+                'median': round(median_move_before_fill_pct, 2) if not pd.isna(median_move_before_fill_pct) else 0,
+                'average': round(average_move_before_fill_pct, 2) if not pd.isna(average_move_before_fill_pct) else 0,
+                'description': 'Percentage move before gap closes',
+                'median_price': round(median_move_before_fill_price, 2) if median_move_before_fill_price else None,
+                'average_price': round(average_move_before_fill_price, 2) if average_move_before_fill_price else None,
+                'price_description': f'Price level from today\'s open (${current_open_price})' if current_open_price else 'Price level from today\'s open (data unavailable)'
             },
             'median_max_move_unfilled': {
-                'median': round(unfilled_df['max_move_gap_direction_first_30min_pct'].median(), 2) if not unfilled_df.empty else 0,
-                'average': round(unfilled_df['max_move_gap_direction_first_30min_pct'].mean(), 2) if not unfilled_df.empty else 0,
-                'description': '% move in gap direction when price does not close the gap'
+                'median': round(median_max_move_unfilled_pct, 2) if not pd.isna(median_max_move_unfilled_pct) else 0,
+                'average': round(average_max_move_unfilled_pct, 2) if not pd.isna(average_max_move_unfilled_pct) else 0,
+                'description': '% move in gap direction when price does not close the gap',
+                'median_price': round(median_max_move_unfilled_price, 2) if median_max_move_unfilled_price else None,
+                'average_price': round(average_max_move_unfilled_price, 2) if average_max_move_unfilled_price else None,
+                'price_description': f'Price level from today\'s open (${current_open_price})' if current_open_price else 'Price level from today\'s open (data unavailable)'
             },
             'median_time_to_fill': {
                 'median': round(median_time_to_fill, 2) if not pd.isna(median_time_to_fill) else 0,
@@ -922,9 +973,17 @@ def get_gap_insights():
                 'description': '% of time price reverses after gap is filled'
             },
             'median_move_before_reversal': {
-                'median': round(filtered_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filtered_df.empty else 0,
-                'average': round(filtered_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filtered_df.empty else 0,
-                'description': 'Median move in gap fill direction before reversal'
+                'median': round(median_move_before_reversal_pct, 2) if not pd.isna(median_move_before_reversal_pct) else 0,
+                'average': round(average_move_before_reversal_pct, 2) if not pd.isna(average_move_before_reversal_pct) else 0,
+                'description': 'Median move in gap fill direction before reversal',
+                'median_price': round(median_move_before_reversal_price, 2) if median_move_before_reversal_price else None,
+                'average_price': round(average_move_before_reversal_price, 2) if average_move_before_reversal_price else None,
+                'price_description': f'Price level from yesterday\'s close (${current_prev_close})' if current_prev_close else 'Price level from yesterday\'s close (data unavailable)'
+            },
+            'market_data': {
+                'current_open': current_open_price,
+                'current_prev_close': current_prev_close,
+                'gap_direction': gap_direction
             }
         }
         logging.debug(f"Computed insights: {insights}")
