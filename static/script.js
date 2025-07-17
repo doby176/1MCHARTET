@@ -4141,6 +4141,16 @@ async function loadGapInsights(event) {
         // Add market data summary if available
         let marketDataHtml = '';
         if (insights.market_data && insights.market_data.current_open) {
+            const nqInfo = insights.market_data.nq_last ? 
+                `<div class="market-data-item">
+                    <span class="market-data-label">NQ Price:</span>
+                    <span class="market-data-value">${insights.market_data.nq_last}</span>
+                </div>
+                <div class="market-data-item">
+                    <span class="market-data-label">NQ/QQQ Ratio:</span>
+                    <span class="market-data-value">${insights.market_data.nq_qqq_ratio}</span>
+                </div>` : '';
+            
             marketDataHtml = `
                 <div class="market-data-summary">
                     <h4>Current Market Data</h4>
@@ -4157,6 +4167,7 @@ async function loadGapInsights(event) {
                             <span class="market-data-label">Gap Direction:</span>
                             <span class="market-data-value ${insights.market_data.gap_direction}">${insights.market_data.gap_direction.toUpperCase()}</span>
                         </div>
+                        ${nqInfo}
                     </div>
                 </div>
             `;
@@ -4191,10 +4202,10 @@ async function loadGapInsights(event) {
             }
             
             // Handle metrics that only have average (no median)
-            const valueDisplay = insights[key].median !== undefined ? 
+            const valueDisplay = (key === 'gap_fill_rate' || key === 'reversal_after_fill_rate') ?
+                `<div class="metric-average">${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>` :
                 `<div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>` :
-                `<div class="metric-average">${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>`;
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>`;
             
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
@@ -4230,10 +4241,10 @@ async function loadGapInsights(event) {
             }
             
             // Handle metrics that only have average (no median)
-            const valueDisplay = insights[key].median !== undefined ? 
+            const valueDisplay = (key === 'gap_fill_rate' || key === 'reversal_after_fill_rate') ?
+                `<div class="metric-average">${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>` :
                 `<div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>` :
-                `<div class="metric-average">${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>`;
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>`;
             
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>

@@ -930,16 +930,29 @@ def get_gap_insights():
         median_move_before_reversal_price = calculate_price_levels(median_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
         average_move_before_reversal_price = calculate_price_levels(average_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
 
-        # NQ Conversion: QQQ to NQ futures conversion
-        # NQ futures typically trade at approximately 20x the QQQ price
-        # This is a rough approximation as the exact ratio varies
+        # Get live NQ/QQQ ratio using ThinkOrSwim logic
+        nq_last = None
+        try:
+            # Try to fetch live NQ price from Yahoo Finance (symbol: NQ=F)
+            nq_resp = requests.get('https://query1.finance.yahoo.com/v8/finance/chart/NQ=F?interval=1m&range=1d', timeout=5)
+            nq_json = nq_resp.json()
+            nq_last = nq_json['chart']['result'][0]['meta']['regularMarketPrice']
+        except Exception as e:
+            logging.warning(f"Could not fetch NQ price: {e}")
+            nq_last = None
+
+        # Calculate conversion factor exactly like ThinkOrSwim script
+        # conversionFactor = if qqq != 0 then nq / qqq else 45.34;
+        if nq_last and current_open_price and current_open_price != 0:
+            nq_qqq_ratio = nq_last / current_open_price
+        else:
+            nq_qqq_ratio = 45.34  # fallback to 45.34 like in ThinkOrSwim script
+
         def convert_qqq_to_nq(qqq_price):
-            """Convert QQQ price to approximate NQ futures price"""
+            """Convert QQQ price to NQ using ThinkOrSwim conversion logic"""
             if not qqq_price:
                 return None
-            # NQ futures are typically around 20x QQQ price
-            # This is an approximation and may vary based on market conditions
-            return round(qqq_price * 20, 1)
+            return round(qqq_price * nq_qqq_ratio, 1)
 
         insights = {
             'gap_fill_rate': {
@@ -947,12 +960,13 @@ def get_gap_insights():
                 'description': 'Percentage of gaps that close'
             },
             'median_move_before_fill': {
+                'median': round(median_move_before_fill_pct, 2) if not pd.isna(median_move_before_fill_pct) else 0,
                 'average': round(average_move_before_fill_pct, 2) if not pd.isna(average_move_before_fill_pct) else 0,
                 'description': 'Percentage move before gap closes',
                 'average_price': round(average_move_before_fill_price, 2) if average_move_before_fill_price else None,
                 'average_price_nq': convert_qqq_to_nq(average_move_before_fill_price),
                 'price_description': f'Price level from today\'s open (${current_open_price})' if current_open_price else 'Price level from today\'s open (data unavailable)',
-                'zone_title': 'Long Zone' if gap_direction == 'up' else 'Short Zone'
+                'zone_title': 'SHORT ZONE' if gap_direction == 'up' else 'LONG ZONE'
             },
             'median_max_move_unfilled': {
                 'average': round(average_max_move_unfilled_pct, 2) if not pd.isna(average_max_move_unfilled_pct) else 0,
@@ -982,17 +996,20 @@ def get_gap_insights():
                 'description': '% of time price reverses after gap is filled'
             },
             'median_move_before_reversal': {
+                'median': round(median_move_before_reversal_pct, 2) if not pd.isna(median_move_before_reversal_pct) else 0,
                 'average': round(average_move_before_reversal_pct, 2) if not pd.isna(average_move_before_reversal_pct) else 0,
                 'description': 'Median move in gap fill direction before reversal',
                 'average_price': round(average_move_before_reversal_price, 2) if average_move_before_reversal_price else None,
                 'average_price_nq': convert_qqq_to_nq(average_move_before_reversal_price),
                 'price_description': f'Price level from yesterday\'s close (${current_prev_close})' if current_prev_close else 'Price level from yesterday\'s close (data unavailable)',
-                'zone_title': 'Long Zone' if gap_direction == 'up' else 'Short Zone'
+                'zone_title': 'LONG ZONE' if gap_direction == 'up' else 'SHORT ZONE'
             },
             'market_data': {
                 'current_open': current_open_price,
                 'current_prev_close': current_prev_close,
-                'gap_direction': gap_direction
+                'gap_direction': gap_direction,
+                'nq_last': nq_last,
+                'nq_qqq_ratio': round(nq_qqq_ratio, 2) if nq_qqq_ratio else None
             }
         }
         logging.debug(f"Computed insights: {insights}")
