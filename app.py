@@ -12,6 +12,11 @@ import sqlite3
 import uuid
 import bcrypt
 from werkzeug.exceptions import TooManyRequests
+import requests
+from bs4 import BeautifulSoup
+import re
+from datetime import datetime, timezone, timedelta
+import pytz
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -824,6 +829,19 @@ def get_gap_insights():
         day = request.args.get('day')
         gap_direction = request.args.get('gap_direction')
         logging.debug(f"Fetching gap insights for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
+        
+        # Get current QQQ market data for price calculations
+        qqq_data = scrape_qqq_data()
+        current_open_price = None
+        current_prev_close = None
+        
+        if qqq_data and 'Open' in qqq_data and 'Prev Close' in qqq_data:
+            try:
+                current_open_price = float(qqq_data['Open'])
+                current_prev_close = float(qqq_data['Prev Close'])
+                logging.debug(f"Current QQQ Open: ${current_open_price}, Prev Close: ${current_prev_close}")
+            except (ValueError, TypeError) as e:
+                logging.warning(f"Could not parse QQQ prices: {e}")
         if not os.path.exists(GAP_DATA_PATH):
             logging.error(f"Gap data file not found: {GAP_DATA_PATH}")
             return jsonify({'error': 'Gap data file not found. Please contact support.'}), 404
@@ -880,21 +898,95 @@ def get_gap_insights():
         median_high_minutes = filtered_df['time_of_high_minutes'].median()
         average_high_minutes = filtered_df['time_of_high_minutes'].mean()
 
+        # Calculate price-based metrics
+        def calculate_price_levels(percentage, base_price, direction='up'):
+            """Calculate price levels from percentage moves"""
+            if not base_price or pd.isna(percentage):
+                return None
+            
+            if direction == 'up':
+                return base_price + (percentage / 100 * base_price)
+            else:
+                return base_price - (percentage / 100 * base_price)
+
+        # Get the key metrics for price calculations
+        median_move_before_fill_pct = filled_df['move_before_reversal_fill_direction_pct'].median() if not filled_df.empty else 0
+        average_move_before_fill_pct = filled_df['move_before_reversal_fill_direction_pct'].mean() if not filled_df.empty else 0
+        median_max_move_unfilled_pct = unfilled_df['max_move_gap_direction_first_30min_pct'].median() if not unfilled_df.empty else 0
+        average_max_move_unfilled_pct = unfilled_df['max_move_gap_direction_first_30min_pct'].mean() if not unfilled_df.empty else 0
+        median_move_before_reversal_pct = filtered_df['move_before_reversal_fill_direction_pct'].median() if not filtered_df.empty else 0
+        average_move_before_reversal_pct = filtered_df['move_before_reversal_fill_direction_pct'].mean() if not filtered_df.empty else 0
+
+        # Calculate price levels from Open Price
+        median_move_before_fill_price = calculate_price_levels(median_move_before_fill_pct, current_open_price, gap_direction) if current_open_price else None
+        average_move_before_fill_price = calculate_price_levels(average_move_before_fill_pct, current_open_price, gap_direction) if current_open_price else None
+        median_max_move_unfilled_price = calculate_price_levels(median_max_move_unfilled_pct, current_open_price, gap_direction) if current_open_price else None
+        average_max_move_unfilled_price = calculate_price_levels(average_max_move_unfilled_pct, current_open_price, gap_direction) if current_open_price else None
+
+        # Calculate price levels from Yesterday Close (for reversal)
+        # For gap up: reversal = yesterday close - percentage
+        # For gap down: reversal = yesterday close + percentage
+        reversal_direction = 'down' if gap_direction == 'up' else 'up'
+        median_move_before_reversal_price = calculate_price_levels(median_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
+        average_move_before_reversal_price = calculate_price_levels(average_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
+
+        # Check if today's gap matches the selected filters
+        today_gap_direction = None
+        today_gap_size_bin = None
+        
+        if qqq_data and 'Gap Value' in qqq_data and qqq_data['Gap Value'] is not None:
+            today_gap_value = qqq_data['Gap Value']
+            today_gap_direction = 'up' if today_gap_value > 0 else 'down'
+            
+            # Determine today's gap size bin
+            abs_gap = abs(today_gap_value)
+            if abs_gap >= 0.15 and abs_gap < 0.35:
+                today_gap_size_bin = '0.15-0.35%'
+            elif abs_gap >= 0.35 and abs_gap < 0.5:
+                today_gap_size_bin = '0.35-0.5%'
+            elif abs_gap >= 0.5 and abs_gap < 1.0:
+                today_gap_size_bin = '0.5-1%'
+            elif abs_gap >= 1.0 and abs_gap < 1.5:
+                today_gap_size_bin = '1-1.5%'
+            elif abs_gap >= 1.5:
+                today_gap_size_bin = '1.5%+'
+        
+        # Get current day of week
+        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        today = datetime.now()
+        today_day = days[today.weekday()]
+        
+        # Check if filters match today's conditions
+        filters_match_today = (
+            today_gap_direction and 
+            today_gap_size_bin and 
+            gap_direction == today_gap_direction and 
+            gap_size == today_gap_size_bin and 
+            day == today_day
+        )
+
         insights = {
             'gap_fill_rate': {
-                'median': round(gap_fill_rate, 2),
                 'average': round(gap_fill_rate, 2),
                 'description': 'Percentage of gaps that close'
             },
             'median_move_before_fill': {
-                'median': round(filled_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filled_df.empty else 0,
-                'average': round(filled_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filled_df.empty else 0,
-                'description': 'Percentage move before gap closes'
+                'median': round(median_move_before_fill_pct, 2) if not pd.isna(median_move_before_fill_pct) else 0,
+                'average': round(average_move_before_fill_pct, 2) if not pd.isna(average_move_before_fill_pct) else 0,
+                'description': 'Percentage move before gap closes',
+                'median_price': round(median_move_before_fill_price, 2) if (median_move_before_fill_price and filters_match_today) else None,
+                'average_price': round(average_move_before_fill_price, 2) if (average_move_before_fill_price and filters_match_today) else None,
+                'price_description': f'Price level from today\'s open (${current_open_price})' if (current_open_price and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
+                'zone_title': 'SHORT ZONE' if gap_direction == 'up' else 'LONG ZONE'
             },
             'median_max_move_unfilled': {
-                'median': round(unfilled_df['max_move_gap_direction_first_30min_pct'].median(), 2) if not unfilled_df.empty else 0,
-                'average': round(unfilled_df['max_move_gap_direction_first_30min_pct'].mean(), 2) if not unfilled_df.empty else 0,
-                'description': '% move in gap direction when price does not close the gap'
+                'median': round(median_max_move_unfilled_pct, 2) if not pd.isna(median_max_move_unfilled_pct) else 0,
+                'average': round(average_max_move_unfilled_pct, 2) if not pd.isna(average_max_move_unfilled_pct) else 0,
+                'description': '% move in gap direction when price does not close the gap',
+                'median_price': round(median_max_move_unfilled_price, 2) if (median_max_move_unfilled_price and filters_match_today) else None,
+                'average_price': round(average_max_move_unfilled_price, 2) if (average_max_move_unfilled_price and filters_match_today) else None,
+                'price_description': f'Price level from today\'s open (${current_open_price})' if (current_open_price and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
+                'zone_title': 'STOP OUT Zone'
             },
             'median_time_to_fill': {
                 'median': round(median_time_to_fill, 2) if not pd.isna(median_time_to_fill) else 0,
@@ -912,14 +1004,26 @@ def get_gap_insights():
                 'description': 'Median time of the day’s high'
             },
             'reversal_after_fill_rate': {
-                'median': round(reversal_after_fill_rate, 2),
                 'average': round(reversal_after_fill_rate, 2),
                 'description': '% of time price reverses after gap is filled'
             },
             'median_move_before_reversal': {
-                'median': round(filtered_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filtered_df.empty else 0,
-                'average': round(filtered_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filtered_df.empty else 0,
-                'description': 'Median move in gap fill direction before reversal'
+                'median': round(median_move_before_reversal_pct, 2) if not pd.isna(median_move_before_reversal_pct) else 0,
+                'average': round(average_move_before_reversal_pct, 2) if not pd.isna(average_move_before_reversal_pct) else 0,
+                'description': 'Median move in gap fill direction before reversal',
+                'median_price': round(median_move_before_reversal_price, 2) if (median_move_before_reversal_price and filters_match_today) else None,
+                'average_price': round(average_move_before_reversal_price, 2) if (average_move_before_reversal_price and filters_match_today) else None,
+                'price_description': f'Price level from yesterday\'s close (${current_prev_close})' if (current_prev_close and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
+                'zone_title': 'LONG ZONE' if gap_direction == 'up' else 'SHORT ZONE'
+            },
+            'market_data': {
+                'current_open': current_open_price,
+                'current_prev_close': current_prev_close,
+                'gap_direction': gap_direction,
+                'filters_match_today': filters_match_today,
+                'today_gap_direction': today_gap_direction,
+                'today_gap_size_bin': today_gap_size_bin,
+                'today_day': today_day
             }
         }
         logging.debug(f"Computed insights: {insights}")
@@ -1163,6 +1267,160 @@ def get_earnings_by_bin():
     except Exception as e:
         logging.error(f"Error processing earnings by bin: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
+
+# Global cache for QQQ data to prevent multiple scraping
+qqq_data_cache = {
+    'data': None,
+    'timestamp': None,
+    'market_date': None  # Store the market date the data represents
+}
+
+def is_market_open():
+    """Check if US market is currently open (9:31 AM - 4:00 PM ET, Mon-Fri)"""
+    et_tz = pytz.timezone('US/Eastern')
+    now_et = datetime.now(et_tz)
+    
+    # Check if it's a weekday (Monday = 0, Sunday = 6)
+    if now_et.weekday() >= 5:  # Saturday or Sunday
+        return False
+    
+    # Check if it's within market hours (9:31 AM - 4:00 PM ET)
+    # We use 9:31 AM to ensure market data is updated
+    market_open = now_et.replace(hour=9, minute=31, second=0, microsecond=0)
+    market_close = now_et.replace(hour=16, minute=0, second=0, microsecond=0)
+    
+    return market_open <= now_et <= market_close
+
+def get_market_date():
+    """Get the current market date (today if market is open, previous trading day if closed)"""
+    et_tz = pytz.timezone('US/Eastern')
+    now_et = datetime.now(et_tz)
+    
+    # If market is closed, we need yesterday's data
+    if not is_market_open():
+        # Go back to previous trading day
+        days_back = 1
+        while days_back <= 7:  # Look back up to 7 days
+            prev_day = now_et - timedelta(days=days_back)
+            if prev_day.weekday() < 5:  # Monday-Friday
+                return prev_day.strftime('%Y-%m-%d')
+            days_back += 1
+        return now_et.strftime('%Y-%m-%d')  # Fallback
+    
+    return now_et.strftime('%Y-%m-%d')
+
+def should_refresh_qqq_data():
+    """Determine if we need to refresh QQQ data - once per day at 9:31 AM ET"""
+    current_market_date = get_market_date()
+    
+    # If we don't have cached data, we need to scrape
+    if not qqq_data_cache['data'] or not qqq_data_cache['market_date']:
+        return True
+    
+    # If the cached data is for a different market date, we need fresh data
+    if qqq_data_cache['market_date'] != current_market_date:
+        return True
+    
+    # If we already have today's data, don't scrape again
+    return False
+
+def scrape_qqq_data():
+    """Scrape QQQ data from CNBC website with market-aware caching"""
+    global qqq_data_cache
+    
+    # Check if we need to refresh based on market conditions
+    if not should_refresh_qqq_data():
+        logging.info("Returning cached QQQ data (market-aware cache)")
+        return qqq_data_cache['data']
+    
+    try:
+        logging.info("Performing single QQQ data scrape from CNBC")
+        url = "https://www.cnbc.com/quotes/QQQ"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Find the Summary section with Key Stats
+        summary_section = soup.find('div', class_='Summary-subsection')
+        if not summary_section:
+            return None
+        
+        # Look for the Key Stats title
+        key_stats_title = summary_section.find('h3', class_='Summary-title', string=lambda text: text and 'KEY STATS' in text.upper())
+        if not key_stats_title:
+            return None
+        
+        # Find the stats list
+        stats_list = summary_section.find('ul', class_='Summary-data')
+        if not stats_list:
+            return None
+        
+        # Extract the data
+        data = {}
+        stats_items = stats_list.find_all('li', class_='Summary-stat')
+        
+        for item in stats_items:
+            label_elem = item.find('span', class_='Summary-label')
+            value_elem = item.find('span', class_='Summary-value')
+            
+            if label_elem and value_elem:
+                label = label_elem.get_text(strip=True)
+                value = value_elem.get_text(strip=True)
+                
+                if label in ['Open', 'Prev Close']:
+                    data[label] = value
+        
+        # Calculate gap percentage if we have both Open and Prev Close
+        if 'Open' in data and 'Prev Close' in data:
+            try:
+                open_price = float(data['Open'])
+                prev_close = float(data['Prev Close'])
+                gap_percentage = ((open_price - prev_close) / prev_close) * 100
+                data['Gap %'] = f"{gap_percentage:.2f}%"
+                data['Gap Value'] = gap_percentage  # Store numeric value for calculations
+            except (ValueError, ZeroDivisionError):
+                data['Gap %'] = "N/A"
+                data['Gap Value'] = None
+        
+        # Cache the data with market date
+        qqq_data_cache['data'] = data
+        qqq_data_cache['timestamp'] = time.time()
+        qqq_data_cache['market_date'] = get_market_date()
+        
+        logging.info(f"QQQ data scraped and cached successfully for market date: {qqq_data_cache['market_date']}")
+        return data
+        
+    except Exception as e:
+        logging.error(f"Error scraping QQQ data: {str(e)}")
+        return None
+
+@app.route('/api/qqq_data', methods=['GET'])
+@limiter.limit("10 per hour")
+def get_qqq_data():
+    """API endpoint to get current QQQ data"""
+    try:
+        data = scrape_qqq_data()
+        if data:
+            return jsonify({
+                'success': True,
+                'data': data
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Unable to fetch QQQ data'
+            }), 500
+    except Exception as e:
+        logging.error(f"Error in QQQ data API: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Server error'
+        }), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

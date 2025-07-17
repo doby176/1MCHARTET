@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof loadEarningsTickers === 'function') loadEarningsTickers();
     if (typeof loadBinOptions === 'function') loadBinOptions();
     if (typeof populateEarningsOutcomes === 'function') populateEarningsOutcomes();
+    if (typeof initializeQQQData === 'function') initializeQQQData();
     
     // Initialize chart-related event listeners only on pages that have chart containers
     if (hasChartContainers) {
@@ -4136,7 +4137,35 @@ async function loadGapInsights(event) {
         const insights = data.insights;
         const container = document.createElement('div');
         container.className = 'insights-container';
-        container.innerHTML = `<h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>`;
+        
+        // Add market data summary if available
+        let marketDataHtml = '';
+        if (insights.market_data && insights.market_data.current_open) {
+            marketDataHtml = `
+                <div class="market-data-summary">
+                    <h4>Current Market Data</h4>
+                    <div class="market-data-grid">
+                        <div class="market-data-item">
+                            <span class="market-data-label">Today's Open:</span>
+                            <span class="market-data-value">$${insights.market_data.current_open}</span>
+                        </div>
+                        <div class="market-data-item">
+                            <span class="market-data-label">Yesterday's Close:</span>
+                            <span class="market-data-value">$${insights.market_data.current_prev_close}</span>
+                        </div>
+                        <div class="market-data-item">
+                            <span class="market-data-label">Gap Direction:</span>
+                            <span class="market-data-value ${insights.market_data.gap_direction}">${insights.market_data.gap_direction.toUpperCase()}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = `
+            <h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>
+            ${marketDataHtml}
+        `;
 
         // First row: 4 metrics
         const row1 = document.createElement('div');
@@ -4144,11 +4173,43 @@ async function loadGapInsights(event) {
         ['gap_fill_rate', 'median_move_before_fill', 'median_max_move_unfilled', 'median_time_to_fill'].forEach(key => {
             const metric = document.createElement('div');
             metric.className = 'insight-metric';
+            
+            let priceInfo = '';
+            if (insights[key].average_price !== undefined && insights[key].average_price !== null) {
+                const zoneTitle = insights[key].zone_title || '';
+                const medianPrice = insights[key].median_price;
+                const averagePrice = insights[key].average_price;
+                
+                let priceDisplay = '';
+                if (medianPrice !== undefined && medianPrice !== null) {
+                    priceDisplay = `
+                        <div class="metric-price-median">QQQ Median: $${medianPrice}</div>
+                        <div class="metric-price-average">QQQ Average: $${averagePrice}</div>
+                    `;
+                } else {
+                    priceDisplay = `<div class="metric-price-average">QQQ: $${averagePrice}</div>`;
+                }
+                
+                priceInfo = `
+                    <div class="metric-price-info">
+                        <div class="metric-zone-title">${zoneTitle}</div>
+                        ${priceDisplay}
+                        <div class="metric-price-description">${insights[key].price_description}</div>
+                    </div>
+                `;
+            }
+            
+            // Handle metrics that only have average (no median)
+            const valueDisplay = (key === 'gap_fill_rate' || key === 'reversal_after_fill_rate') ?
+                `<div class="metric-average">${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>` :
+                `<div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>`;
+            
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                ${valueDisplay}
                 <div class="metric-description">${insights[key].description}</div>
+                ${priceInfo}
             `;
             row1.appendChild(metric);
         });
@@ -4160,11 +4221,43 @@ async function loadGapInsights(event) {
         ['reversal_after_fill_rate', 'median_move_before_reversal'].forEach(key => {
             const metric = document.createElement('div');
             metric.className = 'insight-metric';
+            
+            let priceInfo = '';
+            if (insights[key].average_price !== undefined && insights[key].average_price !== null) {
+                const zoneTitle = insights[key].zone_title || '';
+                const medianPrice = insights[key].median_price;
+                const averagePrice = insights[key].average_price;
+                
+                let priceDisplay = '';
+                if (medianPrice !== undefined && medianPrice !== null) {
+                    priceDisplay = `
+                        <div class="metric-price-median">QQQ Median: $${medianPrice}</div>
+                        <div class="metric-price-average">QQQ Average: $${averagePrice}</div>
+                    `;
+                } else {
+                    priceDisplay = `<div class="metric-price-average">QQQ: $${averagePrice}</div>`;
+                }
+                
+                priceInfo = `
+                    <div class="metric-price-info">
+                        <div class="metric-zone-title">${zoneTitle}</div>
+                        ${priceDisplay}
+                        <div class="metric-price-description">${insights[key].price_description}</div>
+                    </div>
+                `;
+            }
+            
+            // Handle metrics that only have average (no median)
+            const valueDisplay = (key === 'gap_fill_rate' || key === 'reversal_after_fill_rate') ?
+                `<div class="metric-average">${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>` :
+                `<div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>`;
+            
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                ${valueDisplay}
                 <div class="metric-description">${insights[key].description}</div>
+                ${priceInfo}
             `;
             row2.appendChild(metric);
         });
@@ -4197,6 +4290,287 @@ async function loadGapInsights(event) {
         console.error('Error loading gap insights:', error.message);
         insightsContainer.innerHTML = '<p>Failed to load gap insights: ' + error.message + '. Please try again later.</p>';
         alert('Failed to load gap insights: ' + error.message);
+    }
+}
+
+// QQQ Data Functions
+async function loadQQQData() {
+    const displayContainer = document.getElementById('qqq-data-display');
+    const refreshButton = document.getElementById('refresh-qqq-data');
+    
+    if (!displayContainer) return;
+    
+    // Show loading state
+    displayContainer.innerHTML = '<div class="qqq-data-loading">Loading QQQ data...</div>';
+    if (refreshButton) {
+        refreshButton.disabled = true;
+        refreshButton.textContent = 'Loading...';
+    }
+    
+    try {
+        const response = await fetch('/api/qqq_data', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to fetch QQQ data');
+        }
+        
+        // Display the data
+        displayQQQData(data.data);
+        
+        // Track the event
+        gtag('event', 'qqq_data_load', {
+            'event_category': 'QQQ Data',
+            'event_label': 'CNBC Scrape'
+        });
+        
+    } catch (error) {
+        console.error('Error loading QQQ data:', error);
+        displayContainer.innerHTML = `
+            <div class="qqq-data-error">
+                <p>Failed to load QQQ data: ${error.message}</p>
+                <p>Please try again later.</p>
+            </div>
+        `;
+    } finally {
+        if (refreshButton) {
+            refreshButton.disabled = false;
+            refreshButton.textContent = '🔄 Refresh QQQ Data';
+        }
+    }
+}
+
+function displayQQQData(data) {
+    const displayContainer = document.getElementById('qqq-data-display');
+    
+    if (!displayContainer) return;
+    
+    const grid = document.createElement('div');
+    grid.className = 'qqq-data-grid';
+    
+    // Create data items for each metric
+    const metrics = [
+        { key: 'Open', label: 'Open Price', description: 'Today\'s opening price' },
+        { key: 'Prev Close', label: 'Previous Close', description: 'Yesterday\'s closing price' },
+        { key: 'Gap %', label: 'Gap Percentage', description: 'Percentage change from previous close to open' }
+    ];
+    
+    metrics.forEach(metric => {
+        if (data[metric.key]) {
+            const item = document.createElement('div');
+            item.className = 'qqq-data-item';
+            
+            const value = data[metric.key];
+            let valueClass = '';
+            let description = metric.description;
+            
+            // Add special styling for gap percentage
+            if (metric.key === 'Gap %') {
+                const gapValue = parseFloat(value.replace('%', ''));
+                if (!isNaN(gapValue)) {
+                    if (gapValue > 0) {
+                        valueClass = 'gap-positive';
+                        description = 'Positive gap (opened higher than previous close) - Click to populate filters';
+                    } else if (gapValue < 0) {
+                        valueClass = 'gap-negative';
+                        description = 'Negative gap (opened lower than previous close) - Click to populate filters';
+                    } else {
+                        description = 'No gap (opened at previous close)';
+                    }
+                }
+            }
+            
+            item.innerHTML = `
+                <div class="qqq-data-label">${metric.label}</div>
+                <div class="qqq-data-value ${valueClass} ${metric.key === 'Gap %' ? 'gap-percentage' : metric.key === 'Open' ? 'open-price' : 'prev-close'}" data-metric="${metric.key}">${value}</div>
+                <div class="qqq-data-description">${description}</div>
+            `;
+            
+            // Make gap percentage clickable only if gap is >= 0.15%
+            if (metric.key === 'Gap %' && data['Gap Value'] !== null && data['Gap Value'] !== undefined) {
+                const gapValue = data['Gap Value'];
+                const absGap = Math.abs(gapValue);
+                
+                if (absGap >= 0.15) {
+                    // Gap is large enough to be actionable
+                    const gapValueElement = item.querySelector('.qqq-data-value');
+                    gapValueElement.style.cursor = 'pointer';
+                    gapValueElement.title = 'Click to populate gap insights filters';
+                    gapValueElement.addEventListener('click', () => populateGapFilters(gapValue));
+                }
+                // Gaps under 0.15% are not clickable at all
+            }
+            
+            grid.appendChild(item);
+        }
+    });
+    
+    // If no data was found, show error message
+    if (grid.children.length === 0) {
+        displayContainer.innerHTML = `
+            <div class="qqq-data-error">
+                <p>No QQQ data available</p>
+                <p>Please try refreshing the data.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    displayContainer.innerHTML = '';
+    displayContainer.appendChild(grid);
+}
+
+function populateGapFilters(gapValue) {
+    // Determine gap size bin
+    let gapSizeBin = '';
+    const absGap = Math.abs(gapValue);
+    
+    if (absGap >= 0.15 && absGap < 0.35) {
+        gapSizeBin = '0.15-0.35%';
+    } else if (absGap >= 0.35 && absGap < 0.5) {
+        gapSizeBin = '0.35-0.5%';
+    } else if (absGap >= 0.5 && absGap < 1.0) {
+        gapSizeBin = '0.5-1%';
+    } else if (absGap >= 1.0 && absGap < 1.5) {
+        gapSizeBin = '1-1.5%';
+    } else if (absGap >= 1.5) {
+        gapSizeBin = '1.5%+';
+    }
+    
+    // Determine gap direction
+    const gapDirection = gapValue > 0 ? 'up' : 'down';
+    
+    // Get current day of week
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const today = new Date();
+    const dayOfWeek = days[today.getDay()];
+    
+    // Populate the filters
+    const gapSizeSelect = document.getElementById('gap-insights-size-select');
+    const daySelect = document.getElementById('gap-insights-day-select');
+    const directionSelect = document.getElementById('gap-insights-direction-select');
+    
+    if (gapSizeSelect) gapSizeSelect.value = gapSizeBin;
+    if (daySelect) daySelect.value = dayOfWeek;
+    if (directionSelect) directionSelect.value = gapDirection;
+    
+    // Show success message
+    showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection, gapValue);
+    
+    // Track the event
+    gtag('event', 'gap_filters_populated', {
+        'event_category': 'Gap Filters',
+        'event_label': `${gapSizeBin}_${dayOfWeek}_${gapDirection}`
+    });
+}
+
+function showSmallGapMessage() {
+    const displayContainer = document.getElementById('qqq-data-display');
+    if (!displayContainer) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'small-gap-message';
+    messageDiv.innerHTML = `
+        <div class="small-gap-icon">⚠️</div>
+        <div class="small-gap-content">
+            <h4>Gap Too Small for Actionable Trades</h4>
+            <p>Today's gap is under 0.15% - no actionable data available for such small gaps to exploit.</p>
+            <p class="small-gap-note">Consider waiting for larger gaps (≥0.15%) or using different trading strategies.</p>
+        </div>
+    `;
+    
+    // Clear existing content and show message
+    displayContainer.innerHTML = '';
+    displayContainer.appendChild(messageDiv);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        if (displayContainer.contains(messageDiv)) {
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+                if (displayContainer.contains(messageDiv)) {
+                    displayContainer.removeChild(messageDiv);
+                    loadQQQData(); // Reload the original data
+                }
+            }, 500);
+        }
+    }, 5000);
+}
+
+function showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection, gapValue) {
+    const displayContainer = document.getElementById('qqq-data-display');
+    if (!displayContainer) return;
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'gap-filters-message';
+    
+    messageDiv.innerHTML = `
+        <div class="gap-filters-icon">✅</div>
+        <div class="gap-filters-content">
+            <h4>Filters Populated Successfully</h4>
+            <div class="gap-filters-details">
+                <div class="filter-item">
+                    <span class="filter-label">Actual Gap:</span>
+                    <span class="filter-value">${gapValue.toFixed(2)}%</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-label">Gap Size Bin:</span>
+                    <span class="filter-value">${gapSizeBin}</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-label">Day:</span>
+                    <span class="filter-value">${dayOfWeek}</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-label">Direction:</span>
+                    <span class="filter-value">${gapDirection === 'up' ? 'Gap Up' : 'Gap Down'}</span>
+                </div>
+            </div>
+            <p class="gap-filters-note">Click "Get Insights" to view historical data and price calculations for similar gaps.</p>
+        </div>
+    `;
+    
+    // Clear existing content and show message
+    displayContainer.innerHTML = '';
+    displayContainer.appendChild(messageDiv);
+    
+    // Auto-hide after 4 seconds
+    setTimeout(() => {
+        if (displayContainer.contains(messageDiv)) {
+            messageDiv.style.opacity = '0';
+            setTimeout(() => {
+                if (displayContainer.contains(messageDiv)) {
+                    displayContainer.removeChild(messageDiv);
+                    loadQQQData(); // Reload the original data
+                }
+            }, 500);
+        }
+    }, 4000);
+}
+
+// Initialize QQQ data functionality
+function initializeQQQData() {
+    const refreshButton = document.getElementById('refresh-qqq-data');
+    
+    if (refreshButton) {
+        refreshButton.addEventListener('click', loadQQQData);
+    }
+    
+    // Load QQQ data on page load if we're on the gap insights tab
+    const gapInsightsTab = document.getElementById('gap-insights');
+    if (gapInsightsTab) {
+        loadQQQData();
     }
 }
 

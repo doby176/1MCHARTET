@@ -286,6 +286,16 @@
             <div id="gap-insights" class="tab-content">
                 <h2>Nasdaq Gap Insights</h2>
                 <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
+                
+                <!-- QQQ Current Data Section -->
+                <div class="qqq-data-section">
+                    <h3>QQQ Market Data</h3>
+                    <button id="refresh-qqq-data" class="refresh-btn">🔄 Refresh QQQ Data</button>
+                    <div id="qqq-data-display" class="qqq-data-display">
+                        <div class="qqq-data-loading">Loading QQQ data...</div>
+                    </div>
+                </div>
+                
                 <form id="gap-insights-form">
                     <label for="gap-insights-size-select">Select Gap Size Bin:</label>
                     <select id="gap-insights-size-select" name="gap_size">
