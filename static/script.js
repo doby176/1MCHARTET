@@ -4397,13 +4397,19 @@ function displayQQQData(data) {
                 <div class="qqq-data-description">${description}</div>
             `;
             
-            // Make gap percentage clickable
+            // Make gap percentage clickable only if gap is >= 0.15%
             if (metric.key === 'Gap %' && data['Gap Value'] !== null && data['Gap Value'] !== undefined) {
                 const gapValue = data['Gap Value'];
-                const gapValueElement = item.querySelector('.qqq-data-value');
-                gapValueElement.style.cursor = 'pointer';
-                gapValueElement.title = 'Click to populate gap insights filters';
-                gapValueElement.addEventListener('click', () => populateGapFilters(gapValue));
+                const absGap = Math.abs(gapValue);
+                
+                if (absGap >= 0.15) {
+                    // Gap is large enough to be actionable
+                    const gapValueElement = item.querySelector('.qqq-data-value');
+                    gapValueElement.style.cursor = 'pointer';
+                    gapValueElement.title = 'Click to populate gap insights filters';
+                    gapValueElement.addEventListener('click', () => populateGapFilters(gapValue));
+                }
+                // Gaps under 0.15% are not clickable at all
             }
             
             grid.appendChild(item);
@@ -4426,19 +4432,11 @@ function displayQQQData(data) {
 }
 
 function populateGapFilters(gapValue) {
-    // Temporarily allow gaps under 0.15% for testing
-    // if (Math.abs(gapValue) < 0.15) {
-    //     showSmallGapMessage();
-    //     return;
-    // }
-    
     // Determine gap size bin
     let gapSizeBin = '';
     const absGap = Math.abs(gapValue);
     
-    if (absGap < 0.15) {
-        gapSizeBin = '0.15-0.35%'; // Temporarily map small gaps to this bin for testing
-    } else if (absGap >= 0.15 && absGap < 0.35) {
+    if (absGap >= 0.15 && absGap < 0.35) {
         gapSizeBin = '0.15-0.35%';
     } else if (absGap >= 0.35 && absGap < 0.5) {
         gapSizeBin = '0.35-0.5%';
@@ -4486,9 +4484,9 @@ function showSmallGapMessage() {
     messageDiv.innerHTML = `
         <div class="small-gap-icon">⚠️</div>
         <div class="small-gap-content">
-            <h4>Small Gap Detected</h4>
-            <p>Gap is under 0.15% - no actionable data available for such small gaps to exploit.</p>
-            <p class="small-gap-note">Consider waiting for larger gaps or using different trading strategies.</p>
+            <h4>Gap Too Small for Actionable Trades</h4>
+            <p>Today's gap is under 0.15% - no actionable data available for such small gaps to exploit.</p>
+            <p class="small-gap-note">Consider waiting for larger gaps (≥0.15%) or using different trading strategies.</p>
         </div>
     `;
     
@@ -4516,8 +4514,6 @@ function showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection, gap
     
     const messageDiv = document.createElement('div');
     messageDiv.className = 'gap-filters-message';
-    const isSmallGap = Math.abs(gapValue) < 0.15;
-    const testNote = isSmallGap ? '<p class="gap-filters-test-note">⚠️ Testing mode: Small gap mapped to nearest bin for price calculation testing</p>' : '';
     
     messageDiv.innerHTML = `
         <div class="gap-filters-icon">✅</div>
@@ -4541,7 +4537,6 @@ function showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection, gap
                     <span class="filter-value">${gapDirection === 'up' ? 'Gap Up' : 'Gap Down'}</span>
                 </div>
             </div>
-            ${testNote}
             <p class="gap-filters-note">Click "Get Insights" to view historical data and price calculations for similar gaps.</p>
         </div>
     `;
