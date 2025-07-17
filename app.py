@@ -930,29 +930,40 @@ def get_gap_insights():
         median_move_before_reversal_price = calculate_price_levels(median_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
         average_move_before_reversal_price = calculate_price_levels(average_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
 
-        # Get live NQ/QQQ ratio using ThinkOrSwim logic
-        nq_last = None
-        try:
-            # Try to fetch live NQ price from Yahoo Finance (symbol: NQ=F)
-            nq_resp = requests.get('https://query1.finance.yahoo.com/v8/finance/chart/NQ=F?interval=1m&range=1d', timeout=5)
-            nq_json = nq_resp.json()
-            nq_last = nq_json['chart']['result'][0]['meta']['regularMarketPrice']
-        except Exception as e:
-            logging.warning(f"Could not fetch NQ price: {e}")
-            nq_last = None
-
-        # Calculate conversion factor exactly like ThinkOrSwim script
-        # conversionFactor = if qqq != 0 then nq / qqq else 45.34;
-        if nq_last and current_open_price and current_open_price != 0:
-            nq_qqq_ratio = nq_last / current_open_price
-        else:
-            nq_qqq_ratio = 45.34  # fallback to 45.34 like in ThinkOrSwim script
-
-        def convert_qqq_to_nq(qqq_price):
-            """Convert QQQ price to NQ using ThinkOrSwim conversion logic"""
-            if not qqq_price:
-                return None
-            return round(qqq_price * nq_qqq_ratio, 1)
+        # Check if today's gap matches the selected filters
+        today_gap_direction = None
+        today_gap_size_bin = None
+        
+        if qqq_data and 'Gap Value' in qqq_data and qqq_data['Gap Value'] is not None:
+            today_gap_value = qqq_data['Gap Value']
+            today_gap_direction = 'up' if today_gap_value > 0 else 'down'
+            
+            # Determine today's gap size bin
+            abs_gap = abs(today_gap_value)
+            if abs_gap >= 0.15 and abs_gap < 0.35:
+                today_gap_size_bin = '0.15-0.35%'
+            elif abs_gap >= 0.35 and abs_gap < 0.5:
+                today_gap_size_bin = '0.35-0.5%'
+            elif abs_gap >= 0.5 and abs_gap < 1.0:
+                today_gap_size_bin = '0.5-1%'
+            elif abs_gap >= 1.0 and abs_gap < 1.5:
+                today_gap_size_bin = '1-1.5%'
+            elif abs_gap >= 1.5:
+                today_gap_size_bin = '1.5%+'
+        
+        # Get current day of week
+        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        today = datetime.now()
+        today_day = days[today.weekday()]
+        
+        # Check if filters match today's conditions
+        filters_match_today = (
+            today_gap_direction and 
+            today_gap_size_bin and 
+            gap_direction == today_gap_direction and 
+            gap_size == today_gap_size_bin and 
+            day == today_day
+        )
 
         insights = {
             'gap_fill_rate': {
@@ -963,17 +974,16 @@ def get_gap_insights():
                 'median': round(median_move_before_fill_pct, 2) if not pd.isna(median_move_before_fill_pct) else 0,
                 'average': round(average_move_before_fill_pct, 2) if not pd.isna(average_move_before_fill_pct) else 0,
                 'description': 'Percentage move before gap closes',
-                'average_price': round(average_move_before_fill_price, 2) if average_move_before_fill_price else None,
-                'average_price_nq': convert_qqq_to_nq(average_move_before_fill_price),
-                'price_description': f'Price level from today\'s open (${current_open_price})' if current_open_price else 'Price level from today\'s open (data unavailable)',
+                'average_price': round(average_move_before_fill_price, 2) if (average_move_before_fill_price and filters_match_today) else None,
+                'price_description': f'Price level from today\'s open (${current_open_price})' if (current_open_price and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
                 'zone_title': 'SHORT ZONE' if gap_direction == 'up' else 'LONG ZONE'
             },
             'median_max_move_unfilled': {
+                'median': round(median_max_move_unfilled_pct, 2) if not pd.isna(median_max_move_unfilled_pct) else 0,
                 'average': round(average_max_move_unfilled_pct, 2) if not pd.isna(average_max_move_unfilled_pct) else 0,
                 'description': '% move in gap direction when price does not close the gap',
-                'average_price': round(average_max_move_unfilled_price, 2) if average_max_move_unfilled_price else None,
-                'average_price_nq': convert_qqq_to_nq(average_max_move_unfilled_price),
-                'price_description': f'Price level from today\'s open (${current_open_price})' if current_open_price else 'Price level from today\'s open (data unavailable)',
+                'average_price': round(average_max_move_unfilled_price, 2) if (average_max_move_unfilled_price and filters_match_today) else None,
+                'price_description': f'Price level from today\'s open (${current_open_price})' if (current_open_price and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
                 'zone_title': 'STOP OUT Zone'
             },
             'median_time_to_fill': {
@@ -999,17 +1009,18 @@ def get_gap_insights():
                 'median': round(median_move_before_reversal_pct, 2) if not pd.isna(median_move_before_reversal_pct) else 0,
                 'average': round(average_move_before_reversal_pct, 2) if not pd.isna(average_move_before_reversal_pct) else 0,
                 'description': 'Median move in gap fill direction before reversal',
-                'average_price': round(average_move_before_reversal_price, 2) if average_move_before_reversal_price else None,
-                'average_price_nq': convert_qqq_to_nq(average_move_before_reversal_price),
-                'price_description': f'Price level from yesterday\'s close (${current_prev_close})' if current_prev_close else 'Price level from yesterday\'s close (data unavailable)',
+                'average_price': round(average_move_before_reversal_price, 2) if (average_move_before_reversal_price and filters_match_today) else None,
+                'price_description': f'Price level from yesterday\'s close (${current_prev_close})' if (current_prev_close and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
                 'zone_title': 'LONG ZONE' if gap_direction == 'up' else 'SHORT ZONE'
             },
             'market_data': {
                 'current_open': current_open_price,
                 'current_prev_close': current_prev_close,
                 'gap_direction': gap_direction,
-                'nq_last': nq_last,
-                'nq_qqq_ratio': round(nq_qqq_ratio, 2) if nq_qqq_ratio else None
+                'filters_match_today': filters_match_today,
+                'today_gap_direction': today_gap_direction,
+                'today_gap_size_bin': today_gap_size_bin,
+                'today_day': today_day
             }
         }
         logging.debug(f"Computed insights: {insights}")
