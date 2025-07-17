@@ -950,6 +950,9 @@ def get_gap_insights():
                 today_gap_size_bin = '1-1.5%'
             elif abs_gap >= 1.5:
                 today_gap_size_bin = '1.5%+'
+            # For testing: treat gaps under 0.15% as 0.15-0.35%
+            elif abs_gap < 0.15:
+                today_gap_size_bin = '0.15-0.35%'
         
         # Get current day of week
         days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
@@ -957,12 +960,16 @@ def get_gap_insights():
         today_day = days[today.weekday()]
         
         # Check if filters match today's conditions
+        # For testing: allow gaps under 0.15% to match 0.15-0.35% filter
         filters_match_today = (
             today_gap_direction and 
             today_gap_size_bin and 
             gap_direction == today_gap_direction and 
-            gap_size == today_gap_size_bin and 
-            day == today_day
+            day == today_day and
+            (
+                gap_size == today_gap_size_bin or
+                (gap_size == '0.15-0.35%' and abs_gap < 0.15)  # Allow small gaps to match 0.15-0.35%
+            )
         )
 
         insights = {
