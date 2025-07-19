@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, jsonify, session, send_from_d
 from flask_limiter import Limiter
 from flask_session import Session
 # import pandas as pd  # Temporarily disabled due to Python 3.13 compatibility issues
-import csv  # Use built-in CSV module instead
+import csv
 import logging
 import sqlite3
 import uuid
@@ -1417,10 +1417,12 @@ def get_news_event_insights():
                 'total_count': len(regular_directions)
             }
         
-        # 4. First touch of pre market low or high and subsequent moves
+        # 4. First touch of pre market low or high and subsequent moves (only moves above 0.10% or below -0.10%)
         touch_levels = [row['touched_premarket_level_x'] for row in filtered_data if row['touched_premarket_level_x']]
-        same_direction_moves = [safe_float(row['percent_move_same_direction']) for row in filtered_data if safe_float(row['percent_move_same_direction']) is not None]
-        opposite_direction_moves = [safe_float(row['percent_move_opposite_direction']) for row in filtered_data if safe_float(row['percent_move_opposite_direction']) is not None]
+        same_direction_moves = [safe_float(row['percent_move_same_direction']) for row in filtered_data 
+                               if safe_float(row['percent_move_same_direction']) is not None and abs(safe_float(row['percent_move_same_direction'])) > 0.1]
+        opposite_direction_moves = [safe_float(row['percent_move_opposite_direction']) for row in filtered_data 
+                                   if safe_float(row['percent_move_opposite_direction']) is not None and abs(safe_float(row['percent_move_opposite_direction'])) > 0.1]
         
         if touch_levels:
             high_count = touch_levels.count('High')
