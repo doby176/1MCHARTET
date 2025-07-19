@@ -4716,8 +4716,8 @@ async function loadNewsEventInsights(event) {
             insightsContainer.innerHTML = `
                 <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
                     <h4 style="color: #721c24; margin: 0 0 10px 0;">📊 News Event Insights Limit Reached</h4>
-                    <p style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">You've used your 3 free News Event Insights requests. Please wait 12 hours or upgrade your plan.</p>
-                    <p style="color: #6c757d; margin: 0; font-size: 14px;">News Event Insights have a 3-request limit that resets in 12 hours</p>
+                    <p style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">You've used your 5 free News Event Insights requests. Please wait 12 hours or upgrade your plan.</p>
+                    <p style="color: #6c757d; margin: 0; font-size: 14px;">News Event Insights have a 5-request limit that resets in 12 hours</p>
                 </div>
             `;
             button.disabled = true;
@@ -4785,13 +4785,13 @@ async function loadNewsEventInsights(event) {
                         <div class="metric-direction-bias">Low: ${insights[key].low_percentage}%</div>
                         
                         <div class="nested-metric-card">
-                            <div class="nested-metric-title">Same Direction Moves</div>
+                            <div class="nested-metric-title">Same Direction Move After First Pre-Market Low/High Touch</div>
                             <div class="nested-metric-median">${insights[key].same_direction_median}%</div>
                             <div class="nested-metric-average">Avg: ${insights[key].same_direction_average}%</div>
                         </div>
                         
                         <div class="nested-metric-card">
-                            <div class="nested-metric-title">Reversal Moves</div>
+                            <div class="nested-metric-title">Reversal Move After First Pre-Market Low/High Touch</div>
                             <div class="nested-metric-median">${insights[key].opposite_direction_median}%</div>
                             <div class="nested-metric-average">Avg: ${insights[key].opposite_direction_average}%</div>
                         </div>
@@ -4843,17 +4843,17 @@ async function loadNewsEventInsights(event) {
                 <div class="metric-average">High: ${insights['premarket_level_touch'].high_percentage}%</div>
                 <div class="metric-direction-bias">Low: ${insights['premarket_level_touch'].low_percentage}%</div>
                 
-                <div class="nested-metric-card">
-                    <div class="nested-metric-title">Same Direction Moves</div>
-                    <div class="nested-metric-median">${insights['premarket_level_touch'].same_direction_median}%</div>
-                    <div class="nested-metric-average">Avg: ${insights['premarket_level_touch'].same_direction_average}%</div>
-                </div>
-                
-                <div class="nested-metric-card">
-                    <div class="nested-metric-title">Reversal Moves</div>
-                    <div class="nested-metric-median">${insights['premarket_level_touch'].opposite_direction_median}%</div>
-                    <div class="nested-metric-average">Avg: ${insights['premarket_level_touch'].opposite_direction_average}%</div>
-                </div>
+                                        <div class="nested-metric-card">
+                            <div class="nested-metric-title">Same Direction Move After First Pre-Market Low/High Touch</div>
+                            <div class="nested-metric-median">${insights['premarket_level_touch'].same_direction_median}%</div>
+                            <div class="nested-metric-average">Avg: ${insights['premarket_level_touch'].same_direction_average}%</div>
+                        </div>
+                        
+                        <div class="nested-metric-card">
+                            <div class="nested-metric-title">Reversal Move After First Pre-Market Low/High Touch</div>
+                            <div class="nested-metric-median">${insights['premarket_level_touch'].opposite_direction_median}%</div>
+                            <div class="nested-metric-average">Avg: ${insights['premarket_level_touch'].opposite_direction_average}%</div>
+                        </div>
             `;
             
             metric.innerHTML = `

@@ -1301,7 +1301,7 @@ def get_earnings_by_bin():
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/news_event_insights', methods=['GET'])
-@limiter.limit("20 per 12 hours")
+@limiter.limit("5 per 12 hours")
 def get_news_event_insights():
     """API endpoint to get news event insights from event_analysis_metrics.csv"""
     try:
