@@ -4778,12 +4778,13 @@ async function loadNewsEventInsights(event) {
                 
                 let valueDisplay = '';
                 if (key === 'premarket_level_touch') {
-                    // Special handling for premarket level touch with both same and opposite direction
+                    // Special handling for premarket level touch - show which level gets hit first
                     valueDisplay = `
-                        <div class="metric-median">${insights[key].median}%</div>
-                        <div class="metric-average">Avg: ${insights[key].average}%</div>
-                        <div class="metric-direction-bias">Touch Bias: ${insights[key].touch_bias}</div>
-                        <div class="metric-opposite">Opposite: ${insights[key].opposite_median}%</div>
+                        <div class="metric-median">${insights[key].touch_bias}</div>
+                        <div class="metric-average">High: ${insights[key].high_percentage}%</div>
+                        <div class="metric-direction-bias">Low: ${insights[key].low_percentage}%</div>
+                        <div class="metric-opposite">Same Dir: ${insights[key].same_direction_median}% (Avg: ${insights[key].same_direction_average}%)</div>
+                        <div class="metric-opposite">Reversal: ${insights[key].opposite_direction_median}% (Avg: ${insights[key].opposite_direction_average}%)</div>
                     `;
                 } else {
                     valueDisplay = `
