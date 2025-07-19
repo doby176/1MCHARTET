@@ -30,7 +30,7 @@ app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key-12345')
 app.config['SESSION_COOKIE_NAME'] = 'onemchart_session'
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to False for development
+app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
@@ -48,26 +48,14 @@ def get_session_key():
     return session['user_id']
 
 # Configure Flask-Limiter with Redis
-try:
-    limiter = Limiter(
-        get_session_key,
-        app=app,
-        default_limits=["10 per 12 hours"],
-        storage_uri=os.environ.get('REDIS_URL', 'redis://localhost:6379'),
-        storage_options={"socket_connect_timeout": 30, "socket_timeout": 30},
-        headers_enabled=True
-    )
-except Exception as e:
-    logging.error(f"Failed to configure Redis limiter: {str(e)}")
-    # Fallback to in-memory storage
-    limiter = Limiter(
-        get_session_key,
-        app=app,
-        default_limits=["10 per 12 hours"],
-        storage_uri="memory://",
-        headers_enabled=True
-    )
-    logging.warning("Using in-memory storage for rate limiting")
+limiter = Limiter(
+    get_session_key,
+    app=app,
+    default_limits=["10 per 12 hours"],
+    storage_uri=os.environ.get('REDIS_URL', 'redis://localhost:6379'),
+    storage_options={"socket_connect_timeout": 30, "socket_timeout": 30},
+    headers_enabled=True
+)
 
 # Helper function to check and enforce main site action limits (shared 10 clicks)
 def check_main_action_limit():
@@ -1290,7 +1278,7 @@ def get_earnings_by_bin():
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/news_event_insights', methods=['GET'])
-@limiter.limit("3 per 12 hours")
+@limiter.limit("20 per 12 hours")
 def get_news_event_insights():
     """API endpoint to get news event insights from event_analysis_metrics.csv"""
     try:
@@ -1382,15 +1370,17 @@ def get_news_event_insights():
         # Calculate insights for each metric
         insights = {}
         
-        # 1. 8:30-8:31 PRE MARKET reaction to data release move %
-        pm_moves = [safe_float(row['percent_move_830_831']) for row in filtered_data if safe_float(row['percent_move_830_831']) is not None]
-        pm_directions = [row['direction'] for row in filtered_data if row['direction']]
+        # 1. 8:30-8:31 PRE MARKET reaction to data release move % (only moves above 0.1%)
+        pm_moves = [safe_float(row['percent_move_830_831']) for row in filtered_data 
+                   if safe_float(row['percent_move_830_831']) is not None and safe_float(row['percent_move_830_831']) > 0.1]
+        pm_directions = [row['direction'] for row in filtered_data 
+                        if safe_float(row['percent_move_830_831']) is not None and safe_float(row['percent_move_830_831']) > 0.1]
         
         if pm_moves:
             insights['premarket_reaction'] = {
                 'median': round(calculate_median(pm_moves), 2),
                 'average': round(calculate_mean(pm_moves), 2),
-                'description': '8:30-8:31 PRE MARKET reaction to data release move %',
+                'description': '8:30-8:31 PRE MARKET reaction to data release move % (moves > 0.1%)',
                 'direction_bias': 'Up' if pm_directions.count('Up') > pm_directions.count('Down') else 'Down',
                 'up_count': pm_directions.count('Up'),
                 'down_count': pm_directions.count('Down'),
@@ -1427,7 +1417,7 @@ def get_news_event_insights():
                 'total_count': len(regular_directions)
             }
         
-        # 4. First touch of pre market low or high
+        # 4. First touch of pre market low or high and subsequent moves
         touch_levels = [row['touched_premarket_level_x'] for row in filtered_data if row['touched_premarket_level_x']]
         same_direction_moves = [safe_float(row['percent_move_same_direction']) for row in filtered_data if safe_float(row['percent_move_same_direction']) is not None]
         opposite_direction_moves = [safe_float(row['percent_move_opposite_direction']) for row in filtered_data if safe_float(row['percent_move_opposite_direction']) is not None]
@@ -1446,6 +1436,23 @@ def get_news_event_insights():
                 'opposite_description': 'Move opposite to touch direction (reversal)'
             }
         
+        # 4b. 60-minute moves after touching pre-market level (if columns exist)
+        if 'percent_move_same_direction_60min' in data[0] and 'percent_move_opposite_direction_60min' in data[0]:
+            same_direction_60min = [safe_float(row['percent_move_same_direction_60min']) for row in filtered_data if safe_float(row['percent_move_same_direction_60min']) is not None]
+            opposite_direction_60min = [safe_float(row['percent_move_opposite_direction_60min']) for row in filtered_data if safe_float(row['percent_move_opposite_direction_60min']) is not None]
+            
+            if same_direction_60min or opposite_direction_60min:
+                insights['moves_after_touch_60min'] = {
+                    'trend_median': round(calculate_median(same_direction_60min), 2) if same_direction_60min else None,
+                    'trend_average': round(calculate_mean(same_direction_60min), 2) if same_direction_60min else None,
+                    'trend_description': '60-minute move in same direction as gap (trend continuation)',
+                    'reversal_median': round(calculate_median(opposite_direction_60min), 2) if opposite_direction_60min else None,
+                    'reversal_average': round(calculate_mean(opposite_direction_60min), 2) if opposite_direction_60min else None,
+                    'reversal_description': '60-minute move opposite to gap direction (reversal)',
+                    'trend_count': len(same_direction_60min),
+                    'reversal_count': len(opposite_direction_60min)
+                }
+        
         # 5. % of price return to pre market high or low after hit the pre market high or low in other direction
         return_levels = [row['touched_premarket_level'] for row in filtered_data if row['touched_premarket_level']]
         returned_to_opposite = [row['returned_to_opposite_level'] for row in filtered_data if row['returned_to_opposite_level']]
@@ -1454,7 +1461,7 @@ def get_news_event_insights():
             return_rate = (returned_to_opposite.count('Yes') / len(returned_to_opposite)) * 100
             insights['return_to_opposite_level'] = {
                 'average': round(return_rate, 1),
-                'description': '% of price return to pre market high or low after hit the pre market high or low in other direction',
+                'description': '% of time market reversal after hitting pre market high/low',
                 'return_count': returned_to_opposite.count('Yes'),
                 'no_return_count': returned_to_opposite.count('No'),
                 'total_count': len(returned_to_opposite)
