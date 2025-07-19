@@ -359,6 +359,7 @@ GAP_DATA_PATH = os.path.join(DATA_DIR, "qqq_central_data_updated.csv")
 EVENTS_DATA_PATH = os.path.join(DATA_DIR, "news_events.csv")
 EARNINGS_DATA_PATH = os.path.join(DATA_DIR, "earnings_data.csv")
 ECONOMIC_DATA_BINNED_PATH = os.path.join(DATA_DIR, "economic_data_binned.csv")
+EVENT_ANALYSIS_DATA_PATH = os.path.join(DATA_DIR, "event_analysis_metrics.csv")
 
 QQQ_DB_PATHS = [
     os.path.join(DB_DIR, "stock_data_qqq_part1.db"),
@@ -829,19 +830,6 @@ def get_gap_insights():
         day = request.args.get('day')
         gap_direction = request.args.get('gap_direction')
         logging.debug(f"Fetching gap insights for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
-        
-        # Get current QQQ market data for price calculations
-        qqq_data = scrape_qqq_data()
-        current_open_price = None
-        current_prev_close = None
-        
-        if qqq_data and 'Open' in qqq_data and 'Prev Close' in qqq_data:
-            try:
-                current_open_price = float(qqq_data['Open'])
-                current_prev_close = float(qqq_data['Prev Close'])
-                logging.debug(f"Current QQQ Open: ${current_open_price}, Prev Close: ${current_prev_close}")
-            except (ValueError, TypeError) as e:
-                logging.warning(f"Could not parse QQQ prices: {e}")
         if not os.path.exists(GAP_DATA_PATH):
             logging.error(f"Gap data file not found: {GAP_DATA_PATH}")
             return jsonify({'error': 'Gap data file not found. Please contact support.'}), 404
@@ -898,95 +886,21 @@ def get_gap_insights():
         median_high_minutes = filtered_df['time_of_high_minutes'].median()
         average_high_minutes = filtered_df['time_of_high_minutes'].mean()
 
-        # Calculate price-based metrics
-        def calculate_price_levels(percentage, base_price, direction='up'):
-            """Calculate price levels from percentage moves"""
-            if not base_price or pd.isna(percentage):
-                return None
-            
-            if direction == 'up':
-                return base_price + (percentage / 100 * base_price)
-            else:
-                return base_price - (percentage / 100 * base_price)
-
-        # Get the key metrics for price calculations
-        median_move_before_fill_pct = filled_df['move_before_reversal_fill_direction_pct'].median() if not filled_df.empty else 0
-        average_move_before_fill_pct = filled_df['move_before_reversal_fill_direction_pct'].mean() if not filled_df.empty else 0
-        median_max_move_unfilled_pct = unfilled_df['max_move_gap_direction_first_30min_pct'].median() if not unfilled_df.empty else 0
-        average_max_move_unfilled_pct = unfilled_df['max_move_gap_direction_first_30min_pct'].mean() if not unfilled_df.empty else 0
-        median_move_before_reversal_pct = filtered_df['move_before_reversal_fill_direction_pct'].median() if not filtered_df.empty else 0
-        average_move_before_reversal_pct = filtered_df['move_before_reversal_fill_direction_pct'].mean() if not filtered_df.empty else 0
-
-        # Calculate price levels from Open Price
-        median_move_before_fill_price = calculate_price_levels(median_move_before_fill_pct, current_open_price, gap_direction) if current_open_price else None
-        average_move_before_fill_price = calculate_price_levels(average_move_before_fill_pct, current_open_price, gap_direction) if current_open_price else None
-        median_max_move_unfilled_price = calculate_price_levels(median_max_move_unfilled_pct, current_open_price, gap_direction) if current_open_price else None
-        average_max_move_unfilled_price = calculate_price_levels(average_max_move_unfilled_pct, current_open_price, gap_direction) if current_open_price else None
-
-        # Calculate price levels from Yesterday Close (for reversal)
-        # For gap up: reversal = yesterday close - percentage
-        # For gap down: reversal = yesterday close + percentage
-        reversal_direction = 'down' if gap_direction == 'up' else 'up'
-        median_move_before_reversal_price = calculate_price_levels(median_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
-        average_move_before_reversal_price = calculate_price_levels(average_move_before_reversal_pct, current_prev_close, reversal_direction) if current_prev_close else None
-
-        # Check if today's gap matches the selected filters
-        today_gap_direction = None
-        today_gap_size_bin = None
-        
-        if qqq_data and 'Gap Value' in qqq_data and qqq_data['Gap Value'] is not None:
-            today_gap_value = qqq_data['Gap Value']
-            today_gap_direction = 'up' if today_gap_value > 0 else 'down'
-            
-            # Determine today's gap size bin
-            abs_gap = abs(today_gap_value)
-            if abs_gap >= 0.15 and abs_gap < 0.35:
-                today_gap_size_bin = '0.15-0.35%'
-            elif abs_gap >= 0.35 and abs_gap < 0.5:
-                today_gap_size_bin = '0.35-0.5%'
-            elif abs_gap >= 0.5 and abs_gap < 1.0:
-                today_gap_size_bin = '0.5-1%'
-            elif abs_gap >= 1.0 and abs_gap < 1.5:
-                today_gap_size_bin = '1-1.5%'
-            elif abs_gap >= 1.5:
-                today_gap_size_bin = '1.5%+'
-        
-        # Get current day of week
-        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-        today = datetime.now()
-        today_day = days[today.weekday()]
-        
-        # Check if filters match today's conditions
-        filters_match_today = (
-            today_gap_direction and 
-            today_gap_size_bin and 
-            gap_direction == today_gap_direction and 
-            gap_size == today_gap_size_bin and 
-            day == today_day
-        )
-
         insights = {
             'gap_fill_rate': {
+                'median': round(gap_fill_rate, 2),
                 'average': round(gap_fill_rate, 2),
                 'description': 'Percentage of gaps that close'
             },
             'median_move_before_fill': {
-                'median': round(median_move_before_fill_pct, 2) if not pd.isna(median_move_before_fill_pct) else 0,
-                'average': round(average_move_before_fill_pct, 2) if not pd.isna(average_move_before_fill_pct) else 0,
-                'description': 'Percentage move before gap closes',
-                'median_price': round(median_move_before_fill_price, 2) if (median_move_before_fill_price and filters_match_today) else None,
-                'average_price': round(average_move_before_fill_price, 2) if (average_move_before_fill_price and filters_match_today) else None,
-                'price_description': f'Price level from today\'s open (${current_open_price})' if (current_open_price and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
-                'zone_title': 'SHORT ZONE' if gap_direction == 'up' else 'LONG ZONE'
+                'median': round(filled_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filled_df.empty else 0,
+                'average': round(filled_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filled_df.empty else 0,
+                'description': 'Percentage move before gap closes'
             },
             'median_max_move_unfilled': {
-                'median': round(median_max_move_unfilled_pct, 2) if not pd.isna(median_max_move_unfilled_pct) else 0,
-                'average': round(average_max_move_unfilled_pct, 2) if not pd.isna(average_max_move_unfilled_pct) else 0,
-                'description': '% move in gap direction when price does not close the gap',
-                'median_price': round(median_max_move_unfilled_price, 2) if (median_max_move_unfilled_price and filters_match_today) else None,
-                'average_price': round(average_max_move_unfilled_price, 2) if (average_max_move_unfilled_price and filters_match_today) else None,
-                'price_description': f'Price level from today\'s open (${current_open_price})' if (current_open_price and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
-                'zone_title': 'STOP OUT Zone'
+                'median': round(unfilled_df['max_move_gap_direction_first_30min_pct'].median(), 2) if not unfilled_df.empty else 0,
+                'average': round(unfilled_df['max_move_gap_direction_first_30min_pct'].mean(), 2) if not unfilled_df.empty else 0,
+                'description': '% move in gap direction when price does not close the gap'
             },
             'median_time_to_fill': {
                 'median': round(median_time_to_fill, 2) if not pd.isna(median_time_to_fill) else 0,
@@ -1004,32 +918,183 @@ def get_gap_insights():
                 'description': 'Median time of the day’s high'
             },
             'reversal_after_fill_rate': {
+                'median': round(reversal_after_fill_rate, 2),
                 'average': round(reversal_after_fill_rate, 2),
                 'description': '% of time price reverses after gap is filled'
             },
             'median_move_before_reversal': {
-                'median': round(median_move_before_reversal_pct, 2) if not pd.isna(median_move_before_reversal_pct) else 0,
-                'average': round(average_move_before_reversal_pct, 2) if not pd.isna(average_move_before_reversal_pct) else 0,
-                'description': 'Median move in gap fill direction before reversal',
-                'median_price': round(median_move_before_reversal_price, 2) if (median_move_before_reversal_price and filters_match_today) else None,
-                'average_price': round(average_move_before_reversal_price, 2) if (average_move_before_reversal_price and filters_match_today) else None,
-                'price_description': f'Price level from yesterday\'s close (${current_prev_close})' if (current_prev_close and filters_match_today) else 'Price calculations only available when filters match today\'s gap',
-                'zone_title': 'LONG ZONE' if gap_direction == 'up' else 'SHORT ZONE'
-            },
-            'market_data': {
-                'current_open': current_open_price,
-                'current_prev_close': current_prev_close,
-                'gap_direction': gap_direction,
-                'filters_match_today': filters_match_today,
-                'today_gap_direction': today_gap_direction,
-                'today_gap_size_bin': today_gap_size_bin,
-                'today_day': today_day
+                'median': round(filtered_df['move_before_reversal_fill_direction_pct'].median(), 2) if not filtered_df.empty else 0,
+                'average': round(filtered_df['move_before_reversal_fill_direction_pct'].mean(), 2) if not filtered_df.empty else 0,
+                'description': 'Median move in gap fill direction before reversal'
             }
         }
         logging.debug(f"Computed insights: {insights}")
         return jsonify({'insights': insights})
     except Exception as e:
         logging.error(f"Error processing gap insights: {str(e)}")
+        return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/event_insights', methods=['GET'])
+@limiter.limit("3 per 12 hours")
+def get_event_insights():
+    # Check gap insights action limit (separate 2-click limit)
+    if not is_sample_mode():
+        # Main site - check gap insights limit
+        main_action = request.args.get('main_action')
+        if main_action == 'get_insights':
+            if not check_gap_insights_limit():
+                logging.info(f"Event insights limit exceeded for user: {session.get('user_id')}")
+                return jsonify({
+                    'error': 'Event Insights limit reached: You\'ve used your 2 free Event Insights. Please wait 12 hours or upgrade your plan.',
+                    'limit_reached': True
+                }), 429
+    
+    try:
+        event_type = request.args.get('event_type')
+        year = request.args.get('year')
+        bin_value = request.args.get('bin')
+        filter_type = request.args.get('filter_type', 'year')
+        
+        logging.debug(f"Fetching event insights for event_type={event_type}, year={year}, bin={bin_value}, filter_type={filter_type}")
+        
+        if not os.path.exists(EVENT_ANALYSIS_DATA_PATH):
+            logging.error(f"Event analysis data file not found: {EVENT_ANALYSIS_DATA_PATH}")
+            return jsonify({'error': 'Event analysis data file not found. Please contact support.'}), 404
+        
+        try:
+            df = pd.read_csv(EVENT_ANALYSIS_DATA_PATH)
+            logging.debug(f"Loaded event analysis data with shape: {df.shape}")
+        except Exception as e:
+            logging.error(f"Error reading event analysis data file {EVENT_ANALYSIS_DATA_PATH}: {str(e)}")
+            return jsonify({'error': f'Failed to load event analysis data: {str(e)}'}), 500
+        
+        required_columns = [
+            'event_type', 'year', 'bin', 'percent_move_830_831', 'direction',
+            'percent_move_930_959_extreme', 'direction_930_959_extreme',
+            'percent_move_930_1030_x', 'direction_930_1030_x',
+            'touched_premarket_level_x', 'percent_move_same_direction',
+            'percent_move_opposite_direction', 'touched_premarket_level',
+            'returned_to_opposite_level'
+        ]
+        
+        if not all(col in df.columns for col in required_columns):
+            logging.error("Invalid event analysis data format: missing required columns")
+            return jsonify({'error': 'Invalid event analysis data format'}), 400
+        
+        # Filter data based on filter type
+        if filter_type == 'year':
+            if not event_type or not year:
+                return jsonify({'error': 'Event type and year are required'}), 400
+            filtered_df = df[
+                (df['event_type'] == event_type) &
+                (df['year'] == year)
+            ].copy()
+        else:  # bin filter
+            if not event_type or not bin_value:
+                return jsonify({'error': 'Event type and economic impact range are required'}), 400
+            filtered_df = df[
+                (df['event_type'] == event_type) &
+                (df['bin'] == bin_value)
+            ].copy()
+        
+        logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
+        if filtered_df.empty:
+            logging.debug(f"No data found for event_type={event_type}, year={year}, bin={bin_value}")
+            return jsonify({'insights': {}, 'message': 'No data found for the selected criteria'})
+        
+        # Calculate insights for each metric
+        insights = {}
+        
+        # 1. 8:30-8:31 PRE MARKET reaction
+        premarket_moves = filtered_df['percent_move_830_831'].dropna()
+        premarket_directions = filtered_df['direction'].dropna()
+        
+        if not premarket_moves.empty:
+            up_count = (premarket_directions == 'Up').sum()
+            down_count = (premarket_directions == 'Down').sum()
+            total_count = len(premarket_directions)
+            up_percentage = (up_count / total_count) * 100 if total_count > 0 else 0
+            
+            insights['premarket_reaction'] = {
+                'median': round(premarket_moves.median(), 2),
+                'average': round(premarket_moves.mean(), 2),
+                'up_percentage': round(up_percentage, 2),
+                'description': '8:30-8:31 PRE MARKET reaction to data release move %'
+            }
+        
+        # 2. Move between 9:30-10:00 to highest high or lowest low
+        extreme_moves = filtered_df['percent_move_930_959_extreme'].dropna()
+        extreme_directions = filtered_df['direction_930_959_extreme'].dropna()
+        
+        if not extreme_moves.empty:
+            up_count = (extreme_directions == 'Up').sum()
+            down_count = (extreme_directions == 'Down').sum()
+            total_count = len(extreme_directions)
+            up_percentage = (up_count / total_count) * 100 if total_count > 0 else 0
+            
+            insights['extreme_moves_930_1000'] = {
+                'median': round(extreme_moves.median(), 2),
+                'average': round(extreme_moves.mean(), 2),
+                'up_percentage': round(up_percentage, 2),
+                'description': 'Move between 9:30-10:00 to highest high or lowest low'
+            }
+        
+        # 3. Move between 9:30-10:30 close (no extreme moves)
+        close_moves = filtered_df['percent_move_930_1030_x'].dropna()
+        close_directions = filtered_df['direction_930_1030_x'].dropna()
+        
+        if not close_moves.empty:
+            up_count = (close_directions == 'Up').sum()
+            down_count = (close_directions == 'Down').sum()
+            total_count = len(close_directions)
+            up_percentage = (up_count / total_count) * 100 if total_count > 0 else 0
+            
+            insights['close_moves_930_1030'] = {
+                'median': round(close_moves.median(), 2),
+                'average': round(close_moves.mean(), 2),
+                'up_percentage': round(up_percentage, 2),
+                'description': 'Move between 9:30-10:30 close (no extreme moves)'
+            }
+        
+        # 4. First touch of pre market low or high
+        touch_levels = filtered_df['touched_premarket_level_x'].dropna()
+        same_direction_moves = filtered_df['percent_move_same_direction'].dropna()
+        opposite_direction_moves = filtered_df['percent_move_opposite_direction'].dropna()
+        
+        if not touch_levels.empty:
+            high_count = (touch_levels == 'High').sum()
+            low_count = (touch_levels == 'Low').sum()
+            total_count = len(touch_levels)
+            high_percentage = (high_count / total_count) * 100 if total_count > 0 else 0
+            
+            insights['premarket_level_touch'] = {
+                'high_percentage': round(high_percentage, 2),
+                'same_direction_median': round(same_direction_moves.median(), 2) if not same_direction_moves.empty else 0,
+                'same_direction_average': round(same_direction_moves.mean(), 2) if not same_direction_moves.empty else 0,
+                'opposite_direction_median': round(opposite_direction_moves.median(), 2) if not opposite_direction_moves.empty else 0,
+                'opposite_direction_average': round(opposite_direction_moves.mean(), 2) if not opposite_direction_moves.empty else 0,
+                'description': 'First touch of pre market low or high and subsequent moves'
+            }
+        
+        # 5. Return to opposite pre market level
+        touch_levels_final = filtered_df['touched_premarket_level'].dropna()
+        returned_to_opposite = filtered_df['returned_to_opposite_level'].dropna()
+        
+        if not returned_to_opposite.empty:
+            yes_count = (returned_to_opposite == 'Yes').sum()
+            no_count = (returned_to_opposite == 'No').sum()
+            total_count = len(returned_to_opposite)
+            return_percentage = (yes_count / total_count) * 100 if total_count > 0 else 0
+            
+            insights['return_to_opposite_level'] = {
+                'return_percentage': round(return_percentage, 2),
+                'description': '% of price return to pre market high/low after hitting opposite level'
+            }
+        
+        logging.debug(f"Computed event insights: {insights}")
+        return jsonify({'insights': insights})
+    except Exception as e:
+        logging.error(f"Error processing event insights: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/years', methods=['GET'])
