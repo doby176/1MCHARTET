@@ -991,6 +991,19 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
         }
         
         console.log('Chart data updated successfully');
+        
+        // Store the chart data for measurement tool
+        if (section === 'simulator') {
+            chartDataSimulator = candlestickData;
+        } else if (section === 'gap') {
+            chartDataGap = candlestickData;
+        } else if (section === 'events') {
+            chartDataEvents = candlestickData;
+        } else if (section === 'earnings') {
+            chartDataEarnings = candlestickData;
+        }
+        console.log(`Chart data stored for ${section}: ${candlestickData.length} candles`);
+        
     } catch (error) {
         console.error('Error updating chart data:', error);
     }
@@ -2096,6 +2109,8 @@ function activateMeasurementTool(section) {
 }
 
 function getCandleDataForTime(section, time) {
+    console.log(`getCandleDataForTime: Checking data for section: ${section}`);
+    
     // Get the candle data for this section
     let candleData = null;
     
@@ -2109,8 +2124,10 @@ function getCandleDataForTime(section, time) {
         candleData = chartDataEarnings;
     }
     
-    if (!candleData || !candleData.timestamp) {
-        console.log('No candle data available for section:', section);
+    console.log('Raw candleData:', candleData);
+    
+    if (!candleData || !Array.isArray(candleData) || candleData.length === 0) {
+        console.log(`No valid candle data array available for section: ${section}`);
         return null;
     }
     
@@ -2118,24 +2135,27 @@ function getCandleDataForTime(section, time) {
     let closestCandle = null;
     let minDiff = Infinity;
     
-    for (let i = 0; i < candleData.timestamp.length; i++) {
-        const candleTime = candleData.timestamp[i];
+    for (let i = 0; i < candleData.length; i++) {
+        const candle = candleData[i];
+        const candleTime = candle.time;
         const diff = Math.abs(candleTime - time);
         
         if (diff < minDiff) {
             minDiff = diff;
             closestCandle = {
                 timestamp: candleTime,
-                open: candleData.open[i],
-                high: candleData.high[i],
-                low: candleData.low[i],
-                close: candleData.close[i],
-                volume: candleData.volume[i]
+                open: candle.open,
+                high: candle.high,
+                low: candle.low,
+                close: candle.close
             };
         }
     }
     
     console.log('Closest candle found:', closestCandle);
+    if (!closestCandle) {
+        console.log(`No candle data found for time: ${time}`);
+    }
     return closestCandle;
 }
 

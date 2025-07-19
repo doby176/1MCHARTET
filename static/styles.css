@@ -125,7 +125,9 @@ header::before {
 
 /* Sliding candles image for home page */
 .candles-image-slide {
-    height: 120px; /* Larger size */
+    max-width: 450px;
+    width: 100%;
+    height: auto;
     border-radius: 12px;
     filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
     transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
