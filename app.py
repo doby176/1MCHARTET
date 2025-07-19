@@ -1423,17 +1423,24 @@ def get_news_event_insights():
         opposite_direction_moves = [safe_float(row['percent_move_opposite_direction']) for row in filtered_data if safe_float(row['percent_move_opposite_direction']) is not None]
         
         if touch_levels:
+            high_count = touch_levels.count('High')
+            low_count = touch_levels.count('Low')
+            total_count = len(touch_levels)
+            
             insights['premarket_level_touch'] = {
-                'median': round(calculate_median(same_direction_moves), 2) if same_direction_moves else None,
-                'average': round(calculate_mean(same_direction_moves), 2) if same_direction_moves else None,
-                'description': 'First touch of pre market low or high - move in direction of touch',
-                'touch_bias': 'High' if touch_levels.count('High') > touch_levels.count('Low') else 'Low',
-                'high_count': touch_levels.count('High'),
-                'low_count': touch_levels.count('Low'),
-                'total_count': len(touch_levels),
-                'opposite_median': round(calculate_median(opposite_direction_moves), 2) if opposite_direction_moves else None,
-                'opposite_average': round(calculate_mean(opposite_direction_moves), 2) if opposite_direction_moves else None,
-                'opposite_description': 'Move opposite to touch direction (reversal)'
+                'touch_bias': 'High' if high_count > low_count else 'Low',
+                'high_count': high_count,
+                'low_count': low_count,
+                'total_count': total_count,
+                'high_percentage': round((high_count / total_count) * 100, 1) if total_count > 0 else 0,
+                'low_percentage': round((low_count / total_count) * 100, 1) if total_count > 0 else 0,
+                'description': 'Which pre-market level gets hit first (High or Low)',
+                'same_direction_median': round(calculate_median(same_direction_moves), 2) if same_direction_moves else None,
+                'same_direction_average': round(calculate_mean(same_direction_moves), 2) if same_direction_moves else None,
+                'same_direction_description': 'Move in same direction as gap after touching level',
+                'opposite_direction_median': round(calculate_median(opposite_direction_moves), 2) if opposite_direction_moves else None,
+                'opposite_direction_average': round(calculate_mean(opposite_direction_moves), 2) if opposite_direction_moves else None,
+                'opposite_direction_description': 'Move opposite to gap direction after touching level (reversal)'
             }
         
         # 4b. 60-minute moves after touching pre-market level (if columns exist)
