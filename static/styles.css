@@ -2133,3 +2133,36 @@ footer p {
         border: 1px solid #ccc;
     }
 }
+
+/* Nested metric cards for premarket level touch */
+.nested-metric-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 8px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nested-metric-title {
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+    margin-bottom: 6px;
+    text-align: center;
+}
+
+.nested-metric-median {
+    font-size: 18px;
+    font-weight: bold;
+    color: #007bff;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.nested-metric-average {
+    font-size: 14px;
+    color: #28a745;
+    text-align: center;
+    font-weight: 500;
+}

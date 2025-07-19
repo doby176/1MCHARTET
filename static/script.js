@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
             radio.addEventListener('change', toggleFilterSection);
         });
 
-        // Handle filter type toggle for earnings
+                // Handle filter type toggle for earnings
         const earningsFilterRadios = document.querySelectorAll('input[name="earnings-filter-type"]');
         earningsFilterRadios.forEach(radio => {
             radio.addEventListener('change', toggleEarningsFilterSection);
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tickerEvents = document.getElementById('ticker-select-events');
         
         if (tickerSimulator) tickerSimulator.addEventListener('change', () => loadDates('ticker-select-simulator', 'date-simulator'));
-        if (tickerGap) tickerGap.addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
+                if (tickerGap) tickerGap.addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
         if (tickerEvents) tickerEvents.addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
         
         // Event type select listeners for news event insights
@@ -2373,7 +2373,7 @@ async function loadChart(event, tabId) {
                 // Main site action limit reached - show clear message
                 chartContainer.innerHTML = `
                     <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
-                        <h4 style="color: #721c24; margin: 0 0 10px 0;">⏱️ Action Limit Reached</h4>
+                        <h4 style="color: #721c24; margin: 0 0 10px 0;"⏱️ Action Limit Reached</h4>
                         <p style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">You've used all 10 free action buttons. Please wait 12 hours or upgrade your plan.</p>
                         <p style="color: #6c757d; margin: 0; font-size: 14px;">Limit resets automatically in 12 hours from first use</p>
                     </div>
@@ -4778,13 +4778,23 @@ async function loadNewsEventInsights(event) {
                 
                 let valueDisplay = '';
                 if (key === 'premarket_level_touch') {
-                    // Special handling for premarket level touch - show which level gets hit first
+                    // Special handling for premarket level touch - show which level gets hit first with nested cards
                     valueDisplay = `
                         <div class="metric-median">${insights[key].touch_bias}</div>
                         <div class="metric-average">High: ${insights[key].high_percentage}%</div>
                         <div class="metric-direction-bias">Low: ${insights[key].low_percentage}%</div>
-                        <div class="metric-opposite">Same Dir: ${insights[key].same_direction_median}% (Avg: ${insights[key].same_direction_average}%)</div>
-                        <div class="metric-opposite">Reversal: ${insights[key].opposite_direction_median}% (Avg: ${insights[key].opposite_direction_average}%)</div>
+                        
+                        <div class="nested-metric-card">
+                            <div class="nested-metric-title">Same Direction Moves</div>
+                            <div class="nested-metric-median">${insights[key].same_direction_median}%</div>
+                            <div class="nested-metric-average">Avg: ${insights[key].same_direction_average}%</div>
+                        </div>
+                        
+                        <div class="nested-metric-card">
+                            <div class="nested-metric-title">Reversal Moves</div>
+                            <div class="nested-metric-median">${insights[key].opposite_direction_median}%</div>
+                            <div class="nested-metric-average">Avg: ${insights[key].opposite_direction_average}%</div>
+                        </div>
                     `;
                 } else {
                     valueDisplay = `
