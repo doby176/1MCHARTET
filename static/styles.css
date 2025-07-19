@@ -121,6 +121,7 @@ header::before {
     justify-content: center;
     position: relative;
     margin-bottom: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
 }
 
 /* Sliding candles image for home page */
@@ -135,6 +136,7 @@ header::before {
     opacity: 0.9;
     position: absolute;
     left: 0;
+    top: 20px; /* Move down from top */
     margin-left: 0px; /* Show completely */
     z-index: 1;
 }
