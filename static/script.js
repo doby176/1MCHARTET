@@ -2029,9 +2029,13 @@ function activateMeasurementTool(section) {
     
     // Add click event listener to chart
     chart.subscribeClick((param) => {
-        if (!measurementTool[section].isActive) return;
+        console.log('Chart clicked - measurement tool active:', measurementTool[section].isActive);
+        console.log('Click param:', param);
         
-        console.log('Chart clicked:', param);
+        if (!measurementTool[section].isActive) {
+            console.log('Measurement tool not active, ignoring click');
+            return;
+        }
         
         if (!measurementTool[section].startPoint) {
             // First click - set start point
@@ -2045,11 +2049,17 @@ function activateMeasurementTool(section) {
             showMeasurementFeedback(section, 'Click second point to complete measurement');
         } else {
             // Second click - set end point and calculate
+            console.log('Second click detected, setting end point');
             measurementTool[section].endPoint = {
                 time: param.time,
                 price: param.price
             };
+            console.log('Measurement end point set:', measurementTool[section].endPoint);
+            
+            console.log('Drawing measurement line...');
             drawMeasurementLine(section);
+            
+            console.log('Calculating measurement...');
             calculateMeasurement(section);
         }
     });
@@ -2128,16 +2138,27 @@ function showMeasurementFeedback(section, message) {
 }
 
 function drawMeasurementLine(section) {
-    if (!chartInstances[section] || !chartInstances[section].chart || !measurementTool[section].startPoint || !measurementTool[section].endPoint) return;
+    console.log('drawMeasurementLine called for section:', section);
+    console.log('chartInstances[section]:', chartInstances[section]);
+    console.log('startPoint:', measurementTool[section].startPoint);
+    console.log('endPoint:', measurementTool[section].endPoint);
+    
+    if (!chartInstances[section] || !chartInstances[section].chart || !measurementTool[section].startPoint || !measurementTool[section].endPoint) {
+        console.log('drawMeasurementLine: Missing required data, returning');
+        return;
+    }
     
     const chart = chartInstances[section].chart;
+    console.log('Chart instance found:', chart);
     
     // Remove existing line
     if (measurementTool[section].line) {
+        console.log('Removing existing line');
         measurementTool[section].line.remove();
     }
     
     // Create new line
+    console.log('Creating new line series');
     measurementTool[section].line = chart.addLineSeries({
         color: '#FF6B6B',
         lineWidth: 2,
@@ -2147,41 +2168,70 @@ function drawMeasurementLine(section) {
         lastValueVisible: false,
     });
     
-    // Add line points
-    measurementTool[section].line.setData([
+    const lineData = [
         { time: measurementTool[section].startPoint.time, value: measurementTool[section].startPoint.price },
         { time: measurementTool[section].endPoint.time, value: measurementTool[section].endPoint.price }
-    ]);
+    ];
+    console.log('Setting line data:', lineData);
+    
+    // Add line points
+    measurementTool[section].line.setData(lineData);
+    console.log('Line drawn successfully');
 }
 
 function calculateMeasurement(section) {
-    if (!measurementTool[section].startPoint || !measurementTool[section].endPoint) return;
+    console.log('calculateMeasurement called for section:', section);
+    console.log('startPoint:', measurementTool[section].startPoint);
+    console.log('endPoint:', measurementTool[section].endPoint);
+    
+    if (!measurementTool[section].startPoint || !measurementTool[section].endPoint) {
+        console.log('calculateMeasurement: Missing start or end point, returning');
+        return;
+    }
     
     const startPrice = measurementTool[section].startPoint.price;
     const endPrice = measurementTool[section].endPoint.price;
     const priceChange = endPrice - startPrice;
     const priceChangePercent = (priceChange / startPrice) * 100;
     
+    console.log('Price calculation:', {
+        startPrice,
+        endPrice,
+        priceChange,
+        priceChangePercent
+    });
+    
     // Create measurement overlay
-    createMeasurementOverlay(section, {
+    const overlayData = {
         startPrice: startPrice.toFixed(2),
         endPrice: endPrice.toFixed(2),
         priceChange: priceChange.toFixed(2),
         priceChangePercent: priceChangePercent.toFixed(2),
         direction: priceChange >= 0 ? 'UP' : 'DOWN'
-    });
+    };
+    
+    console.log('Creating overlay with data:', overlayData);
+    createMeasurementOverlay(section, overlayData);
     
     console.log(`Measurement: ${startPrice} → ${endPrice} (${priceChangePercent.toFixed(2)}%)`);
 }
 
 function createMeasurementOverlay(section, data) {
+    console.log('createMeasurementOverlay called for section:', section, 'with data:', data);
+    
     // Remove existing overlay
     if (measurementTool[section].overlay) {
+        console.log('Removing existing overlay');
         measurementTool[section].overlay.remove();
     }
     
     const chartContainer = document.getElementById(`chart-${section}`);
-    if (!chartContainer) return;
+    if (!chartContainer) {
+        console.log('Chart container not found:', `chart-${section}`);
+        return;
+    }
+    
+    console.log('Chart container found:', chartContainer);
     
     // Create overlay element
     const overlay = document.createElement('div');
@@ -2214,6 +2264,7 @@ function createMeasurementOverlay(section, data) {
     
     chartContainer.appendChild(overlay);
     measurementTool[section].overlay = overlay;
+    console.log('Overlay created and added to chart container');
 }
 
 function clearMeasurement(section) {
