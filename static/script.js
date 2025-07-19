@@ -2037,18 +2037,27 @@ function activateMeasurementTool(section) {
             return;
         }
         
-        // Get price from the click coordinates
-        const priceScale = chart.priceScale();
-        const timeScale = chart.timeScale();
+        // Get click coordinates
+        const clickX = param.point.x;
+        const clickY = param.point.y;
         
-        // Convert click coordinates to price
-        const price = priceScale.coordinateToPrice(param.point.y);
-        const time = timeScale.coordinateToTime(param.point.x);
+        console.log('Click coordinates:', { x: clickX, y: clickY });
         
-        console.log('Converted coordinates - price:', price, 'time:', time);
+        // Store raw coordinates for now - we'll implement proper conversion
+        const time = param.time || Date.now();
+        const price = null; // We'll need to implement price calculation
         
-        if (price === null || time === null) {
-            console.log('Could not convert coordinates to price/time');
+        console.log('Using time from param:', time);
+        
+        // For now, let's use a simpler approach - store the click coordinates
+        // and we'll implement the price calculation differently
+        
+        // Find the nearest candle data point for this time
+        const candleData = getCandleDataForTime(section, time);
+        console.log('Found candle data:', candleData);
+        
+        if (!candleData) {
+            console.log('No candle data found for time:', time);
             return;
         }
         
@@ -2056,7 +2065,9 @@ function activateMeasurementTool(section) {
             // First click - set start point
             measurementTool[section].startPoint = {
                 time: time,
-                price: price
+                price: candleData.close,
+                x: clickX,
+                y: clickY
             };
             console.log('Measurement start point set:', measurementTool[section].startPoint);
             
@@ -2067,7 +2078,9 @@ function activateMeasurementTool(section) {
             console.log('Second click detected, setting end point');
             measurementTool[section].endPoint = {
                 time: time,
-                price: price
+                price: candleData.close,
+                x: clickX,
+                y: clickY
             };
             console.log('Measurement end point set:', measurementTool[section].endPoint);
             
@@ -2080,6 +2093,50 @@ function activateMeasurementTool(section) {
     });
     
     console.log(`Measurement tool activated for ${section}`);
+}
+
+function getCandleDataForTime(section, time) {
+    // Get the candle data for this section
+    let candleData = null;
+    
+    if (section === 'simulator') {
+        candleData = chartDataSimulator;
+    } else if (section === 'gap') {
+        candleData = chartDataGap;
+    } else if (section === 'events') {
+        candleData = chartDataEvents;
+    } else if (section === 'earnings') {
+        candleData = chartDataEarnings;
+    }
+    
+    if (!candleData || !candleData.timestamp) {
+        console.log('No candle data available for section:', section);
+        return null;
+    }
+    
+    // Find the candle with the closest timestamp
+    let closestCandle = null;
+    let minDiff = Infinity;
+    
+    for (let i = 0; i < candleData.timestamp.length; i++) {
+        const candleTime = candleData.timestamp[i];
+        const diff = Math.abs(candleTime - time);
+        
+        if (diff < minDiff) {
+            minDiff = diff;
+            closestCandle = {
+                timestamp: candleTime,
+                open: candleData.open[i],
+                high: candleData.high[i],
+                low: candleData.low[i],
+                close: candleData.close[i],
+                volume: candleData.volume[i]
+            };
+        }
+    }
+    
+    console.log('Closest candle found:', closestCandle);
+    return closestCandle;
 }
 
 function deactivateMeasurementTool(section) {
@@ -2158,48 +2215,52 @@ function showMeasurementFeedback(section, message) {
 
 function drawMeasurementLine(section) {
     console.log('drawMeasurementLine called for section:', section);
-    console.log('chartInstances[section]:', chartInstances[section]);
     console.log('startPoint:', measurementTool[section].startPoint);
     console.log('endPoint:', measurementTool[section].endPoint);
     
-    if (!chartInstances[section] || !chartInstances[section].chart || !measurementTool[section].startPoint || !measurementTool[section].endPoint) {
-        console.log('drawMeasurementLine: Missing required data, returning');
+    if (!measurementTool[section].startPoint || !measurementTool[section].endPoint) {
+        console.log('drawMeasurementLine: Missing start or end point, returning');
         return;
     }
     
-    const chart = chartInstances[section].chart;
-    console.log('Chart instance found:', chart);
+    const chartContainer = document.getElementById(`chart-${section}`);
+    if (!chartContainer) {
+        console.log('Chart container not found:', `chart-${section}`);
+        return;
+    }
     
     // Remove existing line
     if (measurementTool[section].line) {
         console.log('Removing existing line');
-        try {
-            chart.removeSeries(measurementTool[section].line);
-        } catch (error) {
-            console.log('Error removing existing line:', error);
-        }
+        measurementTool[section].line.remove();
     }
     
-    // Create new line
-    console.log('Creating new line series');
-    measurementTool[section].line = chart.addLineSeries({
-        color: '#FF6B6B',
-        lineWidth: 2,
-        lineStyle: 1, // Dashed
-        crosshairMarkerVisible: false,
-        priceLineVisible: false,
-        lastValueVisible: false,
-    });
+    // Create a custom SVG line overlay
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1000;
+    `;
     
-    const lineData = [
-        { time: measurementTool[section].startPoint.time, value: measurementTool[section].startPoint.price },
-        { time: measurementTool[section].endPoint.time, value: measurementTool[section].endPoint.price }
-    ];
-    console.log('Setting line data:', lineData);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', measurementTool[section].startPoint.x);
+    line.setAttribute('y1', measurementTool[section].startPoint.y);
+    line.setAttribute('x2', measurementTool[section].endPoint.x);
+    line.setAttribute('y2', measurementTool[section].endPoint.y);
+    line.setAttribute('stroke', '#FF6B6B');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-dasharray', '5,5');
     
-    // Add line points
-    measurementTool[section].line.setData(lineData);
-    console.log('Line drawn successfully');
+    svg.appendChild(line);
+    chartContainer.appendChild(svg);
+    
+    measurementTool[section].line = svg;
+    console.log('Custom measurement line drawn successfully');
 }
 
 function calculateMeasurement(section) {
