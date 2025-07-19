@@ -878,6 +878,10 @@ def get_gap_insights():
             logging.debug(f"No data found for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
             return jsonify({'insights': {}, 'message': 'No data found for the selected criteria'})
         
+        # Log some sample data to debug
+        logging.debug(f"Sample time_of_low values: {filtered_df['time_of_low'].head().tolist()}")
+        logging.debug(f"Sample time_of_high values: {filtered_df['time_of_high'].head().tolist()}")
+        
         gap_fill_rate = filtered_df['filled'].mean() * 100
         filled_df = filtered_df[filtered_df['filled'] == True]
         unfilled_df = filtered_df[filtered_df['filled'] == False]
@@ -887,13 +891,25 @@ def get_gap_insights():
 
         def time_to_minutes(t):
             try:
-                h, m = map(int, t.split(':')[:2])
+                if pd.isna(t) or t is None or str(t).strip() == '':
+                    return pd.NaT
+                parts = str(t).split(':')
+                if len(parts) < 2:
+                    return pd.NaT
+                h, m = map(int, parts[:2])
                 return h * 60 + m
             except:
                 return pd.NaT
 
-        filtered_df.loc[:, 'time_of_low_minutes'] = filtered_df['time_of_low'].apply(time_to_minutes)
-        filtered_df.loc[:, 'time_of_high_minutes'] = filtered_df['time_of_high'].apply(time_to_minutes)
+        # Safely apply time conversion with error handling
+        try:
+            filtered_df.loc[:, 'time_of_low_minutes'] = filtered_df['time_of_low'].apply(time_to_minutes)
+            filtered_df.loc[:, 'time_of_high_minutes'] = filtered_df['time_of_high'].apply(time_to_minutes)
+        except Exception as e:
+            logging.warning(f"Error converting time columns: {e}")
+            # Set default values if conversion fails
+            filtered_df.loc[:, 'time_of_low_minutes'] = pd.NaT
+            filtered_df.loc[:, 'time_of_high_minutes'] = pd.NaT
 
         def minutes_to_time(minutes):
             if pd.isna(minutes):
@@ -963,7 +979,14 @@ def get_gap_insights():
         # Get current day of week
         days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
         today = datetime.now()
-        today_day = days[today.weekday()]
+        weekday = today.weekday()
+        # weekday() returns 0=Monday, 1=Tuesday, ..., 6=Sunday
+        # But we only want Monday-Friday (0-4)
+        if weekday < 5:  # Monday to Friday
+            today_day = days[weekday]
+        else:
+            # If it's weekend, use the last Friday
+            today_day = 'Friday'
         
         # Check if filters match today's conditions
         filters_match_today = (
