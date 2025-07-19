@@ -4770,7 +4770,7 @@ async function loadNewsEventInsights(event) {
         const row1 = document.createElement('div');
         row1.className = 'insights-row four-metrics';
         
-        const firstRowMetrics = ['premarket_reaction', 'extreme_moves_930_1000', 'regular_moves_930_1030', 'premarket_level_touch'];
+        const firstRowMetrics = ['premarket_reaction', 'extreme_moves_930_1000', 'regular_moves_930_1030'];
         firstRowMetrics.forEach(key => {
             if (insights[key]) {
                 const metric = document.createElement('div');
@@ -4804,8 +4804,22 @@ async function loadNewsEventInsights(event) {
                     `;
                 }
                 
+                // Custom metric names
+                let metricName = '';
+                if (key === 'premarket_reaction') {
+                    metricName = 'Pre-Market Reaction First 1min';
+                } else if (key === 'extreme_moves_930_1000') {
+                    metricName = 'Extreme Move From Open First 30Min';
+                    // Add hover tooltip
+                    metric.title = 'The move from open to the most extreme high or low in first 30min';
+                } else if (key === 'regular_moves_930_1030') {
+                    metricName = 'First 1hour Move from open';
+                } else {
+                    metricName = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                }
+                
                 metric.innerHTML = `
-                    <div class="metric-name">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                    <div class="metric-name">${metricName}</div>
                     ${valueDisplay}
                     <div class="metric-description">${insights[key].description}</div>
                     <div class="metric-counts">${insights[key].up_count || 0} Up, ${insights[key].down_count || 0} Down (${insights[key].total_count || 0} total)</div>
@@ -4815,15 +4829,48 @@ async function loadNewsEventInsights(event) {
         });
         container.appendChild(row1);
 
-        // Second row: 1 metric (return to opposite level)
+        // Second row: 2 metrics (premarket level touch and return to opposite level)
         const row2 = document.createElement('div');
-        row2.className = 'insights-row one-metric';
+        row2.className = 'insights-row two-metrics';
         
+        // Add premarket level touch metric
+        if (insights['premarket_level_touch']) {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            
+            const valueDisplay = `
+                <div class="metric-median">${insights['premarket_level_touch'].touch_bias}</div>
+                <div class="metric-average">High: ${insights['premarket_level_touch'].high_percentage}%</div>
+                <div class="metric-direction-bias">Low: ${insights['premarket_level_touch'].low_percentage}%</div>
+                
+                <div class="nested-metric-card">
+                    <div class="nested-metric-title">Same Direction Moves</div>
+                    <div class="nested-metric-median">${insights['premarket_level_touch'].same_direction_median}%</div>
+                    <div class="nested-metric-average">Avg: ${insights['premarket_level_touch'].same_direction_average}%</div>
+                </div>
+                
+                <div class="nested-metric-card">
+                    <div class="nested-metric-title">Reversal Moves</div>
+                    <div class="nested-metric-median">${insights['premarket_level_touch'].opposite_direction_median}%</div>
+                    <div class="nested-metric-average">Avg: ${insights['premarket_level_touch'].opposite_direction_average}%</div>
+                </div>
+            `;
+            
+            metric.innerHTML = `
+                <div class="metric-name">First Pre-Market High/Low Touch After Market Opens</div>
+                ${valueDisplay}
+                <div class="metric-description">${insights['premarket_level_touch'].description}</div>
+                <div class="metric-counts">${insights['premarket_level_touch'].high_count || 0} High, ${insights['premarket_level_touch'].low_count || 0} Low (${insights['premarket_level_touch'].total_count || 0} total)</div>
+            `;
+            row2.appendChild(metric);
+        }
+        
+        // Add return to opposite level metric
         if (insights['return_to_opposite_level']) {
             const metric = document.createElement('div');
             metric.className = 'insight-metric';
             metric.innerHTML = `
-                <div class="metric-name">Return To Opposite Level</div>
+                <div class="metric-name">Reversal Rate after hitting Pre-Market Low/High</div>
                 <div class="metric-average">${insights['return_to_opposite_level'].average}%</div>
                 <div class="metric-description">${insights['return_to_opposite_level'].description}</div>
                 <div class="metric-counts">${insights['return_to_opposite_level'].return_count} Returned, ${insights['return_to_opposite_level'].no_return_count} Not Returned (${insights['return_to_opposite_level'].total_count} total)</div>
