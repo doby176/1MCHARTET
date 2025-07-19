@@ -2037,11 +2037,26 @@ function activateMeasurementTool(section) {
             return;
         }
         
+        // Get price from the click coordinates
+        const priceScale = chart.priceScale();
+        const timeScale = chart.timeScale();
+        
+        // Convert click coordinates to price
+        const price = priceScale.coordinateToPrice(param.point.y);
+        const time = timeScale.coordinateToTime(param.point.x);
+        
+        console.log('Converted coordinates - price:', price, 'time:', time);
+        
+        if (price === null || time === null) {
+            console.log('Could not convert coordinates to price/time');
+            return;
+        }
+        
         if (!measurementTool[section].startPoint) {
             // First click - set start point
             measurementTool[section].startPoint = {
-                time: param.time,
-                price: param.price
+                time: time,
+                price: price
             };
             console.log('Measurement start point set:', measurementTool[section].startPoint);
             
@@ -2051,8 +2066,8 @@ function activateMeasurementTool(section) {
             // Second click - set end point and calculate
             console.log('Second click detected, setting end point');
             measurementTool[section].endPoint = {
-                time: param.time,
-                price: param.price
+                time: time,
+                price: price
             };
             console.log('Measurement end point set:', measurementTool[section].endPoint);
             
@@ -2079,8 +2094,12 @@ function deactivateMeasurementTool(section) {
     }
     
     // Remove measurement line and overlay
-    if (measurementTool[section].line) {
-        measurementTool[section].line.remove();
+    if (measurementTool[section].line && chartInstances[section] && chartInstances[section].chart) {
+        try {
+            chartInstances[section].chart.removeSeries(measurementTool[section].line);
+        } catch (error) {
+            console.log('Error removing measurement line:', error);
+        }
         measurementTool[section].line = null;
     }
     if (measurementTool[section].overlay) {
@@ -2154,7 +2173,11 @@ function drawMeasurementLine(section) {
     // Remove existing line
     if (measurementTool[section].line) {
         console.log('Removing existing line');
-        measurementTool[section].line.remove();
+        try {
+            chart.removeSeries(measurementTool[section].line);
+        } catch (error) {
+            console.log('Error removing existing line:', error);
+        }
     }
     
     // Create new line
@@ -2191,6 +2214,12 @@ function calculateMeasurement(section) {
     
     const startPrice = measurementTool[section].startPoint.price;
     const endPrice = measurementTool[section].endPoint.price;
+    
+    if (startPrice === undefined || endPrice === undefined || startPrice === null || endPrice === null) {
+        console.log('calculateMeasurement: Invalid prices, returning');
+        return;
+    }
+    
     const priceChange = endPrice - startPrice;
     const priceChangePercent = (priceChange / startPrice) * 100;
     
