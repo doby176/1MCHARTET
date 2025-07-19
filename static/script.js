@@ -2013,14 +2013,25 @@ function clearAllDrawings(section) {
 
 // Measurement Tool Functions
 function activateMeasurementTool(section) {
-    if (!chartInstances[section]) return;
+    if (!chartInstances[section] || !chartInstances[section].chart) {
+        console.error(`No chart instance found for section: ${section}`);
+        return;
+    }
     
     measurementTool[section].isActive = true;
-    const chart = chartInstances[section];
+    const chart = chartInstances[section].chart;
+    
+    // Change cursor to indicate measurement mode
+    const chartContainer = document.getElementById(`chart-${section}`);
+    if (chartContainer) {
+        chartContainer.style.cursor = 'crosshair';
+    }
     
     // Add click event listener to chart
     chart.subscribeClick((param) => {
         if (!measurementTool[section].isActive) return;
+        
+        console.log('Chart clicked:', param);
         
         if (!measurementTool[section].startPoint) {
             // First click - set start point
@@ -2029,6 +2040,9 @@ function activateMeasurementTool(section) {
                 price: param.price
             };
             console.log('Measurement start point set:', measurementTool[section].startPoint);
+            
+            // Show visual feedback for first click
+            showMeasurementFeedback(section, 'Click second point to complete measurement');
         } else {
             // Second click - set end point and calculate
             measurementTool[section].endPoint = {
@@ -2048,6 +2062,12 @@ function deactivateMeasurementTool(section) {
     measurementTool[section].startPoint = null;
     measurementTool[section].endPoint = null;
     
+    // Reset cursor
+    const chartContainer = document.getElementById(`chart-${section}`);
+    if (chartContainer) {
+        chartContainer.style.cursor = 'default';
+    }
+    
     // Remove measurement line and overlay
     if (measurementTool[section].line) {
         measurementTool[section].line.remove();
@@ -2058,13 +2078,59 @@ function deactivateMeasurementTool(section) {
         measurementTool[section].overlay = null;
     }
     
+    // Remove any feedback
+    const feedback = document.querySelector(`#chart-${section} .measurement-feedback`);
+    if (feedback) {
+        feedback.remove();
+    }
+    
     console.log(`Measurement tool deactivated for ${section}`);
 }
 
-function drawMeasurementLine(section) {
-    if (!chartInstances[section] || !measurementTool[section].startPoint || !measurementTool[section].endPoint) return;
+function showMeasurementFeedback(section, message) {
+    const chartContainer = document.getElementById(`chart-${section}`);
+    if (!chartContainer) return;
     
-    const chart = chartInstances[section];
+    // Remove existing feedback
+    const existingFeedback = chartContainer.querySelector('.measurement-feedback');
+    if (existingFeedback) {
+        existingFeedback.remove();
+    }
+    
+    // Create feedback element
+    const feedback = document.createElement('div');
+    feedback.className = 'measurement-feedback';
+    feedback.style.cssText = `
+        position: absolute;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        z-index: 1000;
+        pointer-events: none;
+        white-space: nowrap;
+    `;
+    feedback.textContent = message;
+    
+    chartContainer.appendChild(feedback);
+    
+    // Remove feedback after 3 seconds
+    setTimeout(() => {
+        if (feedback.parentNode) {
+            feedback.parentNode.removeChild(feedback);
+        }
+    }, 3000);
+}
+
+function drawMeasurementLine(section) {
+    if (!chartInstances[section] || !chartInstances[section].chart || !measurementTool[section].startPoint || !measurementTool[section].endPoint) return;
+    
+    const chart = chartInstances[section].chart;
     
     // Remove existing line
     if (measurementTool[section].line) {
