@@ -846,12 +846,18 @@ form button:disabled::before {
     margin-bottom: var(--spacing-lg);
 }
 
-.insights-row.three-metrics {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+.insights-row.four-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
 .insights-row.two-metrics {
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.insights-row.one-metric {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .insight-metric {
@@ -890,45 +896,131 @@ form button:disabled::before {
     color: var(--accent-green);
 }
 
+.metric-direction-bias {
+    font-size: 0.9rem;
+    font-weight: var(--font-weight-semibold);
+    color: var(--charcoal);
+    margin-bottom: var(--spacing-xs);
+}
+
+.metric-opposite {
+    font-size: 0.9rem;
+    color: var(--dark-grey);
+    margin-bottom: var(--spacing-xs);
+}
+
+.metric-counts {
+    font-size: 0.8rem;
+    color: var(--dark-grey);
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--medium-grey);
+}
+
 .metric-description {
     font-size: 0.85rem;
     color: var(--dark-grey);
     font-style: italic;
 }
 
-.metric-up-percentage,
-.metric-high-percentage,
-.metric-return-percentage {
+.metric-price-info {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--medium-grey);
+    background: #e8f4fd;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm);
+}
+
+.metric-zone-title {
+    font-size: 1rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--charcoal);
+    margin-bottom: 6px;
+    text-align: center;
+    background: var(--primary-blue);
+    color: white;
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-price-median {
     font-size: 1.2rem;
-    font-weight: var(--font-weight-semibold);
-    margin-bottom: var(--spacing-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-blue);
+    margin-bottom: 2px;
 }
 
-.metric-up-percentage {
+.metric-price-average {
+    font-size: 0.9rem;
+    color: var(--dark-grey);
+    margin-bottom: 4px;
+}
+
+.metric-price-nq {
+    font-size: 0.9rem;
     color: var(--accent-green);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: 4px;
 }
 
-.metric-high-percentage {
+.metric-price-description {
+    font-size: 0.75rem;
+    color: var(--dark-grey);
+    font-style: italic;
+}
+
+.market-data-summary {
+    background: var(--light-grey);
+    border: 1px solid var(--medium-grey);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.market-data-summary h4 {
+    font-size: 1.1rem;
+    font-weight: var(--font-weight-semibold);
+    color: var(--charcoal);
+    margin-bottom: var(--spacing-sm);
+    text-align: center;
+}
+
+.market-data-grid {
+    display: flex;
+    justify-content: space-around;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.market-data-item {
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+}
+
+.market-data-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--dark-grey);
+    margin-bottom: 4px;
+}
+
+.market-data-value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: var(--font-weight-bold);
     color: var(--primary-blue);
 }
 
-.metric-return-percentage {
-    color: var(--accent-orange);
-}
-
-.metric-same-direction,
-.metric-opposite-direction {
-    font-size: 0.9rem;
-    color: var(--charcoal);
-    margin-bottom: var(--spacing-xs);
-}
-
-.metric-same-direction {
+.market-data-value.up {
     color: var(--accent-green);
 }
 
-.metric-opposite-direction {
-    color: var(--accent-red);
+.market-data-value.down {
+    color: #dc3545;
 }
 
 /* Sample/Upgrade Notices */
@@ -1967,6 +2059,17 @@ footer p {
     font-style: italic;
     opacity: 0.8;
     margin-top: var(--spacing-xs) !important;
+}
+
+.gap-filters-test-note {
+    font-size: 0.85rem;
+    color: #856404;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+    font-style: italic;
 }
 
 .gap-filters-details {

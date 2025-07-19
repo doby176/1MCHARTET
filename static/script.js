@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formEventsForm = document.getElementById('events-form');
         const formEarningsForm = document.getElementById('earnings-form');
         const formGapInsights = document.getElementById('gap-insights-form');
-        const formEventInsights = document.getElementById('event-insights-form');
+        const formNewsEventInsights = document.getElementById('news-event-insights-form');
         
         if (formSimulator) formSimulator.addEventListener('submit', (e) => loadChart(e, 'market-simulator'));
         if (formGap) formGap.addEventListener('submit', (e) => loadChart(e, 'gap-analysis'));
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (formEventsForm) formEventsForm.addEventListener('submit', loadEventDates);
         if (formEarningsForm) formEarningsForm.addEventListener('submit', loadEarningsDates);
         if (formGapInsights) formGapInsights.addEventListener('submit', loadGapInsights);
-        if (formEventInsights) formEventInsights.addEventListener('submit', loadEventInsights);
+        if (formNewsEventInsights) formNewsEventInsights.addEventListener('submit', loadNewsEventInsights);
         
         // Replay control listeners (Market Simulator)
         const playSimulator = document.getElementById('play-replay-simulator');
@@ -143,8 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
         earningsFilterRadios.forEach(radio => {
             radio.addEventListener('change', toggleEarningsFilterSection);
         });
-        
-        // Handle filter type toggle for event insights
+
+        // Handle filter type toggle for news event insights
         const eventInsightsFilterRadios = document.querySelectorAll('input[name="event-insights-filter-type"]');
         eventInsightsFilterRadios.forEach(radio => {
             radio.addEventListener('change', toggleEventInsightsFilterSection);
@@ -159,10 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tickerGap) tickerGap.addEventListener('change', () => loadDates('ticker-select-gap', 'date-gap'));
         if (tickerEvents) tickerEvents.addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
         
-        // Initialize event insights filters
-        const eventInsightsTypeSelectBin = document.getElementById('event-insights-type-select-bin');
+        // Event type select listeners for news event insights
+        const eventInsightsTypeSelect = document.getElementById('event-insights-type-select');
+        const eventInsightsTypeBinSelect = document.getElementById('event-insights-type-bin-select');
+        const eventInsightsBinSelect = document.getElementById('event-insights-bin-select');
         
-        if (eventInsightsTypeSelectBin) eventInsightsTypeSelectBin.addEventListener('change', loadEventInsightsBinOptions);
+        if (eventInsightsTypeSelect) eventInsightsTypeSelect.addEventListener('change', populateEventInsightsBinOptions);
+        if (eventInsightsTypeBinSelect) eventInsightsTypeBinSelect.addEventListener('change', populateEventInsightsBinOptions);
     }
 });
 
@@ -256,10 +259,10 @@ let timeframeEarnings = 1;
 
 // Bin options for each event type
 const binOptions = {
-    CPI: ['low', 'medium', 'high'],
-    PPI: ['low', 'medium', 'high'],
-    NFP: ['low', 'medium', 'high'],
-    FOMC: ['low', 'medium', 'high']
+    CPI: ['<0%', '0-1%', '1-2%', '2-3%', '3-5%', '>5%'],
+    PPI: ['<0%', '0-2%', '2-4%', '4-8%', '>8%'],
+    NFP: ['<0K', '0-100K', '100-200K', '200-300K', '>300K'],
+    FOMC: ['0-1%', '1-2%', '2-3%', '3-4%', '>4%']
 };
 
 // Earnings outcome options with explanations
@@ -2024,23 +2027,6 @@ function toggleEarningsFilterSection() {
         tickerOnlyFilter.classList.add('active');
         document.getElementById('earnings-ticker-select').value = '';
         document.getElementById('earnings-bin-select').value = '';
-    }
-}
-
-function toggleEventInsightsFilterSection() {
-    const eventOnlyFilter = document.getElementById('event-insights-event-only-filter');
-    const binFilter = document.getElementById('event-insights-bin-filter');
-    const filterType = document.querySelector('input[name="event-insights-filter-type"]:checked').value;
-
-    eventOnlyFilter.classList.remove('active');
-    binFilter.classList.remove('active');
-
-    if (filterType === 'event-only') {
-        eventOnlyFilter.classList.add('active');
-        document.getElementById('bin-insights-select').value = '';
-    } else {
-        binFilter.classList.add('active');
-        document.getElementById('event-insights-type-select').value = '';
     }
 }
 
@@ -4167,7 +4153,35 @@ async function loadGapInsights(event) {
         const insights = data.insights;
         const container = document.createElement('div');
         container.className = 'insights-container';
-        container.innerHTML = `<h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>`;
+        
+        // Add market data summary if available
+        let marketDataHtml = '';
+        if (insights.market_data && insights.market_data.current_open) {
+            marketDataHtml = `
+                <div class="market-data-summary">
+                    <h4>Current Market Data</h4>
+                    <div class="market-data-grid">
+                        <div class="market-data-item">
+                            <span class="market-data-label">Today's Open:</span>
+                            <span class="market-data-value">$${insights.market_data.current_open}</span>
+                        </div>
+                        <div class="market-data-item">
+                            <span class="market-data-label">Yesterday's Close:</span>
+                            <span class="market-data-value">$${insights.market_data.current_prev_close}</span>
+                        </div>
+                        <div class="market-data-item">
+                            <span class="market-data-label">Gap Direction:</span>
+                            <span class="market-data-value ${insights.market_data.gap_direction}">${insights.market_data.gap_direction.toUpperCase()}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = `
+            <h3>QQQ Gap Insights for ${gapSize} ${gapDirection} gaps on ${day}</h3>
+            ${marketDataHtml}
+        `;
 
         // First row: 4 metrics
         const row1 = document.createElement('div');
@@ -4175,11 +4189,43 @@ async function loadGapInsights(event) {
         ['gap_fill_rate', 'median_move_before_fill', 'median_max_move_unfilled', 'median_time_to_fill'].forEach(key => {
             const metric = document.createElement('div');
             metric.className = 'insight-metric';
+            
+            let priceInfo = '';
+            if (insights[key].average_price !== undefined && insights[key].average_price !== null) {
+                const zoneTitle = insights[key].zone_title || '';
+                const medianPrice = insights[key].median_price;
+                const averagePrice = insights[key].average_price;
+                
+                let priceDisplay = '';
+                if (medianPrice !== undefined && medianPrice !== null) {
+                    priceDisplay = `
+                        <div class="metric-price-median">QQQ Median: $${medianPrice}</div>
+                        <div class="metric-price-average">QQQ Average: $${averagePrice}</div>
+                    `;
+                } else {
+                    priceDisplay = `<div class="metric-price-average">QQQ: $${averagePrice}</div>`;
+                }
+                
+                priceInfo = `
+                    <div class="metric-price-info">
+                        <div class="metric-zone-title">${zoneTitle}</div>
+                        ${priceDisplay}
+                        <div class="metric-price-description">${insights[key].price_description}</div>
+                    </div>
+                `;
+            }
+            
+            // Handle metrics that only have average (no median)
+            const valueDisplay = (key === 'gap_fill_rate' || key === 'reversal_after_fill_rate') ?
+                `<div class="metric-average">${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>` :
+                `<div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>`;
+            
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                ${valueDisplay}
                 <div class="metric-description">${insights[key].description}</div>
+                ${priceInfo}
             `;
             row1.appendChild(metric);
         });
@@ -4191,11 +4237,43 @@ async function loadGapInsights(event) {
         ['reversal_after_fill_rate', 'median_move_before_reversal'].forEach(key => {
             const metric = document.createElement('div');
             metric.className = 'insight-metric';
+            
+            let priceInfo = '';
+            if (insights[key].average_price !== undefined && insights[key].average_price !== null) {
+                const zoneTitle = insights[key].zone_title || '';
+                const medianPrice = insights[key].median_price;
+                const averagePrice = insights[key].average_price;
+                
+                let priceDisplay = '';
+                if (medianPrice !== undefined && medianPrice !== null) {
+                    priceDisplay = `
+                        <div class="metric-price-median">QQQ Median: $${medianPrice}</div>
+                        <div class="metric-price-average">QQQ Average: $${averagePrice}</div>
+                    `;
+                } else {
+                    priceDisplay = `<div class="metric-price-average">QQQ: $${averagePrice}</div>`;
+                }
+                
+                priceInfo = `
+                    <div class="metric-price-info">
+                        <div class="metric-zone-title">${zoneTitle}</div>
+                        ${priceDisplay}
+                        <div class="metric-price-description">${insights[key].price_description}</div>
+                    </div>
+                `;
+            }
+            
+            // Handle metrics that only have average (no median)
+            const valueDisplay = (key === 'gap_fill_rate' || key === 'reversal_after_fill_rate') ?
+                `<div class="metric-average">${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>` :
+                `<div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>`;
+            
             metric.innerHTML = `
                 <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
-                <div class="metric-average">Avg: ${insights[key].average}${key.includes('rate') ? '%' : key.includes('time') ? '' : '%'}</div>
+                ${valueDisplay}
                 <div class="metric-description">${insights[key].description}</div>
+                ${priceInfo}
             `;
             row2.appendChild(metric);
         });
@@ -4228,220 +4306,6 @@ async function loadGapInsights(event) {
         console.error('Error loading gap insights:', error.message);
         insightsContainer.innerHTML = '<p>Failed to load gap insights: ' + error.message + '. Please try again later.</p>';
         alert('Failed to load gap insights: ' + error.message);
-    }
-}
-
-async function loadEventInsights(event) {
-    event.preventDefault();
-    const eventType = document.getElementById('event-insights-type-select').value || document.getElementById('event-insights-type-select-bin').value;
-    const bin = document.getElementById('bin-insights-select').value;
-    const filterType = document.querySelector('input[name="event-insights-filter-type"]:checked').value;
-    const insightsContainer = document.getElementById('event-insights-results');
-    const form = document.getElementById('event-insights-form');
-    const button = form.querySelector('button[type="submit"]');
-    const selects = form.querySelectorAll('select');
-    const inputs = form.querySelectorAll('input');
-
-    // Check rate limit state
-    const rateLimitResetTime = localStorage.getItem('eventInsightsRateLimitReset');
-    if (rateLimitResetTime && Date.now() < parseInt(rateLimitResetTime)) {
-        insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">Rate limit exceeded: You have reached the limit of 3 requests per 12 hours. Please wait until ${new Date(parseInt(rateLimitResetTime)).toLocaleTimeString()} to try again.</p>`;
-        button.disabled = true;
-        button.textContent = 'Rate Limit Exceeded';
-        selects.forEach(select => select.disabled = true);
-        inputs.forEach(input => input.disabled = true);
-        return;
-    }
-
-    if (!eventType || (filterType === 'bin' && !bin)) {
-        insightsContainer.innerHTML = '<p>Please select an event type and economic impact range.</p>';
-        return;
-    }
-    
-    console.log(`Fetching event insights for event_type=${eventType}, bin=${bin}, filter_type=${filterType}`);
-    
-    // Add action parameters for rate limiting
-    const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
-    let url = `/api/event_insights?event_type=${encodeURIComponent(eventType)}&filter_type=${encodeURIComponent(filterType)}`;
-    if (filterType === 'bin') {
-        url += `&bin=${encodeURIComponent(bin)}`;
-    }
-    if (!isInSampleMode) {
-        // Main site - add main_action parameter for Get Insights button (separate 2-click limit)
-        url += '&main_action=get_insights';
-    }
-    
-    console.log('Fetching URL:', url);
-    insightsContainer.innerHTML = '<p>Loading event insights...</p>';
-    
-    try {
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        });
-        console.log('Response status:', response.status);
-        
-        if (response.status === 429) {
-            const data = await response.json();
-            console.error('Rate limit error:', data.error);
-            
-            // Handle event insights action limit (separate 2-click limit)
-            if (data.limit_reached && !isInSampleMode) {
-                // Event insights limit reached - show special message for 2-click limit
-                insightsContainer.innerHTML = `
-                    <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
-                        <h4 style="color: #721c24; margin: 0 0 10px 0;">📊 Event Insights Limit Reached</h4>
-                        <p style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">You've used your 2 free Event Insights requests. Please wait 12 hours or upgrade your plan.</p>
-                        <p style="color: #6c757d; margin: 0; font-size: 14px;">Event Insights have a separate 2-request limit that resets in 12 hours</p>
-                    </div>
-                `;
-                button.disabled = true;
-                button.textContent = 'Insights Limit Reached';
-                selects.forEach(select => select.disabled = true);
-                inputs.forEach(input => input.disabled = true);
-                // Set timeout for 12 hours reset
-                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
-                localStorage.setItem('eventInsightsActionLimitReset', resetTime);
-                setTimeout(() => {
-                    button.disabled = false;
-                    button.textContent = 'Get Event Insights';
-                    selects.forEach(select => select.disabled = false);
-                    inputs.forEach(input => input.disabled = false);
-                    localStorage.removeItem('eventInsightsActionLimitReset');
-                    insightsContainer.innerHTML = '<p>Select an event type and economic impact range to view event insights.</p>';
-                }, 12 * 60 * 60 * 1000);
-            } else {
-                // Regular rate limit exceeded
-                insightsContainer.innerHTML = `<p style="color: red; font-weight: bold;">${data.error}</p>`;
-                button.disabled = true;
-                button.textContent = 'Rate Limit Exceeded';
-                selects.forEach(select => select.disabled = true);
-                inputs.forEach(input => input.disabled = true);
-                const resetTime = Date.now() + 12 * 60 * 60 * 1000;
-                localStorage.setItem('eventInsightsRateLimitReset', resetTime);
-                setTimeout(() => {
-                    button.disabled = false;
-                    button.textContent = 'Get Event Insights';
-                    selects.forEach(select => select.disabled = false);
-                    inputs.forEach(input => input.disabled = false);
-                    localStorage.removeItem('eventInsightsRateLimitReset');
-                    insightsContainer.innerHTML = '<p>Select an event type and economic impact range to view event insights.</p>';
-                }, 1000);
-            }
-            return;
-        }
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Event insights API response:', JSON.stringify(data, null, 2));
-        
-        if (data.error) {
-            console.error('Error from event insights API:', data.error);
-            insightsContainer.innerHTML = `<p>${data.error}</p>`;
-            return;
-        }
-        
-        if (!data.insights || Object.keys(data.insights).length === 0) {
-            console.log('No event insights found:', data.message || 'No insights returned');
-            insightsContainer.innerHTML = `<p>${data.message || 'No event insights found for the selected criteria'}</p>`;
-            return;
-        }
-        
-        console.log('Rendering event insights:', data.insights);
-
-        const insights = data.insights;
-        const container = document.createElement('div');
-        container.className = 'insights-container';
-        
-        const filterText = filterType === 'event-only' ? `${eventType} events` : `${eventType} events with ${bin} economic impact`;
-        container.innerHTML = `<h3>News Event Insights for ${filterText}</h3>`;
-
-        // First row: 3 metrics
-        const row1 = document.createElement('div');
-        row1.className = 'insights-row three-metrics';
-        ['premarket_reaction', 'extreme_moves_930_1000', 'close_moves_930_1030'].forEach(key => {
-            if (insights[key]) {
-                const metric = document.createElement('div');
-                metric.className = 'insight-metric';
-                metric.innerHTML = `
-                    <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                    <div class="metric-median tooltip" title="The median is often preferred over the average (mean) when dealing with data that contains outliers or is skewed because it provides a more accurate representation of the central tendency in such cases.">${insights[key].median}%</div>
-                    <div class="metric-average">Avg: ${insights[key].average}%</div>
-                    <div class="metric-up-percentage">Up: ${insights[key].up_percentage}%</div>
-                    <div class="metric-description">${insights[key].description}</div>
-                `;
-                row1.appendChild(metric);
-            }
-        });
-        container.appendChild(row1);
-
-        // Second row: 2 metrics
-        const row2 = document.createElement('div');
-        row2.className = 'insights-row two-metrics';
-        ['premarket_level_touch', 'return_to_opposite_level'].forEach(key => {
-            if (insights[key]) {
-                const metric = document.createElement('div');
-                metric.className = 'insight-metric';
-                
-                if (key === 'premarket_level_touch') {
-                    metric.innerHTML = `
-                        <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                        <div class="metric-high-percentage">High Touch: ${insights[key].high_percentage}%</div>
-                        <div class="metric-same-direction">Same Dir: ${insights[key].same_direction_median}% (med) / ${insights[key].same_direction_average}% (avg)</div>
-                        <div class="metric-opposite-direction">Opposite Dir: ${insights[key].opposite_direction_median}% (med) / ${insights[key].opposite_direction_average}% (avg)</div>
-                        <div class="metric-description">${insights[key].description}</div>
-                    `;
-                } else {
-                    metric.innerHTML = `
-                        <div class="metric-name tooltip" title="${insights[key].description}">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
-                        <div class="metric-return-percentage">${insights[key].return_percentage}%</div>
-                        <div class="metric-description">${insights[key].description}</div>
-                    `;
-                }
-                row2.appendChild(metric);
-            }
-        });
-        container.appendChild(row2);
-
-        insightsContainer.innerHTML = '';
-        insightsContainer.appendChild(container);
-        console.log('Event insights rendered successfully');
-
-        gtag('event', 'event_insights_load', {
-            'event_category': 'Event Insights',
-            'event_label': `${eventType}_${filterType}_${bin || 'all'}`
-        });
-    } catch (error) {
-        console.error('Error loading event insights:', error.message);
-        insightsContainer.innerHTML = '<p>Failed to load event insights: ' + error.message + '. Please try again later.</p>';
-        alert('Failed to load event insights: ' + error.message);
-    }
-}
-
-
-
-function loadEventInsightsBinOptions() {
-    const eventType = document.getElementById('event-insights-type-select-bin').value;
-    const binSelect = document.getElementById('bin-insights-select');
-    
-    binSelect.innerHTML = '<option value="">Select range</option>';
-    binSelect.disabled = true;
-    
-    if (eventType && binOptions[eventType]) {
-        binOptions[eventType].forEach(bin => {
-            const option = document.createElement('option');
-            option.value = bin;
-            option.textContent = bin;
-            binSelect.appendChild(option);
-        });
-        binSelect.disabled = false;
     }
 }
 
@@ -4549,13 +4413,19 @@ function displayQQQData(data) {
                 <div class="qqq-data-description">${description}</div>
             `;
             
-            // Make gap percentage clickable
+            // Make gap percentage clickable only if gap is >= 0.15%
             if (metric.key === 'Gap %' && data['Gap Value'] !== null && data['Gap Value'] !== undefined) {
                 const gapValue = data['Gap Value'];
-                const gapValueElement = item.querySelector('.qqq-data-value');
-                gapValueElement.style.cursor = 'pointer';
-                gapValueElement.title = 'Click to populate gap insights filters';
-                gapValueElement.addEventListener('click', () => populateGapFilters(gapValue));
+                const absGap = Math.abs(gapValue);
+                
+                if (absGap >= 0.15) {
+                    // Gap is large enough to be actionable
+                    const gapValueElement = item.querySelector('.qqq-data-value');
+                    gapValueElement.style.cursor = 'pointer';
+                    gapValueElement.title = 'Click to populate gap insights filters';
+                    gapValueElement.addEventListener('click', () => populateGapFilters(gapValue));
+                }
+                // Gaps under 0.15% are not clickable at all
             }
             
             grid.appendChild(item);
@@ -4578,12 +4448,6 @@ function displayQQQData(data) {
 }
 
 function populateGapFilters(gapValue) {
-    // Check if gap is too small (under 0.15%)
-    if (Math.abs(gapValue) < 0.15) {
-        showSmallGapMessage();
-        return;
-    }
-    
     // Determine gap size bin
     let gapSizeBin = '';
     const absGap = Math.abs(gapValue);
@@ -4618,7 +4482,7 @@ function populateGapFilters(gapValue) {
     if (directionSelect) directionSelect.value = gapDirection;
     
     // Show success message
-    showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection);
+    showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection, gapValue);
     
     // Track the event
     gtag('event', 'gap_filters_populated', {
@@ -4636,9 +4500,9 @@ function showSmallGapMessage() {
     messageDiv.innerHTML = `
         <div class="small-gap-icon">⚠️</div>
         <div class="small-gap-content">
-            <h4>Small Gap Detected</h4>
-            <p>Gap is under 0.15% - no actionable data available for such small gaps to exploit.</p>
-            <p class="small-gap-note">Consider waiting for larger gaps or using different trading strategies.</p>
+            <h4>Gap Too Small for Actionable Trades</h4>
+            <p>Today's gap is under 0.15% - no actionable data available for such small gaps to exploit.</p>
+            <p class="small-gap-note">Consider waiting for larger gaps (≥0.15%) or using different trading strategies.</p>
         </div>
     `;
     
@@ -4660,19 +4524,24 @@ function showSmallGapMessage() {
     }, 5000);
 }
 
-function showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection) {
+function showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection, gapValue) {
     const displayContainer = document.getElementById('qqq-data-display');
     if (!displayContainer) return;
     
     const messageDiv = document.createElement('div');
     messageDiv.className = 'gap-filters-message';
+    
     messageDiv.innerHTML = `
         <div class="gap-filters-icon">✅</div>
         <div class="gap-filters-content">
             <h4>Filters Populated Successfully</h4>
             <div class="gap-filters-details">
                 <div class="filter-item">
-                    <span class="filter-label">Gap Size:</span>
+                    <span class="filter-label">Actual Gap:</span>
+                    <span class="filter-value">${gapValue.toFixed(2)}%</span>
+                </div>
+                <div class="filter-item">
+                    <span class="filter-label">Gap Size Bin:</span>
                     <span class="filter-value">${gapSizeBin}</span>
                 </div>
                 <div class="filter-item">
@@ -4684,7 +4553,7 @@ function showGapFiltersPopulatedMessage(gapSizeBin, dayOfWeek, gapDirection) {
                     <span class="filter-value">${gapDirection === 'up' ? 'Gap Up' : 'Gap Down'}</span>
                 </div>
             </div>
-            <p class="gap-filters-note">Click "Get Insights" to view historical data for similar gaps.</p>
+            <p class="gap-filters-note">Click "Get Insights" to view historical data and price calculations for similar gaps.</p>
         </div>
     `;
     
@@ -4738,4 +4607,232 @@ function openTab(tabName) {
         'event_category': 'Navigation',
         'event_label': tabName
     });
+}
+
+// News Event Insights Functions
+function toggleEventInsightsFilterSection() {
+    const eventOnlyFilter = document.getElementById('event-only-filter');
+    const eventBinFilter = document.getElementById('event-bin-filter');
+    
+    if (eventOnlyFilter && eventBinFilter) {
+        const selectedValue = document.querySelector('input[name="event-insights-filter-type"]:checked').value;
+        
+        if (selectedValue === 'event-only') {
+            eventOnlyFilter.classList.add('active');
+            eventBinFilter.classList.remove('active');
+        } else {
+            eventOnlyFilter.classList.remove('active');
+            eventBinFilter.classList.add('active');
+        }
+    }
+}
+
+function populateEventInsightsBinOptions() {
+    const eventTypeSelect = document.querySelector('input[name="event-insights-filter-type"]:checked').value === 'event-only' 
+        ? document.getElementById('event-insights-type-select') 
+        : document.getElementById('event-insights-type-bin-select');
+    const binSelect = document.getElementById('event-insights-bin-select');
+    
+    if (!eventTypeSelect || !binSelect) return;
+    
+    const eventType = eventTypeSelect.value;
+    
+    // Clear existing options
+    binSelect.innerHTML = '<option value="">Select range</option>';
+    
+    if (!eventType) return;
+    
+    // Define bin options for each event type
+    const binOptions = {
+        'NFP': ['<0K', '0-100K', '100-200K', '200-300K', '>300K'],
+        'CPI': ['<0%', '0-1%', '1-2%', '2-3%', '3-5%', '>5%'],
+        'PPI': ['<0%', '0-2%', '2-4%', '4-8%', '>8%']
+    };
+    
+    const options = binOptions[eventType] || [];
+    
+    options.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option;
+        optionElement.textContent = option;
+        binSelect.appendChild(optionElement);
+    });
+}
+
+async function loadNewsEventInsights(event) {
+    event.preventDefault();
+    
+    const filterType = document.querySelector('input[name="event-insights-filter-type"]:checked').value;
+    const eventType = filterType === 'event-only' 
+        ? document.getElementById('event-insights-type-select').value
+        : document.getElementById('event-insights-type-bin-select').value;
+    const binValue = filterType === 'event-bin' ? document.getElementById('event-insights-bin-select').value : null;
+    
+    const insightsContainer = document.getElementById('news-event-insights-results');
+    const form = document.getElementById('news-event-insights-form');
+    const button = form.querySelector('button[type="submit"]');
+    const selects = form.querySelectorAll('select');
+
+    if (!eventType) {
+        insightsContainer.innerHTML = '<p>Please select an event type.</p>';
+        return;
+    }
+    
+    if (filterType === 'event-bin' && !binValue) {
+        insightsContainer.innerHTML = '<p>Please select a data range.</p>';
+        return;
+    }
+    
+    console.log(`Fetching news event insights for event_type=${eventType}, bin=${binValue}`);
+    
+    // Add action parameters for rate limiting
+    const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
+    let url = `/api/news_event_insights?event_type=${encodeURIComponent(eventType)}`;
+    if (binValue) {
+        url += `&bin=${encodeURIComponent(binValue)}`;
+    }
+    if (!isInSampleMode) {
+        url += '&main_action=get_insights';
+    }
+    
+    console.log('Fetching URL:', url);
+    insightsContainer.innerHTML = '<p>Loading news event insights...</p>';
+    
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (response.status === 429) {
+            const data = await response.json();
+            console.error('Rate limit error:', data.error);
+            
+            insightsContainer.innerHTML = `
+                <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin: 10px 0; text-align: center;">
+                    <h4 style="color: #721c24; margin: 0 0 10px 0;">📊 News Event Insights Limit Reached</h4>
+                    <p style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">You've used your 3 free News Event Insights requests. Please wait 12 hours or upgrade your plan.</p>
+                    <p style="color: #6c757d; margin: 0; font-size: 14px;">News Event Insights have a 3-request limit that resets in 12 hours</p>
+                </div>
+            `;
+            button.disabled = true;
+            button.textContent = 'Insights Limit Reached';
+            selects.forEach(select => select.disabled = true);
+            
+            // Set timeout for 12 hours reset
+            const resetTime = Date.now() + 12 * 60 * 60 * 1000;
+            localStorage.setItem('newsEventInsightsActionLimitReset', resetTime);
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Get Event Insights';
+                selects.forEach(select => select.disabled = false);
+                localStorage.removeItem('newsEventInsightsActionLimitReset');
+                insightsContainer.innerHTML = '<p>Select an event type and optionally a data range to view news event insights.</p>';
+            }, 12 * 60 * 60 * 1000);
+            return;
+        }
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('News event insights API response:', JSON.stringify(data, null, 2));
+        
+        if (data.error) {
+            console.error('Error from news event insights API:', data.error);
+            insightsContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+        }
+        
+        if (!data.insights || Object.keys(data.insights).length === 0) {
+            console.log('No news event insights found:', data.message || 'No insights returned');
+            insightsContainer.innerHTML = `<p>${data.message || 'No news event insights found for the selected criteria'}</p>`;
+            return;
+        }
+        
+        console.log('Rendering news event insights:', data.insights);
+        
+        const insights = data.insights;
+        const container = document.createElement('div');
+        container.className = 'insights-container';
+        
+        const filterText = binValue ? `${eventType} - ${binValue}` : eventType;
+        container.innerHTML = `<h3>News Event Insights for ${filterText}</h3>`;
+
+        // First row: 4 metrics
+        const row1 = document.createElement('div');
+        row1.className = 'insights-row four-metrics';
+        
+        const firstRowMetrics = ['premarket_reaction', 'extreme_moves_930_1000', 'regular_moves_930_1030', 'premarket_level_touch'];
+        firstRowMetrics.forEach(key => {
+            if (insights[key]) {
+                const metric = document.createElement('div');
+                metric.className = 'insight-metric';
+                
+                let valueDisplay = '';
+                if (key === 'premarket_level_touch') {
+                    // Special handling for premarket level touch with both same and opposite direction
+                    valueDisplay = `
+                        <div class="metric-median">${insights[key].median}%</div>
+                        <div class="metric-average">Avg: ${insights[key].average}%</div>
+                        <div class="metric-direction-bias">Touch Bias: ${insights[key].touch_bias}</div>
+                        <div class="metric-opposite">Opposite: ${insights[key].opposite_median}%</div>
+                    `;
+                } else {
+                    valueDisplay = `
+                        <div class="metric-median">${insights[key].median}%</div>
+                        <div class="metric-average">Avg: ${insights[key].average}%</div>
+                        <div class="metric-direction-bias">Bias: ${insights[key].direction_bias}</div>
+                    `;
+                }
+                
+                metric.innerHTML = `
+                    <div class="metric-name">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
+                    ${valueDisplay}
+                    <div class="metric-description">${insights[key].description}</div>
+                    <div class="metric-counts">${insights[key].up_count || 0} Up, ${insights[key].down_count || 0} Down (${insights[key].total_count || 0} total)</div>
+                `;
+                row1.appendChild(metric);
+            }
+        });
+        container.appendChild(row1);
+
+        // Second row: 1 metric (return to opposite level)
+        const row2 = document.createElement('div');
+        row2.className = 'insights-row one-metric';
+        
+        if (insights['return_to_opposite_level']) {
+            const metric = document.createElement('div');
+            metric.className = 'insight-metric';
+            metric.innerHTML = `
+                <div class="metric-name">Return To Opposite Level</div>
+                <div class="metric-average">${insights['return_to_opposite_level'].average}%</div>
+                <div class="metric-description">${insights['return_to_opposite_level'].description}</div>
+                <div class="metric-counts">${insights['return_to_opposite_level'].return_count} Returned, ${insights['return_to_opposite_level'].no_return_count} Not Returned (${insights['return_to_opposite_level'].total_count} total)</div>
+            `;
+            row2.appendChild(metric);
+        }
+        container.appendChild(row2);
+
+        insightsContainer.innerHTML = '';
+        insightsContainer.appendChild(container);
+        console.log('News event insights rendered successfully');
+
+        gtag('event', 'news_event_insights_load', {
+            'event_category': 'News Event Insights',
+            'event_label': `${eventType}_${binValue || 'all'}`
+        });
+        
+    } catch (error) {
+        console.error('Error loading news event insights:', error.message);
+        insightsContainer.innerHTML = '<p>Failed to load news event insights: ' + error.message + '. Please try again later.</p>';
+        alert('Failed to load news event insights: ' + error.message);
+    }
 }
