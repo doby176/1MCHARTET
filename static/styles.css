@@ -2166,3 +2166,16 @@ footer p {
     text-align: center;
     font-weight: 500;
 }
+
+/* Measurement Tool Button Styles */
+.drawing-tool-btn.active {
+    background: #4CAF50 !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    transform: translateY(-1px);
+}
+
+.drawing-tool-btn.active:hover {
+    background: #45a049 !important;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}

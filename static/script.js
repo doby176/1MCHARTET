@@ -195,6 +195,14 @@ let drawingTools = {
     earnings: { active: null, lines: [], pendingTool: null }
 };
 
+// Measurement Tool State
+let measurementTool = {
+    simulator: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null },
+    gap: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null },
+    events: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null },
+    earnings: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null }
+};
+
 // User zoom tracking - to prevent auto-fit during manual zoom
 let userZoomState = {
     simulator: false,
@@ -907,6 +915,11 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                 setupDrawingClickHandler(section, pendingTool);
                 console.log(`Set up pending drawing tool: ${pendingTool} for ${section}`);
             }
+            
+            // Initialize measurement tool if it was active
+            if (measurementTool[section] && measurementTool[section].isActive) {
+                activateMeasurementTool(section);
+            }
         }
     }
 
@@ -997,6 +1010,10 @@ function destroyChart(section) {
     // Clear indicators for this section
     indicatorSeries[section] = {};
     drawingTools[section] = { active: null, lines: [], pendingTool: null };
+    // Clear measurement tool
+    if (measurementTool[section]) {
+        deactivateMeasurementTool(section);
+    }
     // Reset user zoom state
     userZoomState[section] = false;
     // Clear click handlers
@@ -1980,6 +1997,169 @@ function clearAllDrawings(section) {
     // Show the same coming soon message
     alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
     console.log(`Clear drawings clicked for ${section} - showing coming soon message`);
+}
+
+// Measurement Tool Functions
+function activateMeasurementTool(section) {
+    if (!chartInstances[section]) return;
+    
+    measurementTool[section].isActive = true;
+    const chart = chartInstances[section];
+    
+    // Add click event listener to chart
+    chart.subscribeClick((param) => {
+        if (!measurementTool[section].isActive) return;
+        
+        if (!measurementTool[section].startPoint) {
+            // First click - set start point
+            measurementTool[section].startPoint = {
+                time: param.time,
+                price: param.price
+            };
+            console.log('Measurement start point set:', measurementTool[section].startPoint);
+        } else {
+            // Second click - set end point and calculate
+            measurementTool[section].endPoint = {
+                time: param.time,
+                price: param.price
+            };
+            drawMeasurementLine(section);
+            calculateMeasurement(section);
+        }
+    });
+    
+    console.log(`Measurement tool activated for ${section}`);
+}
+
+function deactivateMeasurementTool(section) {
+    measurementTool[section].isActive = false;
+    measurementTool[section].startPoint = null;
+    measurementTool[section].endPoint = null;
+    
+    // Remove measurement line and overlay
+    if (measurementTool[section].line) {
+        measurementTool[section].line.remove();
+        measurementTool[section].line = null;
+    }
+    if (measurementTool[section].overlay) {
+        measurementTool[section].overlay.remove();
+        measurementTool[section].overlay = null;
+    }
+    
+    console.log(`Measurement tool deactivated for ${section}`);
+}
+
+function drawMeasurementLine(section) {
+    if (!chartInstances[section] || !measurementTool[section].startPoint || !measurementTool[section].endPoint) return;
+    
+    const chart = chartInstances[section];
+    
+    // Remove existing line
+    if (measurementTool[section].line) {
+        measurementTool[section].line.remove();
+    }
+    
+    // Create new line
+    measurementTool[section].line = chart.addLineSeries({
+        color: '#FF6B6B',
+        lineWidth: 2,
+        lineStyle: 1, // Dashed
+        crosshairMarkerVisible: false,
+        priceLineVisible: false,
+        lastValueVisible: false,
+    });
+    
+    // Add line points
+    measurementTool[section].line.setData([
+        { time: measurementTool[section].startPoint.time, value: measurementTool[section].startPoint.price },
+        { time: measurementTool[section].endPoint.time, value: measurementTool[section].endPoint.price }
+    ]);
+}
+
+function calculateMeasurement(section) {
+    if (!measurementTool[section].startPoint || !measurementTool[section].endPoint) return;
+    
+    const startPrice = measurementTool[section].startPoint.price;
+    const endPrice = measurementTool[section].endPoint.price;
+    const priceChange = endPrice - startPrice;
+    const priceChangePercent = (priceChange / startPrice) * 100;
+    
+    // Create measurement overlay
+    createMeasurementOverlay(section, {
+        startPrice: startPrice.toFixed(2),
+        endPrice: endPrice.toFixed(2),
+        priceChange: priceChange.toFixed(2),
+        priceChangePercent: priceChangePercent.toFixed(2),
+        direction: priceChange >= 0 ? 'UP' : 'DOWN'
+    });
+    
+    console.log(`Measurement: ${startPrice} → ${endPrice} (${priceChangePercent.toFixed(2)}%)`);
+}
+
+function createMeasurementOverlay(section, data) {
+    // Remove existing overlay
+    if (measurementTool[section].overlay) {
+        measurementTool[section].overlay.remove();
+    }
+    
+    const chartContainer = document.getElementById(`chart-${section}`);
+    if (!chartContainer) return;
+    
+    // Create overlay element
+    const overlay = document.createElement('div');
+    overlay.className = 'measurement-overlay';
+    overlay.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 14px;
+        z-index: 1000;
+        min-width: 200px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    `;
+    
+    const directionColor = data.direction === 'UP' ? '#4CAF50' : '#F44336';
+    
+    overlay.innerHTML = `
+        <div style="margin-bottom: 10px; font-weight: bold; color: ${directionColor};">📏 MEASUREMENT TOOL</div>
+        <div style="margin-bottom: 5px;"><strong>Start:</strong> $${data.startPrice}</div>
+        <div style="margin-bottom: 5px;"><strong>End:</strong> $${data.endPrice}</div>
+        <div style="margin-bottom: 5px;"><strong>Change:</strong> <span style="color: ${directionColor};">$${data.priceChange} (${data.priceChangePercent}%)</span></div>
+        <div style="margin-bottom: 10px;"><strong>Direction:</strong> <span style="color: ${directionColor};">${data.direction}</span></div>
+        <button onclick="clearMeasurement('${section}')" style="background: #FF6B6B; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Clear</button>
+    `;
+    
+    chartContainer.appendChild(overlay);
+    measurementTool[section].overlay = overlay;
+}
+
+function clearMeasurement(section) {
+    deactivateMeasurementTool(section);
+    activateMeasurementTool(section); // Reactivate for next measurement
+}
+
+function toggleMeasurementTool(section) {
+    const button = document.getElementById(`measure-tool-${section}`);
+    
+    if (measurementTool[section].isActive) {
+        // Deactivate
+        deactivateMeasurementTool(section);
+        button.classList.remove('active');
+        button.style.background = '';
+        console.log(`Measurement tool deactivated for ${section}`);
+    } else {
+        // Activate
+        activateMeasurementTool(section);
+        button.classList.add('active');
+        button.style.background = '#4CAF50';
+        button.style.color = 'white';
+        console.log(`Measurement tool activated for ${section}`);
+    }
 }
 
 function populateEarningsOutcomes() {
