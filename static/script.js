@@ -1836,6 +1836,8 @@ function setupIndicatorListeners(section) {
             
             if (tool === 'clear') {
                 clearAllDrawings(section);
+            } else if (tool === 'measure') {
+                toggleMeasurementTool(section);
             } else {
                 activateDrawingTool(section, tool);
             }
@@ -1851,7 +1853,7 @@ function activateDrawingTool(section, tool) {
     const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
     buttons.forEach(btn => btn.classList.remove('active'));
     
-    // Show coming soon message
+    // Show coming soon message for other drawing tools
     alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
     
     console.log(`Drawing tool ${tool} clicked for ${section} - showing coming soon message`);
@@ -1994,7 +1996,17 @@ function deactivateDrawingTool(section) {
 }
 
 function clearAllDrawings(section) {
-    // Show the same coming soon message
+    // Clear measurement tool if active
+    if (measurementTool[section] && measurementTool[section].isActive) {
+        deactivateMeasurementTool(section);
+        const button = document.getElementById(`measure-tool-${section}`);
+        if (button) {
+            button.classList.remove('active');
+            button.style.background = '';
+        }
+    }
+    
+    // Show coming soon message for other drawing tools
     alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
     console.log(`Clear drawings clicked for ${section} - showing coming soon message`);
 }
