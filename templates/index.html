@@ -55,6 +55,7 @@
             <div class="tabs">
                 <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
                 <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
+                <button class="tab-button" onclick="openTab('news-event-insights')">News Event Insights</button>
                 <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
                 <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
                 <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
@@ -325,6 +326,46 @@
                 </form>
                 <div id="gap-insights-results">
                     <p>Select a gap size, day, and direction to view Nasdaq gap insights and statistics.</p>
+                </div>
+            </div>
+            <!-- News Event Insights Section -->
+            <div id="news-event-insights" class="tab-content">
+                <h2>News Event Insights</h2>
+                <p>Analyze market reactions to key economic events (NFP, CPI, PPI) with detailed pre-market and intraday price action metrics, powered by comprehensive event analysis data.</p>
+                
+                <div class="filter-toggle">
+                    <label><input type="radio" name="event-insights-filter-type" value="event-only" checked> Filter by Event Type Only</label>
+                    <label><input type="radio" name="event-insights-filter-type" value="event-bin"> Filter by Event Type and Data Range</label>
+                </div>
+                
+                <form id="news-event-insights-form">
+                    <div id="event-only-filter" class="filter-section active">
+                        <label for="event-insights-type-select">Select Event Type:</label>
+                        <select id="event-insights-type-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="NFP">NFP</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                        </select>
+                    </div>
+                    <div id="event-bin-filter" class="filter-section">
+                        <label for="event-insights-type-bin-select">Select Event Type:</label>
+                        <select id="event-insights-type-bin-select" name="event_type">
+                            <option value="">Select event type</option>
+                            <option value="NFP">NFP</option>
+                            <option value="CPI">CPI</option>
+                            <option value="PPI">PPI</option>
+                        </select>
+                        <label for="event-insights-bin-select">Select Data Range:</label>
+                        <select id="event-insights-bin-select" name="bin">
+                            <option value="">Select range</option>
+                            <!-- Options will be populated dynamically based on event type -->
+                        </select>
+                    </div>
+                    <button type="submit">Get Event Insights</button>
+                </form>
+                <div id="news-event-insights-results">
+                    <p>Select an event type and optionally a data range to view news event insights and statistics.</p>
                 </div>
             </div>
             <!-- News Event Analysis Section -->

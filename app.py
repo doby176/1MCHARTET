@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, jsonify, session, send_from_d
 from flask_limiter import Limiter
 from flask_session import Session
 import pandas as pd
+import csv
 import logging
 import sqlite3
 import uuid
@@ -281,7 +282,15 @@ try:
     logging.info("Successfully connected to Redis")
 except redis.ConnectionError as e:
     logging.error(f"Failed to connect to Redis: {str(e)}")
-    limiter.storage = limiter.storage_memory()
+    # Fallback to in-memory storage for rate limiting
+    from flask_limiter.util import get_remote_address
+    limiter = Limiter(
+        get_remote_address,
+        app=app,
+        default_limits=["10 per 12 hours"],
+        storage_uri="memory://",
+        headers_enabled=True
+    )
     logging.warning("Falling back to in-memory storage for rate limiting")
 
 # Custom error handler for rate limit exceeded
@@ -869,6 +878,10 @@ def get_gap_insights():
             logging.debug(f"No data found for gap_size={gap_size}, day={day}, gap_direction={gap_direction}")
             return jsonify({'insights': {}, 'message': 'No data found for the selected criteria'})
         
+        # Log some sample data to debug
+        logging.debug(f"Sample time_of_low values: {filtered_df['time_of_low'].head().tolist()}")
+        logging.debug(f"Sample time_of_high values: {filtered_df['time_of_high'].head().tolist()}")
+        
         gap_fill_rate = filtered_df['filled'].mean() * 100
         filled_df = filtered_df[filtered_df['filled'] == True]
         unfilled_df = filtered_df[filtered_df['filled'] == False]
@@ -878,13 +891,25 @@ def get_gap_insights():
 
         def time_to_minutes(t):
             try:
-                h, m = map(int, t.split(':')[:2])
+                if pd.isna(t) or t is None or str(t).strip() == '':
+                    return pd.NaT
+                parts = str(t).split(':')
+                if len(parts) < 2:
+                    return pd.NaT
+                h, m = map(int, parts[:2])
                 return h * 60 + m
             except:
                 return pd.NaT
 
-        filtered_df.loc[:, 'time_of_low_minutes'] = filtered_df['time_of_low'].apply(time_to_minutes)
-        filtered_df.loc[:, 'time_of_high_minutes'] = filtered_df['time_of_high'].apply(time_to_minutes)
+        # Safely apply time conversion with error handling
+        try:
+            filtered_df.loc[:, 'time_of_low_minutes'] = filtered_df['time_of_low'].apply(time_to_minutes)
+            filtered_df.loc[:, 'time_of_high_minutes'] = filtered_df['time_of_high'].apply(time_to_minutes)
+        except Exception as e:
+            logging.warning(f"Error converting time columns: {e}")
+            # Set default values if conversion fails
+            filtered_df.loc[:, 'time_of_low_minutes'] = pd.NaT
+            filtered_df.loc[:, 'time_of_high_minutes'] = pd.NaT
 
         def minutes_to_time(minutes):
             if pd.isna(minutes):
@@ -954,7 +979,14 @@ def get_gap_insights():
         # Get current day of week
         days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
         today = datetime.now()
-        today_day = days[today.weekday()]
+        weekday = today.weekday()
+        # weekday() returns 0=Monday, 1=Tuesday, ..., 6=Sunday
+        # But we only want Monday-Friday (0-4)
+        if weekday < 5:  # Monday to Friday
+            today_day = days[weekday]
+        else:
+            # If it's weekend, use the last Friday
+            today_day = 'Friday'
         
         # Check if filters match today's conditions
         filters_match_today = (
@@ -996,12 +1028,12 @@ def get_gap_insights():
             'median_time_of_low': {
                 'median': minutes_to_time(median_low_minutes),
                 'average': minutes_to_time(average_low_minutes),
-                'description': 'Median time of the day’s low'
+                'description': 'Median time of the day\'s low'
             },
             'median_time_of_high': {
                 'median': minutes_to_time(median_high_minutes),
                 'average': minutes_to_time(average_high_minutes),
-                'description': 'Median time of the day’s high'
+                'description': 'Median time of the day\'s high'
             },
             'reversal_after_fill_rate': {
                 'average': round(reversal_after_fill_rate, 2),
@@ -1266,6 +1298,218 @@ def get_earnings_by_bin():
         return jsonify({'dates': sorted(dates)})
     except Exception as e:
         logging.error(f"Error processing earnings by bin: {str(e)}")
+        return jsonify({'error': 'Server error'}), 500
+
+@app.route('/api/news_event_insights', methods=['GET'])
+@limiter.limit("5 per 12 hours")
+def get_news_event_insights():
+    """API endpoint to get news event insights from event_analysis_metrics.csv"""
+    try:
+        event_type = request.args.get('event_type')
+        bin_value = request.args.get('bin')
+        
+        # Check if main action limit is reached (for Get Insights button)
+        if not check_main_action_limit():
+            return jsonify({
+                'error': 'Action limit exceeded: You have reached the limit of 10 main actions per 12 hours. Please wait 12 hours or upgrade your plan.',
+                'limit_reached': True
+            }), 429
+        
+        logging.debug(f"Fetching news event insights for event_type={event_type}, bin={bin_value}")
+        
+        # Path to the event analysis metrics CSV file
+        event_metrics_path = os.path.join(os.path.dirname(__file__), 'data', 'event_analysis_metrics.csv')
+        
+        if not os.path.exists(event_metrics_path):
+            logging.error(f"Event analysis metrics file not found: {event_metrics_path}")
+            return jsonify({'error': 'Event analysis data file not found. Please contact support.'}), 404
+        
+        # Read CSV data using built-in csv module
+        try:
+            with open(event_metrics_path, 'r', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                data = list(reader)
+            logging.debug(f"Loaded event analysis data with {len(data)} rows")
+        except Exception as e:
+            logging.error(f"Error reading event analysis data file {event_metrics_path}: {str(e)}")
+            return jsonify({'error': f'Failed to load event analysis data: {str(e)}'}), 500
+        
+        # Validate required columns
+        required_columns = [
+            'event_type', 'bin', 'percent_move_830_831', 'direction', 
+            'percent_move_930_959_extreme', 'direction_930_959_extreme',
+            'percent_move_930_1030_x', 'direction_930_1030_x', 
+            'touched_premarket_level_x', 'percent_move_same_direction', 
+            'percent_move_opposite_direction', 'touched_premarket_level', 
+            'returned_to_opposite_level'
+        ]
+        
+        if not data:
+            return jsonify({'error': 'Event analysis data file is empty'}), 400
+        
+        missing_columns = [col for col in required_columns if col not in data[0].keys()]
+        if missing_columns:
+            logging.error(f"Invalid event analysis data format: missing columns {missing_columns}")
+            return jsonify({'error': f'Invalid event analysis data format: missing columns {missing_columns}'}), 400
+        
+        # Filter data based on parameters
+        filtered_data = data
+        if event_type:
+            filtered_data = [row for row in filtered_data if row['event_type'] == event_type]
+        
+        if bin_value:
+            filtered_data = [row for row in filtered_data if row['bin'] == bin_value]
+        
+        if not filtered_data:
+            logging.debug(f"No event analysis data found for event_type={event_type}, bin={bin_value}")
+            return jsonify({'insights': {}, 'message': f'No event analysis data found for the selected criteria'})
+        
+        logging.debug(f"Filtered data rows: {len(filtered_data)}")
+        
+        # Helper function to calculate median
+        def calculate_median(values):
+            if not values:
+                return 0
+            sorted_values = sorted(values)
+            n = len(sorted_values)
+            if n % 2 == 0:
+                return (sorted_values[n//2 - 1] + sorted_values[n//2]) / 2
+            else:
+                return sorted_values[n//2]
+        
+        # Helper function to calculate mean
+        def calculate_mean(values):
+            if not values:
+                return 0
+            return sum(values) / len(values)
+        
+        # Helper function to parse numeric values safely
+        def safe_float(value):
+            try:
+                return float(value) if value and value.strip() else None
+            except (ValueError, TypeError):
+                return None
+        
+        # Calculate insights for each metric
+        insights = {}
+        
+        # 1. 8:30-8:31 PRE MARKET reaction to data release move % (only moves above 0.1%)
+        pm_moves = [safe_float(row['percent_move_830_831']) for row in filtered_data 
+                   if safe_float(row['percent_move_830_831']) is not None and safe_float(row['percent_move_830_831']) > 0.1]
+        pm_directions = [row['direction'] for row in filtered_data 
+                        if safe_float(row['percent_move_830_831']) is not None and safe_float(row['percent_move_830_831']) > 0.1]
+        
+        if pm_moves:
+            insights['premarket_reaction'] = {
+                'median': round(calculate_median(pm_moves), 2),
+                'average': round(calculate_mean(pm_moves), 2),
+                'description': '8:30-8:31 PRE MARKET reaction to data release move % (moves > 0.1%)',
+                'direction_bias': 'Up' if pm_directions.count('Up') > pm_directions.count('Down') else 'Down',
+                'up_count': pm_directions.count('Up'),
+                'down_count': pm_directions.count('Down'),
+                'total_count': len(pm_directions)
+            }
+        
+        # 2. Move between 9:30 - 10:00 to highest high or lowest low
+        extreme_moves = [safe_float(row['percent_move_930_959_extreme']) for row in filtered_data if safe_float(row['percent_move_930_959_extreme']) is not None]
+        extreme_directions = [row['direction_930_959_extreme'] for row in filtered_data if row['direction_930_959_extreme']]
+        
+        if extreme_moves:
+            insights['extreme_moves_930_1000'] = {
+                'median': round(calculate_median(extreme_moves), 2),
+                'average': round(calculate_mean(extreme_moves), 2),
+                'description': 'Move between 9:30 - 10:00 to highest high or lowest low',
+                'direction_bias': 'Up' if extreme_directions.count('Up') > extreme_directions.count('Down') else 'Down',
+                'up_count': extreme_directions.count('Up'),
+                'down_count': extreme_directions.count('Down'),
+                'total_count': len(extreme_directions)
+            }
+        
+        # 3. Move between 9:30 - 10:30 close, no extreme moves
+        regular_moves = [safe_float(row['percent_move_930_1030_x']) for row in filtered_data if safe_float(row['percent_move_930_1030_x']) is not None]
+        regular_directions = [row['direction_930_1030_x'] for row in filtered_data if row['direction_930_1030_x']]
+        
+        if regular_moves:
+            insights['regular_moves_930_1030'] = {
+                'median': round(calculate_median(regular_moves), 2),
+                'average': round(calculate_mean(regular_moves), 2),
+                'description': 'Move between 9:30 - 10:30 close, no extreme moves',
+                'direction_bias': 'Up' if regular_directions.count('Up') > regular_directions.count('Down') else 'Down',
+                'up_count': regular_directions.count('Up'),
+                'down_count': regular_directions.count('Down'),
+                'total_count': len(regular_directions)
+            }
+        
+        # 4. First touch of pre market low or high and subsequent moves (only moves above 0.10% or below -0.10%)
+        touch_levels = [row['touched_premarket_level_x'] for row in filtered_data if row['touched_premarket_level_x']]
+        same_direction_moves = [safe_float(row['percent_move_same_direction']) for row in filtered_data 
+                               if safe_float(row['percent_move_same_direction']) is not None and abs(safe_float(row['percent_move_same_direction'])) > 0.1]
+        opposite_direction_moves = [safe_float(row['percent_move_opposite_direction']) for row in filtered_data 
+                                   if safe_float(row['percent_move_opposite_direction']) is not None and abs(safe_float(row['percent_move_opposite_direction'])) > 0.1]
+        
+        if touch_levels:
+            high_count = touch_levels.count('High')
+            low_count = touch_levels.count('Low')
+            total_count = len(touch_levels)
+            
+            insights['premarket_level_touch'] = {
+                'touch_bias': 'High' if high_count > low_count else 'Low',
+                'high_count': high_count,
+                'low_count': low_count,
+                'total_count': total_count,
+                'high_percentage': round((high_count / total_count) * 100, 1) if total_count > 0 else 0,
+                'low_percentage': round((low_count / total_count) * 100, 1) if total_count > 0 else 0,
+                'description': 'Which pre-market level gets hit first (High or Low)',
+                'same_direction_median': round(calculate_median(same_direction_moves), 2) if same_direction_moves else None,
+                'same_direction_average': round(calculate_mean(same_direction_moves), 2) if same_direction_moves else None,
+                'same_direction_description': 'Move in same direction as gap after touching level',
+                'opposite_direction_median': round(calculate_median(opposite_direction_moves), 2) if opposite_direction_moves else None,
+                'opposite_direction_average': round(calculate_mean(opposite_direction_moves), 2) if opposite_direction_moves else None,
+                'opposite_direction_description': 'Move opposite to gap direction after touching level (reversal)'
+            }
+        
+        # 4b. 60-minute moves after touching pre-market level (if columns exist)
+        if 'percent_move_same_direction_60min' in data[0] and 'percent_move_opposite_direction_60min' in data[0]:
+            same_direction_60min = [safe_float(row['percent_move_same_direction_60min']) for row in filtered_data if safe_float(row['percent_move_same_direction_60min']) is not None]
+            opposite_direction_60min = [safe_float(row['percent_move_opposite_direction_60min']) for row in filtered_data if safe_float(row['percent_move_opposite_direction_60min']) is not None]
+            
+            if same_direction_60min or opposite_direction_60min:
+                insights['moves_after_touch_60min'] = {
+                    'trend_median': round(calculate_median(same_direction_60min), 2) if same_direction_60min else None,
+                    'trend_average': round(calculate_mean(same_direction_60min), 2) if same_direction_60min else None,
+                    'trend_description': '60-minute move in same direction as gap (trend continuation)',
+                    'reversal_median': round(calculate_median(opposite_direction_60min), 2) if opposite_direction_60min else None,
+                    'reversal_average': round(calculate_mean(opposite_direction_60min), 2) if opposite_direction_60min else None,
+                    'reversal_description': '60-minute move opposite to gap direction (reversal)',
+                    'trend_count': len(same_direction_60min),
+                    'reversal_count': len(opposite_direction_60min)
+                }
+        
+        # 5. % of price return to pre market high or low after hit the pre market high or low in other direction
+        return_levels = [row['touched_premarket_level'] for row in filtered_data if row['touched_premarket_level']]
+        returned_to_opposite = [row['returned_to_opposite_level'] for row in filtered_data if row['returned_to_opposite_level']]
+        
+        if return_levels and returned_to_opposite:
+            return_rate = (returned_to_opposite.count('Yes') / len(returned_to_opposite)) * 100
+            insights['return_to_opposite_level'] = {
+                'average': round(return_rate, 1),
+                'description': '% of time market reversal after hitting pre market high/low',
+                'return_count': returned_to_opposite.count('Yes'),
+                'no_return_count': returned_to_opposite.count('No'),
+                'total_count': len(returned_to_opposite)
+            }
+        
+        logging.debug(f"Calculated insights: {list(insights.keys())}")
+        
+        return jsonify({
+            'insights': insights,
+            'event_type': event_type,
+            'bin': bin_value,
+            'data_points': len(filtered_data)
+        })
+        
+    except Exception as e:
+        logging.error(f"Error processing news event insights: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
 # Global cache for QQQ data to prevent multiple scraping

@@ -846,6 +846,20 @@ form button:disabled::before {
     margin-bottom: var(--spacing-lg);
 }
 
+.insights-row.four-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.insights-row.two-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.insights-row.one-metric {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
 .insight-metric {
     background: var(--light-grey);
     padding: var(--spacing-lg);
@@ -880,6 +894,27 @@ form button:disabled::before {
 
 .metric-average {
     color: var(--accent-green);
+}
+
+.metric-direction-bias {
+    font-size: 0.9rem;
+    font-weight: var(--font-weight-semibold);
+    color: var(--charcoal);
+    margin-bottom: var(--spacing-xs);
+}
+
+.metric-opposite {
+    font-size: 0.9rem;
+    color: var(--dark-grey);
+    margin-bottom: var(--spacing-xs);
+}
+
+.metric-counts {
+    font-size: 0.8rem;
+    color: var(--dark-grey);
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--medium-grey);
 }
 
 .metric-description {
@@ -2097,4 +2132,37 @@ footer p {
         box-shadow: none;
         border: 1px solid #ccc;
     }
+}
+
+/* Nested metric cards for premarket level touch */
+.nested-metric-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 8px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nested-metric-title {
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+    margin-bottom: 6px;
+    text-align: center;
+}
+
+.nested-metric-median {
+    font-size: 18px;
+    font-weight: bold;
+    color: #007bff;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.nested-metric-average {
+    font-size: 14px;
+    color: #28a745;
+    text-align: center;
+    font-weight: 500;
 }
