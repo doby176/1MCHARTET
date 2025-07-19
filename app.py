@@ -951,11 +951,10 @@ def get_event_insights():
     
     try:
         event_type = request.args.get('event_type')
-        year = request.args.get('year')
         bin_value = request.args.get('bin')
-        filter_type = request.args.get('filter_type', 'year')
+        filter_type = request.args.get('filter_type', 'event-only')
         
-        logging.debug(f"Fetching event insights for event_type={event_type}, year={year}, bin={bin_value}, filter_type={filter_type}")
+        logging.debug(f"Fetching event insights for event_type={event_type}, bin={bin_value}, filter_type={filter_type}")
         
         if not os.path.exists(EVENT_ANALYSIS_DATA_PATH):
             logging.error(f"Event analysis data file not found: {EVENT_ANALYSIS_DATA_PATH}")
@@ -982,13 +981,10 @@ def get_event_insights():
             return jsonify({'error': 'Invalid event analysis data format'}), 400
         
         # Filter data based on filter type
-        if filter_type == 'year':
-            if not event_type or not year:
-                return jsonify({'error': 'Event type and year are required'}), 400
-            filtered_df = df[
-                (df['event_type'] == event_type) &
-                (df['year'] == year)
-            ].copy()
+        if filter_type == 'event-only':
+            if not event_type:
+                return jsonify({'error': 'Event type is required'}), 400
+            filtered_df = df[df['event_type'] == event_type].copy()
         else:  # bin filter
             if not event_type or not bin_value:
                 return jsonify({'error': 'Event type and economic impact range are required'}), 400
@@ -999,7 +995,7 @@ def get_event_insights():
         
         logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
         if filtered_df.empty:
-            logging.debug(f"No data found for event_type={event_type}, year={year}, bin={bin_value}")
+            logging.debug(f"No data found for event_type={event_type}, bin={bin_value}")
             return jsonify({'insights': {}, 'message': 'No data found for the selected criteria'})
         
         # Calculate insights for each metric

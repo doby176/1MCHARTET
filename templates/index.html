@@ -334,12 +334,12 @@
                 <p>Analyze market reactions to key news events with detailed metrics and insights from event-driven price action patterns.</p>
                 
                 <div class="filter-toggle">
-                    <label><input type="radio" name="event-insights-filter-type" value="year" checked> Filter by Event Type and Year</label>
+                    <label><input type="radio" name="event-insights-filter-type" value="event-only" checked> Filter by Event Type Only</label>
                     <label><input type="radio" name="event-insights-filter-type" value="bin"> Filter by Event Type and Economic Impact Range</label>
                 </div>
                 
                 <form id="event-insights-form">
-                    <div id="year-filter" class="filter-section active">
+                    <div id="event-insights-event-only-filter" class="filter-section active">
                         <label for="event-insights-type-select">Select Event Type:</label>
                         <select id="event-insights-type-select" name="event_type">
                             <option value="">Select event type</option>
@@ -348,12 +348,8 @@
                             <option value="FOMC">FOMC</option>
                             <option value="NFP">NFP</option>
                         </select>
-                        <label for="year-insights-select">Select Year:</label>
-                        <select id="year-insights-select" name="year">
-                            <option value="">Select year</option>
-                        </select>
                     </div>
-                    <div id="bin-filter" class="filter-section">
+                    <div id="event-insights-bin-filter" class="filter-section">
                         <label for="event-insights-type-select-bin">Select Event Type:</label>
                         <select id="event-insights-type-select-bin" name="event_type">
                             <option value="">Select event type</option>
@@ -373,7 +369,7 @@
                     <button type="submit">Get Event Insights</button>
                 </form>
                 <div id="event-insights-results">
-                    <p>Select an event type and year/economic impact range to view news event insights and statistics.</p>
+                    <p>Select an event type and economic impact range to view news event insights and statistics.</p>
                 </div>
             </div>
             <!-- News Event Analysis Section -->

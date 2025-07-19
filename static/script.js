@@ -160,10 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tickerEvents) tickerEvents.addEventListener('change', () => loadDates('ticker-select-events', 'date-events'));
         
         // Initialize event insights filters
-        const eventInsightsTypeSelect = document.getElementById('event-insights-type-select');
         const eventInsightsTypeSelectBin = document.getElementById('event-insights-type-select-bin');
         
-        if (eventInsightsTypeSelect) eventInsightsTypeSelect.addEventListener('change', loadEventInsightsYears);
         if (eventInsightsTypeSelectBin) eventInsightsTypeSelectBin.addEventListener('change', loadEventInsightsBinOptions);
     }
 });
@@ -258,10 +256,10 @@ let timeframeEarnings = 1;
 
 // Bin options for each event type
 const binOptions = {
-    CPI: ['<0%', '0-1%', '1-2%', '2-3%', '3-5%', '>5%'],
-    PPI: ['<0%', '0-2%', '2-4%', '4-8%', '>8%'],
-    NFP: ['<0K', '0-100K', '100-200K', '200-300K', '>300K'],
-    FOMC: ['0-1%', '1-2%', '2-3%', '3-4%', '>4%']
+    CPI: ['low', 'medium', 'high'],
+    PPI: ['low', 'medium', 'high'],
+    NFP: ['low', 'medium', 'high'],
+    FOMC: ['low', 'medium', 'high']
 };
 
 // Earnings outcome options with explanations
@@ -2030,19 +2028,19 @@ function toggleEarningsFilterSection() {
 }
 
 function toggleEventInsightsFilterSection() {
-    const yearFilter = document.getElementById('year-filter');
-    const binFilter = document.getElementById('bin-filter');
+    const eventOnlyFilter = document.getElementById('event-insights-event-only-filter');
+    const binFilter = document.getElementById('event-insights-bin-filter');
     const filterType = document.querySelector('input[name="event-insights-filter-type"]:checked').value;
 
-    yearFilter.classList.remove('active');
+    eventOnlyFilter.classList.remove('active');
     binFilter.classList.remove('active');
 
-    if (filterType === 'year') {
-        yearFilter.classList.add('active');
+    if (filterType === 'event-only') {
+        eventOnlyFilter.classList.add('active');
         document.getElementById('bin-insights-select').value = '';
     } else {
         binFilter.classList.add('active');
-        document.getElementById('year-insights-select').value = '';
+        document.getElementById('event-insights-type-select').value = '';
     }
 }
 
@@ -4236,7 +4234,6 @@ async function loadGapInsights(event) {
 async function loadEventInsights(event) {
     event.preventDefault();
     const eventType = document.getElementById('event-insights-type-select').value || document.getElementById('event-insights-type-select-bin').value;
-    const year = document.getElementById('year-insights-select').value;
     const bin = document.getElementById('bin-insights-select').value;
     const filterType = document.querySelector('input[name="event-insights-filter-type"]:checked').value;
     const insightsContainer = document.getElementById('event-insights-results');
@@ -4256,19 +4253,17 @@ async function loadEventInsights(event) {
         return;
     }
 
-    if (!eventType || (filterType === 'year' && !year) || (filterType === 'bin' && !bin)) {
-        insightsContainer.innerHTML = '<p>Please select an event type and year/economic impact range.</p>';
+    if (!eventType || (filterType === 'bin' && !bin)) {
+        insightsContainer.innerHTML = '<p>Please select an event type and economic impact range.</p>';
         return;
     }
     
-    console.log(`Fetching event insights for event_type=${eventType}, year=${year}, bin=${bin}, filter_type=${filterType}`);
+    console.log(`Fetching event insights for event_type=${eventType}, bin=${bin}, filter_type=${filterType}`);
     
     // Add action parameters for rate limiting
     const isInSampleMode = window.SAMPLE_MODE || window.location.pathname.includes('/sample');
     let url = `/api/event_insights?event_type=${encodeURIComponent(eventType)}&filter_type=${encodeURIComponent(filterType)}`;
-    if (filterType === 'year') {
-        url += `&year=${encodeURIComponent(year)}`;
-    } else {
+    if (filterType === 'bin') {
         url += `&bin=${encodeURIComponent(bin)}`;
     }
     if (!isInSampleMode) {
@@ -4316,7 +4311,7 @@ async function loadEventInsights(event) {
                     selects.forEach(select => select.disabled = false);
                     inputs.forEach(input => input.disabled = false);
                     localStorage.removeItem('eventInsightsActionLimitReset');
-                    insightsContainer.innerHTML = '<p>Select an event type and year/economic impact range to view event insights.</p>';
+                    insightsContainer.innerHTML = '<p>Select an event type and economic impact range to view event insights.</p>';
                 }, 12 * 60 * 60 * 1000);
             } else {
                 // Regular rate limit exceeded
@@ -4333,7 +4328,7 @@ async function loadEventInsights(event) {
                     selects.forEach(select => select.disabled = false);
                     inputs.forEach(input => input.disabled = false);
                     localStorage.removeItem('eventInsightsRateLimitReset');
-                    insightsContainer.innerHTML = '<p>Select an event type and year/economic impact range to view event insights.</p>';
+                    insightsContainer.innerHTML = '<p>Select an event type and economic impact range to view event insights.</p>';
                 }, 1000);
             }
             return;
@@ -4365,7 +4360,7 @@ async function loadEventInsights(event) {
         const container = document.createElement('div');
         container.className = 'insights-container';
         
-        const filterText = filterType === 'year' ? `${eventType} events in ${year}` : `${eventType} events with ${bin} economic impact`;
+        const filterText = filterType === 'event-only' ? `${eventType} events` : `${eventType} events with ${bin} economic impact`;
         container.innerHTML = `<h3>News Event Insights for ${filterText}</h3>`;
 
         // First row: 3 metrics
@@ -4421,7 +4416,7 @@ async function loadEventInsights(event) {
 
         gtag('event', 'event_insights_load', {
             'event_category': 'Event Insights',
-            'event_label': `${eventType}_${filterType}_${year || bin}`
+            'event_label': `${eventType}_${filterType}_${bin || 'all'}`
         });
     } catch (error) {
         console.error('Error loading event insights:', error.message);
@@ -4430,60 +4425,7 @@ async function loadEventInsights(event) {
     }
 }
 
-async function loadEventInsightsYears() {
-    const eventType = document.getElementById('event-insights-type-select').value;
-    const yearSelect = document.getElementById('year-insights-select');
-    
-    yearSelect.innerHTML = '<option value="">Loading years...</option>';
-    yearSelect.disabled = true;
-    
-    if (!eventType) {
-        yearSelect.innerHTML = '<option value="">Select year</option>';
-        yearSelect.disabled = true;
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/years', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.status === 429) {
-            const data = await response.json();
-            console.error('Rate limit error:', data.error);
-            yearSelect.innerHTML = `<option value="">${data.error}</option>`;
-            alert(data.error);
-            return;
-        }
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Fetched years for event insights:', data.years);
-        
-        yearSelect.innerHTML = '<option value="">Select year</option>';
-        if (data.years && Array.isArray(data.years)) {
-            data.years.forEach(year => {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                yearSelect.appendChild(option);
-            });
-        }
-        yearSelect.disabled = false;
-    } catch (error) {
-        console.error('Error loading years for event insights:', error.message);
-        yearSelect.innerHTML = '<option value="">Error loading years</option>';
-        alert('Failed to load years: ' + error.message);
-    }
-}
+
 
 function loadEventInsightsBinOptions() {
     const eventType = document.getElementById('event-insights-type-select-bin').value;
