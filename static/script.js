@@ -2056,29 +2056,22 @@ function activateMeasurementTool(section) {
         
         console.log('Click coordinates:', { x: clickX, y: clickY });
         
-        // Store raw coordinates for now - we'll implement proper conversion
+        // Get the exact price from the chart's price scale at the Y coordinate
+        const chart = chartInstances[section].chart;
+        const priceScale = chart.priceScale('right');
+        const exactPrice = priceScale.coordinateToPrice(clickY);
+        
+        console.log('Exact price from coordinate:', exactPrice);
+        
+        // Use time from param
         const time = param.time || Date.now();
-        const price = null; // We'll need to implement price calculation
-        
         console.log('Using time from param:', time);
-        
-        // For now, let's use a simpler approach - store the click coordinates
-        // and we'll implement the price calculation differently
-        
-        // Find the nearest candle data point for this time
-        const candleData = getCandleDataForTime(section, time);
-        console.log('Found candle data:', candleData);
-        
-        if (!candleData) {
-            console.log('No candle data found for time:', time);
-            return;
-        }
         
         if (!measurementTool[section].startPoint) {
             // First click - set start point
             measurementTool[section].startPoint = {
                 time: time,
-                price: candleData.close,
+                price: exactPrice,
                 x: clickX,
                 y: clickY
             };
@@ -2091,7 +2084,7 @@ function activateMeasurementTool(section) {
             console.log('Second click detected, setting end point');
             measurementTool[section].endPoint = {
                 time: time,
-                price: candleData.close,
+                price: exactPrice,
                 x: clickX,
                 y: clickY
             };
