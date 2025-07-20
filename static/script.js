@@ -3445,13 +3445,132 @@ function setInitialReplayZoom(section) {
 
 function startReplay(section) {
     const config = getReplayConfig(section);
-    const chartData = config.chartData();
-    if (!chartData || !chartData.timestamp || !chartData.timestamp.length) {
+    
+    if (isReplaying[section]) {
+        console.log(`Replay already running for ${section}`);
+        return;
+    }
+    
+    // Check if chart data exists in the global chartData variable
+    if (!chartData[section] || !chartData[section].timestamp || chartData[section].timestamp.length === 0) {
+        console.log(`No chart data available for replay in ${section}`);
         alert('No chart data available for replay.');
         return;
     }
-    // ... rest of your startReplay code ...
-    // ... existing code ...
+    
+    const currentChartData = chartData[section];
+    
+    // Clear all indicators before replay starts so they build up naturally
+    clearIndicatorsForReplay(section);
+    
+    // Reset zoom state when starting replay (will be set again by setInitialReplayZoom)
+    userZoomState[section] = false;
+    
+    // Destroy current chart and recreate it
+    destroyChart(section);
+    
+    // Update chart to show no candles (initial state)
+    renderChart(section, []);
+    
+    // Set initial zoom for replay to show normal-sized candles
+    setInitialReplayZoom(section);
+    
+    // Re-setup indicators that were active
+    const indicatorsPanel = document.getElementById(`chart-indicators-${section}`);
+    if (indicatorsPanel) {
+        setupIndicatorListeners(section);
+    }
+    
+    // Reset replay state
+    config.setCurrentReplayIndex(0);
+    config.setIsReplaying(true);
+    config.setIsPaused(false);
+    
+    // Get UI elements
+    const playButton = document.getElementById(config.playButtonId);
+    const pauseButton = document.getElementById(config.pauseButtonId);
+    const startOverButton = document.getElementById(config.startOverButtonId);
+    const prevButton = document.getElementById(config.prevButtonId);
+    const nextButton = document.getElementById(config.nextButtonId);
+    const timestampDisplay = document.getElementById(config.timestampDisplayId);
+    let buyButton, sellButton;
+    if (config.hasTradeSimulator) {
+        buyButton = document.getElementById('buy-trade');
+        sellButton = document.getElementById('sell-trade');
+        
+        // Reset trading state
+        openPosition = null;
+        entryPriceLine = null;
+        takeProfitLine = null;
+        stopLossLine = null;
+        tradeHistory = [];
+    }
+    
+    // Update button states
+    playButton.textContent = 'Pause Replay';
+    playButton.disabled = true;
+    pauseButton.disabled = false;
+    startOverButton.disabled = false;
+    prevButton.disabled = true;
+    nextButton.disabled = true;
+    if (config.hasTradeSimulator) {
+        buyButton.disabled = true;
+        sellButton.disabled = true;
+        updateTradeSummary();
+    }
+    
+    // Start the replay interval
+    const replayInterval = setInterval(() => {
+        if (!config.isReplaying()) {
+            clearInterval(replayInterval);
+            return;
+        }
+        
+        const currentIndex = config.currentReplayIndex();
+        if (currentIndex >= currentChartData.timestamp.length) {
+            // Replay finished
+            stopReplay(section);
+            return;
+        }
+        
+        // Update chart to current index
+        updateChartToIndex(section);
+        
+        // Move to next candle
+        config.setCurrentReplayIndex(currentIndex + 1);
+        
+        // Update timestamp display
+        const timestamp = currentChartData.timestamp[currentIndex];
+        const date = new Date(timestamp * 1000);
+        const timeString = date.toLocaleTimeString('en-US', { 
+            hour12: false, 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
+        timestampDisplay.textContent = `Current Time: ${timeString}`;
+        
+        // Update button states
+        prevButton.disabled = currentIndex + 1 <= 0;
+        nextButton.disabled = currentIndex + 1 >= currentChartData.timestamp.length;
+        if (config.hasTradeSimulator) {
+            buyButton.disabled = currentIndex + 1 <= 0 || currentIndex + 1 > currentChartData.timestamp.length || openPosition?.type === 'sell';
+            sellButton.disabled = currentIndex + 1 <= 0 || currentIndex + 1 > currentChartData.timestamp.length;
+        }
+        
+        // Check for TP/SL if position is open
+        if (config.hasTradeSimulator && openPosition) {
+            checkPositionForTPSL(currentIndex + 1);
+        }
+        
+    }, config.replaySpeed());
+    
+    config.setReplayInterval(replayInterval);
+    
+    gtag('event', 'replay_started', {
+        'event_category': 'Chart',
+        'event_label': `${currentChartData.ticker}_${currentChartData.date}_${section || 'simulator'}`
+    });
 }
 
 function pauseReplay(section) {
@@ -3476,15 +3595,16 @@ function pauseReplay(section) {
     pauseButton.disabled = true;
     startOverButton.disabled = config.currentReplayIndex() <= 0;
     if (config.hasTradeSimulator) {
-        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > config.chartData().count || openPosition?.type === 'sell';
-        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > config.chartData().count;
+        const currentChartData = chartData[section];
+        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > currentChartData.timestamp.length || openPosition?.type === 'sell';
+        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > currentChartData.timestamp.length;
     }
 }
 
 function startOverReplay(section) {
     const config = getReplayConfig(section);
-    const chartData = config.chartData();
-    if (!chartData) return;
+    const currentChartData = chartData[section];
+    if (!currentChartData) return;
     
     // Reset zoom state when starting over (will be set again by setInitialReplayZoom)
     userZoomState[section] = false;
@@ -3554,7 +3674,7 @@ function startOverReplay(section) {
 
     gtag('event', 'replay_start_over', {
         'event_category': 'Chart',
-        'event_label': `${chartData.ticker}_${chartData.date}_${section || 'simulator'}`
+        'event_label': `${currentChartData.ticker}_${currentChartData.date}_${section || 'simulator'}`
     });
 }
 
@@ -3570,7 +3690,7 @@ function stopReplay(section) {
     const startOverButton = document.getElementById(config.startOverButtonId);
     const prevButton = document.getElementById(config.prevButtonId);
     const nextButton = document.getElementById(config.nextButtonId);
-    const chartData = config.chartData();
+    const currentChartData = chartData[section];
     let buyButton, sellButton;
     if (config.hasTradeSimulator) {
         buyButton = document.getElementById('buy-trade');
@@ -3578,8 +3698,8 @@ function stopReplay(section) {
     }
 
     // Close open position if any (only for Market Simulator)
-    if (config.hasTradeSimulator && openPosition && config.currentReplayIndex() > 0 && config.currentReplayIndex() <= chartData.count) {
-        const exitPrice = chartData.close[config.currentReplayIndex() - 1];
+    if (config.hasTradeSimulator && openPosition && config.currentReplayIndex() > 0 && config.currentReplayIndex() <= currentChartData.timestamp.length) {
+        const exitPrice = currentChartData.close[config.currentReplayIndex() - 1];
         const pnl = openPosition.type === 'buy'
             ? (exitPrice - openPosition.price) * openPosition.shares
             : (openPosition.price - exitPrice) * openPosition.shares;
@@ -3588,7 +3708,7 @@ function stopReplay(section) {
             entryPrice: openPosition.price,
             exitPrice: exitPrice,
             shares: openPosition.shares,
-            timestamp: chartData.timestamp[config.currentReplayIndex() - 1],
+            timestamp: currentChartData.timestamp[config.currentReplayIndex() - 1],
             pnl: parseFloat(pnl.toFixed(2))
         });
         
@@ -3612,7 +3732,7 @@ function stopReplay(section) {
         console.log(`Closed position at replay end with P/L: $${pnl.toFixed(2)}`);
         gtag('event', 'trade_closed', {
             'event_category': 'Trade Simulator',
-            'event_label': `${tradeHistory[tradeHistory.length - 1].type}_${chartData.ticker}_${chartData.date}_${tradeHistory[tradeHistory.length - 1].timestamp}`
+            'event_label': `${tradeHistory[tradeHistory.length - 1].type}_${currentChartData.ticker}_${currentChartData.date}_${tradeHistory[tradeHistory.length - 1].timestamp}`
         });
     }
 
