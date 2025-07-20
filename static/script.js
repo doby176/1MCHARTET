@@ -2144,9 +2144,9 @@ function deactivateMeasurementTool(section) {
     }
     
     // Remove measurement line and overlay
-    if (measurementTool[section].line && chartInstances[section] && chartInstances[section].chart) {
+    if (measurementTool[section].line) {
         try {
-            chartInstances[section].chart.removeSeries(measurementTool[section].line);
+            measurementTool[section].line.remove();
         } catch (error) {
             console.log('Error removing measurement line:', error);
         }
@@ -2207,104 +2207,60 @@ function drawMeasurementLine(section) {
     console.log('startPoint:', measurementTool[section].startPoint);
     console.log('endPoint:', measurementTool[section].endPoint);
     
-    const chart = chartInstances[section].chart;
-    if (!chart) {
-        console.log('No chart instance found, cannot draw measurement line');
-        return;
-    }
-    
-    // Additional safety check - ensure chart is still valid
-    if (!chartInstances[section] || !chartInstances[section].candlestickSeries) {
-        console.log('Chart instance is not fully initialized, cannot draw measurement line');
-        return;
-    }
-    
     // Remove existing line if any
     if (measurementTool[section].line) {
         console.log('Removing existing line');
-        try {
-            chart.removeSeries(measurementTool[section].line);
-        } catch (error) {
-            console.log('Error removing existing line:', error);
-        }
+        measurementTool[section].line.remove();
         measurementTool[section].line = null;
     }
     
-    // Skip line drawing if chart seems unstable
-    if (!chartInstances[section].candlestickSeries || !chartInstances[section].candlestickSeries.data) {
-        console.log('Chart data seems unstable, skipping line drawing');
+    const chartContainer = document.getElementById(`chart-${section}`);
+    if (!chartContainer) {
+        console.log('Chart container not found, cannot draw measurement line');
         return;
     }
     
     try {
-        // Validate data before creating series
-        const startTime = measurementTool[section].startPoint.time;
-        const endTime = measurementTool[section].endPoint.time;
-        const startPrice = measurementTool[section].startPoint.price;
-        const endPrice = measurementTool[section].endPoint.price;
+        // Get the coordinates from the measurement points
+        const startX = measurementTool[section].startPoint.x;
+        const startY = measurementTool[section].startPoint.y;
+        const endX = measurementTool[section].endPoint.x;
+        const endY = measurementTool[section].endPoint.y;
         
-        if (!startTime || !endTime || startPrice === null || endPrice === null || 
-            isNaN(startPrice) || isNaN(endPrice)) {
-            console.error('Invalid measurement data:', { startTime, endTime, startPrice, endPrice });
-            return;
-        }
+        // Calculate line properties
+        const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+        const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
         
-        // Ensure we have valid numeric values
-        const validStartPrice = parseFloat(startPrice);
-        const validEndPrice = parseFloat(endPrice);
+        // Create SVG line element
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        `;
         
-        if (isNaN(validStartPrice) || isNaN(validEndPrice)) {
-            console.error('Invalid price values after parsing:', { validStartPrice, validEndPrice });
-            return;
-        }
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', startX);
+        line.setAttribute('y1', startY);
+        line.setAttribute('x2', endX);
+        line.setAttribute('y2', endY);
+        line.setAttribute('stroke', '#FF6B6B');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-linecap', 'round');
         
-        // Check if chart is still responsive
-        if (!chart || typeof chart.addLineSeries !== 'function') {
-            console.error('Chart is not in a valid state for adding series');
-            return;
-        }
+        svg.appendChild(line);
+        chartContainer.appendChild(svg);
         
-        // Create line series for measurement with minimal options
-        const lineSeries = chart.addLineSeries({
-            color: '#FF6B6B',
-            lineWidth: 2,
-            crosshairMarkerVisible: false,
-            lastValueVisible: false,
-            priceLineVisible: false
-        });
-        
-        // Add line points with validated data
-        const lineData = [
-            { time: startTime, value: validStartPrice },
-            { time: endTime, value: validEndPrice }
-        ];
-        
-        console.log('Setting line data:', lineData);
-        
-        // Set data with error handling
-        try {
-            lineSeries.setData(lineData);
-            measurementTool[section].line = lineSeries;
-            console.log('Custom measurement line drawn successfully');
-        } catch (setDataError) {
-            console.error('Error setting line data:', setDataError);
-            // Clean up the series if data setting fails
-            try {
-                chart.removeSeries(lineSeries);
-            } catch (cleanupError) {
-                console.error('Error cleaning up failed line series:', cleanupError);
-            }
-            throw setDataError; // Re-throw to be caught by outer try-catch
-        }
+        measurementTool[section].line = svg;
+        console.log('Custom measurement line drawn successfully using SVG');
         
     } catch (error) {
         console.error('Error drawing measurement line:', error);
         console.log('Measurement line drawing failed, but chart should remain functional');
-        
-        // Don't attempt any chart recovery as it can cause more issues
-        // The chart should continue to work normally without the measurement line
-        
-        // Set line to null to indicate no line was drawn
         measurementTool[section].line = null;
     }
 }
@@ -2404,9 +2360,9 @@ function clearMeasurement(section) {
     console.log(`Clearing measurement for ${section}`);
     
     // Clear the measurement overlay and line, but keep the tool active
-    if (measurementTool[section].line && chartInstances[section] && chartInstances[section].chart) {
+    if (measurementTool[section].line) {
         try {
-            chartInstances[section].chart.removeSeries(measurementTool[section].line);
+            measurementTool[section].line.remove();
             console.log('Measurement line removed successfully');
         } catch (error) {
             console.log('Error removing measurement line:', error);
