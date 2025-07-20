@@ -101,87 +101,6 @@ header::before {
     pointer-events: none;
 }
 
-.candles-image {
-    height: 60px;
-    margin-right: 15px;
-    border-radius: 8px;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
-    transition: var(--transition-medium);
-}
-
-.candles-image:hover {
-    transform: scale(1.02);
-    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
-}
-
-/* Header content container for home page */
-.header-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    margin-bottom: var(--spacing-lg);
-}
-
-/* Sliding candles image for home page */
-.candles-image-slide {
-    max-width: 450px;
-    width: 100%;
-    height: auto;
-    border-radius: 12px;
-    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
-    transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    transform: translateY(0);
-    opacity: 0.9;
-    position: absolute;
-    right: 20px; /* Move to the right side */
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 1;
-}
-
-.candles-image-slide:hover {
-    transform: translateY(-50%) scale(1.05);
-    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
-    opacity: 1;
-}
-
-/* Logo positioning for home page */
-.landing-header .logo {
-    position: relative;
-    z-index: 2;
-    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.landing-header .logo:hover {
-    transform: scale(1.02);
-}
-
-.landing-header .candles-image {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    height: auto;
-    z-index: 1;
-}
-
-/* Animation on page load */
-@keyframes slideInCandles {
-    0% {
-        transform: translateY(100px);
-        opacity: 0;
-    }
-    100% {
-        transform: translateY(-50%);
-        opacity: 0.9;
-    }
-}
-
-.candles-image-slide {
-    animation: slideInCandles 1.5s ease-out forwards;
-}
-
 .logo {
     max-width: 450px;
     width: 100%;
@@ -1172,10 +1091,6 @@ form button:disabled::before {
     text-align: center;
     position: relative;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
 }
 
 .landing-header::before {
@@ -1459,10 +1374,9 @@ form#signup-form p a:hover, form#login-form p a:hover {
 footer {
     background: var(--navy);
     color: var(--white);
-    padding: var(--spacing-xxl) 0;
+    padding: var(--spacing-xxl) var(--spacing-lg);
     text-align: center;
     margin-top: var(--spacing-xxl);
-    position: relative;
 }
 
 .footer-logo {
@@ -1490,20 +1404,6 @@ footer p {
     margin-top: var(--spacing-xl);
     font-size: 0.9rem;
     opacity: 0.8;
-}
-
-.footer .downpic-image {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: auto;
-    z-index: 1;
-}
-
-.footer .footer-content {
-    position: relative;
-    z-index: 2;
-    padding: 0 var(--spacing-lg);
 }
 
 /* Trade Summary Styling */
@@ -2265,17 +2165,4 @@ footer p {
     color: #28a745;
     text-align: center;
     font-weight: 500;
-}
-
-/* Measurement Tool Button Styles */
-.drawing-tool-btn.active {
-    background: #4CAF50 !important;
-    color: white !important;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
-    transform: translateY(-1px);
-}
-
-.drawing-tool-btn.active:hover {
-    background: #45a049 !important;
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
 }

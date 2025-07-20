@@ -70,8 +70,8 @@
                 <a href="{{ url_for('landing') }}" class="auth-btn" style="background: #007bff; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9em; font-weight: 500; transition: all 0.2s ease;">Sign Up</a>
             </div>
         </div>
-        <img src="{{ url_for('static', filename='candles.png') }}" alt="Candles" class="candles-image">
-        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo" style="max-width: 675px; margin-bottom: 20px;">
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
+        <h1>Discover Powerful Nasdaq Gap Insights, News Analysis, Market Replay and Earnings Data with 1MChart</h1>
     </header>
     
     <main class="landing-main">
@@ -87,7 +87,7 @@
                 <iframe 
                     width="100%" 
                     height="315" 
-                    src="https://www.youtube.com/embed/BPywNAlhFA4" 
+                    src="https://www.youtube.com/embed/rXmOpfbfyfg" 
                     title="1MChart Introduction" 
                     frameborder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -167,13 +167,10 @@
         </div>
     </main>
     <footer class="footer">
-        <img src="{{ url_for('static', filename='downpic.png') }}" alt="Footer Image" class="downpic-image">
-        <div class="footer-content">
-            <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
-            <p>More coming soon</p>
-            <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
-            <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
-        </div>
+        <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
+        <p>More coming soon</p>
+        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='script.js') }}?v=50"></script>
