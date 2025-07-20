@@ -2041,33 +2041,55 @@ function activateMeasurementTool(section) {
         if (param && param.point) {
             const candlestickSeries = chartInstances[section].candlestickSeries;
             if (candlestickSeries) {
-                const clickPrice = candlestickSeries.coordinateToPrice(param.point.y);
-                if (clickPrice !== null && clickPrice !== undefined) {
-                    const clickTime = param.time;
-                    
-                    if (!measurementTool[section].startPoint) {
-                        // First click - set start point
-                        measurementTool[section].startPoint = {
-                            time: clickTime,
-                            price: clickPrice,
-                            x: param.point.x,
-                            y: param.point.y
-                        };
-                        showMeasurementFeedback(section, `Start point set at $${clickPrice.toFixed(2)}`);
-                    } else {
-                        // Second click - set end point and draw measurement
-                        measurementTool[section].endPoint = {
-                            time: clickTime,
-                            price: clickPrice,
-                            x: param.point.x,
-                            y: param.point.y
-                        };
-                        drawMeasurementLine(section);
-                        calculateMeasurement(section);
+                try {
+                    const clickPrice = candlestickSeries.coordinateToPrice(param.point.y);
+                    if (clickPrice !== null && clickPrice !== undefined && !isNaN(clickPrice)) {
+                        const clickTime = param.time;
                         
-                        // Reset for next measurement
-                        measurementTool[section].startPoint = null;
-                        measurementTool[section].endPoint = null;
+                        if (!measurementTool[section].startPoint) {
+                            // First click - set start point
+                            measurementTool[section].startPoint = {
+                                time: clickTime,
+                                price: clickPrice,
+                                x: param.point.x,
+                                y: param.point.y
+                            };
+                            showMeasurementFeedback(section, `Start point set at $${clickPrice.toFixed(2)}`);
+                        } else {
+                            // Second click - set end point and draw measurement
+                            measurementTool[section].endPoint = {
+                                time: clickTime,
+                                price: clickPrice,
+                                x: param.point.x,
+                                y: param.point.y
+                            };
+                            drawMeasurementLine(section);
+                            calculateMeasurement(section);
+                            
+                            // Reset for next measurement - clear both points
+                            measurementTool[section].startPoint = null;
+                            measurementTool[section].endPoint = null;
+                            
+                            // Show feedback that measurement is complete and ready for next
+                            showMeasurementFeedback(section, 'Measurement complete! Click to measure again.');
+                        }
+                    } else {
+                        console.log('Invalid click price detected, ignoring click');
+                    }
+                } catch (error) {
+                    console.error('Error handling measurement click:', error);
+                    // Auto-recovery: refresh chart data if there's an error
+                    try {
+                        const config = getReplayConfig(section);
+                        if (config && config.aggregatedCandles) {
+                            const candles = config.aggregatedCandles();
+                            if (candles && candles.length > 0) {
+                                renderChart(section, candles);
+                                console.log('Chart data refreshed after measurement error');
+                            }
+                        }
+                    } catch (recoveryError) {
+                        console.error('Auto-recovery failed:', recoveryError);
                     }
                 }
             }
@@ -2175,7 +2197,10 @@ function drawMeasurementLine(section) {
     console.log('endPoint:', measurementTool[section].endPoint);
     
     const chart = chartInstances[section].chart;
-    if (!chart) return;
+    if (!chart) {
+        console.log('No chart instance found, cannot draw measurement line');
+        return;
+    }
     
     // Remove existing line if any
     if (measurementTool[section].line) {
@@ -2185,26 +2210,58 @@ function drawMeasurementLine(section) {
         } catch (error) {
             console.log('Error removing existing line:', error);
         }
+        measurementTool[section].line = null;
     }
     
-    // Create line series for measurement
-    const lineSeries = chart.addLineSeries({
-        color: '#FF6B6B',
-        lineWidth: 2,
-        lineStyle: LightweightCharts.LineStyle.Solid,
-        crosshairMarkerVisible: false,
-        lastValueVisible: false,
-        priceLineVisible: false
-    });
-    
-    // Add line points
-    lineSeries.setData([
-        { time: measurementTool[section].startPoint.time, value: measurementTool[section].startPoint.price },
-        { time: measurementTool[section].endPoint.time, value: measurementTool[section].endPoint.price }
-    ]);
-    
-    measurementTool[section].line = lineSeries;
-    console.log('Custom measurement line drawn successfully');
+    try {
+        // Create line series for measurement
+        const lineSeries = chart.addLineSeries({
+            color: '#FF6B6B',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Solid,
+            crosshairMarkerVisible: false,
+            lastValueVisible: false,
+            priceLineVisible: false
+        });
+        
+        // Validate data before setting
+        const startTime = measurementTool[section].startPoint.time;
+        const endTime = measurementTool[section].endPoint.time;
+        const startPrice = measurementTool[section].startPoint.price;
+        const endPrice = measurementTool[section].endPoint.price;
+        
+        if (!startTime || !endTime || startPrice === null || endPrice === null || 
+            isNaN(startPrice) || isNaN(endPrice)) {
+            console.error('Invalid measurement data:', { startTime, endTime, startPrice, endPrice });
+            return;
+        }
+        
+        // Add line points
+        lineSeries.setData([
+            { time: startTime, value: startPrice },
+            { time: endTime, value: endPrice }
+        ]);
+        
+        measurementTool[section].line = lineSeries;
+        console.log('Custom measurement line drawn successfully');
+        
+    } catch (error) {
+        console.error('Error drawing measurement line:', error);
+        // Auto-recovery: refresh chart data if candles disappeared
+        console.log('Attempting auto-recovery by refreshing chart data...');
+        try {
+            const config = getReplayConfig(section);
+            if (config && config.aggregatedCandles) {
+                const candles = config.aggregatedCandles();
+                if (candles && candles.length > 0) {
+                    renderChart(section, candles);
+                    console.log('Chart data refreshed successfully');
+                }
+            }
+        } catch (recoveryError) {
+            console.error('Auto-recovery failed:', recoveryError);
+        }
+    }
 }
 
 function calculateMeasurement(section) {
