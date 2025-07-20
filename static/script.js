@@ -2230,18 +2230,14 @@ function drawMeasurementLine(section) {
         measurementTool[section].line = null;
     }
     
+    // Skip line drawing if chart seems unstable
+    if (!chartInstances[section].candlestickSeries || !chartInstances[section].candlestickSeries.data) {
+        console.log('Chart data seems unstable, skipping line drawing');
+        return;
+    }
+    
     try {
-        // Create line series for measurement
-        const lineSeries = chart.addLineSeries({
-            color: '#FF6B6B',
-            lineWidth: 2,
-            lineStyle: LightweightCharts.LineStyle.Solid,
-            crosshairMarkerVisible: false,
-            lastValueVisible: false,
-            priceLineVisible: false
-        });
-        
-        // Validate data before setting
+        // Validate data before creating series
         const startTime = measurementTool[section].startPoint.time;
         const endTime = measurementTool[section].endPoint.time;
         const startPrice = measurementTool[section].startPoint.price;
@@ -2262,6 +2258,21 @@ function drawMeasurementLine(section) {
             return;
         }
         
+        // Check if chart is still responsive
+        if (!chart || typeof chart.addLineSeries !== 'function') {
+            console.error('Chart is not in a valid state for adding series');
+            return;
+        }
+        
+        // Create line series for measurement with minimal options
+        const lineSeries = chart.addLineSeries({
+            color: '#FF6B6B',
+            lineWidth: 2,
+            crosshairMarkerVisible: false,
+            lastValueVisible: false,
+            priceLineVisible: false
+        });
+        
         // Add line points with validated data
         const lineData = [
             { time: startTime, value: validStartPrice },
@@ -2269,16 +2280,32 @@ function drawMeasurementLine(section) {
         ];
         
         console.log('Setting line data:', lineData);
-        lineSeries.setData(lineData);
         
-        measurementTool[section].line = lineSeries;
-        console.log('Custom measurement line drawn successfully');
+        // Set data with error handling
+        try {
+            lineSeries.setData(lineData);
+            measurementTool[section].line = lineSeries;
+            console.log('Custom measurement line drawn successfully');
+        } catch (setDataError) {
+            console.error('Error setting line data:', setDataError);
+            // Clean up the series if data setting fails
+            try {
+                chart.removeSeries(lineSeries);
+            } catch (cleanupError) {
+                console.error('Error cleaning up failed line series:', cleanupError);
+            }
+            throw setDataError; // Re-throw to be caught by outer try-catch
+        }
         
     } catch (error) {
         console.error('Error drawing measurement line:', error);
-        // Don't attempt auto-recovery as it can cause more issues
-        // Just log the error and continue
         console.log('Measurement line drawing failed, but chart should remain functional');
+        
+        // Don't attempt any chart recovery as it can cause more issues
+        // The chart should continue to work normally without the measurement line
+        
+        // Set line to null to indicate no line was drawn
+        measurementTool[section].line = null;
     }
 }
 
