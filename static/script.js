@@ -3445,131 +3445,123 @@ function setInitialReplayZoom(section) {
 
 function startReplay(section) {
     const config = getReplayConfig(section);
+    const chartData = config.chartData();
+    if (!chartData) return;
     
-    if (config.isReplaying()) {
-        console.log(`Replay already running for ${section}`);
-        return;
-    }
-    
-    // Check if chart data exists in the global chartData variable
-    if (!chartData[section] || !chartData[section].timestamp || chartData[section].timestamp.length === 0) {
-        console.log(`No chart data available for replay in ${section}`);
-        alert('No chart data available for replay.');
-        return;
-    }
-    
-    const currentChartData = chartData[section];
-    
-    // Clear all indicators before replay starts so they build up naturally
-    clearIndicatorsForReplay(section);
-    
-    // Reset zoom state when starting replay (will be set again by setInitialReplayZoom)
+    // Reset zoom state when starting replay to enable auto-fit
     userZoomState[section] = false;
     
-    // Destroy current chart and recreate it
-    destroyChart(section);
-    
-    // Update chart to show no candles (initial state)
-    renderChart(section, []);
-    
-    // Set initial zoom for replay to show normal-sized candles
-    setInitialReplayZoom(section);
-    
-    // Re-setup indicators that were active
-    const indicatorsPanel = document.getElementById(`chart-indicators-${section}`);
-    if (indicatorsPanel) {
-        setupIndicatorListeners(section);
-    }
-    
-    // Reset replay state
-    config.setCurrentReplayIndex(0);
-    config.setIsReplaying(true);
-    config.setIsPaused(false);
-    
-    // Get UI elements
+    // Clear all indicators before starting replay so they build up naturally
+    clearIndicatorsForReplay(section);
+
     const playButton = document.getElementById(config.playButtonId);
     const pauseButton = document.getElementById(config.pauseButtonId);
     const startOverButton = document.getElementById(config.startOverButtonId);
     const prevButton = document.getElementById(config.prevButtonId);
     const nextButton = document.getElementById(config.nextButtonId);
     const timestampDisplay = document.getElementById(config.timestampDisplayId);
+    const startTimeInput = document.getElementById(config.startTimeInputId).value;
+    const replaySpeed = parseInt(document.getElementById(config.replaySpeedId).value);
     let buyButton, sellButton;
     if (config.hasTradeSimulator) {
         buyButton = document.getElementById('buy-trade');
         sellButton = document.getElementById('sell-trade');
-        
-        // Reset trading state
-        openPosition = null;
-        entryPriceLine = null;
-        takeProfitLine = null;
-        stopLossLine = null;
-        tradeHistory = [];
     }
-    
-    // Update button states
-    playButton.textContent = 'Pause Replay';
+
+    // Determine start index based on user input
+    if (!config.isPaused()) {
+        if (startTimeInput && startTimeInput.match(/^[0-9]{1,2}:[0-5][0-9]$/)) {
+            const [hours, minutes] = startTimeInput.split(':').map(Number);
+            // Validate time ranges
+            if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+                const targetTime = new Date(`${chartData.date}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
+                let currentReplayIndex = chartData.timestamp.findIndex(ts => {
+                    const candleTime = new Date(ts);
+                    return candleTime.getTime() >= targetTime.getTime();
+                });
+                if (currentReplayIndex === -1) {
+                    currentReplayIndex = 0;
+                    alert('Start time not found in chart data. Starting from first candle.');
+                }
+                config.setCurrentReplayIndex(currentReplayIndex);
+            } else {
+                config.setCurrentReplayIndex(0);
+                alert('Invalid time format. Please enter time in HH:MM format (e.g., 9:30 or 09:30).');
+            }
+        } else if (startTimeInput && startTimeInput.trim() !== '') {
+            config.setCurrentReplayIndex(0);
+            alert('Invalid time format. Please enter time in HH:MM format (e.g., 9:30 or 09:30).');
+        } else {
+            config.setCurrentReplayIndex(0);
+        }
+    }
+
+    config.setIsReplaying(true);
+    config.setIsPaused(false);
+    playButton.textContent = 'Play Replay';
     playButton.disabled = true;
     pauseButton.disabled = false;
-    startOverButton.disabled = false;
-    prevButton.disabled = true;
-    nextButton.disabled = true;
+    startOverButton.disabled = config.currentReplayIndex() <= 0;
+    prevButton.disabled = config.currentReplayIndex() <= 0;
+    nextButton.disabled = config.currentReplayIndex() >= chartData.count;
     if (config.hasTradeSimulator) {
-        buyButton.disabled = true;
-        sellButton.disabled = true;
+        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
+        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
         updateTradeSummary();
     }
+
+    // Initial render
+    let minuteIndex = config.currentReplayIndex() % config.timeframe();
+    let candleIndex = Math.floor(config.currentReplayIndex() / config.timeframe());
+
+    if (candleIndex > 0 || minuteIndex > 0) {
+        renderChart(section, config.aggregatedCandles().slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
+        timestampDisplay.textContent = config.currentReplayIndex() > 0 
+            ? `Current Time: ${chartData.timestamp[config.currentReplayIndex() - 1].split(' ')[1]}`
+            : 'Current Time: --:--:--';
+    } else {
+        renderChart(section, []);
+        timestampDisplay.textContent = 'Current Time: --:--:--';
+    }
     
-    // Start the replay interval
-    const replayInterval = setInterval(() => {
-        if (!config.isReplaying()) {
-            clearInterval(replayInterval);
-            return;
-        }
-        
-        const currentIndex = config.currentReplayIndex();
-        if (currentIndex >= currentChartData.timestamp.length) {
-            // Replay finished
+    // Set initial zoom for replay to show candles at normal size (not huge)
+    setInitialReplayZoom(section);
+
+    config.setReplayInterval(setInterval(() => {
+        if (config.currentReplayIndex() >= chartData.count) {
             stopReplay(section);
             return;
         }
-        
-        // Update chart to current index
-        updateChartToIndex(section);
-        
-        // Move to next candle
-        config.setCurrentReplayIndex(currentIndex + 1);
-        
-        // Update timestamp display
-        const timestamp = currentChartData.timestamp[currentIndex];
-        const date = new Date(timestamp * 1000);
-        const timeString = date.toLocaleTimeString('en-US', { 
-            hour12: false, 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit' 
-        });
-        timestampDisplay.textContent = `Current Time: ${timeString}`;
-        
-        // Update button states
-        prevButton.disabled = currentIndex + 1 <= 0;
-        nextButton.disabled = currentIndex + 1 >= currentChartData.timestamp.length;
+
+        candleIndex = Math.floor(config.currentReplayIndex() / config.timeframe());
+        minuteIndex = config.currentReplayIndex() % config.timeframe();
+
+        // Render only up to the current candle, with minute-by-minute updates for the current candle only
+        renderChart(section, config.aggregatedCandles().slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
+        timestampDisplay.textContent = `Current Time: ${chartData.timestamp[config.currentReplayIndex()].split(' ')[1]}`;
+
+        prevButton.disabled = config.currentReplayIndex() <= 0;
+        nextButton.disabled = config.currentReplayIndex() + 1 >= chartData.count;
+        startOverButton.disabled = config.currentReplayIndex() <= 0;
         if (config.hasTradeSimulator) {
-            buyButton.disabled = currentIndex + 1 <= 0 || currentIndex + 1 > currentChartData.timestamp.length || openPosition?.type === 'sell';
-            sellButton.disabled = currentIndex + 1 <= 0 || currentIndex + 1 > currentChartData.timestamp.length;
+            buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count || openPosition?.type === 'sell';
+            sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
+            
+            // Check for TP/SL hits during replay
+            checkPositionForTPSL(config.currentReplayIndex());
+            
+            updateTradeSummary();
         }
-        
-        // Check for TP/SL if position is open
-        if (config.hasTradeSimulator && openPosition) {
-            checkPositionForTPSL(currentIndex + 1);
+
+        config.setCurrentReplayIndex(config.currentReplayIndex() + 1);
+        if (config.currentReplayIndex() % config.timeframe() === 0) {
+            minuteIndex = 0;
         }
-        
-    }, config.replaySpeed());
-    
-    config.setReplayInterval(replayInterval);
-    
-    gtag('event', 'replay_started', {
+    }, replaySpeed));
+
+    gtag('event', 'replay_start', {
         'event_category': 'Chart',
-        'event_label': `${currentChartData.ticker}_${currentChartData.date}_${section || 'simulator'}`
+        'event_label': `${chartData.ticker}_${chartData.date}_${section || 'simulator'}`
     });
 }
 
@@ -3595,16 +3587,15 @@ function pauseReplay(section) {
     pauseButton.disabled = true;
     startOverButton.disabled = config.currentReplayIndex() <= 0;
     if (config.hasTradeSimulator) {
-        const currentChartData = chartData[section];
-        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > currentChartData.timestamp.length || openPosition?.type === 'sell';
-        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > currentChartData.timestamp.length;
+        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > config.chartData().count || openPosition?.type === 'sell';
+        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > config.chartData().count;
     }
 }
 
 function startOverReplay(section) {
     const config = getReplayConfig(section);
-    const currentChartData = chartData[section];
-    if (!currentChartData) return;
+    const chartData = config.chartData();
+    if (!chartData) return;
     
     // Reset zoom state when starting over (will be set again by setInitialReplayZoom)
     userZoomState[section] = false;
@@ -3674,7 +3665,7 @@ function startOverReplay(section) {
 
     gtag('event', 'replay_start_over', {
         'event_category': 'Chart',
-        'event_label': `${currentChartData.ticker}_${currentChartData.date}_${section || 'simulator'}`
+        'event_label': `${chartData.ticker}_${chartData.date}_${section || 'simulator'}`
     });
 }
 
@@ -3690,7 +3681,7 @@ function stopReplay(section) {
     const startOverButton = document.getElementById(config.startOverButtonId);
     const prevButton = document.getElementById(config.prevButtonId);
     const nextButton = document.getElementById(config.nextButtonId);
-    const currentChartData = chartData[section];
+    const chartData = config.chartData();
     let buyButton, sellButton;
     if (config.hasTradeSimulator) {
         buyButton = document.getElementById('buy-trade');
@@ -3698,8 +3689,8 @@ function stopReplay(section) {
     }
 
     // Close open position if any (only for Market Simulator)
-    if (config.hasTradeSimulator && openPosition && config.currentReplayIndex() > 0 && config.currentReplayIndex() <= currentChartData.timestamp.length) {
-        const exitPrice = currentChartData.close[config.currentReplayIndex() - 1];
+    if (config.hasTradeSimulator && openPosition && config.currentReplayIndex() > 0 && config.currentReplayIndex() <= chartData.count) {
+        const exitPrice = chartData.close[config.currentReplayIndex() - 1];
         const pnl = openPosition.type === 'buy'
             ? (exitPrice - openPosition.price) * openPosition.shares
             : (openPosition.price - exitPrice) * openPosition.shares;
@@ -3708,7 +3699,7 @@ function stopReplay(section) {
             entryPrice: openPosition.price,
             exitPrice: exitPrice,
             shares: openPosition.shares,
-            timestamp: currentChartData.timestamp[config.currentReplayIndex() - 1],
+            timestamp: chartData.timestamp[config.currentReplayIndex() - 1],
             pnl: parseFloat(pnl.toFixed(2))
         });
         
@@ -3732,7 +3723,7 @@ function stopReplay(section) {
         console.log(`Closed position at replay end with P/L: $${pnl.toFixed(2)}`);
         gtag('event', 'trade_closed', {
             'event_category': 'Trade Simulator',
-            'event_label': `${tradeHistory[tradeHistory.length - 1].type}_${currentChartData.ticker}_${currentChartData.date}_${tradeHistory[tradeHistory.length - 1].timestamp}`
+            'event_label': `${tradeHistory[tradeHistory.length - 1].type}_${chartData.ticker}_${chartData.date}_${tradeHistory[tradeHistory.length - 1].timestamp}`
         });
     }
 
