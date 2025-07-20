@@ -131,16 +131,17 @@ header::before {
     border-radius: 12px;
     filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
     transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    transform: translateX(-80px);
+    transform: translateY(0);
     opacity: 0.9;
     position: absolute;
-    left: 0;
-    margin-left: -100px; /* Start off-screen to the left */
+    right: 20px; /* Move to the right side */
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 1;
 }
 
 .candles-image-slide:hover {
-    transform: translateX(-60px) scale(1.05);
+    transform: translateY(-50%) scale(1.05);
     filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
     opacity: 1;
 }
@@ -159,11 +160,11 @@ header::before {
 /* Animation on page load */
 @keyframes slideInCandles {
     0% {
-        transform: translateX(-150px);
+        transform: translateY(100px);
         opacity: 0;
     }
     100% {
-        transform: translateX(-80px);
+        transform: translateY(-50%);
         opacity: 0.9;
     }
 }

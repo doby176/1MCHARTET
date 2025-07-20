@@ -915,6 +915,14 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                 setupDrawingClickHandler(section, pendingTool);
                 console.log(`Set up pending drawing tool: ${pendingTool} for ${section}`);
             }
+            
+            // Activate measurement tool by default for new charts
+            setTimeout(() => {
+                if (!measurementTool[section].isActive) {
+                    activateMeasurementTool(section);
+                    console.log(`Measurement tool activated by default for ${section}`);
+                }
+            }, 100); // Small delay to ensure chart is fully initialized
         }
     }
 
