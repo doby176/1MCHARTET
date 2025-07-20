@@ -121,7 +121,6 @@ header::before {
     justify-content: center;
     position: relative;
     margin-bottom: var(--spacing-lg);
-    margin-top: var(--spacing-lg);
 }
 
 /* Sliding candles image for home page */
@@ -132,17 +131,16 @@ header::before {
     border-radius: 12px;
     filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
     transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    transform: translateX(0px);
+    transform: translateX(-80px);
     opacity: 0.9;
     position: absolute;
     left: 0;
-    top: 20px; /* Move down from top */
-    margin-left: 0px; /* Show completely */
+    margin-left: -100px; /* Start off-screen to the left */
     z-index: 1;
 }
 
 .candles-image-slide:hover {
-    transform: translateX(0px) scale(1.05);
+    transform: translateX(-60px) scale(1.05);
     filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
     opacity: 1;
 }
@@ -161,11 +159,11 @@ header::before {
 /* Animation on page load */
 @keyframes slideInCandles {
     0% {
-        transform: translateX(-100px);
+        transform: translateX(-150px);
         opacity: 0;
     }
     100% {
-        transform: translateX(0px);
+        transform: translateX(-80px);
         opacity: 0.9;
     }
 }

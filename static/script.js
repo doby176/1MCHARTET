@@ -2031,9 +2031,6 @@ function activateMeasurementTool(section) {
         return;
     }
     
-    // Deactivate any other drawing tools first
-    deactivateDrawingTool(section);
-    
     measurementTool[section].isActive = true;
     const chart = chartInstances[section].chart;
     
@@ -2043,68 +2040,70 @@ function activateMeasurementTool(section) {
         chartContainer.style.cursor = 'crosshair';
     }
     
-    // Store the click handler so we can remove it later
-    if (!measurementTool[section].clickHandler) {
-        measurementTool[section].clickHandler = (param) => {
-            console.log('Chart clicked - measurement tool active:', measurementTool[section].isActive);
-            console.log('Click param:', param);
-            
-            if (!measurementTool[section].isActive) {
-                console.log('Measurement tool not active, ignoring click');
-                return;
-            }
-            
-            // Get click coordinates
-            const clickX = param.point.x;
-            const clickY = param.point.y;
-            
-            console.log('Click coordinates:', { x: clickX, y: clickY });
-            
-            // Get the exact price from the chart's price scale at the Y coordinate
-            const chart = chartInstances[section].chart;
-            const priceScale = chart.priceScale('right');
-            const exactPrice = priceScale.coordinateToPrice(clickY);
-            
-            console.log('Exact price from coordinate:', exactPrice);
-            
-            // Use time from param
-            const time = param.time || Date.now();
-            console.log('Using time from param:', time);
-            
-            if (!measurementTool[section].startPoint) {
-                // First click - set start point
-                measurementTool[section].startPoint = {
-                    time: time,
-                    price: exactPrice,
-                    x: clickX,
-                    y: clickY
-                };
-                console.log('Measurement start point set:', measurementTool[section].startPoint);
-                
-                // Show visual feedback for first click
-                showMeasurementFeedback(section, 'Click second point to complete measurement');
-            } else {
-                // Second click - set end point and calculate
-                console.log('Second click detected, setting end point');
-                measurementTool[section].endPoint = {
-                    time: time,
-                    price: exactPrice,
-                    x: clickX,
-                    y: clickY
-                };
-                console.log('Measurement end point set:', measurementTool[section].endPoint);
-                
-                console.log('Drawing measurement line...');
-                drawMeasurementLine(section);
-                
-                console.log('Calculating measurement...');
-                calculateMeasurement(section);
-            }
-        };
+    // Add click event listener to chart
+    chart.subscribeClick((param) => {
+        console.log('Chart clicked - measurement tool active:', measurementTool[section].isActive);
+        console.log('Click param:', param);
         
-        // Add click event listener to chart
-        chart.subscribeClick(measurementTool[section].clickHandler);
-    }
+        if (!measurementTool[section].isActive) {
+            console.log('Measurement tool not active, ignoring click');
+            return;
+        }
+        
+        // Get click coordinates
+        const clickX = param.point.x;
+        const clickY = param.point.y;
+        
+        console.log('Click coordinates:', { x: clickX, y: clickY });
+        
+        // Store raw coordinates for now - we'll implement proper conversion
+        const time = param.time || Date.now();
+        const price = null; // We'll need to implement price calculation
+        
+        console.log('Using time from param:', time);
+        
+        // For now, let's use a simpler approach - store the click coordinates
+        // and we'll implement the price calculation differently
+        
+        // Find the nearest candle data point for this time
+        const candleData = getCandleDataForTime(section, time);
+        console.log('Found candle data:', candleData);
+        
+        if (!candleData) {
+            console.log('No candle data found for time:', time);
+            return;
+        }
+        
+        if (!measurementTool[section].startPoint) {
+            // First click - set start point
+            measurementTool[section].startPoint = {
+                time: time,
+                price: candleData.close,
+                x: clickX,
+                y: clickY
+            };
+            console.log('Measurement start point set:', measurementTool[section].startPoint);
+            
+            // Show visual feedback for first click
+            showMeasurementFeedback(section, 'Click second point to complete measurement');
+        } else {
+            // Second click - set end point and calculate
+            console.log('Second click detected, setting end point');
+            measurementTool[section].endPoint = {
+                time: time,
+                price: candleData.close,
+                x: clickX,
+                y: clickY
+            };
+            console.log('Measurement end point set:', measurementTool[section].endPoint);
+            
+            console.log('Drawing measurement line...');
+            drawMeasurementLine(section);
+            
+            console.log('Calculating measurement...');
+            calculateMeasurement(section);
+        }
+    });
     
     console.log(`Measurement tool activated for ${section}`);
 }
@@ -2190,9 +2189,6 @@ function deactivateMeasurementTool(section) {
     if (feedback) {
         feedback.remove();
     }
-    
-    // Note: We don't remove the click handler here to avoid conflicts
-    // It will be reused when the tool is activated again
     
     console.log(`Measurement tool deactivated for ${section}`);
 }
