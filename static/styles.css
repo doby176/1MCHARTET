@@ -123,22 +123,24 @@ header::before {
     margin-bottom: var(--spacing-lg);
 }
 
-/* Candles image for home page - fixed positioning */
+/* Sliding candles image for home page */
 .candles-image-slide {
     max-width: 450px;
     width: 100%;
     height: auto;
     border-radius: 12px;
     filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
-    transition: transform 0.3s ease;
+    transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translateX(-80px);
     opacity: 0.9;
-    position: relative;
-    margin: 0 auto;
+    position: absolute;
+    left: 0;
+    margin-left: -100px; /* Start off-screen to the left */
     z-index: 1;
 }
 
 .candles-image-slide:hover {
-    transform: scale(1.05);
+    transform: translateX(-60px) scale(1.05);
     filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
     opacity: 1;
 }
@@ -154,9 +156,20 @@ header::before {
     transform: scale(1.02);
 }
 
-/* Candles image - no animation */
+/* Animation on page load */
+@keyframes slideInCandles {
+    0% {
+        transform: translateX(-150px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(-80px);
+        opacity: 0.9;
+    }
+}
+
 .candles-image-slide {
-    /* No animation - static positioning */
+    animation: slideInCandles 1.5s ease-out forwards;
 }
 
 .logo {

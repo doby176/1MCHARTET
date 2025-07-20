@@ -2054,6 +2054,7 @@ function activateMeasurementTool(section) {
                                 x: param.point.x,
                                 y: param.point.y
                             };
+                            console.log(`First click - start point set at $${clickPrice.toFixed(2)} for ${section}`);
                             showMeasurementFeedback(section, `Start point set at $${clickPrice.toFixed(2)}`);
                         } else {
                             // Second click - set end point and draw measurement
@@ -2063,6 +2064,7 @@ function activateMeasurementTool(section) {
                                 x: param.point.x,
                                 y: param.point.y
                             };
+                            console.log(`Second click - end point set at $${clickPrice.toFixed(2)} for ${section}`);
                             drawMeasurementLine(section);
                             calculateMeasurement(section);
                             
@@ -2070,6 +2072,7 @@ function activateMeasurementTool(section) {
                             measurementTool[section].startPoint = null;
                             measurementTool[section].endPoint = null;
                             
+                            console.log(`Measurement complete for ${section}, points reset for next measurement`);
                             // Show feedback that measurement is complete and ready for next
                             showMeasurementFeedback(section, 'Measurement complete! Click to measure again.');
                         }
@@ -2356,8 +2359,29 @@ function createMeasurementOverlay(section, data) {
 }
 
 function clearMeasurement(section) {
-    deactivateMeasurementTool(section);
-    activateMeasurementTool(section);
+    // Clear the measurement overlay and line, but keep the tool active
+    if (measurementTool[section].line && chartInstances[section] && chartInstances[section].chart) {
+        try {
+            chartInstances[section].chart.removeSeries(measurementTool[section].line);
+        } catch (error) {
+            console.log('Error removing measurement line:', error);
+        }
+        measurementTool[section].line = null;
+    }
+    
+    if (measurementTool[section].overlay) {
+        measurementTool[section].overlay.remove();
+        measurementTool[section].overlay = null;
+    }
+    
+    // Reset points but keep tool active
+    measurementTool[section].startPoint = null;
+    measurementTool[section].endPoint = null;
+    
+    // Show feedback that tool is ready for next measurement
+    showMeasurementFeedback(section, 'Click to start new measurement');
+    
+    console.log(`Measurement cleared for ${section}, tool remains active`);
 }
 
 function toggleMeasurementTool(section) {
