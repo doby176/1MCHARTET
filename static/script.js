@@ -274,6 +274,14 @@ const earningsOutcomes = [
     { value: 'Unknown', text: 'Unknown (data unavailable)' }
 ];
 
+// Measurement Tool State
+let measurementTool = {
+    simulator: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
+    gap: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
+    events: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
+    earnings: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null }
+};
+
 function aggregateCandles(data, timeframe) {
     if (timeframe === 1) {
         return data.timestamp.map((_, i) => ({
@@ -907,6 +915,14 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                 setupDrawingClickHandler(section, pendingTool);
                 console.log(`Set up pending drawing tool: ${pendingTool} for ${section}`);
             }
+            
+            // Activate measurement tool by default for new charts
+            setTimeout(() => {
+                if (!measurementTool[section].isActive) {
+                    activateMeasurementTool(section);
+                    console.log(`Measurement tool activated by default for ${section}`);
+                }
+            }, 100); // Small delay to ensure chart is fully initialized
         }
     }
 
@@ -1001,6 +1017,8 @@ function destroyChart(section) {
     userZoomState[section] = false;
     // Clear click handlers
     chartClickHandlers[section] = null;
+    // Deactivate measurement tool
+    deactivateMeasurementTool(section);
 }
 
 // Setup chart zoom tracking to detect user interactions
@@ -1828,13 +1846,20 @@ function setupIndicatorListeners(section) {
 
 // Drawing Tools Functions (Enhanced)
 function activateDrawingTool(section, tool) {
-    // Temporarily disabled - drawing tools require complex overlay system
-    // Based on: https://github.com/tradingview/lightweight-charts/issues/1345
-    
     const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
     buttons.forEach(btn => btn.classList.remove('active'));
     
-    // Show coming soon message
+    // Special handling for measure tool - use measurement tool instead
+    if (tool === 'measure') {
+        console.log(`Measure tool clicked for ${section} - activating measurement tool`);
+        toggleMeasurementTool(section);
+        return;
+    }
+    
+    // Temporarily disabled - drawing tools require complex overlay system
+    // Based on: https://github.com/tradingview/lightweight-charts/issues/1345
+    
+    // Show coming soon message for other drawing tools
     alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
     
     console.log(`Drawing tool ${tool} clicked for ${section} - showing coming soon message`);
@@ -1980,6 +2005,402 @@ function clearAllDrawings(section) {
     // Show the same coming soon message
     alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
     console.log(`Clear drawings clicked for ${section} - showing coming soon message`);
+}
+
+// Measurement Tool Functions
+function activateMeasurementTool(section) {
+    if (!chartInstances[section] || !chartInstances[section].chart) {
+        console.log(`No chart instance found for ${section}`);
+        return;
+    }
+    
+    const chart = chartInstances[section].chart;
+    measurementTool[section].isActive = true;
+    console.log(`Measurement tool activated for ${section}`);
+    
+    // Add mouse move listener to show Y-axis price on hover
+    measurementTool[section].crosshairListener = chart.subscribeCrosshairMove((param) => {
+        if (!measurementTool[section].isActive) return;
+        
+        if (param && param.seriesData && param.seriesData.size > 0) {
+            // Get the first series data (candlestick series)
+            const firstSeriesData = param.seriesData.values().next().value;
+            if (firstSeriesData && param.point) {
+                const candlestickSeries = chartInstances[section].candlestickSeries;
+                if (candlestickSeries) {
+                    const hoverPrice = candlestickSeries.coordinateToPrice(param.point.y);
+                    if (hoverPrice !== null && hoverPrice !== undefined) {
+                        // Update cursor to show price
+                        const chartContainer = document.getElementById(`chart-${section}`);
+                        if (chartContainer) {
+                            chartContainer.style.cursor = 'crosshair';
+                            chartContainer.title = `Y-axis price: $${hoverPrice.toFixed(2)}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Add click listener for measurement
+    measurementTool[section].clickListener = chart.subscribeClick((param) => {
+        if (!measurementTool[section].isActive) return;
+        
+        if (param && param.point) {
+            const candlestickSeries = chartInstances[section].candlestickSeries;
+            if (candlestickSeries) {
+                try {
+                    const clickPrice = candlestickSeries.coordinateToPrice(param.point.y);
+                    if (clickPrice !== null && clickPrice !== undefined && !isNaN(clickPrice)) {
+                        const clickTime = param.time;
+                        
+                        if (!measurementTool[section].startPoint) {
+                            // First click - set start point
+                            measurementTool[section].startPoint = {
+                                time: clickTime,
+                                price: clickPrice,
+                                x: param.point.x,
+                                y: param.point.y
+                            };
+                            console.log(`First click - start point set at $${clickPrice.toFixed(2)} for ${section}`);
+                            showMeasurementFeedback(section, `Start point set at $${clickPrice.toFixed(2)}`);
+                        } else {
+                            // Second click - set end point and draw measurement
+                            measurementTool[section].endPoint = {
+                                time: clickTime,
+                                price: clickPrice,
+                                x: param.point.x,
+                                y: param.point.y
+                            };
+                            console.log(`Second click - end point set at $${clickPrice.toFixed(2)} for ${section}`);
+                            
+                            // Only draw measurement if start and end points are different
+                            if (measurementTool[section].startPoint.time !== measurementTool[section].endPoint.time ||
+                                measurementTool[section].startPoint.price !== measurementTool[section].endPoint.price) {
+                                drawMeasurementLine(section);
+                                calculateMeasurement(section);
+                                console.log(`Measurement complete for ${section}, points reset for next measurement`);
+                                showMeasurementFeedback(section, 'Measurement complete! Click to measure again.');
+                            } else {
+                                console.log('Same point clicked twice, ignoring second click');
+                                showMeasurementFeedback(section, 'Please click a different point for measurement');
+                                // Don't reset points, let user try again
+                                return;
+                            }
+                            
+                            // Reset for next measurement - clear both points
+                            measurementTool[section].startPoint = null;
+                            measurementTool[section].endPoint = null;
+                        }
+                    } else {
+                        console.log('Invalid click price detected, ignoring click');
+                    }
+                } catch (error) {
+                    console.error('Error handling measurement click:', error);
+                    // Auto-recovery: refresh chart data if there's an error
+                    try {
+                        const config = getReplayConfig(section);
+                        if (config && config.aggregatedCandles) {
+                            const candles = config.aggregatedCandles();
+                            if (candles && candles.length > 0) {
+                                renderChart(section, candles);
+                                console.log('Chart data refreshed after measurement error');
+                            }
+                        }
+                    } catch (recoveryError) {
+                        console.error('Auto-recovery failed:', recoveryError);
+                    }
+                }
+            }
+        }
+    });
+}
+
+function getCandleDataForTime(section, time) {
+    const config = getReplayConfig(section);
+    const chartData = config.chartData();
+    if (!chartData || !chartData.timestamp) return null;
+    
+    // Find the closest timestamp
+    const timeIndex = chartData.timestamp.findIndex(ts => {
+        const candleTime = new Date(ts);
+        return candleTime.getTime() >= time * 1000;
+    });
+    
+    if (timeIndex === -1 || timeIndex >= chartData.timestamp.length) return null;
+    
+    return {
+        timestamp: chartData.timestamp[timeIndex],
+        open: chartData.open[timeIndex],
+        high: chartData.high[timeIndex],
+        low: chartData.low[timeIndex],
+        close: chartData.close[timeIndex],
+        volume: chartData.volume[timeIndex]
+    };
+}
+
+function deactivateMeasurementTool(section) {
+    measurementTool[section].isActive = false;
+    measurementTool[section].startPoint = null;
+    measurementTool[section].endPoint = null;
+    
+    // Reset cursor and title
+    const chartContainer = document.getElementById(`chart-${section}`);
+    if (chartContainer) {
+        chartContainer.style.cursor = 'default';
+        chartContainer.title = '';
+    }
+    
+    // Remove measurement line and overlay
+    if (measurementTool[section].line) {
+        try {
+            measurementTool[section].line.remove();
+        } catch (error) {
+            console.log('Error removing measurement line:', error);
+        }
+        measurementTool[section].line = null;
+    }
+    if (measurementTool[section].overlay) {
+        measurementTool[section].overlay.remove();
+        measurementTool[section].overlay = null;
+    }
+    
+    // Remove event listeners
+    if (measurementTool[section].crosshairListener) {
+        measurementTool[section].crosshairListener();
+        measurementTool[section].crosshairListener = null;
+    }
+    if (measurementTool[section].clickListener) {
+        measurementTool[section].clickListener();
+        measurementTool[section].clickListener = null;
+    }
+    
+    console.log(`Measurement tool deactivated for ${section}`);
+}
+
+function showMeasurementFeedback(section, message) {
+    const chartContainer = document.getElementById(`chart-${section}`);
+    if (chartContainer) {
+        // Create temporary feedback element
+        const feedback = document.createElement('div');
+        feedback.textContent = message;
+        feedback.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+            pointer-events: none;
+        `;
+        chartContainer.appendChild(feedback);
+        
+        // Remove after 2 seconds
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 2000);
+    }
+}
+
+function drawMeasurementLine(section) {
+    if (!measurementTool[section].startPoint || !measurementTool[section].endPoint) return;
+    
+    console.log('drawMeasurementLine called for section:', section);
+    console.log('startPoint:', measurementTool[section].startPoint);
+    console.log('endPoint:', measurementTool[section].endPoint);
+    
+    // Remove existing line if any
+    if (measurementTool[section].line) {
+        console.log('Removing existing line');
+        measurementTool[section].line.remove();
+        measurementTool[section].line = null;
+    }
+    
+    const chartContainer = document.getElementById(`chart-${section}`);
+    if (!chartContainer) {
+        console.log('Chart container not found, cannot draw measurement line');
+        return;
+    }
+    
+    try {
+        // Get the coordinates from the measurement points
+        const startX = measurementTool[section].startPoint.x;
+        const startY = measurementTool[section].startPoint.y;
+        const endX = measurementTool[section].endPoint.x;
+        const endY = measurementTool[section].endPoint.y;
+        
+        // Calculate line properties
+        const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+        const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+        
+        // Create SVG line element
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        `;
+        
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', startX);
+        line.setAttribute('y1', startY);
+        line.setAttribute('x2', endX);
+        line.setAttribute('y2', endY);
+        line.setAttribute('stroke', '#FF6B6B');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-linecap', 'round');
+        
+        svg.appendChild(line);
+        chartContainer.appendChild(svg);
+        
+        measurementTool[section].line = svg;
+        console.log('Custom measurement line drawn successfully using SVG');
+        
+    } catch (error) {
+        console.error('Error drawing measurement line:', error);
+        console.log('Measurement line drawing failed, but chart should remain functional');
+        measurementTool[section].line = null;
+    }
+}
+
+function calculateMeasurement(section) {
+    if (!measurementTool[section].startPoint || !measurementTool[section].endPoint) return;
+    
+    console.log('calculateMeasurement called for section:', section);
+    console.log('startPoint:', measurementTool[section].startPoint);
+    console.log('endPoint:', measurementTool[section].endPoint);
+    
+    const startPrice = measurementTool[section].startPoint.price;
+    const endPrice = measurementTool[section].endPoint.price;
+    
+    const priceChange = endPrice - startPrice;
+    const priceChangePercent = (priceChange / startPrice) * 100;
+    
+    console.log('Price calculation:', { startPrice, endPrice, priceChange, priceChangePercent });
+    
+    const direction = priceChange >= 0 ? 'UP' : 'DOWN';
+    
+    const measurementData = {
+        startPrice: startPrice.toFixed(2),
+        endPrice: endPrice.toFixed(2),
+        priceChange: priceChange.toFixed(2),
+        priceChangePercent: priceChangePercent.toFixed(2),
+        direction: direction
+    };
+    
+    console.log('Creating overlay with data:', measurementData);
+    createMeasurementOverlay(section, measurementData);
+    
+    console.log(`Measurement: ${startPrice} → ${endPrice} (${priceChangePercent.toFixed(2)}%)`);
+}
+
+function createMeasurementOverlay(section, data) {
+    console.log('createMeasurementOverlay called for section:', section, 'with data:', data);
+    
+    // Remove existing overlay
+    if (measurementTool[section].overlay) {
+        console.log('Removing existing overlay');
+        measurementTool[section].overlay.remove();
+    }
+    
+    const chartContainer = document.getElementById(`chart-${section}`);
+    if (!chartContainer) {
+        console.log('Chart container not found');
+        return;
+    }
+    
+    console.log('Chart container found:', chartContainer);
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'measurement-overlay';
+    overlay.style.cssText = `
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 12px;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        z-index: 1000;
+        min-width: 200px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    `;
+    
+    const color = data.direction === 'UP' ? '#4CAF50' : '#F44336';
+    
+    overlay.innerHTML = `
+        <div style="margin-bottom: 8px; font-weight: bold; color: #cccccc;">Measurement Tool</div>
+        <div style="margin-bottom: 4px;">Start: $${data.startPrice}</div>
+        <div style="margin-bottom: 4px;">End: $${data.endPrice}</div>
+        <div style="margin-bottom: 4px; color: ${color}; font-weight: bold;">
+            Change: ${data.priceChange >= 0 ? '+' : ''}$${data.priceChange} (${data.priceChangePercent >= 0 ? '+' : ''}${data.priceChangePercent}%)
+        </div>
+        <div style="font-size: 10px; color: #999; margin-top: 8px;">
+            Click to measure again
+        </div>
+    `;
+    
+    // Add click to clear functionality
+    overlay.addEventListener('click', () => {
+        clearMeasurement(section);
+    });
+    
+    chartContainer.appendChild(overlay);
+    measurementTool[section].overlay = overlay;
+    
+    console.log('Overlay created and added to chart container');
+}
+
+function clearMeasurement(section) {
+    console.log(`Clearing measurement for ${section}`);
+    
+    // Clear the measurement overlay and line, but keep the tool active
+    if (measurementTool[section].line) {
+        try {
+            measurementTool[section].line.remove();
+            console.log('Measurement line removed successfully');
+        } catch (error) {
+            console.log('Error removing measurement line:', error);
+        }
+        measurementTool[section].line = null;
+    }
+    
+    if (measurementTool[section].overlay) {
+        measurementTool[section].overlay.remove();
+        measurementTool[section].overlay = null;
+        console.log('Measurement overlay removed');
+    }
+    
+    // Reset points but keep tool active
+    measurementTool[section].startPoint = null;
+    measurementTool[section].endPoint = null;
+    
+    // Show feedback that tool is ready for next measurement
+    showMeasurementFeedback(section, 'Click to start new measurement');
+    
+    console.log(`Measurement cleared for ${section}, tool remains active`);
+}
+
+function toggleMeasurementTool(section) {
+    if (measurementTool[section].isActive) {
+        deactivateMeasurementTool(section);
+    } else {
+        deactivateDrawingTool(section); // Deactivate drawing tool first
+        activateMeasurementTool(section);
+    }
 }
 
 function populateEarningsOutcomes() {
