@@ -2065,16 +2065,24 @@ function activateMeasurementTool(section) {
                                 y: param.point.y
                             };
                             console.log(`Second click - end point set at $${clickPrice.toFixed(2)} for ${section}`);
-                            drawMeasurementLine(section);
-                            calculateMeasurement(section);
+                            
+                            // Only draw measurement if start and end points are different
+                            if (measurementTool[section].startPoint.time !== measurementTool[section].endPoint.time ||
+                                measurementTool[section].startPoint.price !== measurementTool[section].endPoint.price) {
+                                drawMeasurementLine(section);
+                                calculateMeasurement(section);
+                                console.log(`Measurement complete for ${section}, points reset for next measurement`);
+                                showMeasurementFeedback(section, 'Measurement complete! Click to measure again.');
+                            } else {
+                                console.log('Same point clicked twice, ignoring second click');
+                                showMeasurementFeedback(section, 'Please click a different point for measurement');
+                                // Don't reset points, let user try again
+                                return;
+                            }
                             
                             // Reset for next measurement - clear both points
                             measurementTool[section].startPoint = null;
                             measurementTool[section].endPoint = null;
-                            
-                            console.log(`Measurement complete for ${section}, points reset for next measurement`);
-                            // Show feedback that measurement is complete and ready for next
-                            showMeasurementFeedback(section, 'Measurement complete! Click to measure again.');
                         }
                     } else {
                         console.log('Invalid click price detected, ignoring click');
@@ -2205,6 +2213,12 @@ function drawMeasurementLine(section) {
         return;
     }
     
+    // Additional safety check - ensure chart is still valid
+    if (!chartInstances[section] || !chartInstances[section].candlestickSeries) {
+        console.log('Chart instance is not fully initialized, cannot draw measurement line');
+        return;
+    }
+    
     // Remove existing line if any
     if (measurementTool[section].line) {
         console.log('Removing existing line');
@@ -2239,31 +2253,32 @@ function drawMeasurementLine(section) {
             return;
         }
         
-        // Add line points
-        lineSeries.setData([
-            { time: startTime, value: startPrice },
-            { time: endTime, value: endPrice }
-        ]);
+        // Ensure we have valid numeric values
+        const validStartPrice = parseFloat(startPrice);
+        const validEndPrice = parseFloat(endPrice);
+        
+        if (isNaN(validStartPrice) || isNaN(validEndPrice)) {
+            console.error('Invalid price values after parsing:', { validStartPrice, validEndPrice });
+            return;
+        }
+        
+        // Add line points with validated data
+        const lineData = [
+            { time: startTime, value: validStartPrice },
+            { time: endTime, value: validEndPrice }
+        ];
+        
+        console.log('Setting line data:', lineData);
+        lineSeries.setData(lineData);
         
         measurementTool[section].line = lineSeries;
         console.log('Custom measurement line drawn successfully');
         
     } catch (error) {
         console.error('Error drawing measurement line:', error);
-        // Auto-recovery: refresh chart data if candles disappeared
-        console.log('Attempting auto-recovery by refreshing chart data...');
-        try {
-            const config = getReplayConfig(section);
-            if (config && config.aggregatedCandles) {
-                const candles = config.aggregatedCandles();
-                if (candles && candles.length > 0) {
-                    renderChart(section, candles);
-                    console.log('Chart data refreshed successfully');
-                }
-            }
-        } catch (recoveryError) {
-            console.error('Auto-recovery failed:', recoveryError);
-        }
+        // Don't attempt auto-recovery as it can cause more issues
+        // Just log the error and continue
+        console.log('Measurement line drawing failed, but chart should remain functional');
     }
 }
 
@@ -2359,10 +2374,13 @@ function createMeasurementOverlay(section, data) {
 }
 
 function clearMeasurement(section) {
+    console.log(`Clearing measurement for ${section}`);
+    
     // Clear the measurement overlay and line, but keep the tool active
     if (measurementTool[section].line && chartInstances[section] && chartInstances[section].chart) {
         try {
             chartInstances[section].chart.removeSeries(measurementTool[section].line);
+            console.log('Measurement line removed successfully');
         } catch (error) {
             console.log('Error removing measurement line:', error);
         }
@@ -2372,6 +2390,7 @@ function clearMeasurement(section) {
     if (measurementTool[section].overlay) {
         measurementTool[section].overlay.remove();
         measurementTool[section].overlay = null;
+        console.log('Measurement overlay removed');
     }
     
     // Reset points but keep tool active
