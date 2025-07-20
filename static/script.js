@@ -197,10 +197,10 @@ let drawingTools = {
 
 // Measurement Tool State
 let measurementTool = {
-    simulator: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null },
-    gap: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null },
-    events: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null },
-    earnings: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null }
+    simulator: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
+    gap: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
+    events: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
+    earnings: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null }
 };
 
 // User zoom tracking - to prevent auto-fit during manual zoom
@@ -2044,7 +2044,7 @@ function activateMeasurementTool(section) {
     showMeasurementFeedback(section, 'Click anywhere on the chart to measure from Y-axis price levels');
     
     // Add mouse move listener to show Y-axis price on hover
-    chart.subscribeCrosshairMove((param) => {
+    measurementTool[section].crosshairListener = (param) => {
         if (!measurementTool[section].isActive) return;
         
         if (param && param.seriesData && param.seriesData.size > 0) {
@@ -2064,10 +2064,11 @@ function activateMeasurementTool(section) {
                 }
             }
         }
-    });
+    };
+    chart.subscribeCrosshairMove(measurementTool[section].crosshairListener);
     
     // Add click event listener to chart
-    chart.subscribeClick((param) => {
+    measurementTool[section].clickListener = (param) => {
         console.log('Chart clicked - measurement tool active:', measurementTool[section].isActive);
         console.log('Click param:', param);
         
@@ -2130,7 +2131,8 @@ function activateMeasurementTool(section) {
             console.log('Calculating measurement...');
             calculateMeasurement(section);
         }
-    });
+    };
+    chart.subscribeClick(measurementTool[section].clickListener);
     
     console.log(`Measurement tool activated for ${section}`);
 }
@@ -2210,6 +2212,26 @@ function deactivateMeasurementTool(section) {
     if (measurementTool[section].overlay) {
         measurementTool[section].overlay.remove();
         measurementTool[section].overlay = null;
+    }
+    
+    // Remove event listeners
+    if (chartInstances[section] && chartInstances[section].chart) {
+        if (measurementTool[section].crosshairListener) {
+            try {
+                chartInstances[section].chart.unsubscribeCrosshairMove(measurementTool[section].crosshairListener);
+            } catch (error) {
+                console.log('Error removing crosshair listener:', error);
+            }
+            measurementTool[section].crosshairListener = null;
+        }
+        if (measurementTool[section].clickListener) {
+            try {
+                chartInstances[section].chart.unsubscribeClick(measurementTool[section].clickListener);
+            } catch (error) {
+                console.log('Error removing click listener:', error);
+            }
+            measurementTool[section].clickListener = null;
+        }
     }
     
     // Remove any feedback
@@ -2398,7 +2420,7 @@ function createMeasurementOverlay(section, data) {
     overlay.style.cssText = `
         position: absolute;
         top: 10px;
-        right: 10px;
+        left: 10px;
         background: rgba(0, 0, 0, 0.8);
         color: white;
         padding: 15px;
