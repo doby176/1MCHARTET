@@ -3446,7 +3446,7 @@ function setInitialReplayZoom(section) {
 function startReplay(section) {
     const config = getReplayConfig(section);
     
-    if (isReplaying[section]) {
+    if (config.isReplaying()) {
         console.log(`Replay already running for ${section}`);
         return;
     }
