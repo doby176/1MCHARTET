@@ -195,14 +195,6 @@ let drawingTools = {
     earnings: { active: null, lines: [], pendingTool: null }
 };
 
-// Measurement Tool State
-let measurementTool = {
-    simulator: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
-    gap: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
-    events: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
-    earnings: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null }
-};
-
 // User zoom tracking - to prevent auto-fit during manual zoom
 let userZoomState = {
     simulator: false,
@@ -281,6 +273,14 @@ const earningsOutcomes = [
     { value: 'Slight Miss', text: 'Slight Miss (-10% to 0%)' },
     { value: 'Unknown', text: 'Unknown (data unavailable)' }
 ];
+
+// Measurement Tool State
+let measurementTool = {
+    simulator: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
+    gap: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
+    events: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null },
+    earnings: { isActive: false, startPoint: null, endPoint: null, line: null, overlay: null, crosshairListener: null, clickListener: null }
+};
 
 function aggregateCandles(data, timeframe) {
     if (timeframe === 1) {
@@ -915,11 +915,6 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
                 setupDrawingClickHandler(section, pendingTool);
                 console.log(`Set up pending drawing tool: ${pendingTool} for ${section}`);
             }
-            
-            // Initialize measurement tool if it was active
-            if (measurementTool[section] && measurementTool[section].isActive) {
-                activateMeasurementTool(section);
-            }
         }
     }
 
@@ -991,19 +986,6 @@ function renderChart(section, candles, currentCandleIndex = -1, minuteIndex = nu
         }
         
         console.log('Chart data updated successfully');
-        
-        // Store the chart data for measurement tool
-        if (section === 'simulator') {
-            chartDataSimulator = candlestickData;
-        } else if (section === 'gap') {
-            chartDataGap = candlestickData;
-        } else if (section === 'events') {
-            chartDataEvents = candlestickData;
-        } else if (section === 'earnings') {
-            chartDataEarnings = candlestickData;
-        }
-        console.log(`Chart data stored for ${section}: ${candlestickData.length} candles`);
-        
     } catch (error) {
         console.error('Error updating chart data:', error);
     }
@@ -1023,14 +1005,12 @@ function destroyChart(section) {
     // Clear indicators for this section
     indicatorSeries[section] = {};
     drawingTools[section] = { active: null, lines: [], pendingTool: null };
-    // Clear measurement tool
-    if (measurementTool[section]) {
-        deactivateMeasurementTool(section);
-    }
     // Reset user zoom state
     userZoomState[section] = false;
     // Clear click handlers
     chartClickHandlers[section] = null;
+    // Deactivate measurement tool
+    deactivateMeasurementTool(section);
 }
 
 // Setup chart zoom tracking to detect user interactions
@@ -1849,8 +1829,6 @@ function setupIndicatorListeners(section) {
             
             if (tool === 'clear') {
                 clearAllDrawings(section);
-            } else if (tool === 'measure') {
-                toggleMeasurementTool(section);
             } else {
                 activateDrawingTool(section, tool);
             }
@@ -1866,7 +1844,7 @@ function activateDrawingTool(section, tool) {
     const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
     buttons.forEach(btn => btn.classList.remove('active'));
     
-    // Show coming soon message for other drawing tools
+    // Show coming soon message
     alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
     
     console.log(`Drawing tool ${tool} clicked for ${section} - showing coming soon message`);
@@ -2009,17 +1987,7 @@ function deactivateDrawingTool(section) {
 }
 
 function clearAllDrawings(section) {
-    // Clear measurement tool if active
-    if (measurementTool[section] && measurementTool[section].isActive) {
-        deactivateMeasurementTool(section);
-        const button = document.getElementById(`measure-tool-${section}`);
-        if (button) {
-            button.classList.remove('active');
-            button.style.background = '';
-        }
-    }
-    
-    // Show coming soon message for other drawing tools
+    // Show the same coming soon message
     alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
     console.log(`Clear drawings clicked for ${section} - showing coming soon message`);
 }
@@ -2027,295 +1995,238 @@ function clearAllDrawings(section) {
 // Measurement Tool Functions
 function activateMeasurementTool(section) {
     if (!chartInstances[section] || !chartInstances[section].chart) {
-        console.error(`No chart instance found for section: ${section}`);
+        console.log(`No chart instance found for ${section}`);
         return;
     }
-    // Clean up any previous listeners
-    deactivateMeasurementTool(section);
-    measurementTool[section].isActive = true;
+    
     const chart = chartInstances[section].chart;
-    // Change cursor to indicate measurement mode
-    const chartContainer = document.getElementById(`chart-${section}`);
-    if (chartContainer) {
-        chartContainer.style.cursor = 'crosshair';
-    }
-    showMeasurementFeedback(section, 'Click anywhere on the chart to measure from Y-axis price levels');
-    // Store and add listeners
-    measurementTool[section].crosshairListener = (param) => {
+    measurementTool[section].isActive = true;
+    console.log(`Measurement tool activated for ${section}`);
+    
+    // Add mouse move listener to show Y-axis price on hover
+    measurementTool[section].crosshairListener = chart.subscribeCrosshairMove((param) => {
         if (!measurementTool[section].isActive) return;
+        
         if (param && param.seriesData && param.seriesData.size > 0) {
+            // Get the first series data (candlestick series)
             const firstSeriesData = param.seriesData.values().next().value;
             if (firstSeriesData && param.point) {
                 const candlestickSeries = chartInstances[section].candlestickSeries;
                 if (candlestickSeries) {
                     const hoverPrice = candlestickSeries.coordinateToPrice(param.point.y);
                     if (hoverPrice !== null && hoverPrice !== undefined) {
+                        // Update cursor to show price
                         const chartContainer = document.getElementById(`chart-${section}`);
                         if (chartContainer) {
+                            chartContainer.style.cursor = 'crosshair';
                             chartContainer.title = `Y-axis price: $${hoverPrice.toFixed(2)}`;
                         }
                     }
                 }
             }
         }
-    };
-    chart.subscribeCrosshairMove(measurementTool[section].crosshairListener);
-    measurementTool[section].clickListener = (param) => {
+    });
+    
+    // Add click listener for measurement
+    measurementTool[section].clickListener = chart.subscribeClick((param) => {
         if (!measurementTool[section].isActive) return;
-        const clickX = param.point.x;
-        const clickY = param.point.y;
-        const candlestickSeries = chartInstances[section].candlestickSeries;
-        if (!candlestickSeries) return;
-        const exactPrice = candlestickSeries.coordinateToPrice(clickY);
-        if (exactPrice === null || exactPrice === undefined) return;
-        const time = param.time || Date.now();
-        if (!measurementTool[section].startPoint) {
-            measurementTool[section].startPoint = { time, price: exactPrice, x: clickX, y: clickY };
-            showMeasurementFeedback(section, `Y-axis start point: $${exactPrice.toFixed(2)} - Click second point to complete measurement`);
-        } else {
-            measurementTool[section].endPoint = { time, price: exactPrice, x: clickX, y: clickY };
-            drawMeasurementLine(section);
-            calculateMeasurement(section);
+        
+        if (param && param.point) {
+            const candlestickSeries = chartInstances[section].candlestickSeries;
+            if (candlestickSeries) {
+                const clickPrice = candlestickSeries.coordinateToPrice(param.point.y);
+                if (clickPrice !== null && clickPrice !== undefined) {
+                    const clickTime = param.time;
+                    
+                    if (!measurementTool[section].startPoint) {
+                        // First click - set start point
+                        measurementTool[section].startPoint = {
+                            time: clickTime,
+                            price: clickPrice,
+                            x: param.point.x,
+                            y: param.point.y
+                        };
+                        showMeasurementFeedback(section, `Start point set at $${clickPrice.toFixed(2)}`);
+                    } else {
+                        // Second click - set end point and draw measurement
+                        measurementTool[section].endPoint = {
+                            time: clickTime,
+                            price: clickPrice,
+                            x: param.point.x,
+                            y: param.point.y
+                        };
+                        drawMeasurementLine(section);
+                        calculateMeasurement(section);
+                        
+                        // Reset for next measurement
+                        measurementTool[section].startPoint = null;
+                        measurementTool[section].endPoint = null;
+                    }
+                }
+            }
         }
-    };
-    chart.subscribeClick(measurementTool[section].clickListener);
-    console.log(`Measurement tool activated for ${section}`);
+    });
 }
 
 function getCandleDataForTime(section, time) {
-    console.log(`getCandleDataForTime: Checking data for section: ${section}`);
+    const config = getReplayConfig(section);
+    const chartData = config.chartData();
+    if (!chartData || !chartData.timestamp) return null;
     
-    // Get the candle data for this section
-    let candleData = null;
+    // Find the closest timestamp
+    const timeIndex = chartData.timestamp.findIndex(ts => {
+        const candleTime = new Date(ts);
+        return candleTime.getTime() >= time * 1000;
+    });
     
-    if (section === 'simulator') {
-        candleData = chartDataSimulator;
-    } else if (section === 'gap') {
-        candleData = chartDataGap;
-    } else if (section === 'events') {
-        candleData = chartDataEvents;
-    } else if (section === 'earnings') {
-        candleData = chartDataEarnings;
-    }
+    if (timeIndex === -1 || timeIndex >= chartData.timestamp.length) return null;
     
-    console.log('Raw candleData:', candleData);
-    
-    if (!candleData || !Array.isArray(candleData) || candleData.length === 0) {
-        console.log(`No valid candle data array available for section: ${section}`);
-        return null;
-    }
-    
-    // Find the candle with the closest timestamp
-    let closestCandle = null;
-    let minDiff = Infinity;
-    
-    for (let i = 0; i < candleData.length; i++) {
-        const candle = candleData[i];
-        const candleTime = candle.time;
-        const diff = Math.abs(candleTime - time);
-        
-        if (diff < minDiff) {
-            minDiff = diff;
-            closestCandle = {
-                timestamp: candleTime,
-                open: candle.open,
-                high: candle.high,
-                low: candle.low,
-                close: candle.close
-            };
-        }
-    }
-    
-    console.log('Closest candle found:', closestCandle);
-    if (!closestCandle) {
-        console.log(`No candle data found for time: ${time}`);
-    }
-    return closestCandle;
+    return {
+        timestamp: chartData.timestamp[timeIndex],
+        open: chartData.open[timeIndex],
+        high: chartData.high[timeIndex],
+        low: chartData.low[timeIndex],
+        close: chartData.close[timeIndex],
+        volume: chartData.volume[timeIndex]
+    };
 }
 
 function deactivateMeasurementTool(section) {
     measurementTool[section].isActive = false;
     measurementTool[section].startPoint = null;
     measurementTool[section].endPoint = null;
+    
+    // Reset cursor and title
     const chartContainer = document.getElementById(`chart-${section}`);
     if (chartContainer) {
         chartContainer.style.cursor = 'default';
         chartContainer.title = '';
     }
+    
+    // Remove measurement line and overlay
     if (measurementTool[section].line && chartInstances[section] && chartInstances[section].chart) {
-        try { chartInstances[section].chart.removeSeries(measurementTool[section].line); } catch (error) {}
+        try {
+            chartInstances[section].chart.removeSeries(measurementTool[section].line);
+        } catch (error) {
+            console.log('Error removing measurement line:', error);
+        }
         measurementTool[section].line = null;
     }
     if (measurementTool[section].overlay) {
         measurementTool[section].overlay.remove();
         measurementTool[section].overlay = null;
     }
+    
     // Remove event listeners
-    if (chartInstances[section] && chartInstances[section].chart) {
-        if (measurementTool[section].crosshairListener) {
-            try { chartInstances[section].chart.unsubscribeCrosshairMove(measurementTool[section].crosshairListener); } catch (error) {}
-            measurementTool[section].crosshairListener = null;
-        }
-        if (measurementTool[section].clickListener) {
-            try { chartInstances[section].chart.unsubscribeClick(measurementTool[section].clickListener); } catch (error) {}
-            measurementTool[section].clickListener = null;
-        }
+    if (measurementTool[section].crosshairListener) {
+        measurementTool[section].crosshairListener();
+        measurementTool[section].crosshairListener = null;
     }
-    const feedback = document.querySelector(`#chart-${section} .measurement-feedback`);
-    if (feedback) feedback.remove();
+    if (measurementTool[section].clickListener) {
+        measurementTool[section].clickListener();
+        measurementTool[section].clickListener = null;
+    }
+    
     console.log(`Measurement tool deactivated for ${section}`);
 }
 
 function showMeasurementFeedback(section, message) {
     const chartContainer = document.getElementById(`chart-${section}`);
-    if (!chartContainer) return;
-    
-    // Remove existing feedback
-    const existingFeedback = chartContainer.querySelector('.measurement-feedback');
-    if (existingFeedback) {
-        existingFeedback.remove();
+    if (chartContainer) {
+        // Create temporary feedback element
+        const feedback = document.createElement('div');
+        feedback.textContent = message;
+        feedback.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+            pointer-events: none;
+        `;
+        chartContainer.appendChild(feedback);
+        
+        // Remove after 2 seconds
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 2000);
     }
-    
-    // Create feedback element
-    const feedback = document.createElement('div');
-    feedback.className = 'measurement-feedback';
-    feedback.style.cssText = `
-        position: absolute;
-        top: 50px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 10px 15px;
-        border-radius: 6px;
-        font-family: 'Inter', sans-serif;
-        font-size: 14px;
-        z-index: 1000;
-        pointer-events: none;
-        white-space: nowrap;
-    `;
-    feedback.textContent = message;
-    
-    chartContainer.appendChild(feedback);
-    
-    // Remove feedback after 3 seconds
-    setTimeout(() => {
-        if (feedback.parentNode) {
-            feedback.parentNode.removeChild(feedback);
-        }
-    }, 3000);
 }
 
 function drawMeasurementLine(section) {
+    if (!measurementTool[section].startPoint || !measurementTool[section].endPoint) return;
+    
     console.log('drawMeasurementLine called for section:', section);
     console.log('startPoint:', measurementTool[section].startPoint);
     console.log('endPoint:', measurementTool[section].endPoint);
     
-    if (!measurementTool[section].startPoint || !measurementTool[section].endPoint) {
-        console.log('drawMeasurementLine: Missing start or end point, returning');
-        return;
-    }
+    const chart = chartInstances[section].chart;
+    if (!chart) return;
     
-    const chartContainer = document.getElementById(`chart-${section}`);
-    if (!chartContainer) {
-        console.log('Chart container not found:', `chart-${section}`);
-        return;
-    }
-    
-    // Remove existing line
+    // Remove existing line if any
     if (measurementTool[section].line) {
         console.log('Removing existing line');
-        measurementTool[section].line.remove();
+        try {
+            chart.removeSeries(measurementTool[section].line);
+        } catch (error) {
+            console.log('Error removing existing line:', error);
+        }
     }
     
-    // Create a custom SVG line overlay
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.style.cssText = `
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 1000;
-    `;
+    // Create line series for measurement
+    const lineSeries = chart.addLineSeries({
+        color: '#FF6B6B',
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Solid,
+        crosshairMarkerVisible: false,
+        lastValueVisible: false,
+        priceLineVisible: false
+    });
     
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', measurementTool[section].startPoint.x);
-    line.setAttribute('y1', measurementTool[section].startPoint.y);
-    line.setAttribute('x2', measurementTool[section].endPoint.x);
-    line.setAttribute('y2', measurementTool[section].endPoint.y);
-    line.setAttribute('stroke', '#FF6B6B');
-    line.setAttribute('stroke-width', '3');
-    line.setAttribute('stroke-dasharray', '8,4');
-    line.setAttribute('opacity', '0.8');
+    // Add line points
+    lineSeries.setData([
+        { time: measurementTool[section].startPoint.time, value: measurementTool[section].startPoint.price },
+        { time: measurementTool[section].endPoint.time, value: measurementTool[section].endPoint.price }
+    ]);
     
-    // Add start point indicator
-    const startCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    startCircle.setAttribute('cx', measurementTool[section].startPoint.x);
-    startCircle.setAttribute('cy', measurementTool[section].startPoint.y);
-    startCircle.setAttribute('r', '4');
-    startCircle.setAttribute('fill', '#FF6B6B');
-    startCircle.setAttribute('stroke', 'white');
-    startCircle.setAttribute('stroke-width', '2');
-    
-    // Add end point indicator
-    const endCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    endCircle.setAttribute('cx', measurementTool[section].endPoint.x);
-    endCircle.setAttribute('cy', measurementTool[section].endPoint.y);
-    endCircle.setAttribute('r', '4');
-    endCircle.setAttribute('fill', '#FF6B6B');
-    endCircle.setAttribute('stroke', 'white');
-    endCircle.setAttribute('stroke-width', '2');
-    
-    svg.appendChild(line);
-    svg.appendChild(startCircle);
-    svg.appendChild(endCircle);
-    chartContainer.appendChild(svg);
-    
-    measurementTool[section].line = svg;
+    measurementTool[section].line = lineSeries;
     console.log('Custom measurement line drawn successfully');
 }
 
 function calculateMeasurement(section) {
+    if (!measurementTool[section].startPoint || !measurementTool[section].endPoint) return;
+    
     console.log('calculateMeasurement called for section:', section);
     console.log('startPoint:', measurementTool[section].startPoint);
     console.log('endPoint:', measurementTool[section].endPoint);
     
-    if (!measurementTool[section].startPoint || !measurementTool[section].endPoint) {
-        console.log('calculateMeasurement: Missing start or end point, returning');
-        return;
-    }
-    
     const startPrice = measurementTool[section].startPoint.price;
     const endPrice = measurementTool[section].endPoint.price;
-    
-    if (startPrice === undefined || endPrice === undefined || startPrice === null || endPrice === null) {
-        console.log('calculateMeasurement: Invalid prices, returning');
-        return;
-    }
     
     const priceChange = endPrice - startPrice;
     const priceChangePercent = (priceChange / startPrice) * 100;
     
-    console.log('Price calculation:', {
-        startPrice,
-        endPrice,
-        priceChange,
-        priceChangePercent
-    });
+    console.log('Price calculation:', { startPrice, endPrice, priceChange, priceChangePercent });
     
-    // Create measurement overlay
-    const overlayData = {
+    const direction = priceChange >= 0 ? 'UP' : 'DOWN';
+    
+    const measurementData = {
         startPrice: startPrice.toFixed(2),
         endPrice: endPrice.toFixed(2),
         priceChange: priceChange.toFixed(2),
         priceChangePercent: priceChangePercent.toFixed(2),
-        direction: priceChange >= 0 ? 'UP' : 'DOWN'
+        direction: direction
     };
     
-    console.log('Creating overlay with data:', overlayData);
-    createMeasurementOverlay(section, overlayData);
+    console.log('Creating overlay with data:', measurementData);
+    createMeasurementOverlay(section, measurementData);
     
     console.log(`Measurement: ${startPrice} → ${endPrice} (${priceChangePercent.toFixed(2)}%)`);
 }
@@ -2331,68 +2242,66 @@ function createMeasurementOverlay(section, data) {
     
     const chartContainer = document.getElementById(`chart-${section}`);
     if (!chartContainer) {
-        console.log('Chart container not found:', `chart-${section}`);
+        console.log('Chart container not found');
         return;
     }
     
     console.log('Chart container found:', chartContainer);
     
-    // Create overlay element
     const overlay = document.createElement('div');
     overlay.className = 'measurement-overlay';
     overlay.style.cssText = `
         position: absolute;
         top: 10px;
         left: 10px;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.9);
         color: white;
-        padding: 15px;
+        padding: 12px;
         border-radius: 8px;
-        font-family: 'Inter', sans-serif;
-        font-size: 14px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
         z-index: 1000;
         min-width: 200px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     `;
     
-    const directionColor = data.direction === 'UP' ? '#4CAF50' : '#F44336';
+    const color = data.direction === 'UP' ? '#4CAF50' : '#F44336';
     
     overlay.innerHTML = `
-        <div style="margin-bottom: 10px; font-weight: bold; color: ${directionColor};">📏 Y-AXIS MEASUREMENT</div>
-        <div style="margin-bottom: 5px;"><strong>Start:</strong> $${data.startPrice}</div>
-        <div style="margin-bottom: 5px;"><strong>End:</strong> $${data.endPrice}</div>
-        <div style="margin-bottom: 5px;"><strong>Change:</strong> <span style="color: ${directionColor};">$${data.priceChange} (${data.priceChangePercent}%)</span></div>
-        <div style="margin-bottom: 10px;"><strong>Direction:</strong> <span style="color: ${directionColor};">${data.direction}</span></div>
-        <div style="margin-bottom: 10px; font-size: 12px; color: #888;"><em>Measured from Y-axis price levels</em></div>
-        <button onclick="clearMeasurement('${section}')" style="background: #FF6B6B; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Clear</button>
+        <div style="margin-bottom: 8px; font-weight: bold; color: #cccccc;">Measurement Tool</div>
+        <div style="margin-bottom: 4px;">Start: $${data.startPrice}</div>
+        <div style="margin-bottom: 4px;">End: $${data.endPrice}</div>
+        <div style="margin-bottom: 4px; color: ${color}; font-weight: bold;">
+            Change: ${data.priceChange >= 0 ? '+' : ''}$${data.priceChange} (${data.priceChangePercent >= 0 ? '+' : ''}${data.priceChangePercent}%)
+        </div>
+        <div style="font-size: 10px; color: #999; margin-top: 8px;">
+            Click to measure again
+        </div>
     `;
+    
+    // Add click to clear functionality
+    overlay.addEventListener('click', () => {
+        clearMeasurement(section);
+    });
     
     chartContainer.appendChild(overlay);
     measurementTool[section].overlay = overlay;
+    
     console.log('Overlay created and added to chart container');
 }
 
 function clearMeasurement(section) {
     deactivateMeasurementTool(section);
-    activateMeasurementTool(section); // Reactivate for next measurement
+    activateMeasurementTool(section);
 }
 
 function toggleMeasurementTool(section) {
-    const button = document.getElementById(`measure-tool-${section}`);
-    
     if (measurementTool[section].isActive) {
-        // Deactivate
         deactivateMeasurementTool(section);
-        button.classList.remove('active');
-        button.style.background = '';
-        console.log(`Measurement tool deactivated for ${section}`);
     } else {
-        // Activate
+        deactivateDrawingTool(section); // Deactivate drawing tool first
         activateMeasurementTool(section);
-        button.classList.add('active');
-        button.style.background = '#4CAF50';
-        button.style.color = 'white';
-        console.log(`Measurement tool activated for ${section}`);
     }
 }
 
