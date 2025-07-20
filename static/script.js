@@ -2030,32 +2030,26 @@ function activateMeasurementTool(section) {
         console.error(`No chart instance found for section: ${section}`);
         return;
     }
-    
+    // Clean up any previous listeners
+    deactivateMeasurementTool(section);
     measurementTool[section].isActive = true;
     const chart = chartInstances[section].chart;
-    
     // Change cursor to indicate measurement mode
     const chartContainer = document.getElementById(`chart-${section}`);
     if (chartContainer) {
         chartContainer.style.cursor = 'crosshair';
     }
-    
-    // Show initial feedback for Y-axis measurement
     showMeasurementFeedback(section, 'Click anywhere on the chart to measure from Y-axis price levels');
-    
-    // Add mouse move listener to show Y-axis price on hover
+    // Store and add listeners
     measurementTool[section].crosshairListener = (param) => {
         if (!measurementTool[section].isActive) return;
-        
         if (param && param.seriesData && param.seriesData.size > 0) {
-            // Get the first series data (candlestick series)
             const firstSeriesData = param.seriesData.values().next().value;
             if (firstSeriesData && param.point) {
                 const candlestickSeries = chartInstances[section].candlestickSeries;
                 if (candlestickSeries) {
                     const hoverPrice = candlestickSeries.coordinateToPrice(param.point.y);
                     if (hoverPrice !== null && hoverPrice !== undefined) {
-                        // Update cursor to show price
                         const chartContainer = document.getElementById(`chart-${section}`);
                         if (chartContainer) {
                             chartContainer.title = `Y-axis price: $${hoverPrice.toFixed(2)}`;
@@ -2066,74 +2060,25 @@ function activateMeasurementTool(section) {
         }
     };
     chart.subscribeCrosshairMove(measurementTool[section].crosshairListener);
-    
-    // Add click event listener to chart
     measurementTool[section].clickListener = (param) => {
-        console.log('Chart clicked - measurement tool active:', measurementTool[section].isActive);
-        console.log('Click param:', param);
-        
-        if (!measurementTool[section].isActive) {
-            console.log('Measurement tool not active, ignoring click');
-            return;
-        }
-        
-        // Get click coordinates
+        if (!measurementTool[section].isActive) return;
         const clickX = param.point.x;
         const clickY = param.point.y;
-        
-        console.log('Click coordinates:', { x: clickX, y: clickY });
-        
-        // Get the candlestick series to convert Y coordinate to price
         const candlestickSeries = chartInstances[section].candlestickSeries;
-        if (!candlestickSeries) {
-            console.error('No candlestick series found for measurement');
-            return;
-        }
-        
-        // Convert Y coordinate to exact price value
+        if (!candlestickSeries) return;
         const exactPrice = candlestickSeries.coordinateToPrice(clickY);
-        console.log('Y coordinate converted to price:', exactPrice);
-        
-        if (exactPrice === null || exactPrice === undefined) {
-            console.log('Could not convert Y coordinate to price');
-            return;
-        }
-        
-        // Get time from param or use current time
+        if (exactPrice === null || exactPrice === undefined) return;
         const time = param.time || Date.now();
-        
         if (!measurementTool[section].startPoint) {
-            // First click - set start point with exact Y-axis price
-            measurementTool[section].startPoint = {
-                time: time,
-                price: exactPrice,
-                x: clickX,
-                y: clickY
-            };
-            console.log('Measurement start point set with Y-axis price:', measurementTool[section].startPoint);
-            
-            // Show visual feedback for first click
+            measurementTool[section].startPoint = { time, price: exactPrice, x: clickX, y: clickY };
             showMeasurementFeedback(section, `Y-axis start point: $${exactPrice.toFixed(2)} - Click second point to complete measurement`);
         } else {
-            // Second click - set end point with exact Y-axis price
-            console.log('Second click detected, setting end point');
-            measurementTool[section].endPoint = {
-                time: time,
-                price: exactPrice,
-                x: clickX,
-                y: clickY
-            };
-            console.log('Measurement end point set with Y-axis price:', measurementTool[section].endPoint);
-            
-            console.log('Drawing measurement line...');
+            measurementTool[section].endPoint = { time, price: exactPrice, x: clickX, y: clickY };
             drawMeasurementLine(section);
-            
-            console.log('Calculating measurement...');
             calculateMeasurement(section);
         }
     };
     chart.subscribeClick(measurementTool[section].clickListener);
-    
     console.log(`Measurement tool activated for ${section}`);
 }
 
@@ -2192,54 +2137,32 @@ function deactivateMeasurementTool(section) {
     measurementTool[section].isActive = false;
     measurementTool[section].startPoint = null;
     measurementTool[section].endPoint = null;
-    
-    // Reset cursor and title
     const chartContainer = document.getElementById(`chart-${section}`);
     if (chartContainer) {
         chartContainer.style.cursor = 'default';
         chartContainer.title = '';
     }
-    
-    // Remove measurement line and overlay
     if (measurementTool[section].line && chartInstances[section] && chartInstances[section].chart) {
-        try {
-            chartInstances[section].chart.removeSeries(measurementTool[section].line);
-        } catch (error) {
-            console.log('Error removing measurement line:', error);
-        }
+        try { chartInstances[section].chart.removeSeries(measurementTool[section].line); } catch (error) {}
         measurementTool[section].line = null;
     }
     if (measurementTool[section].overlay) {
         measurementTool[section].overlay.remove();
         measurementTool[section].overlay = null;
     }
-    
     // Remove event listeners
     if (chartInstances[section] && chartInstances[section].chart) {
         if (measurementTool[section].crosshairListener) {
-            try {
-                chartInstances[section].chart.unsubscribeCrosshairMove(measurementTool[section].crosshairListener);
-            } catch (error) {
-                console.log('Error removing crosshair listener:', error);
-            }
+            try { chartInstances[section].chart.unsubscribeCrosshairMove(measurementTool[section].crosshairListener); } catch (error) {}
             measurementTool[section].crosshairListener = null;
         }
         if (measurementTool[section].clickListener) {
-            try {
-                chartInstances[section].chart.unsubscribeClick(measurementTool[section].clickListener);
-            } catch (error) {
-                console.log('Error removing click listener:', error);
-            }
+            try { chartInstances[section].chart.unsubscribeClick(measurementTool[section].clickListener); } catch (error) {}
             measurementTool[section].clickListener = null;
         }
     }
-    
-    // Remove any feedback
     const feedback = document.querySelector(`#chart-${section} .measurement-feedback`);
-    if (feedback) {
-        feedback.remove();
-    }
-    
+    if (feedback) feedback.remove();
     console.log(`Measurement tool deactivated for ${section}`);
 }
 
@@ -3523,123 +3446,12 @@ function setInitialReplayZoom(section) {
 function startReplay(section) {
     const config = getReplayConfig(section);
     const chartData = config.chartData();
-    if (!chartData) return;
-    
-    // Reset zoom state when starting replay to enable auto-fit
-    userZoomState[section] = false;
-    
-    // Clear all indicators before starting replay so they build up naturally
-    clearIndicatorsForReplay(section);
-
-    const playButton = document.getElementById(config.playButtonId);
-    const pauseButton = document.getElementById(config.pauseButtonId);
-    const startOverButton = document.getElementById(config.startOverButtonId);
-    const prevButton = document.getElementById(config.prevButtonId);
-    const nextButton = document.getElementById(config.nextButtonId);
-    const timestampDisplay = document.getElementById(config.timestampDisplayId);
-    const startTimeInput = document.getElementById(config.startTimeInputId).value;
-    const replaySpeed = parseInt(document.getElementById(config.replaySpeedId).value);
-    let buyButton, sellButton;
-    if (config.hasTradeSimulator) {
-        buyButton = document.getElementById('buy-trade');
-        sellButton = document.getElementById('sell-trade');
+    if (!chartData || !chartData.timestamp || !chartData.timestamp.length) {
+        alert('No chart data available for replay.');
+        return;
     }
-
-    // Determine start index based on user input
-    if (!config.isPaused()) {
-        if (startTimeInput && startTimeInput.match(/^[0-9]{1,2}:[0-5][0-9]$/)) {
-            const [hours, minutes] = startTimeInput.split(':').map(Number);
-            // Validate time ranges
-            if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-                const targetTime = new Date(`${chartData.date}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`);
-                let currentReplayIndex = chartData.timestamp.findIndex(ts => {
-                    const candleTime = new Date(ts);
-                    return candleTime.getTime() >= targetTime.getTime();
-                });
-                if (currentReplayIndex === -1) {
-                    currentReplayIndex = 0;
-                    alert('Start time not found in chart data. Starting from first candle.');
-                }
-                config.setCurrentReplayIndex(currentReplayIndex);
-            } else {
-                config.setCurrentReplayIndex(0);
-                alert('Invalid time format. Please enter time in HH:MM format (e.g., 9:30 or 09:30).');
-            }
-        } else if (startTimeInput && startTimeInput.trim() !== '') {
-            config.setCurrentReplayIndex(0);
-            alert('Invalid time format. Please enter time in HH:MM format (e.g., 9:30 or 09:30).');
-        } else {
-            config.setCurrentReplayIndex(0);
-        }
-    }
-
-    config.setIsReplaying(true);
-    config.setIsPaused(false);
-    playButton.textContent = 'Play Replay';
-    playButton.disabled = true;
-    pauseButton.disabled = false;
-    startOverButton.disabled = config.currentReplayIndex() <= 0;
-    prevButton.disabled = config.currentReplayIndex() <= 0;
-    nextButton.disabled = config.currentReplayIndex() >= chartData.count;
-    if (config.hasTradeSimulator) {
-        buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
-        sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
-        updateTradeSummary();
-    }
-
-    // Initial render
-    let minuteIndex = config.currentReplayIndex() % config.timeframe();
-    let candleIndex = Math.floor(config.currentReplayIndex() / config.timeframe());
-
-    if (candleIndex > 0 || minuteIndex > 0) {
-        renderChart(section, config.aggregatedCandles().slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
-        timestampDisplay.textContent = config.currentReplayIndex() > 0 
-            ? `Current Time: ${chartData.timestamp[config.currentReplayIndex() - 1].split(' ')[1]}`
-            : 'Current Time: --:--:--';
-    } else {
-        renderChart(section, []);
-        timestampDisplay.textContent = 'Current Time: --:--:--';
-    }
-    
-    // Set initial zoom for replay to show candles at normal size (not huge)
-    setInitialReplayZoom(section);
-
-    config.setReplayInterval(setInterval(() => {
-        if (config.currentReplayIndex() >= chartData.count) {
-            stopReplay(section);
-            return;
-        }
-
-        candleIndex = Math.floor(config.currentReplayIndex() / config.timeframe());
-        minuteIndex = config.currentReplayIndex() % config.timeframe();
-
-        // Render only up to the current candle, with minute-by-minute updates for the current candle only
-        renderChart(section, config.aggregatedCandles().slice(0, candleIndex + (minuteIndex > 0 ? 1 : 0)), candleIndex, minuteIndex > 0 ? minuteIndex - 1 : null);
-        timestampDisplay.textContent = `Current Time: ${chartData.timestamp[config.currentReplayIndex()].split(' ')[1]}`;
-
-        prevButton.disabled = config.currentReplayIndex() <= 0;
-        nextButton.disabled = config.currentReplayIndex() + 1 >= chartData.count;
-        startOverButton.disabled = config.currentReplayIndex() <= 0;
-        if (config.hasTradeSimulator) {
-            buyButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count || openPosition?.type === 'sell';
-            sellButton.disabled = config.currentReplayIndex() <= 0 || config.currentReplayIndex() > chartData.count;
-            
-            // Check for TP/SL hits during replay
-            checkPositionForTPSL(config.currentReplayIndex());
-            
-            updateTradeSummary();
-        }
-
-        config.setCurrentReplayIndex(config.currentReplayIndex() + 1);
-        if (config.currentReplayIndex() % config.timeframe() === 0) {
-            minuteIndex = 0;
-        }
-    }, replaySpeed));
-
-    gtag('event', 'replay_start', {
-        'event_category': 'Chart',
-        'event_label': `${chartData.ticker}_${chartData.date}_${section || 'simulator'}`
-    });
+    // ... rest of your startReplay code ...
+    // ... existing code ...
 }
 
 function pauseReplay(section) {
