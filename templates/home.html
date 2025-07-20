@@ -70,9 +70,9 @@
                 <a href="{{ url_for('landing') }}" class="auth-btn" style="background: #007bff; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9em; font-weight: 500; transition: all 0.2s ease;">Sign Up</a>
             </div>
         </div>
+        <img src="{{ url_for('static', filename='candles.png') }}" alt="Candles" class="candles-image">
         <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
             <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo" style="max-width: 675px; margin-bottom: 20px;">
-            <img src="{{ url_for('static', filename='candles.png') }}" alt="Candles" style="height: auto; margin-bottom: 20px;">
         </div>
     </header>
     
@@ -169,14 +169,12 @@
         </div>
     </main>
     <footer class="footer">
-        <div style="position: relative; max-width: 1200px; margin: 0 auto; padding: 0;">
-            <img src="{{ url_for('static', filename='downpic.png') }}" alt="Footer Image" style="position: absolute; bottom: 0; left: 0; height: auto; z-index: 1;">
-            <div style="text-align: center; position: relative; z-index: 2; padding: 0 20px;">
-                <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
-                <p>More coming soon</p>
-                <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
-                <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
-            </div>
+        <img src="{{ url_for('static', filename='downpic.png') }}" alt="Footer Image" class="downpic-image">
+        <div class="footer-content">
+            <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
+            <p>More coming soon</p>
+            <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
+            <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
         </div>
     </footer>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>

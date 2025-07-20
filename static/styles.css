@@ -157,6 +157,14 @@ header::before {
     transform: scale(1.02);
 }
 
+.landing-header .candles-image {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: auto;
+    z-index: 1;
+}
+
 /* Animation on page load */
 @keyframes slideInCandles {
     0% {
@@ -1163,6 +1171,10 @@ form button:disabled::before {
     text-align: center;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .landing-header::before {
@@ -1446,9 +1458,10 @@ form#signup-form p a:hover, form#login-form p a:hover {
 footer {
     background: var(--navy);
     color: var(--white);
-    padding: var(--spacing-xxl) var(--spacing-lg);
+    padding: var(--spacing-xxl) 0;
     text-align: center;
     margin-top: var(--spacing-xxl);
+    position: relative;
 }
 
 .footer-logo {
@@ -1476,6 +1489,20 @@ footer p {
     margin-top: var(--spacing-xl);
     font-size: 0.9rem;
     opacity: 0.8;
+}
+
+.footer .downpic-image {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: auto;
+    z-index: 1;
+}
+
+.footer .footer-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 var(--spacing-lg);
 }
 
 /* Trade Summary Styling */
