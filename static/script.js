@@ -2040,6 +2040,32 @@ function activateMeasurementTool(section) {
         chartContainer.style.cursor = 'crosshair';
     }
     
+    // Show initial feedback for Y-axis measurement
+    showMeasurementFeedback(section, 'Click anywhere on the chart to measure from Y-axis price levels');
+    
+    // Add mouse move listener to show Y-axis price on hover
+    chart.subscribeCrosshairMove((param) => {
+        if (!measurementTool[section].isActive) return;
+        
+        if (param && param.seriesData && param.seriesData.size > 0) {
+            // Get the first series data (candlestick series)
+            const firstSeriesData = param.seriesData.values().next().value;
+            if (firstSeriesData && param.point) {
+                const candlestickSeries = chartInstances[section].candlestickSeries;
+                if (candlestickSeries) {
+                    const hoverPrice = candlestickSeries.coordinateToPrice(param.point.y);
+                    if (hoverPrice !== null && hoverPrice !== undefined) {
+                        // Update cursor to show price
+                        const chartContainer = document.getElementById(`chart-${section}`);
+                        if (chartContainer) {
+                            chartContainer.title = `Y-axis price: $${hoverPrice.toFixed(2)}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
     // Add click event listener to chart
     chart.subscribeClick((param) => {
         console.log('Chart clicked - measurement tool active:', measurementTool[section].isActive);
@@ -2056,46 +2082,47 @@ function activateMeasurementTool(section) {
         
         console.log('Click coordinates:', { x: clickX, y: clickY });
         
-        // Store raw coordinates for now - we'll implement proper conversion
-        const time = param.time || Date.now();
-        const price = null; // We'll need to implement price calculation
-        
-        console.log('Using time from param:', time);
-        
-        // For now, let's use a simpler approach - store the click coordinates
-        // and we'll implement the price calculation differently
-        
-        // Find the nearest candle data point for this time
-        const candleData = getCandleDataForTime(section, time);
-        console.log('Found candle data:', candleData);
-        
-        if (!candleData) {
-            console.log('No candle data found for time:', time);
+        // Get the candlestick series to convert Y coordinate to price
+        const candlestickSeries = chartInstances[section].candlestickSeries;
+        if (!candlestickSeries) {
+            console.error('No candlestick series found for measurement');
             return;
         }
         
+        // Convert Y coordinate to exact price value
+        const exactPrice = candlestickSeries.coordinateToPrice(clickY);
+        console.log('Y coordinate converted to price:', exactPrice);
+        
+        if (exactPrice === null || exactPrice === undefined) {
+            console.log('Could not convert Y coordinate to price');
+            return;
+        }
+        
+        // Get time from param or use current time
+        const time = param.time || Date.now();
+        
         if (!measurementTool[section].startPoint) {
-            // First click - set start point
+            // First click - set start point with exact Y-axis price
             measurementTool[section].startPoint = {
                 time: time,
-                price: candleData.close,
+                price: exactPrice,
                 x: clickX,
                 y: clickY
             };
-            console.log('Measurement start point set:', measurementTool[section].startPoint);
+            console.log('Measurement start point set with Y-axis price:', measurementTool[section].startPoint);
             
             // Show visual feedback for first click
-            showMeasurementFeedback(section, 'Click second point to complete measurement');
+            showMeasurementFeedback(section, `Y-axis start point: $${exactPrice.toFixed(2)} - Click second point to complete measurement`);
         } else {
-            // Second click - set end point and calculate
+            // Second click - set end point with exact Y-axis price
             console.log('Second click detected, setting end point');
             measurementTool[section].endPoint = {
                 time: time,
-                price: candleData.close,
+                price: exactPrice,
                 x: clickX,
                 y: clickY
             };
-            console.log('Measurement end point set:', measurementTool[section].endPoint);
+            console.log('Measurement end point set with Y-axis price:', measurementTool[section].endPoint);
             
             console.log('Drawing measurement line...');
             drawMeasurementLine(section);
@@ -2164,10 +2191,11 @@ function deactivateMeasurementTool(section) {
     measurementTool[section].startPoint = null;
     measurementTool[section].endPoint = null;
     
-    // Reset cursor
+    // Reset cursor and title
     const chartContainer = document.getElementById(`chart-${section}`);
     if (chartContainer) {
         chartContainer.style.cursor = 'default';
+        chartContainer.title = '';
     }
     
     // Remove measurement line and overlay
@@ -2273,10 +2301,31 @@ function drawMeasurementLine(section) {
     line.setAttribute('x2', measurementTool[section].endPoint.x);
     line.setAttribute('y2', measurementTool[section].endPoint.y);
     line.setAttribute('stroke', '#FF6B6B');
-    line.setAttribute('stroke-width', '2');
-    line.setAttribute('stroke-dasharray', '5,5');
+    line.setAttribute('stroke-width', '3');
+    line.setAttribute('stroke-dasharray', '8,4');
+    line.setAttribute('opacity', '0.8');
+    
+    // Add start point indicator
+    const startCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    startCircle.setAttribute('cx', measurementTool[section].startPoint.x);
+    startCircle.setAttribute('cy', measurementTool[section].startPoint.y);
+    startCircle.setAttribute('r', '4');
+    startCircle.setAttribute('fill', '#FF6B6B');
+    startCircle.setAttribute('stroke', 'white');
+    startCircle.setAttribute('stroke-width', '2');
+    
+    // Add end point indicator
+    const endCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    endCircle.setAttribute('cx', measurementTool[section].endPoint.x);
+    endCircle.setAttribute('cy', measurementTool[section].endPoint.y);
+    endCircle.setAttribute('r', '4');
+    endCircle.setAttribute('fill', '#FF6B6B');
+    endCircle.setAttribute('stroke', 'white');
+    endCircle.setAttribute('stroke-width', '2');
     
     svg.appendChild(line);
+    svg.appendChild(startCircle);
+    svg.appendChild(endCircle);
     chartContainer.appendChild(svg);
     
     measurementTool[section].line = svg;
@@ -2364,11 +2413,12 @@ function createMeasurementOverlay(section, data) {
     const directionColor = data.direction === 'UP' ? '#4CAF50' : '#F44336';
     
     overlay.innerHTML = `
-        <div style="margin-bottom: 10px; font-weight: bold; color: ${directionColor};">📏 MEASUREMENT TOOL</div>
+        <div style="margin-bottom: 10px; font-weight: bold; color: ${directionColor};">📏 Y-AXIS MEASUREMENT</div>
         <div style="margin-bottom: 5px;"><strong>Start:</strong> $${data.startPrice}</div>
         <div style="margin-bottom: 5px;"><strong>End:</strong> $${data.endPrice}</div>
         <div style="margin-bottom: 5px;"><strong>Change:</strong> <span style="color: ${directionColor};">$${data.priceChange} (${data.priceChangePercent}%)</span></div>
         <div style="margin-bottom: 10px;"><strong>Direction:</strong> <span style="color: ${directionColor};">${data.direction}</span></div>
+        <div style="margin-bottom: 10px; font-size: 12px; color: #888;"><em>Measured from Y-axis price levels</em></div>
         <button onclick="clearMeasurement('${section}')" style="background: #FF6B6B; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Clear</button>
     `;
     
