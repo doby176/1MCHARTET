@@ -1838,13 +1838,20 @@ function setupIndicatorListeners(section) {
 
 // Drawing Tools Functions (Enhanced)
 function activateDrawingTool(section, tool) {
-    // Temporarily disabled - drawing tools require complex overlay system
-    // Based on: https://github.com/tradingview/lightweight-charts/issues/1345
-    
     const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
     buttons.forEach(btn => btn.classList.remove('active'));
     
-    // Show coming soon message
+    // Special handling for measure tool - use measurement tool instead
+    if (tool === 'measure') {
+        console.log(`Measure tool clicked for ${section} - activating measurement tool`);
+        toggleMeasurementTool(section);
+        return;
+    }
+    
+    // Temporarily disabled - drawing tools require complex overlay system
+    // Based on: https://github.com/tradingview/lightweight-charts/issues/1345
+    
+    // Show coming soon message for other drawing tools
     alert('Drawing tools are coming soon! 📈\n\nLightweight Charts requires a custom overlay system for drawing tools. This feature is being developed and will be available in a future update.');
     
     console.log(`Drawing tool ${tool} clicked for ${section} - showing coming soon message`);
