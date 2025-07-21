@@ -1860,6 +1860,17 @@ footer p {
         color: #6c757d;
         font-size: 0.75rem;
     }
+    
+    /* Mobile footer image spacing */
+    .footer .buttom1-image {
+        right: 5%;
+        max-width: 35%;
+    }
+    
+    .footer .buttom2-image {
+        left: 5%;
+        max-width: 35%;
+    }
 }
 
 @media (max-width: 480px) {
