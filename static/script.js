@@ -2343,8 +2343,8 @@ function createMeasurementOverlay(section, data) {
     
     overlay.innerHTML = `
         <div style="margin-bottom: 8px; font-weight: bold; color: #cccccc;">Measurement Tool</div>
-        <div style="margin-bottom: 4px;">Start: $${data.startPrice}</div>
-        <div style="margin-bottom: 4px;">End: $${data.endPrice}</div>
+        <div class="start-end-info" style="margin-bottom: 4px;">Start: $${data.startPrice}</div>
+        <div class="start-end-info" style="margin-bottom: 4px;">End: $${data.endPrice}</div>
         <div style="margin-bottom: 4px; color: ${color}; font-weight: bold;">
             Change: ${data.priceChange >= 0 ? '+' : ''}$${data.priceChange} (${data.priceChangePercent >= 0 ? '+' : ''}${data.priceChangePercent}%)
         </div>

@@ -1512,6 +1512,14 @@ footer p {
     padding: 0 var(--spacing-lg);
 }
 
+.disclaimer-section {
+    background: var(--navy);
+    color: var(--white);
+    text-align: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* Trade Summary Styling */
 #trade-summary {
     background: #f8f9fa;
@@ -2290,14 +2298,27 @@ footer p {
   .measurement-overlay {
     left: 8px !important;
     right: auto !important;
-    top: 8px !important;
-    min-width: 120px !important;
-    max-width: 60vw !important;
-    font-size: 10px !important;
-    padding: 6px !important;
-    border-radius: 6px !important;
+    bottom: 40px !important;
+    top: auto !important;
+    min-width: 80px !important;
+    max-width: 40vw !important;
+    font-size: 9px !important;
+    padding: 4px !important;
+    border-radius: 4px !important;
   }
   .measurement-overlay div {
-    font-size: 10px !important;
+    font-size: 9px !important;
+  }
+  .measurement-overlay .start-end-info {
+    display: none !important;
+  }
+}
+
+@media (min-width: 601px) {
+  .measurement-overlay {
+    left: 10px !important;
+    right: auto !important;
+    bottom: 40px !important;
+    top: auto !important;
   }
 }
