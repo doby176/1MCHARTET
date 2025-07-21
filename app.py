@@ -1410,9 +1410,11 @@ def get_news_event_insights():
                 'total_count': len(pm_directions)
             }
         
-        # 2. Move between 9:30 - 10:00 to highest high or lowest low
-        extreme_moves = [safe_float(row['percent_move_930_959_extreme']) for row in filtered_data if safe_float(row['percent_move_930_959_extreme']) is not None]
-        extreme_directions = [row['direction_930_959_extreme'] for row in filtered_data if row['direction_930_959_extreme']]
+        # 2. Move between 9:30 - 10:00 to highest high or lowest low (only moves above 0.1%)
+        extreme_moves = [safe_float(row['percent_move_930_959_extreme']) for row in filtered_data 
+                        if safe_float(row['percent_move_930_959_extreme']) is not None and abs(safe_float(row['percent_move_930_959_extreme'])) > 0.1]
+        extreme_directions = [row['direction_930_959_extreme'] for row in filtered_data 
+                             if safe_float(row['percent_move_930_959_extreme']) is not None and abs(safe_float(row['percent_move_930_959_extreme'])) > 0.1]
         
         if extreme_moves:
             insights['extreme_moves_930_1000'] = {
@@ -1425,9 +1427,11 @@ def get_news_event_insights():
                 'total_count': len(extreme_directions)
             }
         
-        # 3. Move between 9:30 - 10:30 close, no extreme moves
-        regular_moves = [safe_float(row['percent_move_930_1030_x']) for row in filtered_data if safe_float(row['percent_move_930_1030_x']) is not None]
-        regular_directions = [row['direction_930_1030_x'] for row in filtered_data if row['direction_930_1030_x']]
+        # 3. Move between 9:30 - 10:30 close, no extreme moves (only moves above 0.1%)
+        regular_moves = [safe_float(row['percent_move_930_1030_x']) for row in filtered_data 
+                        if safe_float(row['percent_move_930_1030_x']) is not None and abs(safe_float(row['percent_move_930_1030_x'])) > 0.1]
+        regular_directions = [row['direction_930_1030_x'] for row in filtered_data 
+                             if safe_float(row['percent_move_930_1030_x']) is not None and abs(safe_float(row['percent_move_930_1030_x'])) > 0.1]
         
         if regular_moves:
             insights['regular_moves_930_1030'] = {
@@ -1468,10 +1472,12 @@ def get_news_event_insights():
                 'opposite_direction_description': 'Move opposite to gap direction after touching level (reversal)'
             }
         
-        # 4b. 60-minute moves after touching pre-market level (if columns exist)
+        # 4b. 60-minute moves after touching pre-market level (only moves above 0.1%)
         if 'percent_move_same_direction_60min' in data[0] and 'percent_move_opposite_direction_60min' in data[0]:
-            same_direction_60min = [safe_float(row['percent_move_same_direction_60min']) for row in filtered_data if safe_float(row['percent_move_same_direction_60min']) is not None]
-            opposite_direction_60min = [safe_float(row['percent_move_opposite_direction_60min']) for row in filtered_data if safe_float(row['percent_move_opposite_direction_60min']) is not None]
+            same_direction_60min = [safe_float(row['percent_move_same_direction_60min']) for row in filtered_data 
+                                   if safe_float(row['percent_move_same_direction_60min']) is not None and abs(safe_float(row['percent_move_same_direction_60min'])) > 0.1]
+            opposite_direction_60min = [safe_float(row['percent_move_opposite_direction_60min']) for row in filtered_data 
+                                       if safe_float(row['percent_move_opposite_direction_60min']) is not None and abs(safe_float(row['percent_move_opposite_direction_60min'])) > 0.1]
             
             if same_direction_60min or opposite_direction_60min:
                 insights['moves_after_touch_60min'] = {
@@ -1617,7 +1623,7 @@ def scrape_qqq_data():
                 value = value_elem.get_text(strip=True)
                 
                 if label in ['Open', 'Prev Close']:
-                    data[label] = value
+                        data[label] = value
         
         # Calculate gap percentage if we have both Open and Prev Close
         if 'Open' in data and 'Prev Close' in data:

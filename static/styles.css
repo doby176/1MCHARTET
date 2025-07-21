@@ -1495,27 +1495,27 @@ footer p {
 .footer .buttom1-image {
     position: absolute;
     bottom: 0;
-    right: 0;
+    right: 10%;
     height: auto;
     z-index: 1;
     margin: 0;
     padding: 0;
-    max-height: 90%;
+    max-height: 100%;
     object-fit: contain;
-    max-width: 40%;
+    max-width: 50%;
 }
 
 .footer .buttom2-image {
     position: absolute;
     bottom: 0;
-    left: 0;
+    left: 10%;
     height: auto;
     z-index: 1;
     margin: 0;
     padding: 0;
-    max-height: 90%;
+    max-height: 100%;
     object-fit: contain;
-    max-width: 40%;
+    max-width: 50%;
 }
 
 .footer .footer-content {
