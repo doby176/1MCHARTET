@@ -2285,3 +2285,19 @@ footer p {
     background: #45a049 !important;
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
 }
+
+@media (max-width: 600px) {
+  .measurement-overlay {
+    left: 8px !important;
+    right: auto !important;
+    top: 8px !important;
+    min-width: 120px !important;
+    max-width: 60vw !important;
+    font-size: 10px !important;
+    padding: 6px !important;
+    border-radius: 6px !important;
+  }
+  .measurement-overlay div {
+    font-size: 10px !important;
+  }
+}
