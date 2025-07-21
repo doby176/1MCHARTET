@@ -1452,11 +1452,12 @@ form#signup-form p a:hover, form#login-form p a:hover {
 footer {
     background: var(--navy);
     color: var(--white);
-    padding: var(--spacing-xxl) 0;
+    padding: var(--spacing-lg) 0;
     text-align: center;
     margin-top: var(--spacing-xxl);
     position: relative;
     overflow: hidden;
+    min-height: 300px;
 }
 
 .footer-logo {
@@ -1499,6 +1500,9 @@ footer p {
     z-index: 1;
     margin: 0;
     padding: 0;
+    max-height: 90%;
+    object-fit: contain;
+    max-width: 40%;
 }
 
 .footer .buttom2-image {
@@ -1509,6 +1513,9 @@ footer p {
     z-index: 1;
     margin: 0;
     padding: 0;
+    max-height: 90%;
+    object-fit: contain;
+    max-width: 40%;
 }
 
 .footer .footer-content {
