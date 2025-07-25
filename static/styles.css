@@ -1097,6 +1097,35 @@ form button:disabled::before {
     color: #dc3545;
 }
 
+/* Previous High/Low Section Styles */
+.previous-high-low h2 {
+    font-size: 1.8rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--charcoal);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    position: relative;
+    padding-bottom: var(--spacing-md);
+}
+
+.previous-high-low h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: var(--button-gradient);
+    border-radius: 2px;
+}
+
+.previous-high-low p {
+    color: var(--dark-grey);
+    line-height: 1.7;
+    margin-bottom: var(--spacing-md);
+}
+
 /* Sample/Upgrade Notices */
 .sample-notice {
     background: linear-gradient(135deg, #fff3cd 0%, #fdf2b3 100%);

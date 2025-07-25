@@ -59,6 +59,7 @@
                 <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
                 <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
                 <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
+                <button class="tab-button" onclick="openTab('previous-high-low')">NASDAQ Previous High/Low of Day</button>
             </div>
             <!-- Market Simulator Section -->
             <div id="market-simulator" class="tab-content active">
@@ -606,6 +607,50 @@
                         <option value="250">4x (0.25 sec/bar)</option>
                     </select>
                     <span id="replay-timestamp-earnings">Current Time: --:--:--</span>
+                </div>
+            </div>
+            <!-- NASDAQ Previous High/Low of Day Section -->
+            <div id="previous-high-low" class="tab-content">
+                <h2>NASDAQ Previous High/Low of Day</h2>
+                <p>Analyze market behavior when price opens relative to previous day's high and low levels. Discover continuation and reversal patterns with detailed 10-minute and 60-minute move statistics.</p>
+                
+                <div class="filter-toggle">
+                    <label><input type="radio" name="previous-high-low-filter-type" value="both-filters" checked> Filter with Open Position and Day of Week</label>
+                    <label><input type="radio" name="previous-high-low-filter-type" value="position-only"> Filter with Open Position Only</label>
+                </div>
+                
+                <form id="previous-high-low-form">
+                    <div id="both-filters-section" class="filter-section active">
+                        <label for="open-position-select">Open Price Relative to Previous High/Low:</label>
+                        <select id="open-position-select" name="open_position">
+                            <option value="">Select position</option>
+                            <option value="Between Previous High and Low">Between Previous High and Low</option>
+                            <option value="Above Previous High">Above Previous High</option>
+                            <option value="Below Previous Low">Below Previous Low</option>
+                        </select>
+                        <label for="day-of-week-select">Day of Week:</label>
+                        <select id="day-of-week-select" name="day_of_week">
+                            <option value="">Select day</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                        </select>
+                    </div>
+                    <div id="position-only-section" class="filter-section">
+                        <label for="open-position-only-select">Open Price Relative to Previous High/Low:</label>
+                        <select id="open-position-only-select" name="open_position">
+                            <option value="">Select position</option>
+                            <option value="Between Previous High and Low">Between Previous High and Low</option>
+                            <option value="Above Previous High">Above Previous High</option>
+                            <option value="Below Previous Low">Below Previous Low</option>
+                        </select>
+                    </div>
+                    <button type="submit">Get Insights</button>
+                </form>
+                <div id="previous-high-low-results">
+                    <p>Select filters to view NASDAQ previous high/low insights and statistics.</p>
                 </div>
             </div>
             <!-- AdSense Ad Unit -->
