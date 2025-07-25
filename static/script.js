@@ -5350,9 +5350,20 @@ async function loadPreviousHighLowInsights(event) {
     resultsContainer.innerHTML = '<p>Loading insights...</p>';
     
     try {
-        const formData = new FormData(event.target);
-        const openPosition = formData.get('open_position');
-        const dayOfWeek = formData.get('day_of_week');
+        // Check which filter type is selected
+        const filterType = document.querySelector('input[name="previous-high-low-filter-type"]:checked').value;
+        
+        let openPosition, dayOfWeek;
+        
+        if (filterType === 'both-filters') {
+            // Use the both-filters section values
+            openPosition = document.getElementById('previous-high-low-position-select').value;
+            dayOfWeek = document.getElementById('previous-high-low-day-select').value;
+        } else {
+            // Use the position-only section value
+            openPosition = document.getElementById('previous-high-low-position-only-select').value;
+            dayOfWeek = null;
+        }
         
         if (!openPosition) {
             resultsContainer.innerHTML = '<p style="color: red;">Please select an open position.</p>';
