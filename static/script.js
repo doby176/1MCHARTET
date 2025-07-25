@@ -4075,6 +4075,7 @@ async function loadGapDates(event) {
         console.log(`Rendering ${data.dates.length} gap dates:`, data.dates);
         const ul = document.createElement('ul');
         ul.id = 'gap-dates-list';
+        ul.className = 'date-list';
         data.dates.forEach(date => {
             const li = document.createElement('li');
             const link = document.createElement('a');
@@ -4290,6 +4291,7 @@ async function loadEventDates(event) {
         console.log(`Rendering ${data.dates.length} event dates:`, data.dates);
         const ul = document.createElement('ul');
         ul.id = 'event-dates-list';
+        ul.className = 'date-list';
         data.dates.forEach(date => {
             const li = document.createElement('li');
             const link = document.createElement('a');
@@ -4442,6 +4444,7 @@ async function loadEarningsDates(event) {
         console.log(`Rendering ${data.dates.length} earnings dates:`, data.dates);
         const ul = document.createElement('ul');
         ul.id = 'earnings-dates-list';
+        ul.className = 'date-list';
         data.dates.forEach(date => {
             const li = document.createElement('li');
             const link = document.createElement('a');

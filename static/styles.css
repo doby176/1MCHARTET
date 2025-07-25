@@ -1844,6 +1844,80 @@ footer p {
         font-size: 0.9rem;
     }
     
+    /* Mobile responsive styles for dates */
+    .date-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 8px;
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .date-list li {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .date-list a {
+        display: block;
+        padding: 8px 12px;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--primary-blue);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .date-list a:hover {
+        background: var(--primary-blue);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 102, 204, 0.2);
+    }
+    
+    .date-list a:active {
+        transform: translateY(0);
+    }
+}
+
+/* Desktop styles for dates */
+@media (min-width: 769px) {
+    .date-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .date-list li {
+        margin-bottom: 8px;
+    }
+    
+    .date-list a {
+        display: inline-block;
+        padding: 8px 16px;
+        background: var(--light-grey);
+        border: 1px solid var(--medium-grey);
+        border-radius: var(--border-radius-sm);
+        color: var(--primary-blue);
+        text-decoration: none;
+        transition: all var(--transition-fast);
+        font-size: 0.9rem;
+    }
+    
+    .date-list a:hover {
+        background: var(--primary-blue);
+        color: var(--white);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-light);
+    }
+    
     form {
         flex-direction: column;
         align-items: stretch;
