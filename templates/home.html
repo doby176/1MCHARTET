@@ -30,7 +30,7 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=71">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=70">
     <style>
         .landing-header {
             position: relative;
@@ -70,17 +70,17 @@
                 <a href="{{ url_for('landing') }}" class="auth-btn" style="background: #007bff; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9em; font-weight: 500; transition: all 0.2s ease;">Sign Up</a>
             </div>
         </div>
-        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo" style="max-width: 675px; margin-bottom: 20px;">
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
         <h1>Discover Powerful Nasdaq Gap Insights, News Analysis, Market Replay and Earnings Data with 1MChart</h1>
     </header>
     
     <main class="landing-main">
         <section class="hero">
-            <h2>Trade Smarter with 1MChart</h2>
-            <p>Harness the power of high-frequency 1-minute data to simulate trades with the Market Simulator, replay market sessions, analyze Nasdaq gaps, earnings reactions, and key economic events (CPI, FOMC, NFP). Build data-driven trading strategies with precision.</p>
-            <p class="free-trial-text"><strong>Start for free. No credit card required.</strong></p>
+            <h2>Master the Market with 1MChart's Data-Driven Insights</h2>
+            <p>Unlock the power of comprehensive Nasdaq analytics with our three core data statistics: <strong>Gap Insights</strong> for gap fill rates and patterns, <strong>Previous High/Low Analysis</strong> for support/resistance levels, and <strong>News Event Insights</strong> for economic event reactions. Plus, explore <strong>Backtest Analysis</strong> for strategy testing and <strong>Market Simulator</strong> for risk-free practice with 1-minute precision data.</p>
+            <p class="free-trial-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 25px; border-radius: 25px; display: inline-block; font-size: 1.2em; font-weight: bold; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); margin: 20px 0;"><strong>🚀 Start for free</strong></p>
             <div class="cta-buttons">
-                <a href="/sample" class="sample-btn">🚀 Try Sample Features</a>
+                <a href="/sample" class="sample-btn" style="background: #28a745; color: white;">🚀 Try Sample Features</a>
                 <a href="/register" class="signup-btn">📈 Full Access Signup</a>
             </div>
             <div class="video-container">
@@ -126,9 +126,9 @@
                     <p>Explore price action on key economic event days (CPI, PPI, FOMC, NFP) to master intraday trading strategies.</p>
                 </div>
                 <div class="feature-card">
-                    <img src="{{ url_for('static', filename='replaymetric.png') }}" alt="Market Replay" class="metric-icon">
-                    <h3>Market Replay</h3>
-                    <p>Replay 1-minute candlestick charts to simulate intraday trading sessions. Control playback with play, pause, and candle navigation, and start at any time for strategic practice.</p>
+                    <img src="{{ url_for('static', filename='highmetric.png') }}" alt="Previous High/Low Analysis" class="metric-icon">
+                    <h3>Previous High/Low of Day Data Stats</h3>
+                    <p>Analyze previous day high/low levels and their impact on current trading sessions. Discover breakout statistics, support/resistance patterns, and key intraday levels for strategic entry and exit points.</p>
                 </div>
                 <div class="feature-card">
                     <img src="{{ url_for('static', filename='simumetric.png') }}" alt="Market Simulator" class="metric-icon">
@@ -136,9 +136,9 @@
                     <p>Practice trading by revisiting key historical events (CPI, FOMC, earnings) with 1-minute candlestick charts. Simulate trades and test strategies risk-free.</p>
                 </div>
                 <div class="feature-card">
-                    <img src="{{ url_for('static', filename='highmetric.png') }}" alt="High-Frequency 1-Minute Data" class="metric-icon">
-                    <h3>High-Frequency 1-Minute Data</h3>
-                    <p>Access 1-minute candle data from 2015 to 2025 for precise market analysis and replay. Available tickers include QQQ, AAPL, MSFT, TSLA, ORCL, NVDA, MSTR, UBER, PLTR, and META, enabling detailed intraday trading strategies.</p>
+                    <img src="{{ url_for('static', filename='replaymetric.png') }}" alt="Market Replay" class="metric-icon">
+                    <h3>Market Replay & Simulator</h3>
+                    <p>Replay 1-minute candlestick charts to simulate intraday trading sessions. Control playback with play, pause, and candle navigation. Practice trading on historical events with our Market Simulator using high-frequency data from 2015-2025.</p>
                 </div>
             </div>
         </section>
@@ -148,7 +148,7 @@
             <h2>Ready to Elevate Your Trading?</h2>
             <p>Join 1MChart today and gain access to powerful analytics tools and market replay features designed for day traders.</p>
             <div class="cta-buttons">
-                <a href="/sample" class="sample-btn">🚀 Try Sample Features</a>
+                <a href="/sample" class="sample-btn" style="background: #28a745; color: white;">🚀 Try Sample Features</a>
                 <a href="/register" class="signup-btn">📈 Full Access Signup</a>
             </div>
         </div>
@@ -167,18 +167,12 @@
         </div>
     </main>
     <footer class="footer">
-        <div class="footer-content">
-            <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
-            <p>More coming soon</p>
-        </div>
-        <img src="{{ url_for('static', filename='buttom2.png') }}" alt="Left Footer Image" class="buttom2-image">
-        <img src="{{ url_for('static', filename='buttom1.png') }}" alt="Right Footer Image" class="buttom1-image">
+        <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
+        <p>More coming soon</p>
+        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
         <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
-    <div class="disclaimer-section">
-        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
-    </div>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='script.js') }}?v=51"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=50"></script>
 </body>
 </html>
