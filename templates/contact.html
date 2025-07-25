@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - 1MChart</title>
+    <meta name="description" content="Contact 1MChart - Get in touch with our team for support, questions, or feedback about our trading analytics platform.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=70">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <style>
+        .contact-page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--spacing-xxl) var(--spacing-lg);
+            line-height: 1.6;
+        }
+        .contact-page h1 {
+            color: var(--primary-blue);
+            margin-bottom: var(--spacing-xl);
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: var(--font-weight-bold);
+        }
+        .contact-page h2 {
+            color: var(--secondary-blue);
+            margin-top: var(--spacing-xxl);
+            margin-bottom: var(--spacing-lg);
+            font-size: 1.8rem;
+            font-weight: var(--font-weight-semibold);
+        }
+        .contact-page h3 {
+            color: var(--primary-blue);
+            margin-top: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            font-size: 1.3rem;
+            font-weight: var(--font-weight-semibold);
+        }
+        .contact-page p {
+            margin-bottom: var(--spacing-lg);
+            font-size: 1.1rem;
+            color: var(--charcoal);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: var(--spacing-xl);
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: var(--font-weight-medium);
+            font-size: 1.1rem;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            transition: var(--transition-fast);
+        }
+        .back-link:hover {
+            background: var(--light-grey);
+            text-decoration: none;
+        }
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-xxl);
+            margin: var(--spacing-xl) 0;
+        }
+        .contact-form {
+            background: var(--light-grey);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--medium-grey);
+        }
+        .contact-form h3 {
+            margin-bottom: var(--spacing-lg);
+            color: var(--charcoal);
+        }
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: var(--font-weight-semibold);
+            color: var(--primary-blue);
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 2px solid var(--medium-grey);
+            border-radius: var(--border-radius-md);
+            font-size: 1rem;
+            font-family: var(--font-primary);
+            transition: var(--transition-fast);
+        }
+        .form-group textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+            transform: translateY(-1px);
+        }
+        .submit-btn {
+            background: var(--button-gradient);
+            color: var(--white);
+            padding: var(--spacing-md) var(--spacing-xl);
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-size: 1.1rem;
+            font-weight: var(--font-weight-semibold);
+            cursor: pointer;
+            transition: var(--transition-fast);
+            box-shadow: var(--shadow-light);
+        }
+        .submit-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+        .contact-info {
+            background: var(--header-gradient);
+            color: var(--white);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-medium);
+        }
+        .contact-info h3 {
+            color: var(--white);
+            margin-bottom: var(--spacing-lg);
+            font-weight: var(--font-weight-bold);
+        }
+        .contact-item {
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+        }
+        .contact-item i {
+            margin-right: var(--spacing-md);
+            font-size: 1.2rem;
+            width: 20px;
+        }
+        .contact-item a {
+            color: var(--white);
+            text-decoration: none;
+            transition: var(--transition-fast);
+        }
+        .contact-item a:hover {
+            color: var(--secondary-blue);
+            text-decoration: none;
+        }
+        .faq-section {
+            background: var(--light-grey);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-lg);
+            margin: var(--spacing-xl) 0;
+            border: 1px solid var(--medium-grey);
+        }
+        .faq-item {
+            margin-bottom: var(--spacing-lg);
+        }
+        .faq-item h4 {
+            color: var(--primary-blue);
+            margin-bottom: var(--spacing-sm);
+            cursor: pointer;
+            font-weight: var(--font-weight-semibold);
+        }
+        .faq-item p {
+            margin-bottom: 0;
+            padding-left: var(--spacing-lg);
+            border-left: 3px solid var(--primary-blue);
+            color: var(--charcoal);
+        }
+        .support-hours {
+            background: linear-gradient(145deg, #e8f5e8 0%, #d4edda 100%);
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            margin: var(--spacing-lg) 0;
+            border-left: 4px solid var(--accent-green);
+            box-shadow: var(--shadow-light);
+        }
+        .support-hours h4 {
+            color: var(--accent-green);
+            margin-bottom: var(--spacing-sm);
+            font-weight: var(--font-weight-semibold);
+        }
+        @media (max-width: 768px) {
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-lg);
+            }
+            .contact-page h1 {
+                font-size: 2rem;
+            }
+            .contact-page h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="contact-page">
+        <a href="/" class="back-link">← Back to Home</a>
+        
+        <h1>Contact Us</h1>
+        
+        <p>We're here to help! Whether you have questions about our platform, need technical support, or want to provide feedback, our team is ready to assist you. Get in touch with us through any of the methods below.</p>
+        
+        <div class="contact-grid">
+            <div class="contact-form">
+                <h3>Send Us a Message</h3>
+                <form action="/contact" method="POST">
+                    <div class="form-group">
+                        <label for="name">Full Name *</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject">Subject *</label>
+                        <select id="subject" name="subject" required>
+                            <option value="">Select a subject</option>
+                            <option value="general">General Inquiry</option>
+                            <option value="technical">Technical Support</option>
+                            <option value="account">Account Issues</option>
+                            <option value="feature">Feature Request</option>
+                            <option value="feedback">Feedback</option>
+                            <option value="partnership">Partnership</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Message *</label>
+                        <textarea id="message" name="message" placeholder="Please describe your inquiry in detail..." required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
+            </div>
+            
+            <div class="contact-info">
+                <h3>Get in Touch</h3>
+                
+                <div class="contact-item">
+                    <i>📧</i>
+                    <div>
+                        <strong>Email Contact</strong><br>
+                        <a href="mailto:onemchart.onemchart@mail.com">onemchart.onemchart@mail.com</a>
+                    </div>
+                </div>
+                
+                <div class="contact-item">
+                    <i>📺</i>
+                    <div>
+                        <strong>YouTube Channel</strong><br>
+                        <a href="https://www.youtube.com/@1Mchart1" target="_blank">@1Mchart1</a>
+                    </div>
+                </div>
+                
+                <div class="support-hours">
+                    <h4>📅 Support Hours</h4>
+                    <p><strong>Monday - Friday:</strong> 9:00 AM - 6:00 PM EST</p>
+                    <p><strong>Saturday:</strong> 10:00 AM - 4:00 PM EST</p>
+                    <p><strong>Sunday:</strong> Closed</p>
+                    <p><em>We typically respond within 24 hours during business days.</em></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            
+            <div class="faq-item">
+                <h4>What is 1MChart?</h4>
+                <p>1MChart is an educational trading analytics platform that provides comprehensive tools for analyzing Nasdaq market data, studying trading patterns, and developing trading strategies through research and education.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h4>Is 1MChart free to use?</h4>
+                <p>We offer both free and premium features. You can try our sample features for free, and we offer various subscription plans for full access to all our analytics tools and data.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h4>Do you provide investment advice?</h4>
+                <p>No, 1MChart is designed exclusively for educational and research purposes. We do not provide investment advice, guarantee profits, or predict market outcomes. All information is for educational use only.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h4>What data do you provide?</h4>
+                <p>We provide comprehensive Nasdaq market data including 1-minute candlestick charts, gap analysis, earnings data, and economic event analysis from 2015 to present.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h4>How accurate is your market data?</h4>
+                <p>We source our data from reliable financial data providers and strive for accuracy. However, we do not guarantee real-time accuracy and recommend users verify critical information from multiple sources.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h4>Can I use 1MChart for live trading?</h4>
+                <p>1MChart is designed for educational and research purposes. While you can use our insights to inform your trading decisions, we strongly recommend using our platform as part of a comprehensive trading education strategy.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h4>How do I get technical support?</h4>
+                <p>For technical support, please email us at onemchart.onemchart@mail.com with a detailed description of your issue. Include screenshots if possible, and we'll respond within 24 hours during business days.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h4>Can I cancel my subscription?</h4>
+                <p>Yes, you can cancel your subscription at any time through your account settings or by contacting our support team. We do not charge cancellation fees.</p>
+            </div>
+        </div>
+        
+        <h2>Additional Resources</h2>
+        
+        <p>Before contacting us, you might find answers to your questions in our other resources:</p>
+        
+        <ul>
+            <li><strong><a href="/about">About Us</a></strong> - Learn more about 1MChart and our mission</li>
+            <li><strong><a href="/privacy">Privacy Policy</a></strong> - Understand how we protect your data</li>
+            <li><strong><a href="/terms">Terms of Service</a></strong> - Read our terms and conditions</li>
+            <li><strong><a href="/sample">Sample Features</a></strong> - Try our platform before signing up</li>
+        </ul>
+        
+        <h2>Stay Connected</h2>
+        
+        <p>Follow us for the latest updates, market insights, and educational content:</p>
+        
+        <ul>
+            <li><strong>Blog:</strong> Coming soon - Educational trading articles and market analysis</li>
+            <li><strong>Newsletter:</strong> Coming soon - Weekly market insights and platform updates</li>
+            <li><strong>Social Media:</strong> Coming soon - Follow us for real-time updates</li>
+        </ul>
+        
+        <p><strong>Disclaimer:</strong> 1MChart is an educational platform designed for learning and research purposes. We do not provide investment advice, and all information on this platform is for educational use only. Trading involves substantial risk of loss and is not suitable for all investors.</p>
+    </div>
+</body>
+</html>

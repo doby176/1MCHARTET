@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - 1MChart</title>
+    <meta name="description" content="Learn about 1MChart - Your trusted platform for Nasdaq trading analytics, market insights, and educational trading tools. Discover our mission to empower traders with data-driven insights.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=70">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <style>
+        .about-page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: var(--spacing-xxl) var(--spacing-lg);
+            line-height: 1.6;
+        }
+        .about-page h1 {
+            color: var(--primary-blue);
+            margin-bottom: var(--spacing-xl);
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: var(--font-weight-bold);
+        }
+        .about-page h2 {
+            color: var(--secondary-blue);
+            margin-top: var(--spacing-xxl);
+            margin-bottom: var(--spacing-lg);
+            font-size: 1.8rem;
+            font-weight: var(--font-weight-semibold);
+        }
+        .about-page h3 {
+            color: var(--primary-blue);
+            margin-top: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            font-size: 1.3rem;
+            font-weight: var(--font-weight-semibold);
+        }
+        .about-page p {
+            margin-bottom: var(--spacing-lg);
+            font-size: 1.1rem;
+            color: var(--charcoal);
+        }
+        .about-page ul {
+            margin-bottom: var(--spacing-lg);
+            padding-left: var(--spacing-xl);
+        }
+        .about-page li {
+            margin-bottom: var(--spacing-sm);
+            font-size: 1.1rem;
+            color: var(--charcoal);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: var(--spacing-xl);
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: var(--font-weight-medium);
+            font-size: 1.1rem;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            transition: var(--transition-fast);
+        }
+        .back-link:hover {
+            background: var(--light-grey);
+            text-decoration: none;
+        }
+        .mission-section {
+            background: var(--header-gradient);
+            color: var(--white);
+            padding: var(--spacing-xxl);
+            border-radius: var(--border-radius-xl);
+            margin: var(--spacing-xl) 0;
+            text-align: center;
+            box-shadow: var(--shadow-medium);
+        }
+        .mission-section h2 {
+            color: var(--white);
+            margin-bottom: var(--spacing-lg);
+            font-weight: var(--font-weight-bold);
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+        }
+        .feature-card {
+            background: var(--light-grey);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-lg);
+            border-left: 4px solid var(--primary-blue);
+            transition: var(--transition-medium);
+        }
+        .feature-card:hover {
+            background: var(--white);
+            box-shadow: var(--shadow-medium);
+            transform: translateY(-2px);
+        }
+        .feature-card h3 {
+            color: var(--primary-blue);
+            margin-bottom: var(--spacing-md);
+            font-weight: var(--font-weight-semibold);
+        }
+        .team-section {
+            background: var(--light-grey);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-lg);
+            margin: var(--spacing-xl) 0;
+            border: 1px solid var(--medium-grey);
+        }
+        .values-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin: var(--spacing-xl) 0;
+        }
+        .value-item {
+            text-align: center;
+            padding: var(--spacing-lg);
+            background: var(--white);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--medium-grey);
+            transition: var(--transition-fast);
+        }
+        .value-item:hover {
+            box-shadow: var(--shadow-medium);
+            transform: translateY(-2px);
+        }
+        .value-item h4 {
+            color: var(--primary-blue);
+            margin-bottom: var(--spacing-sm);
+            font-weight: var(--font-weight-semibold);
+        }
+        .cta-section {
+            background: var(--accent-gradient);
+            color: var(--white);
+            padding: var(--spacing-xxl);
+            border-radius: var(--border-radius-xl);
+            text-align: center;
+            margin: var(--spacing-xxl) 0;
+            box-shadow: var(--shadow-medium);
+        }
+        .cta-section h2 {
+            color: var(--white);
+            margin-bottom: var(--spacing-lg);
+            font-weight: var(--font-weight-bold);
+        }
+        .cta-buttons {
+            display: flex;
+            gap: var(--spacing-lg);
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: var(--spacing-xl);
+        }
+        .cta-btn {
+            padding: var(--spacing-md) var(--spacing-xl);
+            border-radius: var(--border-radius-md);
+            text-decoration: none;
+            font-weight: var(--font-weight-bold);
+            transition: var(--transition-fast);
+            box-shadow: var(--shadow-light);
+        }
+        .cta-btn.primary {
+            background: var(--white);
+            color: var(--accent-green);
+        }
+        .cta-btn.secondary {
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+            border: 2px solid var(--white);
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+        @media (max-width: 768px) {
+            .about-page h1 {
+                font-size: 2rem;
+            }
+            .about-page h2 {
+                font-size: 1.5rem;
+            }
+            .mission-section {
+                padding: var(--spacing-lg);
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="about-page">
+        <a href="/" class="back-link">← Back to Home</a>
+        
+        <h1>About 1MChart</h1>
+        
+        <p>Welcome to 1MChart, your premier destination for comprehensive Nasdaq trading analytics and educational tools. We're dedicated to empowering traders with data-driven insights and cutting-edge analysis tools to enhance their trading education and research capabilities.</p>
+        
+        <div class="mission-section">
+            <h2>Our Mission</h2>
+            <p>To democratize access to professional-grade trading analytics by providing comprehensive, accurate, and user-friendly tools that help traders make informed decisions through education and research.</p>
+        </div>
+        
+        <h2>What We Do</h2>
+        
+        <p>1MChart is an educational trading analytics platform that provides traders, researchers, and financial enthusiasts with powerful tools to analyze market data, study trading patterns, and develop their understanding of market dynamics. Our platform is designed exclusively for educational and research purposes.</p>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <h3>📊 Data Statistics</h3>
+                <p>Comprehensive analytics covering gap insights, previous high/low analysis, and news event insights. Our data statistics provide deep market intelligence to help you understand market patterns and behaviors.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>🔍 Backtest Analysis</h3>
+                <p>Advanced backtesting tools for Nasdaq gap analysis, news event analysis, and earnings analysis. Test your trading strategies against historical data to validate your approaches.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>🎮 Market Simulator</h3>
+                <p>Risk-free trading simulation environment where you can practice trading strategies, replay historical market sessions, and develop your skills without financial risk.</p>
+            </div>
+        </div>
+        
+        <h2>Our Core Values</h2>
+        
+        <div class="values-section">
+            <div class="value-item">
+                <h4>🎯 Education First</h4>
+                <p>We believe in empowering traders through education and knowledge, not through promises of quick profits.</p>
+            </div>
+            
+            <div class="value-item">
+                <h4>📈 Data-Driven</h4>
+                <p>All our insights and tools are based on comprehensive market data analysis, not speculation or guesswork.</p>
+            </div>
+            
+            <div class="value-item">
+                <h4>🛡️ Risk Awareness</h4>
+                <p>We emphasize the importance of understanding trading risks and never guarantee profits or predict market outcomes.</p>
+            </div>
+            
+            <div class="value-item">
+                <h4>🔬 Research-Oriented</h4>
+                <p>Our platform is designed for serious research and analysis, helping users develop evidence-based trading strategies.</p>
+            </div>
+        </div>
+        
+        <h2>Our Platform Features</h2>
+        
+        <h3>Data Statistics</h3>
+        <ul>
+            <li><strong>Gap Insights:</strong> Analyze gap fill rates, median moves, and maximum unfilled gap movements</li>
+            <li><strong>Previous High/Low Analysis:</strong> Study support/resistance levels and breakout statistics</li>
+            <li><strong>News Event Insights:</strong> Understand market reactions to economic events like CPI, FOMC, and NFP</li>
+        </ul>
+        
+        <h3>Backtest Analysis</h3>
+        <ul>
+            <li><strong>Nasdaq Gap Analysis:</strong> Test gap-based trading strategies with historical data</li>
+            <li><strong>News Event Analysis:</strong> Study how markets react to major economic announcements</li>
+            <li><strong>Earnings Analysis:</strong> Analyze stock price reactions to earnings outcomes</li>
+        </ul>
+        
+        <h3>Market Simulator</h3>
+        <ul>
+            <li><strong>Historical Replay:</strong> Replay 1-minute candlestick charts from any historical date</li>
+            <li><strong>Risk-Free Practice:</strong> Simulate trades without financial risk</li>
+            <li><strong>Strategy Testing:</strong> Test and refine your trading strategies</li>
+        </ul>
+        
+        <div class="team-section">
+            <h2>Our Commitment to Quality</h2>
+            <p>At 1MChart, we're committed to providing the highest quality trading analytics platform. Our team continuously works to:</p>
+            <ul>
+                <li>Ensure data accuracy and reliability</li>
+                <li>Improve platform performance and user experience</li>
+                <li>Add new features and analysis tools</li>
+                <li>Maintain educational focus and risk awareness</li>
+                <li>Provide comprehensive support and documentation</li>
+            </ul>
+        </div>
+        
+        <h2>Educational Focus</h2>
+        
+        <p>1MChart is designed exclusively for educational and research purposes. We believe that successful trading comes from:</p>
+        <ul>
+            <li><strong>Knowledge:</strong> Understanding market mechanics and trading principles</li>
+            <li><strong>Practice:</strong> Testing strategies in risk-free environments</li>
+            <li><strong>Analysis:</strong> Using data-driven insights to make informed decisions</li>
+            <li><strong>Patience:</strong> Developing disciplined trading habits over time</li>
+        </ul>
+        
+        <p>We do not provide investment advice, guarantee profits, or predict market outcomes. Our platform is a tool for learning and research, helping users develop their own trading strategies and risk management approaches.</p>
+        
+        <div class="cta-section">
+            <h2>Ready to Start Your Trading Education Journey?</h2>
+            <p>Join thousands of traders who use 1MChart to enhance their market understanding and develop data-driven trading strategies.</p>
+            <div class="cta-buttons">
+                <a href="/sample" class="cta-btn primary">🚀 Try Sample Features</a>
+                <a href="/register" class="cta-btn secondary">📈 Sign Up Free</a>
+            </div>
+        </div>
+        
+        <h2>Contact Us</h2>
+        
+        <p>Have questions about 1MChart or need support? We're here to help:</p>
+        <ul>
+            <li><strong>Email:</strong> <a href="mailto:onemchart.onemchart@mail.com">onemchart.onemchart@mail.com</a></li>
+            <li><strong>YouTube:</strong> <a href="https://www.youtube.com/@1Mchart1" target="_blank">@1Mchart1</a></li>
+            <li><strong>Website:</strong> <a href="/contact">Contact Form</a></li>
+        </ul>
+        
+        <p><strong>Disclaimer:</strong> 1MChart is an educational platform designed for learning and research purposes. We do not provide investment advice, and all information on this platform is for educational use only. Trading involves substantial risk of loss and is not suitable for all investors.</p>
+    </div>
+</body>
+</html>

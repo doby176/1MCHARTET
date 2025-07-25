@@ -486,6 +486,45 @@ def sample():
     logging.debug("Rendering sample.html")
     return render_template('sample.html')
 
+@app.route('/about')
+def about():
+    """About us page"""
+    logging.debug("Rendering about.html")
+    return render_template('about.html')
+
+@app.route('/privacy')
+def privacy():
+    """Privacy policy page"""
+    logging.debug("Rendering privacy.html")
+    return render_template('privacy.html')
+
+@app.route('/terms')
+def terms():
+    """Terms of service page"""
+    logging.debug("Rendering terms.html")
+    return render_template('terms.html')
+
+@app.route('/contact')
+def contact():
+    """Contact us page"""
+    logging.debug("Rendering contact.html")
+    return render_template('contact.html')
+
+@app.route('/contact', methods=['POST'])
+def contact_post():
+    """Handle contact form submission"""
+    name = request.form.get('name')
+    email = request.form.get('email')
+    subject = request.form.get('subject')
+    message = request.form.get('message')
+    
+    # Here you would typically send an email or store the message
+    # For now, we'll just log it
+    logging.info(f"Contact form submission: {name} ({email}) - {subject}: {message}")
+    
+    # Redirect back to contact page with success message
+    return redirect(url_for('contact'))
+
 @app.route('/api/sample/gap_bins', methods=['GET'])
 def get_sample_gap_bins_api():
     """Return limited gap bins for sample mode"""
