@@ -283,15 +283,25 @@ footer {
 }
 
 .free-trial-text {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     color: white;
-    padding: 15px 25px;
-    border-radius: 25px;
+    padding: 18px 30px;
+    border-radius: 30px;
     display: inline-block;
-    font-size: 1.2em;
+    font-size: 1.4em;
     font-weight: bold;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    margin: 20px 0;
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    margin: 25px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.free-trial-text:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.5);
+    background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
 }
 
 .cta-buttons {
@@ -473,6 +483,12 @@ main {
     
     .features h2 {
         font-size: 1.7rem;
+    }
+    
+    .free-trial-text {
+        font-size: 1.2em;
+        padding: 15px 25px;
+        margin: 20px 0;
     }
     
     .footer .buttom1-image {
