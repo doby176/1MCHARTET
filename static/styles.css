@@ -276,58 +276,163 @@ main {
     transform: translateY(-2px);
 }
 
-/* Modern Tab System */
-.tabs {
-    display: flex;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-xl);
-    padding: var(--spacing-sm);
-    background: var(--light-grey);
-    border-radius: var(--border-radius-lg);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-    flex-wrap: wrap;
-}
-
-.tab-button {
-    flex: 1;
-    min-width: 150px;
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: transparent;
-    border: none;
+/* Section Description */
+.section-description {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid var(--medium-grey);
     border-radius: var(--border-radius-md);
-    font-family: var(--font-primary);
-    font-weight: var(--font-weight-medium);
-    font-size: 0.95rem;
-    color: var(--dark-grey);
-    cursor: pointer;
-    transition: var(--transition-fast);
-    position: relative;
-    white-space: nowrap;
-}
-
-.tab-button:hover {
-    background: rgba(0, 102, 204, 0.1);
-    color: var(--primary-blue);
-    transform: translateY(-1px);
-}
-
-.tab-button.active {
-    background: var(--button-gradient);
-    color: var(--white);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
     box-shadow: var(--shadow-light);
+}
+
+.section-description h3 {
+    color: var(--primary-blue);
+    font-size: 1.3rem;
+    margin-bottom: var(--spacing-md);
     font-weight: var(--font-weight-semibold);
 }
 
-.tab-button.active::after {
+.section-description p {
+    margin-bottom: var(--spacing-xs);
+    color: var(--charcoal);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.section-description strong {
+    color: var(--primary-blue);
+    font-weight: var(--font-weight-semibold);
+}
+
+/* Hierarchical Tab System */
+.tabs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xl);
+    padding: var(--spacing-md);
+    background: var(--white);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--medium-grey);
+}
+
+/* Main Category Tabs */
+.main-tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    border-bottom: 2px solid var(--medium-grey);
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm);
+}
+
+.main-tab-button {
+    flex: 1;
+    min-width: 160px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--light-grey);
+    border: 2px solid transparent;
+    border-radius: var(--border-radius-md);
+    font-family: var(--font-primary);
+    font-weight: var(--font-weight-medium);
+    font-size: 1rem;
+    color: var(--dark-grey);
+    cursor: pointer;
+    transition: all var(--transition-medium);
+    position: relative;
+    text-align: center;
+}
+
+.main-tab-button:hover {
+    background: var(--secondary-blue);
+    color: var(--white);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.main-tab-button.active {
+    background: var(--primary-blue);
+    color: var(--white);
+    border-color: var(--primary-dark);
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-2px);
+}
+
+.main-tab-button.active::after {
     content: '';
     position: absolute;
-    bottom: -2px;
+    bottom: -12px;
     left: 50%;
     transform: translateX(-50%);
-    width: 20px;
-    height: 3px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid var(--primary-blue);
+}
+
+/* Sub-tabs */
+.sub-tabs {
+    display: none;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    background: var(--light-grey);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--medium-grey);
+    margin-bottom: var(--spacing-sm);
+}
+
+.sub-tabs.active {
+    display: flex;
+}
+
+.sub-tab-button {
+    padding: var(--spacing-sm) var(--spacing-md);
     background: var(--white);
-    border-radius: 2px;
+    border: 1px solid var(--medium-grey);
+    border-radius: var(--border-radius-sm);
+    font-family: var(--font-primary);
+    font-weight: var(--font-weight-normal);
+    font-size: 0.9rem;
+    color: var(--charcoal);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    position: relative;
+    min-width: 140px;
+    text-align: center;
+}
+
+.sub-tab-button:hover {
+    background: var(--light-grey);
+    border-color: var(--secondary-blue);
+    color: var(--primary-blue);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-light);
+}
+
+.sub-tab-button.active {
+    background: var(--secondary-blue);
+    color: var(--white);
+    border-color: var(--primary-blue);
+    box-shadow: var(--shadow-light);
+}
+
+.sub-tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--secondary-blue);
 }
 
 /* Tab Content */
@@ -1703,9 +1808,40 @@ footer p {
         flex-direction: column;
     }
     
-    .tab-button {
+    .main-tabs {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+    
+    .main-tab-button {
         min-width: auto;
         text-align: center;
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.9rem;
+    }
+    
+    .sub-tabs {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+    
+    .sub-tab-button {
+        min-width: auto;
+        text-align: center;
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.85rem;
+    }
+    
+    .section-description {
+        padding: var(--spacing-md);
+    }
+    
+    .section-description h3 {
+        font-size: 1.1rem;
+    }
+    
+    .section-description p {
+        font-size: 0.9rem;
     }
     
     form {
