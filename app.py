@@ -1067,24 +1067,13 @@ def get_gap_insights():
 @app.route('/api/previous_high_low_insights', methods=['GET'])
 @limiter.limit("3 per 12 hours")
 def get_previous_high_low_insights():
-    # Check gap insights action limit (separate 2-click limit)
-    if not is_sample_mode():
-        # Main site - check gap insights limit
-        main_action = request.args.get('main_action')
-        if main_action == 'get_insights':
-            if not check_gap_insights_limit():
-                logging.info(f"Previous high/low insights limit exceeded for user: {session.get('user_id')}")
-                return jsonify({
-                    'error': 'Previous High/Low Insights limit reached: You\'ve used your 2 free Previous High/Low Insights. Please wait 12 hours or upgrade your plan.',
-                    'limit_reached': True
-                }), 429
-    
+    """API endpoint for NASDAQ Previous High/Low of Day insights"""
     try:
         open_position = request.args.get('open_position')
         day_of_week = request.args.get('day_of_week')
         logging.debug(f"Fetching previous high/low insights for open_position={open_position}, day_of_week={day_of_week}")
         
-        # Path to the previous high/low data CSV file
+        # Path to the previous high/low data file
         previous_high_low_path = os.path.join(DATA_DIR, "previuos_high_low.csv")
         
         if not os.path.exists(previous_high_low_path):
@@ -1098,6 +1087,7 @@ def get_previous_high_low_insights():
             logging.error(f"Error reading previous high/low data file {previous_high_low_path}: {str(e)}")
             return jsonify({'error': f'Failed to load previous high/low data: {str(e)}'}), 500
         
+        # Validate required columns
         required_columns = [
             'open_position', 'day_of_week', 'continuation_move_pct', 'reversal_move_pct',
             'continuation_move_pct_60min', 'reversal_move_pct_60min'
@@ -1122,57 +1112,70 @@ def get_previous_high_low_insights():
             logging.debug(f"No data found for open_position={open_position}, day_of_week={day_of_week}")
             return jsonify({'insights': {}, 'message': 'No data found for the selected criteria'})
         
-        # Calculate insights for each metric
-        insights = {}
+        # Calculate insights for 10-minute moves
+        continuation_10min_median = filtered_df['continuation_move_pct'].median()
+        continuation_10min_average = filtered_df['continuation_move_pct'].mean()
+        reversal_10min_median = filtered_df['reversal_move_pct'].median()
+        reversal_10min_average = filtered_df['reversal_move_pct'].mean()
         
-        # 1. Continuation move in first 10min
-        continuation_10min = filtered_df['continuation_move_pct'].dropna()
-        reversal_10min = filtered_df['reversal_move_pct'].dropna()
+        # Calculate insights for 60-minute moves
+        continuation_60min_median = filtered_df['continuation_move_pct_60min'].median()
+        continuation_60min_average = filtered_df['continuation_move_pct_60min'].mean()
+        reversal_60min_median = filtered_df['reversal_move_pct_60min'].median()
+        reversal_60min_average = filtered_df['reversal_move_pct_60min'].mean()
         
-        if not continuation_10min.empty:
-            insights['continuation_move_10min'] = {
-                'median': round(continuation_10min.median(), 2),
-                'average': round(continuation_10min.mean(), 2),
-                'description': 'Continuation move in first 10 minutes (%)',
-                'count': len(continuation_10min)
+        # Calculate direction bias for 10-minute moves
+        continuation_10min_count = len(filtered_df[filtered_df['continuation_move_pct'] > 0])
+        reversal_10min_count = len(filtered_df[filtered_df['reversal_move_pct'] > 0])
+        total_10min_count = len(filtered_df)
+        
+        # Calculate direction bias for 60-minute moves
+        continuation_60min_count = len(filtered_df[filtered_df['continuation_move_pct_60min'] > 0])
+        reversal_60min_count = len(filtered_df[filtered_df['reversal_move_pct_60min'] > 0])
+        total_60min_count = len(filtered_df)
+        
+        insights = {
+            'continuation_move_10min': {
+                'median': round(continuation_10min_median, 2) if not pd.isna(continuation_10min_median) else 0,
+                'average': round(continuation_10min_average, 2) if not pd.isna(continuation_10min_average) else 0,
+                'description': 'Continuation move in first 10 minutes',
+                'direction_bias': 'Positive' if continuation_10min_median > 0 else 'Negative',
+                'positive_count': continuation_10min_count,
+                'total_count': total_10min_count
+            },
+            'reversal_move_10min': {
+                'median': round(reversal_10min_median, 2) if not pd.isna(reversal_10min_median) else 0,
+                'average': round(reversal_10min_average, 2) if not pd.isna(reversal_10min_average) else 0,
+                'description': 'Reversal move in first 10 minutes',
+                'direction_bias': 'Positive' if reversal_10min_median > 0 else 'Negative',
+                'positive_count': reversal_10min_count,
+                'total_count': total_10min_count
+            },
+            'continuation_move_60min': {
+                'median': round(continuation_60min_median, 2) if not pd.isna(continuation_60min_median) else 0,
+                'average': round(continuation_60min_average, 2) if not pd.isna(continuation_60min_average) else 0,
+                'description': 'Continuation move in first 60 minutes',
+                'direction_bias': 'Positive' if continuation_60min_median > 0 else 'Negative',
+                'positive_count': continuation_60min_count,
+                'total_count': total_60min_count
+            },
+            'reversal_move_60min': {
+                'median': round(reversal_60min_median, 2) if not pd.isna(reversal_60min_median) else 0,
+                'average': round(reversal_60min_average, 2) if not pd.isna(reversal_60min_average) else 0,
+                'description': 'Reversal move in first 60 minutes',
+                'direction_bias': 'Positive' if reversal_60min_median > 0 else 'Negative',
+                'positive_count': reversal_60min_count,
+                'total_count': total_60min_count
+            },
+            'data_summary': {
+                'open_position': open_position,
+                'day_of_week': day_of_week,
+                'total_data_points': len(filtered_df)
             }
+        }
         
-        if not reversal_10min.empty:
-            insights['reversal_move_10min'] = {
-                'median': round(reversal_10min.median(), 2),
-                'average': round(reversal_10min.mean(), 2),
-                'description': 'Reversal move in first 10 minutes (%)',
-                'count': len(reversal_10min)
-            }
-        
-        # 2. Continuation move in first 60min
-        continuation_60min = filtered_df['continuation_move_pct_60min'].dropna()
-        reversal_60min = filtered_df['reversal_move_pct_60min'].dropna()
-        
-        if not continuation_60min.empty:
-            insights['continuation_move_60min'] = {
-                'median': round(continuation_60min.median(), 2),
-                'average': round(continuation_60min.mean(), 2),
-                'description': 'Continuation move in first 60 minutes (%)',
-                'count': len(continuation_60min)
-            }
-        
-        if not reversal_60min.empty:
-            insights['reversal_move_60min'] = {
-                'median': round(reversal_60min.median(), 2),
-                'average': round(reversal_60min.mean(), 2),
-                'description': 'Reversal move in first 60 minutes (%)',
-                'count': len(reversal_60min)
-            }
-        
-        logging.debug(f"Calculated insights: {list(insights.keys())}")
-        
-        return jsonify({
-            'insights': insights,
-            'open_position': open_position,
-            'day_of_week': day_of_week,
-            'data_points': len(filtered_df)
-        })
+        logging.debug(f"Computed previous high/low insights: {insights}")
+        return jsonify({'insights': insights})
         
     except Exception as e:
         logging.error(f"Error processing previous high/low insights: {str(e)}")
