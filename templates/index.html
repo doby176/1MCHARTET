@@ -52,13 +52,41 @@
     </header>
     <main>
         <div class="card">
+            <div class="section-description">
+                <h3>📊 Trading Platform Overview</h3>
+                <p><strong>Data Statistics:</strong> Real-time insights and market data analysis</p>
+                <p><strong>Backtest Analysis:</strong> Historical pattern analysis and strategy testing</p>
+                <p><strong>Market Simulator:</strong> Interactive trading simulation with historical data</p>
+            </div>
             <div class="tabs">
-                <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
-                <button class="tab-button" onclick="openTab('data-statistics')">Data Statistics</button>
-                <button class="tab-button" onclick="openTab('backtest-opportunities')">Backtest Opportunities</button>
+                <!-- Main Category Tabs -->
+                <div class="main-tabs">
+                    <button class="main-tab-button active" onclick="openMainTab('data-statistics')">📊 Data Statistics</button>
+                    <button class="main-tab-button" onclick="openMainTab('backtest-analysis')">🔍 Backtest Analysis</button>
+                    <button class="main-tab-button" onclick="openMainTab('market-simulator')">🎮 Market Simulator</button>
+                </div>
+                
+                <!-- Sub-tabs for Data Statistics -->
+                <div id="data-statistics-subtabs" class="sub-tabs active">
+                    <button class="sub-tab-button active" onclick="openSubTab('gap-insights')">Nasdaq Gap Insights</button>
+                    <button class="sub-tab-button" onclick="openSubTab('previous-high-low-insights')">NASDAQ Previous High/Low of Day</button>
+                    <button class="sub-tab-button" onclick="openSubTab('news-event-insights')">News Event Insights</button>
+                </div>
+                
+                <!-- Sub-tabs for Backtest Analysis -->
+                <div id="backtest-analysis-subtabs" class="sub-tabs">
+                    <button class="sub-tab-button active" onclick="openSubTab('gap-analysis')">Nasdaq Gap Analysis</button>
+                    <button class="sub-tab-button" onclick="openSubTab('events-analysis')">News Event Analysis</button>
+                    <button class="sub-tab-button" onclick="openSubTab('earnings-analysis')">Earnings Analysis</button>
+                </div>
+                
+                <!-- Sub-tabs for Market Simulator (single tab) -->
+                <div id="market-simulator-subtabs" class="sub-tabs">
+                    <button class="sub-tab-button active" onclick="openSubTab('simulator')">Trading Simulator</button>
+                </div>
             </div>
             <!-- Market Simulator Section -->
-            <div id="market-simulator" class="tab-content active">
+            <div id="simulator" class="tab-content active">
                 <h2>Market Simulator</h2>
                 <p>Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls.</p>
                 <form id="stock-form-simulator">
@@ -697,6 +725,8 @@
             document.getElementById(tabId).classList.add('active');
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
+
+
     </script>
     <script src="/static/script.js?v=76"></script>
 </body>
