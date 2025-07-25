@@ -1629,6 +1629,23 @@ footer p {
     padding: 0 var(--spacing-lg);
 }
 
+.footer-links {
+    text-align: center;
+    margin: var(--spacing-lg) 0;
+}
+
+.footer-links a {
+    color: var(--white);
+    text-decoration: none;
+    margin: 0 var(--spacing-md);
+    transition: var(--transition-fast);
+}
+
+.footer-links a:hover {
+    color: var(--secondary-blue);
+    text-decoration: none;
+}
+
 .disclaimer-section {
     background: var(--navy);
     color: var(--white);

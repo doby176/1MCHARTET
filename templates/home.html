@@ -31,43 +31,15 @@
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=70">
-    <style>
-        .landing-header {
-            position: relative;
-            padding-top: 60px; /* Add space for absolute positioned auth buttons */
-        }
-        .auth-btn {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .auth-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .auth-btn[style*="background: #f8f9fa"]:hover {
-            background: #e9ecef !important;
-        }
-        .auth-btn[style*="background: #007bff"]:hover {
-            background: #0056b3 !important;
-        }
-        @media (max-width: 768px) {
-            .header-top {
-                position: static !important;
-                margin-bottom: 20px;
-                text-align: center;
-            }
-            .landing-header {
-                padding-top: 20px;
-            }
-        }
-    </style>
+
     <title>1MChart - Precision Trading Insights</title>
 </head>
 <body>
     <header class="landing-header">
-        <div class="header-top" style="position: absolute; top: 20px; left: 20px; z-index: 10;">
-            <div class="auth-buttons" style="display: flex; gap: 10px;">
-                <a href="{{ url_for('login') }}" class="auth-btn" style="background: #f8f9fa; color: #495057; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9em; font-weight: 500; border: 1px solid #dee2e6; transition: all 0.2s ease;">Log In</a>
-                <a href="{{ url_for('landing') }}" class="auth-btn" style="background: #007bff; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9em; font-weight: 500; transition: all 0.2s ease;">Sign Up</a>
+        <div class="header-top">
+            <div class="auth-buttons">
+                <a href="{{ url_for('login') }}" class="auth-btn">Log In</a>
+                <a href="{{ url_for('landing') }}" class="auth-btn">Sign Up</a>
             </div>
         </div>
         <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
@@ -78,9 +50,9 @@
         <section class="hero">
             <h2>Master the Market with 1MChart's Data-Driven Insights</h2>
             <p>Unlock the power of comprehensive Nasdaq analytics with our three core data statistics: <strong>Gap Insights</strong> for gap fill rates and patterns, <strong>Previous High/Low Analysis</strong> for support/resistance levels, and <strong>News Event Insights</strong> for economic event reactions. Plus, explore <strong>Backtest Analysis</strong> for strategy testing and <strong>Market Simulator</strong> for risk-free practice with 1-minute precision data.</p>
-            <p class="free-trial-text" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 25px; border-radius: 25px; display: inline-block; font-size: 1.2em; font-weight: bold; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); margin: 20px 0;"><strong>🚀 Start for free</strong></p>
+            <p class="free-trial-text"><strong>🚀 Start for free</strong></p>
             <div class="cta-buttons">
-                <a href="/sample" class="sample-btn" style="background: #28a745; color: white;">🚀 Try Sample Features</a>
+                <a href="/sample" class="sample-btn">🚀 Try Sample Features</a>
                 <a href="/register" class="signup-btn">📈 Full Access Signup</a>
             </div>
             <div class="video-container">
@@ -144,11 +116,11 @@
         </section>
         
         <!-- New Card CTA Section -->
-        <div class="card" style="max-width: 800px; margin: 2rem auto; text-align: center;">
+        <div class="card">
             <h2>Ready to Elevate Your Trading?</h2>
             <p>Join 1MChart today and gain access to powerful analytics tools and market replay features designed for day traders.</p>
             <div class="cta-buttons">
-                <a href="/sample" class="sample-btn" style="background: #28a745; color: white;">🚀 Try Sample Features</a>
+                <a href="/sample" class="sample-btn">🚀 Try Sample Features</a>
                 <a href="/register" class="signup-btn">📈 Full Access Signup</a>
             </div>
         </div>
@@ -169,18 +141,18 @@
     <footer class="footer">
         <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
         <p>More coming soon</p>
-        <div style="text-align: center; margin: 20px 0;">
-            <a href="/about" style="color: white; text-decoration: none; margin: 0 15px;">About Us</a>
-            <a href="/privacy" style="color: white; text-decoration: none; margin: 0 15px;">Privacy Policy</a>
-            <a href="/terms" style="color: white; text-decoration: none; margin: 0 15px;">Terms of Service</a>
-            <a href="/contact" style="color: white; text-decoration: none; margin: 0 15px;">Contact Us</a>
-        </div>
         <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
         <img src="{{ url_for('static', filename='buttom2.png') }}" alt="Left Footer Image" class="buttom2-image">
         <img src="{{ url_for('static', filename='buttom1.png') }}" alt="Right Footer Image" class="buttom1-image">
     </footer>
     
     <div class="disclaimer-section">
+        <div class="footer-links">
+            <a href="/about">About Us</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+            <a href="/contact">Contact Us</a>
+        </div>
         <p>DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
     </div>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
