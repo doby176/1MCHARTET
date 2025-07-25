@@ -52,16 +52,36 @@
     </header>
     <main>
         <div class="card">
+
             <div class="tabs">
-                <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator</button>
-                <button class="tab-button" onclick="openTab('gap-insights')">Nasdaq Gap Insights</button>
-                <button class="tab-button" onclick="openTab('news-event-insights')">News Event Insights</button>
-                <button class="tab-button" onclick="openTab('gap-analysis')">Nasdaq Gap Analysis</button>
-                <button class="tab-button" onclick="openTab('events-analysis')">News Event Analysis</button>
-                <button class="tab-button" onclick="openTab('earnings-analysis')">Earnings Analysis</button>
+                <!-- Main Category Tabs -->
+                <div class="main-tabs">
+                    <button class="main-tab-button active" onclick="openMainTab('data-statistics')">📊 Data Statistics</button>
+                    <button class="main-tab-button" onclick="openMainTab('backtest-analysis')">🔍 Backtest Analysis</button>
+                    <button class="main-tab-button" onclick="openMainTab('market-simulator')">🎮 Market Simulator</button>
+                </div>
+                
+                <!-- Sub-tabs for Data Statistics -->
+                <div id="data-statistics-subtabs" class="sub-tabs active">
+                    <button class="sub-tab-button active" onclick="openSubTab('gap-insights')">Nasdaq Gap Insights</button>
+                    <button class="sub-tab-button" onclick="openSubTab('previous-high-low-insights')">NASDAQ Previous High/Low of Day</button>
+                    <button class="sub-tab-button" onclick="openSubTab('news-event-insights')">News Event Insights</button>
+                </div>
+                
+                <!-- Sub-tabs for Backtest Analysis -->
+                <div id="backtest-analysis-subtabs" class="sub-tabs">
+                    <button class="sub-tab-button active" onclick="openSubTab('gap-analysis')">Nasdaq Gap Analysis</button>
+                    <button class="sub-tab-button" onclick="openSubTab('events-analysis')">News Event Analysis</button>
+                    <button class="sub-tab-button" onclick="openSubTab('earnings-analysis')">Earnings Analysis</button>
+                </div>
+                
+                <!-- Sub-tabs for Market Simulator (single tab) -->
+                <div id="market-simulator-subtabs" class="sub-tabs">
+                    <button class="sub-tab-button active" onclick="openSubTab('simulator')">Trading Simulator</button>
+                </div>
             </div>
             <!-- Market Simulator Section -->
-            <div id="market-simulator" class="tab-content active">
+            <div id="simulator" class="tab-content">
                 <h2>Market Simulator</h2>
                 <p>Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls.</p>
                 <form id="stock-form-simulator">
@@ -284,7 +304,7 @@
                 </form>
             </div>
             <!-- Nasdaq Gap Insights Section -->
-            <div id="gap-insights" class="tab-content">
+            <div id="gap-insights" class="tab-content active">
                 <h2>Nasdaq Gap Insights</h2>
                 <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
                 
@@ -326,6 +346,50 @@
                 </form>
                 <div id="gap-insights-results">
                     <p>Select a gap size, day, and direction to view Nasdaq gap insights and statistics.</p>
+                </div>
+            </div>
+            <!-- NASDAQ Previous High/Low of Day Section -->
+            <div id="previous-high-low-insights" class="tab-content">
+                <h2>NASDAQ Previous High/Low of Day</h2>
+                <p>Analyze market behavior when price opens relative to previous day's high and low levels. Get insights on continuation and reversal moves in the first 10 and 60 minutes.</p>
+                
+                <div class="filter-toggle">
+                    <label><input type="radio" name="previous-high-low-filter-type" value="both-filters" checked> Filter with Open Position and Day of Week</label>
+                    <label><input type="radio" name="previous-high-low-filter-type" value="position-only"> Filter with Open Position Only</label>
+                </div>
+                
+                <form id="previous-high-low-insights-form">
+                    <div id="both-filters-section" class="filter-section active">
+                        <label for="previous-high-low-position-select">Select Open Position Relative to Previous High/Low:</label>
+                        <select id="previous-high-low-position-select" name="open_position">
+                            <option value="">Select position</option>
+                            <option value="Between Previous High and Low">Between Previous High and Low</option>
+                            <option value="Above Previous High">Above Previous High</option>
+                            <option value="Below Previous Low">Below Previous Low</option>
+                        </select>
+                        <label for="previous-high-low-day-select">Select Day of Week:</label>
+                        <select id="previous-high-low-day-select" name="day_of_week">
+                            <option value="">Select day</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                        </select>
+                    </div>
+                    <div id="position-only-section" class="filter-section">
+                        <label for="previous-high-low-position-only-select">Select Open Position Relative to Previous High/Low:</label>
+                        <select id="previous-high-low-position-only-select" name="open_position">
+                            <option value="">Select position</option>
+                            <option value="Between Previous High and Low">Between Previous High and Low</option>
+                            <option value="Above Previous High">Above Previous High</option>
+                            <option value="Below Previous Low">Below Previous Low</option>
+                        </select>
+                    </div>
+                    <button type="submit">Get Previous High/Low Insights</button>
+                </form>
+                <div id="previous-high-low-insights-results">
+                    <p>Select filters to view NASDAQ previous high/low of day insights and statistics.</p>
                 </div>
             </div>
             <!-- News Event Insights Section -->
@@ -656,7 +720,17 @@
             document.getElementById(tabId).classList.add('active');
             document.querySelector(`button[onclick="openTab('${tabId}')"]`).classList.add('active');
         }
+
+
     </script>
     <script src="/static/script.js?v=76"></script>
+    <script>
+        // Initialize the page with the correct tab structure
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure Data Statistics is the active main tab and gap-insights is the active sub-tab
+            openMainTab('data-statistics');
+            openSubTab('gap-insights');
+        });
+    </script>
 </body>
 </html>

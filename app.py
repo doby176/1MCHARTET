@@ -1064,6 +1064,159 @@ def get_gap_insights():
         logging.error(f"Error processing gap insights: {str(e)}")
         return jsonify({'error': 'Server error'}), 500
 
+@app.route('/api/previous_high_low_insights', methods=['GET'])
+@limiter.limit("5 per 12 hours")
+def get_previous_high_low_insights():
+    """API endpoint for NASDAQ Previous High/Low of Day insights"""
+    try:
+        open_position = request.args.get('open_position')
+        day_of_week = request.args.get('day_of_week')
+        logging.debug(f"Fetching previous high/low insights for open_position={open_position}, day_of_week={day_of_week}")
+        
+        # Path to the previous high/low data file
+        previous_high_low_path = os.path.join(DATA_DIR, "previuos_high_low.csv")
+        
+        if not os.path.exists(previous_high_low_path):
+            logging.error(f"Previous high/low data file not found: {previous_high_low_path}")
+            return jsonify({'error': 'Previous high/low data file not found. Please contact support.'}), 404
+        
+        try:
+            df = pd.read_csv(previous_high_low_path)
+            logging.debug(f"Loaded previous high/low data with shape: {df.shape}")
+        except Exception as e:
+            logging.error(f"Error reading previous high/low data file {previous_high_low_path}: {str(e)}")
+            return jsonify({'error': f'Failed to load previous high/low data: {str(e)}'}), 500
+        
+        # Validate required columns
+        required_columns = [
+            'open_position', 'day_of_week', 'continuation_move_pct', 'reversal_move_pct',
+            'continuation_move_pct_60min', 'reversal_move_pct_60min'
+        ]
+        
+        if not all(col in df.columns for col in required_columns):
+            logging.error("Invalid previous high/low data format: missing required columns")
+            return jsonify({'error': 'Invalid previous high/low data format'}), 400
+        
+        # Filter data based on parameters
+        filtered_df = df.copy()
+        
+        if open_position:
+            filtered_df = filtered_df[filtered_df['open_position'] == open_position]
+        
+        if day_of_week:
+            filtered_df = filtered_df[filtered_df['day_of_week'] == day_of_week]
+        
+        logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
+        
+        if filtered_df.empty:
+            logging.debug(f"No data found for open_position={open_position}, day_of_week={day_of_week}")
+            return jsonify({'insights': {}, 'message': 'No data found for the selected criteria'})
+        
+        # Calculate insights for Previous High direction
+        df_high = filtered_df[filtered_df['touch_type'] == 'Previous High']
+        
+        # 10-minute moves for Previous High
+        high_continuation_10min_median = df_high['continuation_move_pct'].median() if len(df_high) > 0 else 0
+        high_continuation_10min_average = df_high['continuation_move_pct'].mean() if len(df_high) > 0 else 0
+        high_reversal_10min_median = df_high['reversal_move_pct'].median() if len(df_high) > 0 else 0
+        high_reversal_10min_average = df_high['reversal_move_pct'].mean() if len(df_high) > 0 else 0
+        
+        # 60-minute moves for Previous High
+        high_continuation_60min_median = df_high['continuation_move_pct_60min'].median() if len(df_high) > 0 else 0
+        high_continuation_60min_average = df_high['continuation_move_pct_60min'].mean() if len(df_high) > 0 else 0
+        high_reversal_60min_median = df_high['reversal_move_pct_60min'].median() if len(df_high) > 0 else 0
+        high_reversal_60min_average = df_high['reversal_move_pct_60min'].mean() if len(df_high) > 0 else 0
+        
+        # Calculate insights for Previous Low direction
+        df_low = filtered_df[filtered_df['touch_type'] == 'Previous Low']
+        
+        # 10-minute moves for Previous Low
+        low_continuation_10min_median = df_low['continuation_move_pct'].median() if len(df_low) > 0 else 0
+        low_continuation_10min_average = df_low['continuation_move_pct'].mean() if len(df_low) > 0 else 0
+        low_reversal_10min_median = df_low['reversal_move_pct'].median() if len(df_low) > 0 else 0
+        low_reversal_10min_average = df_low['reversal_move_pct'].mean() if len(df_low) > 0 else 0
+        
+        # 60-minute moves for Previous Low
+        low_continuation_60min_median = df_low['continuation_move_pct_60min'].median() if len(df_low) > 0 else 0
+        low_continuation_60min_average = df_low['continuation_move_pct_60min'].mean() if len(df_low) > 0 else 0
+        low_reversal_60min_median = df_low['reversal_move_pct_60min'].median() if len(df_low) > 0 else 0
+        low_reversal_60min_average = df_low['reversal_move_pct_60min'].mean() if len(df_low) > 0 else 0
+        
+        insights = {
+            'previous_high': {
+                'continuation_move_10min': {
+                    'median': round(high_continuation_10min_median, 2) if not pd.isna(high_continuation_10min_median) else 0,
+                    'average': round(high_continuation_10min_average, 2) if not pd.isna(high_continuation_10min_average) else 0,
+                    'description': 'Continuation move in first 10 minutes',
+                    'direction_bias': 'Positive' if high_continuation_10min_median > 0 else 'Negative',
+                    'samples': len(df_high)
+                },
+                'reversal_move_10min': {
+                    'median': round(high_reversal_10min_median, 2) if not pd.isna(high_reversal_10min_median) else 0,
+                    'average': round(high_reversal_10min_average, 2) if not pd.isna(high_reversal_10min_average) else 0,
+                    'description': 'Reversal move in first 10 minutes',
+                    'direction_bias': 'Positive' if high_reversal_10min_median > 0 else 'Negative',
+                    'samples': len(df_high)
+                },
+                'continuation_move_60min': {
+                    'median': round(high_continuation_60min_median, 2) if not pd.isna(high_continuation_60min_median) else 0,
+                    'average': round(high_continuation_60min_average, 2) if not pd.isna(high_continuation_60min_average) else 0,
+                    'description': 'Continuation move in first 60 minutes',
+                    'direction_bias': 'Positive' if high_continuation_60min_median > 0 else 'Negative',
+                    'samples': len(df_high)
+                },
+                'reversal_move_60min': {
+                    'median': round(high_reversal_60min_median, 2) if not pd.isna(high_reversal_60min_median) else 0,
+                    'average': round(high_reversal_60min_average, 2) if not pd.isna(high_reversal_60min_average) else 0,
+                    'description': 'Reversal move in first 60 minutes',
+                    'direction_bias': 'Positive' if high_reversal_60min_median > 0 else 'Negative',
+                    'samples': len(df_high)
+                }
+            },
+            'previous_low': {
+                'continuation_move_10min': {
+                    'median': round(low_continuation_10min_median, 2) if not pd.isna(low_continuation_10min_median) else 0,
+                    'average': round(low_continuation_10min_average, 2) if not pd.isna(low_continuation_10min_average) else 0,
+                    'description': 'Continuation move in first 10 minutes',
+                    'direction_bias': 'Positive' if low_continuation_10min_median > 0 else 'Negative',
+                    'samples': len(df_low)
+                },
+                'reversal_move_10min': {
+                    'median': round(low_reversal_10min_median, 2) if not pd.isna(low_reversal_10min_median) else 0,
+                    'average': round(low_reversal_10min_average, 2) if not pd.isna(low_reversal_10min_average) else 0,
+                    'description': 'Reversal move in first 10 minutes',
+                    'direction_bias': 'Positive' if low_reversal_10min_median > 0 else 'Negative',
+                    'samples': len(df_low)
+                },
+                'continuation_move_60min': {
+                    'median': round(low_continuation_60min_median, 2) if not pd.isna(low_continuation_60min_median) else 0,
+                    'average': round(low_continuation_60min_average, 2) if not pd.isna(low_continuation_60min_average) else 0,
+                    'description': 'Continuation move in first 60 minutes',
+                    'direction_bias': 'Positive' if low_continuation_60min_median > 0 else 'Negative',
+                    'samples': len(df_low)
+                },
+                'reversal_move_60min': {
+                    'median': round(low_reversal_60min_median, 2) if not pd.isna(low_reversal_60min_median) else 0,
+                    'average': round(low_reversal_60min_average, 2) if not pd.isna(low_reversal_60min_average) else 0,
+                    'description': 'Reversal move in first 60 minutes',
+                    'direction_bias': 'Positive' if low_reversal_60min_median > 0 else 'Negative',
+                    'samples': len(df_low)
+                }
+            },
+            'data_summary': {
+                'open_position': open_position,
+                'day_of_week': day_of_week,
+                'total_data_points': len(filtered_df)
+            }
+        }
+        
+        logging.debug(f"Computed previous high/low insights: {insights}")
+        return jsonify({'insights': insights})
+        
+    except Exception as e:
+        logging.error(f"Error processing previous high/low insights: {str(e)}")
+        return jsonify({'error': 'Server error'}), 500
+
 @app.route('/api/years', methods=['GET'])
 @limiter.limit("10 per 12 hours")
 def get_years():
@@ -1410,11 +1563,9 @@ def get_news_event_insights():
                 'total_count': len(pm_directions)
             }
         
-        # 2. Move between 9:30 - 10:00 to highest high or lowest low (only moves above 0.1%)
-        extreme_moves = [safe_float(row['percent_move_930_959_extreme']) for row in filtered_data 
-                        if safe_float(row['percent_move_930_959_extreme']) is not None and abs(safe_float(row['percent_move_930_959_extreme'])) > 0.1]
-        extreme_directions = [row['direction_930_959_extreme'] for row in filtered_data 
-                             if safe_float(row['percent_move_930_959_extreme']) is not None and abs(safe_float(row['percent_move_930_959_extreme'])) > 0.1]
+        # 2. Move between 9:30 - 10:00 to highest high or lowest low
+        extreme_moves = [safe_float(row['percent_move_930_959_extreme']) for row in filtered_data if safe_float(row['percent_move_930_959_extreme']) is not None]
+        extreme_directions = [row['direction_930_959_extreme'] for row in filtered_data if row['direction_930_959_extreme']]
         
         if extreme_moves:
             insights['extreme_moves_930_1000'] = {
@@ -1427,11 +1578,9 @@ def get_news_event_insights():
                 'total_count': len(extreme_directions)
             }
         
-        # 3. Move between 9:30 - 10:30 close, no extreme moves (only moves above 0.1%)
-        regular_moves = [safe_float(row['percent_move_930_1030_x']) for row in filtered_data 
-                        if safe_float(row['percent_move_930_1030_x']) is not None and abs(safe_float(row['percent_move_930_1030_x'])) > 0.1]
-        regular_directions = [row['direction_930_1030_x'] for row in filtered_data 
-                             if safe_float(row['percent_move_930_1030_x']) is not None and abs(safe_float(row['percent_move_930_1030_x'])) > 0.1]
+        # 3. Move between 9:30 - 10:30 close, no extreme moves
+        regular_moves = [safe_float(row['percent_move_930_1030_x']) for row in filtered_data if safe_float(row['percent_move_930_1030_x']) is not None]
+        regular_directions = [row['direction_930_1030_x'] for row in filtered_data if row['direction_930_1030_x']]
         
         if regular_moves:
             insights['regular_moves_930_1030'] = {
@@ -1472,12 +1621,10 @@ def get_news_event_insights():
                 'opposite_direction_description': 'Move opposite to gap direction after touching level (reversal)'
             }
         
-        # 4b. 60-minute moves after touching pre-market level (only moves above 0.1%)
+        # 4b. 60-minute moves after touching pre-market level (if columns exist)
         if 'percent_move_same_direction_60min' in data[0] and 'percent_move_opposite_direction_60min' in data[0]:
-            same_direction_60min = [safe_float(row['percent_move_same_direction_60min']) for row in filtered_data 
-                                   if safe_float(row['percent_move_same_direction_60min']) is not None and abs(safe_float(row['percent_move_same_direction_60min'])) > 0.1]
-            opposite_direction_60min = [safe_float(row['percent_move_opposite_direction_60min']) for row in filtered_data 
-                                       if safe_float(row['percent_move_opposite_direction_60min']) is not None and abs(safe_float(row['percent_move_opposite_direction_60min'])) > 0.1]
+            same_direction_60min = [safe_float(row['percent_move_same_direction_60min']) for row in filtered_data if safe_float(row['percent_move_same_direction_60min']) is not None]
+            opposite_direction_60min = [safe_float(row['percent_move_opposite_direction_60min']) for row in filtered_data if safe_float(row['percent_move_opposite_direction_60min']) is not None]
             
             if same_direction_60min or opposite_direction_60min:
                 insights['moves_after_touch_60min'] = {

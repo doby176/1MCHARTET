@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formEarningsForm = document.getElementById('earnings-form');
         const formGapInsights = document.getElementById('gap-insights-form');
         const formNewsEventInsights = document.getElementById('news-event-insights-form');
+        const formPreviousHighLowInsights = document.getElementById('previous-high-low-insights-form');
         
         if (formSimulator) formSimulator.addEventListener('submit', (e) => loadChart(e, 'market-simulator'));
         if (formGap) formGap.addEventListener('submit', (e) => loadChart(e, 'gap-analysis'));
@@ -67,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (formEarningsForm) formEarningsForm.addEventListener('submit', loadEarningsDates);
         if (formGapInsights) formGapInsights.addEventListener('submit', loadGapInsights);
         if (formNewsEventInsights) formNewsEventInsights.addEventListener('submit', loadNewsEventInsights);
+        if (formPreviousHighLowInsights) formPreviousHighLowInsights.addEventListener('submit', loadPreviousHighLowInsights);
         
         // Replay control listeners (Market Simulator)
         const playSimulator = document.getElementById('play-replay-simulator');
@@ -148,6 +150,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const eventInsightsFilterRadios = document.querySelectorAll('input[name="event-insights-filter-type"]');
         eventInsightsFilterRadios.forEach(radio => {
             radio.addEventListener('change', toggleEventInsightsFilterSection);
+        });
+
+        // Handle filter type toggle for previous high/low insights
+        const previousHighLowFilterRadios = document.querySelectorAll('input[name="previous-high-low-filter-type"]');
+        previousHighLowFilterRadios.forEach(radio => {
+            radio.addEventListener('change', togglePreviousHighLowFilterSection);
         });
 
         // Initialize ticker selects for all tabs
@@ -1844,7 +1852,7 @@ function setupIndicatorListeners(section) {
     });
 }
 
-// Drawing Tools Functions (Enhanced)
+// Drawing Toools Functions (Enhanced)
 function activateDrawingTool(section, tool) {
     const buttons = document.querySelectorAll(`#chart-indicators-${section} .drawing-tool-btn`);
     buttons.forEach(btn => btn.classList.remove('active'));
@@ -4067,6 +4075,7 @@ async function loadGapDates(event) {
         console.log(`Rendering ${data.dates.length} gap dates:`, data.dates);
         const ul = document.createElement('ul');
         ul.id = 'gap-dates-list';
+        ul.className = 'date-list';
         data.dates.forEach(date => {
             const li = document.createElement('li');
             const link = document.createElement('a');
@@ -4075,7 +4084,7 @@ async function loadGapDates(event) {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log(`Clicked gap date: ${date}`);
-                openTab('gap-analysis');
+                openSubTab('gap-analysis');
                 document.getElementById('ticker-select-gap').value = 'QQQ';
                 document.getElementById('date-gap').value = date;
                 loadChart(new Event('submit'), 'gap-analysis');
@@ -4282,6 +4291,7 @@ async function loadEventDates(event) {
         console.log(`Rendering ${data.dates.length} event dates:`, data.dates);
         const ul = document.createElement('ul');
         ul.id = 'event-dates-list';
+        ul.className = 'date-list';
         data.dates.forEach(date => {
             const li = document.createElement('li');
             const link = document.createElement('a');
@@ -4290,7 +4300,7 @@ async function loadEventDates(event) {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log(`Clicked event date: ${date}`);
-                openTab('events-analysis');
+                openSubTab('events-analysis');
                 document.getElementById('ticker-select-events').value = 'QQQ';
                 document.getElementById('date-events').value = date;
                 loadChart(new Event('submit'), 'events-analysis');
@@ -4434,6 +4444,7 @@ async function loadEarningsDates(event) {
         console.log(`Rendering ${data.dates.length} earnings dates:`, data.dates);
         const ul = document.createElement('ul');
         ul.id = 'earnings-dates-list';
+        ul.className = 'date-list';
         data.dates.forEach(date => {
             const li = document.createElement('li');
             const link = document.createElement('a');
@@ -4442,7 +4453,7 @@ async function loadEarningsDates(event) {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log(`Clicked earnings date: ${date}`);
-                openTab('earnings-analysis');
+                openSubTab('earnings-analysis');
                 document.getElementById('earnings-ticker-select').value = ticker;
                 document.getElementById('date-gap').value = date;
                 loadChart(new Event('submit'), 'earnings-analysis');
@@ -5011,6 +5022,63 @@ function initializeQQQData() {
     }
 }
 
+// New function to open main tabs
+function openMainTab(mainTabId) {
+    console.log(`Opening main tab: ${mainTabId}`);
+    
+    // Update main tab buttons
+    document.querySelectorAll('.main-tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    document.querySelector(`.main-tab-button[onclick="openMainTab('${mainTabId}')"]`).classList.add('active');
+
+    // Update sub-tabs visibility
+    document.querySelectorAll('.sub-tabs').forEach(subTabs => {
+        subTabs.classList.remove('active');
+    });
+    document.getElementById(`${mainTabId}-subtabs`).classList.add('active');
+
+    // Close all tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Open the first sub-tab of the selected main tab
+    const firstSubTab = document.querySelector(`#${mainTabId}-subtabs .sub-tab-button`);
+    if (firstSubTab) {
+        const subTabId = firstSubTab.getAttribute('onclick').match(/openSubTab\('([^']+)'\)/)[1];
+        openSubTab(subTabId);
+    }
+    
+    gtag('event', 'main_tab_open', {
+        'event_category': 'Navigation',
+        'event_label': mainTabId
+    });
+}
+
+// New function to open sub-tabs
+function openSubTab(subTabId) {
+    console.log(`Opening sub tab: ${subTabId}`);
+    
+    // Update sub-tab buttons
+    document.querySelectorAll('.sub-tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    document.querySelector(`.sub-tab-button[onclick="openSubTab('${subTabId}')"]`).classList.add('active');
+
+    // Update tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.getElementById(subTabId).classList.add('active');
+    
+    gtag('event', 'sub_tab_open', {
+        'event_category': 'Navigation',
+        'event_label': subTabId
+    });
+}
+
+// Legacy function for backward compatibility
 function openTab(tabName) {
     console.log(`Opening tab: ${tabName}`);
     const tabs = document.getElementsByClassName('tab-content');
@@ -5314,4 +5382,251 @@ async function loadNewsEventInsights(event) {
         insightsContainer.innerHTML = '<p>Failed to load news event insights: ' + error.message + '. Please try again later.</p>';
         alert('Failed to load news event insights: ' + error.message);
     }
+}
+
+// Previous High/Low Insights Functions
+function togglePreviousHighLowFilterSection() {
+    const bothFiltersSection = document.getElementById('both-filters-section');
+    const positionOnlySection = document.getElementById('position-only-section');
+    const filterType = document.querySelector('input[name="previous-high-low-filter-type"]:checked').value;
+
+    bothFiltersSection.classList.remove('active');
+    positionOnlySection.classList.remove('active');
+
+    if (filterType === 'both-filters') {
+        bothFiltersSection.classList.add('active');
+        document.getElementById('previous-high-low-position-only-select').value = '';
+    } else {
+        positionOnlySection.classList.add('active');
+        document.getElementById('previous-high-low-position-select').value = '';
+        document.getElementById('previous-high-low-day-select').value = '';
+    }
+}
+
+async function loadPreviousHighLowInsights(event) {
+    event.preventDefault();
+    
+    const resultsContainer = document.getElementById('previous-high-low-insights-results');
+    resultsContainer.innerHTML = '<p>Loading insights...</p>';
+    
+    try {
+        // Check which filter type is selected
+        const filterType = document.querySelector('input[name="previous-high-low-filter-type"]:checked').value;
+        
+        let openPosition, dayOfWeek;
+        
+        if (filterType === 'both-filters') {
+            // Use the both-filters section values
+            openPosition = document.getElementById('previous-high-low-position-select').value;
+            dayOfWeek = document.getElementById('previous-high-low-day-select').value;
+        } else {
+            // Use the position-only section value
+            openPosition = document.getElementById('previous-high-low-position-only-select').value;
+            dayOfWeek = null;
+        }
+        
+        if (!openPosition) {
+            resultsContainer.innerHTML = '<p style="color: red;">Please select an open position.</p>';
+            return;
+        }
+        
+        const params = new URLSearchParams({
+            open_position: openPosition
+        });
+        
+        if (dayOfWeek) {
+            params.append('day_of_week', dayOfWeek);
+        }
+        
+        const response = await fetch(`/api/previous_high_low_insights?${params}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.status === 429) {
+            const data = await response.json();
+            resultsContainer.innerHTML = `<p style="color: red;">${data.error}</p>`;
+            return;
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            resultsContainer.innerHTML = `<p style="color: red;">Error: ${errorData.error || 'Failed to load insights'}</p>`;
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.message) {
+            resultsContainer.innerHTML = `<p>${data.message}</p>`;
+            return;
+        }
+        
+        displayPreviousHighLowInsights(data.insights, resultsContainer);
+        
+    } catch (error) {
+        console.error('Error loading previous high/low insights:', error);
+        resultsContainer.innerHTML = '<p style="color: red;">Error loading insights. Please try again.</p>';
+    }
+}
+
+function displayPreviousHighLowInsights(insights, container) {
+    const dataSummary = insights.data_summary;
+    
+    let html = `
+        <div class="insights-container">
+            <h3>NASDAQ Previous High/Low of Day Insights</h3>
+            <div class="market-data-summary">
+                <h4>Filter Summary</h4>
+                <div class="market-data-grid">
+                    <div class="market-data-item">
+                        <span class="market-data-label">Open Position:</span>
+                        <span class="market-data-value">${dataSummary.open_position || 'All'}</span>
+                    </div>
+                    <div class="market-data-item">
+                        <span class="market-data-label">Day of Week:</span>
+                        <span class="market-data-value">${dataSummary.day_of_week || 'All'}</span>
+                    </div>
+                    <div class="market-data-item">
+                        <span class="market-data-label">Data Points:</span>
+                        <span class="market-data-value">${dataSummary.total_data_points}</span>
+                    </div>
+                </div>
+            </div>
+    `;
+    
+    // Previous High Section
+    html += `
+        <div class="direction-section">
+            <h4 class="direction-title">Previous High of Day</h4>
+            <div class="insights-row two-metrics">
+    `;
+    
+    // Add Previous High continuation move 10min
+    const highContinuation10min = insights.previous_high.continuation_move_10min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${highContinuation10min.description}</div>
+            <div class="metric-median">${highContinuation10min.median}%</div>
+            <div class="metric-average">Avg: ${highContinuation10min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${highContinuation10min.direction_bias}</div>
+            <div class="metric-counts">${highContinuation10min.samples} samples</div>
+            <div class="metric-description">Median continuation move in first 10 minutes</div>
+        </div>
+    `;
+    
+    // Add Previous High reversal move 10min
+    const highReversal10min = insights.previous_high.reversal_move_10min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${highReversal10min.description}</div>
+            <div class="metric-median">${highReversal10min.median}%</div>
+            <div class="metric-average">Avg: ${highReversal10min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${highReversal10min.direction_bias}</div>
+            <div class="metric-counts">${highReversal10min.samples} samples</div>
+            <div class="metric-description">Median reversal move in first 10 minutes</div>
+        </div>
+    `;
+    
+    html += `</div><div class="insights-row two-metrics">`;
+    
+    // Add Previous High continuation move 60min
+    const highContinuation60min = insights.previous_high.continuation_move_60min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${highContinuation60min.description}</div>
+            <div class="metric-median">${highContinuation60min.median}%</div>
+            <div class="metric-average">Avg: ${highContinuation60min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${highContinuation60min.direction_bias}</div>
+            <div class="metric-counts">${highContinuation60min.samples} samples</div>
+            <div class="metric-description">Median continuation move in first 60 minutes</div>
+        </div>
+    `;
+    
+    // Add Previous High reversal move 60min
+    const highReversal60min = insights.previous_high.reversal_move_60min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${highReversal60min.description}</div>
+            <div class="metric-median">${highReversal60min.median}%</div>
+            <div class="metric-average">Avg: ${highReversal60min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${highReversal60min.direction_bias}</div>
+            <div class="metric-counts">${highReversal60min.samples} samples</div>
+            <div class="metric-description">Median reversal move in first 60 minutes</div>
+        </div>
+    `;
+    
+    html += `</div></div>`;
+    
+    // Previous Low Section
+    html += `
+        <div class="direction-section">
+            <h4 class="direction-title">Previous Low of Day</h4>
+            <div class="insights-row two-metrics">
+    `;
+    
+    // Add Previous Low continuation move 10min
+    const lowContinuation10min = insights.previous_low.continuation_move_10min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${lowContinuation10min.description}</div>
+            <div class="metric-median">${lowContinuation10min.median}%</div>
+            <div class="metric-average">Avg: ${lowContinuation10min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${lowContinuation10min.direction_bias}</div>
+            <div class="metric-counts">${lowContinuation10min.samples} samples</div>
+            <div class="metric-description">Median continuation move in first 10 minutes</div>
+        </div>
+    `;
+    
+    // Add Previous Low reversal move 10min
+    const lowReversal10min = insights.previous_low.reversal_move_10min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${lowReversal10min.description}</div>
+            <div class="metric-median">${lowReversal10min.median}%</div>
+            <div class="metric-average">Avg: ${lowReversal10min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${lowReversal10min.direction_bias}</div>
+            <div class="metric-counts">${lowReversal10min.samples} samples</div>
+            <div class="metric-description">Median reversal move in first 10 minutes</div>
+        </div>
+    `;
+    
+    html += `</div><div class="insights-row two-metrics">`;
+    
+    // Add Previous Low continuation move 60min
+    const lowContinuation60min = insights.previous_low.continuation_move_60min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${lowContinuation60min.description}</div>
+            <div class="metric-median">${lowContinuation60min.median}%</div>
+            <div class="metric-average">Avg: ${lowContinuation60min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${lowContinuation60min.direction_bias}</div>
+            <div class="metric-counts">${lowContinuation60min.samples} samples</div>
+            <div class="metric-description">Median continuation move in first 60 minutes</div>
+        </div>
+    `;
+    
+    // Add Previous Low reversal move 60min
+    const lowReversal60min = insights.previous_low.reversal_move_60min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${lowReversal60min.description}</div>
+            <div class="metric-median">${lowReversal60min.median}%</div>
+            <div class="metric-average">Avg: ${lowReversal60min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${lowReversal60min.direction_bias}</div>
+            <div class="metric-counts">${lowReversal60min.samples} samples</div>
+            <div class="metric-description">Median reversal move in first 60 minutes</div>
+        </div>
+    `;
+    
+    html += `
+            </div>
+        </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
 }
