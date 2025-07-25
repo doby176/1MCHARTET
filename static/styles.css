@@ -294,7 +294,6 @@ footer {
     margin: 25px 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     border: 3px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
     transition: all 0.3s ease;
 }
 
