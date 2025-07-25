@@ -550,6 +550,11 @@ def education_gap_fundamentals():
     """Educational course on gap analysis fundamentals"""
     return render_template('education-gap-fundamentals.html')
 
+@app.route('/previous-low-reversal-trading')
+def previous_low_reversal_trading():
+    """Educational article about Previous Low Reversal Trading strategy"""
+    return render_template('previous-low-reversal-trading.html')
+
 @app.route('/api/sample/gap_bins', methods=['GET'])
 def get_sample_gap_bins_api():
     """Return limited gap bins for sample mode"""
