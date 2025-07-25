@@ -1887,37 +1887,6 @@ footer p {
     }
 }
 
-/* Desktop styles for dates */
-@media (min-width: 769px) {
-    .date-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .date-list li {
-        margin-bottom: 8px;
-    }
-    
-    .date-list a {
-        display: inline-block;
-        padding: 8px 16px;
-        background: var(--light-grey);
-        border: 1px solid var(--medium-grey);
-        border-radius: var(--border-radius-sm);
-        color: var(--primary-blue);
-        text-decoration: none;
-        transition: all var(--transition-fast);
-        font-size: 0.9rem;
-    }
-    
-    .date-list a:hover {
-        background: var(--primary-blue);
-        color: var(--white);
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-light);
-    }
-    
     form {
         flex-direction: column;
         align-items: stretch;
