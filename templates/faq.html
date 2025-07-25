@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Frequently Asked Questions | 1MChart</title>
+    <meta name="description" content="Find answers to frequently asked questions about 1MChart, gap analysis, trading strategies, and our platform features. Get help with common trading questions and platform usage.">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=70">
+    <style>
+        .faq-page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: var(--spacing-xxl) var(--spacing-lg);
+        }
+        
+        .faq-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xxl);
+        }
+        
+        .faq-header h1 {
+            color: var(--primary-blue);
+            font-size: 2.5rem;
+            font-weight: var(--font-weight-bold);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .faq-header p {
+            color: var(--dark-grey);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .faq-category {
+            margin-bottom: var(--spacing-xxl);
+        }
+        
+        .faq-category h2 {
+            color: var(--secondary-blue);
+            font-size: 1.8rem;
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 2px solid var(--medium-grey);
+        }
+        
+        .faq-item {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-light);
+            margin-bottom: var(--spacing-md);
+            border: 1px solid var(--medium-grey);
+            overflow: hidden;
+        }
+        
+        .faq-question {
+            background: var(--light-grey);
+            padding: var(--spacing-lg);
+            cursor: pointer;
+            transition: var(--transition-fast);
+            border-bottom: 1px solid var(--medium-grey);
+        }
+        
+        .faq-question:hover {
+            background: var(--medium-grey);
+        }
+        
+        .faq-question h3 {
+            color: var(--primary-blue);
+            font-size: 1.1rem;
+            font-weight: var(--font-weight-semibold);
+            margin: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .faq-question::after {
+            content: '▼';
+            font-size: 0.8rem;
+            transition: var(--transition-fast);
+        }
+        
+        .faq-question.active::after {
+            transform: rotate(180deg);
+        }
+        
+        .faq-answer {
+            padding: var(--spacing-lg);
+            display: none;
+            color: var(--charcoal);
+            line-height: 1.6;
+        }
+        
+        .faq-answer.active {
+            display: block;
+        }
+        
+        .faq-answer p {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .faq-answer ul {
+            margin-bottom: var(--spacing-md);
+            padding-left: var(--spacing-lg);
+        }
+        
+        .faq-answer li {
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: var(--spacing-xl);
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: var(--font-weight-medium);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            transition: var(--transition-fast);
+        }
+        
+        .back-link:hover {
+            background: var(--light-grey);
+            text-decoration: none;
+        }
+        
+        .contact-section {
+            background: var(--light-grey);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+            margin-top: var(--spacing-xxl);
+            border: 1px solid var(--medium-grey);
+        }
+        
+        .contact-section h3 {
+            color: var(--primary-blue);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        @media (max-width: 768px) {
+            .faq-header h1 {
+                font-size: 2rem;
+            }
+            
+            .faq-category h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="landing-header">
+        <div class="header-top">
+            <div class="auth-buttons">
+                <a href="{{ url_for('login') }}" class="auth-btn">Log In</a>
+                <a href="{{ url_for('landing') }}" class="auth-btn">Sign Up</a>
+            </div>
+        </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
+        <h1>Frequently Asked Questions</h1>
+    </header>
+
+    <main class="faq-page">
+        <a href="/" class="back-link">← Back to Home</a>
+        
+        <div class="faq-header">
+            <h1>Frequently Asked Questions</h1>
+            <p>Find answers to common questions about 1MChart, gap analysis, trading strategies, and platform features. Can't find what you're looking for? Contact our support team.</p>
+        </div>
+
+        <div class="faq-category">
+            <h2>Platform & Features</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>What is 1MChart and how does it work?</h3>
+                </div>
+                <div class="faq-answer">
+                    <p>1MChart is a comprehensive trading analysis platform that provides data-driven insights for Nasdaq gap trading. Our platform offers:</p>
+                    <ul>
+                        <li><strong>Gap Analysis:</strong> Analyze gap fill rates, patterns, and probabilities across different sizes and weekdays</li>
+                        <li><strong>Market Simulator:</strong> Practice trading with historical 1-minute data on key events</li>
+                        <li><strong>Backtest Analysis:</strong> Test trading strategies using historical market data</li>
+                        <li><strong>Real-time Data:</strong> Access high-frequency 1-minute candlestick data from 2015-2025</li>
+                    </ul>
+                    <p>All data is for educational purposes and helps traders make informed decisions based on historical patterns.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>What data does 1MChart provide?</h3>
+                </div>
+                <div class="faq-answer">
+                    <p>1MChart provides comprehensive Nasdaq trading data including:</p>
+                    <ul>
+                        <li><strong>Gap Analysis:</strong> Gap fill rates by size (0.15% to 3.0%+), direction (up/down), and weekday</li>
+                        <li><strong>Earnings Data:</strong> Stock price reactions to earnings outcomes (Beat, Miss, Slight Beat)</li>
+                        <li><strong>Economic Events:</strong> Price action on CPI, PPI, FOMC, and NFP announcements</li>
+                        <li><strong>Previous High/Low Analysis:</strong> Support and resistance level statistics</li>
+                        <li><strong>1-Minute Charts:</strong> High-frequency intraday data for precise analysis</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>Is 1MChart free to use?</h3>
+                </div>
+                <div class="faq-answer">
+                    <p>Yes! 1MChart is completely free to use with full features:</p>
+                    <ul>
+                        <li><strong>Free Full Access:</strong> Complete platform access with all features and data sets (requires free sign up)</li>
+                        <li><strong>Sample Features:</strong> Limited access to explore the platform without signing up</li>
+                    </ul>
+                    <p>Simply sign up for free to unlock all premium features including complete gap analysis, backtest tools, and market simulator.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-category">
+            <h2>Gap Analysis & Trading</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>What are the best gap sizes to trade?</h3>
+                </div>
+                <div class="faq-answer">
+                    <p>Based on our analysis, the most profitable gap sizes are:</p>
+                    <ul>
+                        <li><strong>0.5-1.0% gaps:</strong> Highest fill rates across all weekdays (up to 75.68% on Friday down gaps)</li>
+                        <li><strong>1.0-1.5% gaps:</strong> Good fill rates, especially on Tuesdays (78.38% for Tuesday up gaps)</li>
+                        <li><strong>Avoid 3.0%+ gaps:</strong> Consistently fill less than 40% of the time</li>
+                    </ul>
+                    <p><strong>Key Insight:</strong> Small gaps (0.5-1.0%) consistently show the highest fill rates, suggesting a mean-reversion edge for intraday trading.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>Why do down gaps fill more often than up gaps?</h3>
+                </div>
+                <div class="faq-answer">
+                    <p>Our data shows that down gaps consistently have higher fill rates than up gaps. For example:</p>
+                    <ul>
+                        <li>Monday down gaps (0.5-1.0%): 73.81% fill rate</li>
+                        <li>Monday up gaps (0.5-1.0%): 51.79% fill rate</li>
+                    </ul>
+                    <p>This pattern likely reflects:</p>
+                    <ul>
+                        <li><strong>Panic Selling:</strong> Investors often overreact to negative news at market open</li>
+                        <li><strong>Market Recovery:</strong> Prices tend to recover throughout the trading day</li>
+                        <li><strong>Institutional Buying:</strong> Large buyers often step in after initial selling pressure</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>Which day of the week is best for gap trading?</h3>
+                </div>
+                <div class="faq-answer">
+                    <p><strong>Tuesdays show the most consistent gap fill patterns:</strong></p>
+                    <ul>
+                        <li>Tuesday up gaps (1.0-1.5%): 78.38% fill rate</li>
+                        <li>Tuesday down gaps (0.5-1.0%): 67.27% fill rate</li>
+                    </ul>
+                    <p>This "Tuesday effect" may be due to:</p>
+                    <ul>
+                        <li>Market participants adjusting positions after Monday's news</li>
+                        <li>Midweek reversion behavior</li>
+                        <li>Excess reaction correction from Monday events</li>
+                    </ul>
+                    <p><strong>Note:</strong> Thursday also shows interesting patterns, with down gaps (1.5-2.0%) filling at 88.24%.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-category">
+            <h2>Technical & Support</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>What browsers are supported?</h3>
+                </div>
+                <div class="faq-answer">
+                    <p>1MChart works best on modern browsers:</p>
+                    <ul>
+                        <li>Google Chrome (recommended)</li>
+                        <li>Mozilla Firefox</li>
+                        <li>Safari</li>
+                        <li>Microsoft Edge</li>
+                    </ul>
+                    <p>For optimal performance, we recommend using the latest version of Chrome with JavaScript enabled.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>How accurate is the historical data?</h3>
+                </div>
+                <div class="faq-answer">
+                    <p>Our historical data is sourced from reliable market data providers and includes:</p>
+                    <ul>
+                        <li>1-minute candlestick data from 2015-2025</li>
+                        <li>Nasdaq (QQQ) price action</li>
+                        <li>Earnings announcements and outcomes</li>
+                        <li>Economic event dates and times</li>
+                    </ul>
+                    <p>While we strive for accuracy, all data is provided for educational purposes and should not be considered as investment advice.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>How do I get technical support?</h3>
+                </div>
+                <div class="faq-answer">
+                    <p>We offer multiple support channels:</p>
+                    <ul>
+                        <li><strong>Email:</strong> onemchart.onemchart@mail.com</li>
+                        <li><strong>YouTube:</strong> <a href="https://www.youtube.com/@1Mchart1" target="_blank">@1Mchart1</a></li>
+                        <li><strong>Contact Form:</strong> Use our <a href="/contact">contact page</a></li>
+                    </ul>
+                    <p>Our support team typically responds within 24 hours during business days.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-category">
+            <h2>Legal & Compliance</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>Is 1MChart regulated or licensed?</h3>
+                </div>
+                <div class="faq-answer">
+                    <p>1MChart is an educational platform that provides market analysis tools and data. We are not:</p>
+                    <ul>
+                        <li>A broker or trading platform</li>
+                        <li>A financial advisor</li>
+                        <li>Regulated by financial authorities</li>
+                    </ul>
+                    <p>Our platform is designed for educational purposes to help traders understand market patterns and develop their own strategies.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h3>What is your data privacy policy?</h3>
+                </div>
+                <div class="faq-answer">
+                    <p>We take data privacy seriously. Our policy includes:</p>
+                    <ul>
+                        <li>We do not sell personal information to third parties</li>
+                        <li>Account data is encrypted and securely stored</li>
+                        <li>We use cookies only for essential platform functionality</li>
+                        <li>You can request data deletion at any time</li>
+                    </ul>
+                    <p>For complete details, please read our <a href="/privacy">Privacy Policy</a>.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="contact-section">
+            <h3>Still Have Questions?</h3>
+            <p>Can't find the answer you're looking for? Our support team is here to help.</p>
+            <div class="cta-buttons">
+                <a href="/contact" class="signup-btn">Contact Support</a>
+                <a href="/sample" class="sample-btn">Try Platform</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
+            <p>More coming soon</p>
+        </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
+        <img src="{{ url_for('static', filename='buttom2.png') }}" alt="Left Footer Image" class="buttom2-image">
+        <img src="{{ url_for('static', filename='buttom1.png') }}" alt="Right Footer Image" class="buttom1-image">
+    </footer>
+    
+    <div class="disclaimer-section">
+        <div class="footer-links">
+            <a href="/about">About Us</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+            <a href="/contact">Contact Us</a>
+        </div>
+        <p>DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
+    </div>
+
+    <script>
+        // FAQ Toggle Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const faqQuestions = document.querySelectorAll('.faq-question');
+            
+            faqQuestions.forEach(question => {
+                question.addEventListener('click', function() {
+                    const answer = this.nextElementSibling;
+                    const isActive = this.classList.contains('active');
+                    
+                    // Close all other FAQ items
+                    faqQuestions.forEach(q => {
+                        q.classList.remove('active');
+                        q.nextElementSibling.classList.remove('active');
+                    });
+                    
+                    // Toggle current item
+                    if (!isActive) {
+                        this.classList.add('active');
+                        answer.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=50"></script>
+</body>
+</html>

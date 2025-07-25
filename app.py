@@ -525,6 +525,31 @@ def contact_post():
     # Redirect back to contact page with success message
     return redirect(url_for('contact'))
 
+@app.route('/blog')
+def blog():
+    """Blog page route"""
+    return render_template('blog.html')
+
+@app.route('/faq')
+def faq():
+    """FAQ page route"""
+    return render_template('faq.html')
+
+@app.route('/education')
+def education():
+    """Educational resources page route"""
+    return render_template('education.html')
+
+@app.route('/blog/small-gaps-fill-more-often')
+def blog_small_gaps():
+    """Blog post about small gaps filling more often"""
+    return render_template('blog-small-gaps.html')
+
+@app.route('/education/gap-fundamentals')
+def education_gap_fundamentals():
+    """Educational course on gap analysis fundamentals"""
+    return render_template('education-gap-fundamentals.html')
+
 @app.route('/api/sample/gap_bins', methods=['GET'])
 def get_sample_gap_bins_api():
     """Return limited gap bins for sample mode"""

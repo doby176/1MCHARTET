@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Resources - Trading Guides & Tutorials | 1MChart</title>
+    <meta name="description" content="Master trading with our comprehensive educational resources. Learn gap analysis, intraday trading strategies, market psychology, and technical analysis with expert guides and tutorials.">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=70">
+    <style>
+        .education-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-xxl) var(--spacing-lg);
+        }
+        
+        .education-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xxl);
+        }
+        
+        .education-header h1 {
+            color: var(--primary-blue);
+            font-size: 2.5rem;
+            font-weight: var(--font-weight-bold);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .education-header p {
+            color: var(--dark-grey);
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .education-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: var(--spacing-xl);
+            margin-bottom: var(--spacing-xxl);
+        }
+        
+        .education-card {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-light);
+            overflow: hidden;
+            transition: var(--transition-medium);
+            border: 1px solid var(--medium-grey);
+            height: 100%;
+        }
+        
+        .education-card:hover {
+            box-shadow: var(--shadow-medium);
+            transform: translateY(-3px);
+        }
+        
+        .education-card-header {
+            background: var(--header-gradient);
+            color: var(--white);
+            padding: var(--spacing-lg);
+            text-align: center;
+        }
+        
+        .education-card-header h3 {
+            font-size: 1.4rem;
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .education-card-header .level {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.8rem;
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .education-card-content {
+            padding: var(--spacing-lg);
+        }
+        
+        .education-card-content p {
+            color: var(--dark-grey);
+            margin-bottom: var(--spacing-md);
+            line-height: 1.6;
+        }
+        
+        .education-card-content ul {
+            margin-bottom: var(--spacing-md);
+            padding-left: var(--spacing-lg);
+        }
+        
+        .education-card-content li {
+            margin-bottom: var(--spacing-xs);
+            color: var(--charcoal);
+        }
+        
+        .education-card-content .duration {
+            color: var(--primary-blue);
+            font-weight: var(--font-weight-semibold);
+            font-size: 0.9rem;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: var(--spacing-xl);
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: var(--font-weight-medium);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            transition: var(--transition-fast);
+        }
+        
+        .back-link:hover {
+            background: var(--light-grey);
+            text-decoration: none;
+        }
+        
+        .resources-section {
+            background: var(--light-grey);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-lg);
+            margin-bottom: var(--spacing-xxl);
+            border: 1px solid var(--medium-grey);
+        }
+        
+        .resources-section h2 {
+            color: var(--primary-blue);
+            font-size: 1.8rem;
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-lg);
+            text-align: center;
+        }
+        
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        
+        .resource-item {
+            background: var(--white);
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            text-align: center;
+            border: 1px solid var(--medium-grey);
+            transition: var(--transition-fast);
+        }
+        
+        .resource-item:hover {
+            box-shadow: var(--shadow-light);
+            transform: translateY(-2px);
+        }
+        
+        .resource-item .icon {
+            font-size: 2.5rem;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .resource-item h4 {
+            color: var(--primary-blue);
+            font-size: 1.1rem;
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .resource-item p {
+            color: var(--dark-grey);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .cta-section {
+            text-align: center;
+            background: var(--white);
+            padding: var(--spacing-xxl);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--medium-grey);
+        }
+        
+        .cta-section h2 {
+            color: var(--primary-blue);
+            font-size: 2rem;
+            font-weight: var(--font-weight-bold);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .cta-section p {
+            color: var(--dark-grey);
+            font-size: 1.1rem;
+            margin-bottom: var(--spacing-xl);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .education-header h1 {
+                font-size: 2rem;
+            }
+            
+            .education-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-lg);
+            }
+            
+            .resources-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="landing-header">
+        <div class="header-top">
+            <div class="auth-buttons">
+                <a href="{{ url_for('login') }}" class="auth-btn">Log In</a>
+                <a href="{{ url_for('landing') }}" class="auth-btn">Sign Up</a>
+            </div>
+        </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
+        <h1>Educational Resources</h1>
+    </header>
+
+    <main class="education-page">
+        <a href="/" class="back-link">← Back to Home</a>
+        
+        <div class="education-header">
+            <h1>Master Trading with Expert Education</h1>
+            <p>Start your trading education journey with our comprehensive gap analysis fundamentals course. Learn essential trading concepts and strategies with real-world examples.</p>
+        </div>
+
+        <div class="education-grid">
+            <div class="education-card">
+                <div class="education-card-header">
+                    <h3>Gap Analysis Fundamentals</h3>
+                    <span class="level">Beginner</span>
+                </div>
+                <div class="education-card-content">
+                    <p>Learn the basics of gap analysis and how to identify profitable trading opportunities using historical data patterns.</p>
+                    <ul>
+                        <li>Understanding gap types and classifications</li>
+                        <li>Reading gap fill rate statistics</li>
+                        <li>Identifying high-probability setups</li>
+                        <li>Risk management for gap trading</li>
+                    </ul>
+                    <p class="duration">⏱️ Estimated time: 30-45 minutes</p>
+                    <a href="/education/gap-fundamentals" class="read-more">Start Learning →</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="resources-section">
+            <h2>Additional Learning Resources</h2>
+            <div class="resources-grid">
+                <div class="resource-item">
+                    <div class="icon">📊</div>
+                    <h4>Data Analysis Tools</h4>
+                    <p>Learn to use our platform's data analysis features to identify patterns and opportunities.</p>
+                </div>
+                
+                <div class="resource-item">
+                    <div class="icon">📈</div>
+                    <h4>Chart Reading Skills</h4>
+                    <p>Master the art of reading 1-minute charts and identifying key price action patterns.</p>
+                </div>
+                
+                <div class="resource-item">
+                    <div class="icon">🎯</div>
+                    <h4>Entry & Exit Strategies</h4>
+                    <p>Develop precise entry and exit strategies for optimal trade execution.</p>
+                </div>
+                
+                <div class="resource-item">
+                    <div class="icon">🧠</div>
+                    <h4>Psychology & Discipline</h4>
+                    <p>Build the mental framework needed for consistent trading success.</p>
+                </div>
+                
+                <div class="resource-item">
+                    <div class="icon">📱</div>
+                    <h4>Platform Tutorials</h4>
+                    <p>Step-by-step guides for using all 1MChart features effectively.</p>
+                </div>
+                
+                <div class="resource-item">
+                    <div class="icon">📚</div>
+                    <h4>Market Theory</h4>
+                    <p>Understand the fundamental principles that drive market movements.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h2>Ready to Start Learning?</h2>
+            <p>Access our comprehensive educational resources and start building your trading knowledge with data-driven insights.</p>
+            <div class="cta-buttons">
+                <a href="/register" class="signup-btn">📈 Get Full Access</a>
+                <a href="/sample" class="sample-btn">🚀 Try Sample Features</a>
+                <a href="/blog" class="sample-btn">📖 Read Our Blog</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
+            <p>More coming soon</p>
+        </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
+        <img src="{{ url_for('static', filename='buttom2.png') }}" alt="Left Footer Image" class="buttom2-image">
+        <img src="{{ url_for('static', filename='buttom1.png') }}" alt="Right Footer Image" class="buttom1-image">
+    </footer>
+    
+    <div class="disclaimer-section">
+        <div class="footer-links">
+            <a href="/about">About Us</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+            <a href="/contact">Contact Us</a>
+        </div>
+        <p>DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}?v=50"></script>
+</body>
+</html>

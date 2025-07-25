@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gap Analysis Fundamentals - Complete Trading Guide | 1MChart Education</title>
+    <meta name="description" content="Master the fundamentals of gap analysis with our comprehensive trading guide. Learn gap types, fill rates, trading strategies, and risk management techniques for successful gap trading.">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=70">
+    <style>
+        .course-page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: var(--spacing-xxl) var(--spacing-lg);
+        }
+        
+        .course-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xxl);
+        }
+        
+        .course-header h1 {
+            color: var(--primary-blue);
+            font-size: 2.5rem;
+            font-weight: var(--font-weight-bold);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .course-meta {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            color: var(--dark-grey);
+            font-size: 0.9rem;
+        }
+        
+        .course-level {
+            background: var(--accent-green);
+            color: var(--white);
+            padding: 4px 12px;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.8rem;
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .course-content {
+            background: var(--white);
+            padding: var(--spacing-xxl);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--medium-grey);
+            line-height: 1.7;
+        }
+        
+        .course-content h2 {
+            color: var(--primary-blue);
+            font-size: 1.8rem;
+            font-weight: var(--font-weight-semibold);
+            margin: var(--spacing-xl) 0 var(--spacing-lg) 0;
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 2px solid var(--medium-grey);
+        }
+        
+        .course-content h3 {
+            color: var(--secondary-blue);
+            font-size: 1.4rem;
+            font-weight: var(--font-weight-semibold);
+            margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+        }
+        
+        .course-content p {
+            margin-bottom: var(--spacing-md);
+            color: var(--charcoal);
+        }
+        
+        .course-content ul, .course-content ol {
+            margin-bottom: var(--spacing-md);
+            padding-left: var(--spacing-lg);
+        }
+        
+        .course-content li {
+            margin-bottom: var(--spacing-xs);
+            color: var(--charcoal);
+        }
+        
+        .lesson-box {
+            background: var(--light-grey);
+            border-left: 4px solid var(--primary-blue);
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+            border-radius: var(--border-radius-sm);
+        }
+        
+        .lesson-box h4 {
+            color: var(--primary-blue);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .example-box {
+            background: var(--white);
+            border: 2px solid var(--medium-grey);
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+            border-radius: var(--border-radius-md);
+        }
+        
+        .example-box h4 {
+            color: var(--accent-green);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+            border-radius: var(--border-radius-md);
+        }
+        
+        .warning-box h4 {
+            color: #856404;
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: var(--spacing-xl);
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: var(--font-weight-medium);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            transition: var(--transition-fast);
+        }
+        
+        .back-link:hover {
+            background: var(--light-grey);
+            text-decoration: none;
+        }
+        
+        .progress-bar {
+            background: var(--light-grey);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-sm);
+            margin: var(--spacing-lg) 0;
+        }
+        
+        .progress-fill {
+            background: var(--accent-green);
+            height: 8px;
+            border-radius: var(--border-radius-sm);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .cta-section {
+            background: var(--light-grey);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+            margin-top: var(--spacing-xxl);
+            border: 1px solid var(--medium-grey);
+        }
+        
+        @media (max-width: 768px) {
+            .course-header h1 {
+                font-size: 2rem;
+            }
+            
+            .course-meta {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="landing-header">
+        <div class="header-top">
+            <div class="auth-buttons">
+                <a href="{{ url_for('login') }}" class="auth-btn">Log In</a>
+                <a href="{{ url_for('landing') }}" class="auth-btn">Sign Up</a>
+            </div>
+        </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
+        <h1>1MChart Education</h1>
+    </header>
+
+    <main class="course-page">
+        <a href="/education" class="back-link">← Back to Education</a>
+        
+        <div class="course-header">
+            <h1>Gap Analysis Fundamentals</h1>
+            <div class="course-meta">
+                <span class="course-level">Beginner</span>
+                <span>⏱️ 30-45 minutes</span>
+                <span>📊 6 Lessons</span>
+                <span>🎯 Practical Examples</span>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+
+        <article class="course-content">
+            <h2>Introduction to Gap Analysis</h2>
+            
+            <p>Gap analysis is one of the most powerful tools in a trader's arsenal. Understanding how gaps work, why they occur, and how to trade them can significantly improve your trading performance. This comprehensive guide will teach you everything you need to know about gap analysis fundamentals.</p>
+
+            <div class="lesson-box">
+                <h4>🎯 Learning Objectives</h4>
+                <ul>
+                    <li>Understand what gaps are and how they form</li>
+                    <li>Learn to identify different types of gaps</li>
+                    <li>Master gap fill rate analysis</li>
+                    <li>Develop gap trading strategies</li>
+                    <li>Implement proper risk management</li>
+                </ul>
+            </div>
+
+            <h2>Lesson 1: What Are Gaps?</h2>
+
+            <p>A gap occurs when the opening price of a security is significantly different from the previous day's closing price. This creates a "gap" in the price chart where no trading occurred.</p>
+
+            <h3>How Gaps Form</h3>
+            <ul>
+                <li><strong>After-hours news:</strong> Earnings reports, economic data, or company announcements</li>
+                <li><strong>Market sentiment shifts:</strong> Changes in investor psychology overnight</li>
+                <li><strong>Global events:</strong> International news affecting markets</li>
+                <li><strong>Technical factors:</strong> Stop-loss orders and algorithmic trading</li>
+            </ul>
+
+            <div class="example-box">
+                <h4>📈 Real Example</h4>
+                <p><strong>Scenario:</strong> A company reports earnings after market close. The stock closed at $100, but opens the next day at $95 due to disappointing results.</p>
+                <p><strong>Result:</strong> A 5% down gap is created between $100 and $95.</p>
+            </div>
+
+            <h2>Lesson 2: Types of Gaps</h2>
+
+            <h3>1. Common Gaps</h3>
+            <p>These are small gaps that occur frequently and usually fill quickly. They're often caused by normal market noise and don't indicate significant trend changes.</p>
+
+            <h3>2. Breakaway Gaps</h3>
+            <p>These occur when price breaks out of a consolidation pattern with significant volume. They often signal the start of a new trend and may not fill for extended periods.</p>
+
+            <h3>3. Runaway Gaps</h3>
+            <p>Also called "continuation gaps," these occur in the middle of a strong trend and indicate the trend is likely to continue.</p>
+
+            <h3>4. Exhaustion Gaps</h3>
+            <p>These occur near the end of a trend and often signal a reversal is coming. They're characterized by high volume and rapid price movement.</p>
+
+            <div class="lesson-box">
+                <h4>💡 Key Insight</h4>
+                <p>Small gaps (0.5-1.0%) are more likely to fill than large gaps (3%+). This is a crucial pattern for gap trading strategies.</p>
+            </div>
+
+            <h2>Lesson 3: Gap Fill Rate Analysis</h2>
+
+            <p>Understanding gap fill rates is essential for successful gap trading. Our data analysis reveals important patterns:</p>
+
+            <h3>Size Matters</h3>
+            <ul>
+                <li><strong>0.5-1.0% gaps:</strong> 70-75% fill rate</li>
+                <li><strong>1.0-1.5% gaps:</strong> 60-65% fill rate</li>
+                <li><strong>1.5-2.0% gaps:</strong> 50-55% fill rate</li>
+                <li><strong>3.0%+ gaps:</strong> Less than 40% fill rate</li>
+            </ul>
+
+            <h3>Day of the Week Patterns</h3>
+            <ul>
+                <li><strong>Tuesday:</strong> Highest fill rates across all gap sizes</li>
+                <li><strong>Monday:</strong> Good fill rates for down gaps</li>
+                <li><strong>Friday:</strong> Excellent fill rates for small down gaps</li>
+            </ul>
+
+            <div class="example-box">
+                <h4>📊 Data Example</h4>
+                <p><strong>Tuesday up gaps (1.0-1.5%):</strong> 78.38% fill rate</p>
+                <p><strong>Friday down gaps (0.5-1.0%):</strong> 75.68% fill rate</p>
+                <p><strong>Large gaps (3.0%+):</strong> Consistently below 40% fill rate</p>
+            </div>
+
+            <h2>Lesson 4: Gap Trading Strategies</h2>
+
+            <h3>Strategy 1: Mean Reversion (Gap Fade)</h3>
+            <p>This strategy bets that the gap will fill, especially for small gaps with high fill rates.</p>
+
+            <div class="lesson-box">
+                <h4>📋 Mean Reversion Steps</h4>
+                <ol>
+                    <li>Identify a small gap (0.5-1.5%)</li>
+                    <li>Wait for the first 15-30 minutes of trading</li>
+                    <li>Look for signs the gap won't expand further</li>
+                    <li>Enter a position opposite to the gap direction</li>
+                    <li>Set profit target at gap fill level</li>
+                    <li>Use tight stop-loss for risk management</li>
+                </ol>
+            </div>
+
+            <h3>Strategy 2: Momentum Trading</h3>
+            <p>This strategy trades in the direction of the gap, especially for larger gaps or strong volume.</p>
+
+            <div class="lesson-box">
+                <h4>📋 Momentum Trading Steps</h4>
+                <ol>
+                    <li>Identify a gap with strong volume</li>
+                    <li>Wait for confirmation of gap direction</li>
+                    <li>Enter in the direction of the gap</li>
+                    <li>Use the gap as a reference for support/resistance</li>
+                    <li>Set profit targets beyond the gap</li>
+                </ol>
+            </div>
+
+            <h2>Lesson 5: Risk Management</h2>
+
+            <div class="warning-box">
+                <h4>⚠️ Critical Risk Management Rules</h4>
+                <ul>
+                    <li>Never risk more than 1-2% of your account per trade</li>
+                    <li>Always use stop-loss orders</li>
+                    <li>Don't chase gaps that have already moved significantly</li>
+                    <li>Consider market conditions and volatility</li>
+                    <li>Have a clear exit strategy before entering</li>
+                </ul>
+            </div>
+
+            <h3>Position Sizing Formula</h3>
+            <p><strong>Position Size = (Account Risk %) × (Account Size) ÷ (Stop Loss Distance)</strong></p>
+
+            <div class="example-box">
+                <h4>💰 Position Sizing Example</h4>
+                <p><strong>Account:</strong> $10,000</p>
+                <p><strong>Risk per trade:</strong> 1% ($100)</p>
+                <p><strong>Stop loss:</strong> 2% from entry</p>
+                <p><strong>Position size:</strong> $100 ÷ 0.02 = $5,000</p>
+            </div>
+
+            <h2>Lesson 6: Technical Analysis Integration</h2>
+
+            <h3>Key Indicators for Gap Trading</h3>
+            <ul>
+                <li><strong>Volume:</strong> High volume confirms gap direction</li>
+                <li><strong>Support/Resistance:</strong> Previous levels influence gap behavior</li>
+                <li><strong>Moving Averages:</strong> Use as dynamic support/resistance</li>
+                <li><strong>RSI:</strong> Oversold/overbought conditions</li>
+                <li><strong>VWAP:</strong> Volume-weighted average price</li>
+            </ul>
+
+            <h3>Chart Patterns to Watch</h3>
+            <ul>
+                <li><strong>Gap and Go:</strong> Price gaps and continues in same direction</li>
+                <li><strong>Gap and Fill:</strong> Price gaps then returns to fill the gap</li>
+                <li><strong>Gap and Extend:</strong> Price gaps, fills, then continues in original direction</li>
+            </ul>
+
+            <h2>Practical Application</h2>
+
+            <p>Now let's apply what we've learned to a real trading scenario:</p>
+
+            <div class="example-box">
+                <h4>🎯 Complete Trading Example</h4>
+                <p><strong>Setup:</strong> Tuesday morning, stock gaps down 0.8% on earnings news</p>
+                <p><strong>Analysis:</strong> Small gap, Tuesday pattern, high fill probability</p>
+                <p><strong>Strategy:</strong> Mean reversion fade</p>
+                <p><strong>Entry:</strong> After 20 minutes, price shows signs of stabilization</p>
+                <p><strong>Position:</strong> Long position at $95.50</p>
+                <p><strong>Target:</strong> Gap fill at $96.30 (previous close)</p>
+                <p><strong>Stop:</strong> $95.00 (0.5% risk)</p>
+                <p><strong>Result:</strong> Gap fills by 11 AM, profit target hit</p>
+            </div>
+
+            <h2>Common Mistakes to Avoid</h2>
+
+            <div class="warning-box">
+                <h4>❌ Avoid These Common Errors</h4>
+                <ul>
+                    <li><strong>Chasing large gaps:</strong> They have low fill rates</li>
+                    <li><strong>No stop-loss:</strong> Always protect your capital</li>
+                    <li><strong>Ignoring volume:</strong> Volume confirms gap validity</li>
+                    <li><strong>Over-trading:</strong> Not every gap is tradeable</li>
+                    <li><strong>Ignoring market conditions:</strong> Context matters</li>
+                </ul>
+            </div>
+
+            <h2>Conclusion</h2>
+
+            <p>Gap analysis is a powerful tool that can significantly improve your trading results. By understanding gap types, fill rates, and implementing proper strategies with risk management, you can develop a systematic approach to gap trading.</p>
+
+            <div class="lesson-box">
+                <h4>🎓 Key Takeaways</h4>
+                <ul>
+                    <li>Small gaps (0.5-1.0%) have the highest fill rates</li>
+                    <li>Tuesday shows the most consistent gap patterns</li>
+                    <li>Always use proper risk management</li>
+                    <li>Combine gap analysis with technical indicators</li>
+                    <li>Practice with paper trading before using real money</li>
+                </ul>
+            </div>
+
+            <h2>Next Steps</h2>
+
+            <p>Now that you understand gap analysis fundamentals, consider exploring:</p>
+            <ul>
+                <li><strong>Advanced Gap Strategies:</strong> Learn more sophisticated approaches</li>
+                <li><strong>Market Psychology:</strong> Understand the psychology behind gaps</li>
+                <li><strong>Risk Management:</strong> Deep dive into position sizing and risk control</li>
+                <li><strong>Technical Analysis:</strong> Master chart patterns and indicators</li>
+            </ul>
+        </article>
+
+        <div class="cta-section">
+            <h3>Ready to Practice Gap Analysis?</h3>
+            <p>Apply what you've learned with our comprehensive gap analysis tools and historical data.</p>
+            <div class="cta-buttons">
+                <a href="/sample" class="signup-btn">🚀 Try Sample Features</a>
+                <a href="/register" class="sample-btn">📈 Get Full Access</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
+            <p>More coming soon</p>
+        </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
+        <img src="{{ url_for('static', filename='buttom2.png') }}" alt="Left Footer Image" class="buttom2-image">
+        <img src="{{ url_for('static', filename='buttom1.png') }}" alt="Right Footer Image" class="buttom1-image">
+    </footer>
+    
+    <div class="disclaimer-section">
+        <div class="footer-links">
+            <a href="/about">About Us</a>
+            <a href="/blog">Blog</a>
+            <a href="/education">Education</a>
+            <a href="/faq">FAQ</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+            <a href="/contact">Contact Us</a>
+        </div>
+        <p>DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
+    </div>
+
+    <script>
+        // Simple progress tracking
+        window.addEventListener('scroll', function() {
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.body.offsetHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            document.getElementById('progress-fill').style.width = scrollPercent + '%';
+        });
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=50"></script>
+</body>
+</html>

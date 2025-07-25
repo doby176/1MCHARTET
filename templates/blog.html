@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1MChart Blog - Trading Insights & Analysis</title>
+    <meta name="description" content="Discover professional trading insights, gap analysis strategies, and market education from 1MChart. Learn about Nasdaq gap patterns, intraday trading strategies, and data-driven approaches to market analysis.">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=70">
+    <style>
+        .blog-page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--spacing-xxl) var(--spacing-lg);
+        }
+        
+        .blog-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xxl);
+        }
+        
+        .blog-header h1 {
+            color: var(--primary-blue);
+            font-size: 2.5rem;
+            font-weight: var(--font-weight-bold);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .blog-header p {
+            color: var(--dark-grey);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-xl);
+            margin-bottom: var(--spacing-xxl);
+        }
+        
+        .blog-card {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-light);
+            overflow: hidden;
+            transition: var(--transition-medium);
+            border: 1px solid var(--medium-grey);
+        }
+        
+        .blog-card:hover {
+            box-shadow: var(--shadow-medium);
+            transform: translateY(-3px);
+        }
+        
+        .blog-card-image {
+            width: 100%;
+            height: 200px;
+            background: var(--header-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 3rem;
+        }
+        
+        .blog-card-content {
+            padding: var(--spacing-lg);
+        }
+        
+        .blog-card h3 {
+            color: var(--primary-blue);
+            font-size: 1.3rem;
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .blog-card p {
+            color: var(--dark-grey);
+            margin-bottom: var(--spacing-md);
+            line-height: 1.6;
+        }
+        
+        .blog-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .blog-date {
+            color: var(--dark-grey);
+            font-size: 0.9rem;
+        }
+        
+        .blog-category {
+            background: var(--accent-green);
+            color: var(--white);
+            padding: 4px 8px;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.8rem;
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .read-more {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: var(--font-weight-semibold);
+            transition: var(--transition-fast);
+        }
+        
+        .read-more:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: var(--spacing-xl);
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: var(--font-weight-medium);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            transition: var(--transition-fast);
+        }
+        
+        .back-link:hover {
+            background: var(--light-grey);
+            text-decoration: none;
+        }
+        
+        @media (max-width: 768px) {
+            .blog-header h1 {
+                font-size: 2rem;
+            }
+            
+            .blog-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-lg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="landing-header">
+        <div class="header-top">
+            <div class="auth-buttons">
+                <a href="{{ url_for('login') }}" class="auth-btn">Log In</a>
+                <a href="{{ url_for('landing') }}" class="auth-btn">Sign Up</a>
+            </div>
+        </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
+        <h1>1MChart Trading Blog</h1>
+    </header>
+
+    <main class="blog-page">
+        <a href="/" class="back-link">← Back to Home</a>
+        
+        <div class="blog-header">
+            <h1>Trading Insights & Market Analysis</h1>
+            <p>Discover data-driven trading strategies and gap analysis insights from our comprehensive Nasdaq analysis platform. Start with our featured article on small gap trading strategies.</p>
+        </div>
+
+        <div class="blog-grid">
+            <article class="blog-card">
+                <div class="blog-card-image">📊</div>
+                <div class="blog-card-content">
+                    <div class="blog-meta">
+                        <span class="blog-date">December 15, 2024</span>
+                        <span class="blog-category">Gap Analysis</span>
+                    </div>
+                    <h3>Small Gaps Fill More Often: The 0.5-1.0% Sweet Spot</h3>
+                    <p>Discover why gaps in the 0.5-1.0% range consistently show the highest fill rates across all weekdays and both directions. Learn how to identify and trade these high-probability setups.</p>
+                    <a href="/blog/small-gaps-fill-more-often" class="read-more">Read More →</a>
+                </div>
+            </article>
+        </div>
+
+        <div class="card">
+            <h2>Stay Updated with Market Insights</h2>
+            <p>Get the latest trading analysis, gap patterns, and market education delivered to your inbox. Join our community of data-driven traders.</p>
+            <div class="cta-buttons">
+                <a href="/register" class="signup-btn">📈 Get Full Access</a>
+                <a href="/sample" class="sample-btn">🚀 Try Sample Features</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
+            <p>More coming soon</p>
+        </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
+        <img src="{{ url_for('static', filename='buttom2.png') }}" alt="Left Footer Image" class="buttom2-image">
+        <img src="{{ url_for('static', filename='buttom1.png') }}" alt="Right Footer Image" class="buttom1-image">
+    </footer>
+    
+    <div class="disclaimer-section">
+        <div class="footer-links">
+            <a href="/about">About Us</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+            <a href="/contact">Contact Us</a>
+        </div>
+        <p>DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}?v=50"></script>
+</body>
+</html>

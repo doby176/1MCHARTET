@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Small Gaps Fill More Often: The 0.5-1.0% Sweet Spot | 1MChart Blog</title>
+    <meta name="description" content="Discover why gaps in the 0.5-1.0% range consistently show the highest fill rates across all weekdays and both directions. Learn how to identify and trade these high-probability setups.">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=70">
+    <style>
+        .blog-post {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--spacing-xxl) var(--spacing-lg);
+        }
+        
+        .blog-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xxl);
+        }
+        
+        .blog-header h1 {
+            color: var(--primary-blue);
+            font-size: 2.5rem;
+            font-weight: var(--font-weight-bold);
+            margin-bottom: var(--spacing-md);
+            line-height: 1.2;
+        }
+        
+        .blog-meta {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            color: var(--dark-grey);
+            font-size: 0.9rem;
+        }
+        
+        .blog-category {
+            background: var(--accent-green);
+            color: var(--white);
+            padding: 4px 12px;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.8rem;
+            font-weight: var(--font-weight-medium);
+        }
+        
+        .blog-content {
+            background: var(--white);
+            padding: var(--spacing-xxl);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--medium-grey);
+            line-height: 1.7;
+        }
+        
+        .blog-content h2 {
+            color: var(--primary-blue);
+            font-size: 1.8rem;
+            font-weight: var(--font-weight-semibold);
+            margin: var(--spacing-xl) 0 var(--spacing-lg) 0;
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 2px solid var(--medium-grey);
+        }
+        
+        .blog-content h3 {
+            color: var(--secondary-blue);
+            font-size: 1.4rem;
+            font-weight: var(--font-weight-semibold);
+            margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+        }
+        
+        .blog-content p {
+            margin-bottom: var(--spacing-md);
+            color: var(--charcoal);
+        }
+        
+        .blog-content ul, .blog-content ol {
+            margin-bottom: var(--spacing-md);
+            padding-left: var(--spacing-lg);
+        }
+        
+        .blog-content li {
+            margin-bottom: var(--spacing-xs);
+            color: var(--charcoal);
+        }
+        
+        .highlight-box {
+            background: var(--light-grey);
+            border-left: 4px solid var(--primary-blue);
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+            border-radius: var(--border-radius-sm);
+        }
+        
+        .highlight-box h4 {
+            color: var(--primary-blue);
+            font-weight: var(--font-weight-semibold);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin: var(--spacing-lg) 0;
+        }
+        
+        .stat-card {
+            background: var(--white);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            text-align: center;
+            border: 1px solid var(--medium-grey);
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: var(--font-weight-bold);
+            color: var(--accent-green);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--dark-grey);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: var(--spacing-xl);
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: var(--font-weight-medium);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            transition: var(--transition-fast);
+        }
+        
+        .back-link:hover {
+            background: var(--light-grey);
+            text-decoration: none;
+        }
+        
+        .cta-section {
+            background: var(--light-grey);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+            margin-top: var(--spacing-xxl);
+            border: 1px solid var(--medium-grey);
+        }
+        
+        @media (max-width: 768px) {
+            .blog-header h1 {
+                font-size: 2rem;
+            }
+            
+            .blog-meta {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="landing-header">
+        <div class="header-top">
+            <div class="auth-buttons">
+                <a href="{{ url_for('login') }}" class="auth-btn">Log In</a>
+                <a href="{{ url_for('landing') }}" class="auth-btn">Sign Up</a>
+            </div>
+        </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
+        <h1>1MChart Trading Blog</h1>
+    </header>
+
+    <main class="blog-post">
+        <a href="/blog" class="back-link">← Back to Blog</a>
+        
+        <div class="blog-header">
+            <h1>Small Gaps Fill More Often: The 0.5-1.0% Sweet Spot</h1>
+            <div class="blog-meta">
+                <span class="blog-date">December 15, 2024</span>
+                <span class="blog-category">Gap Analysis</span>
+                <span>📊 Data-Driven Insights</span>
+            </div>
+        </div>
+
+        <article class="blog-content">
+            <p>In the world of gap trading, not all gaps are created equal. Our comprehensive analysis of Nasdaq data reveals a fascinating pattern: gaps in the 0.5-1.0% range consistently demonstrate the highest fill rates across all weekdays and both directions. This discovery could be the key to identifying high-probability trading setups.</p>
+
+            <h2>The Data Speaks: Why Small Gaps Matter</h2>
+            
+            <p>After analyzing thousands of gap occurrences in the Nasdaq market, we've identified a clear pattern that challenges conventional trading wisdom. While many traders focus on larger, more dramatic gaps, the data tells a different story.</p>
+
+            <div class="highlight-box">
+                <h4>🎯 Key Finding</h4>
+                <p><strong>Gaps in the 0.5-1.0% range consistently show the highest fill rates across all weekdays and both directions.</strong> This suggests a potential mean-reversion edge for intraday trading strategies.</p>
+            </div>
+
+            <h3>Friday Down Gaps: The Champion Performer</h3>
+            
+            <p>Our analysis reveals that Friday down gaps in the 0.5-1.0% bucket achieve an impressive <strong>75.68% fill rate</strong>. This is significantly higher than larger gaps and suggests a unique market behavior pattern.</p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">75.68%</div>
+                    <div class="stat-label">Friday Down Gaps Fill Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">73.81%</div>
+                    <div class="stat-label">Monday Down Gaps Fill Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card">
+                        <div class="stat-number">51.79%</div>
+                        <div class="stat-label">Monday Up Gaps Fill Rate</div>
+                    </div>
+                </div>
+            </div>
+
+            <h2>Understanding the Psychology Behind Small Gap Fills</h2>
+
+            <p>Why do small gaps fill more frequently? The answer lies in market psychology and institutional behavior patterns.</p>
+
+            <h3>1. Mean Reversion Tendency</h3>
+            <p>Small gaps often represent minor market inefficiencies that get corrected throughout the trading day. Unlike large gaps driven by significant news events, small gaps are more likely to be "noise" that the market naturally corrects.</p>
+
+            <h3>2. Institutional Participation</h3>
+            <p>Large institutional players often use small gaps as opportunities to accumulate or distribute positions. Their participation creates buying or selling pressure that helps push prices back toward the previous close.</p>
+
+            <h3>3. Retail vs. Institutional Behavior</h3>
+            <p>Small gaps are less likely to trigger panic selling or buying from retail traders, allowing for more orderly price discovery and eventual gap filling.</p>
+
+            <h2>Practical Trading Applications</h2>
+
+            <p>Understanding this pattern can significantly improve your gap trading strategy. Here's how to apply this knowledge:</p>
+
+            <h3>Strategy 1: Mean Reversion Approach</h3>
+            <ul>
+                <li><strong>Entry:</strong> Wait for confirmation that the gap is not expanding</li>
+                <li><strong>Position:</strong> Take a position opposite to the gap direction</li>
+                <li><strong>Target:</strong> Aim for partial or complete gap fill</li>
+                <li><strong>Risk Management:</strong> Set tight stops to limit downside</li>
+            </ul>
+
+            <h3>Strategy 2: Momentum Confirmation</h3>
+            <ul>
+                <li><strong>Entry:</strong> Wait for the first 15-30 minutes of trading</li>
+                <li><strong>Confirmation:</strong> Look for volume and price action confirmation</li>
+                <li><strong>Position:</strong> Trade in the direction of the confirmed momentum</li>
+                <li><strong>Target:</strong> Use the gap as a reference point for profit targets</li>
+            </ul>
+
+            <h2>Risk Management Considerations</h2>
+
+            <p>While small gaps offer attractive fill rates, proper risk management is crucial:</p>
+
+            <div class="highlight-box">
+                <h4>⚠️ Important Risk Factors</h4>
+                <ul>
+                    <li>Market conditions can change rapidly</li>
+                    <li>Not all small gaps will fill</li>
+                    <li>News events can override normal gap behavior</li>
+                    <li>Always use proper position sizing</li>
+                </ul>
+            </div>
+
+            <h3>Position Sizing Guidelines</h3>
+            <ul>
+                <li>Risk no more than 1-2% of your account per trade</li>
+                <li>Consider the gap size when determining position size</li>
+                <li>Account for market volatility in your calculations</li>
+                <li>Have a clear exit strategy before entering</li>
+            </ul>
+
+            <h2>Technical Analysis Integration</h2>
+
+            <p>Combine gap analysis with technical indicators for enhanced decision-making:</p>
+
+            <h3>Key Indicators to Monitor</h3>
+            <ul>
+                <li><strong>Volume:</strong> Higher volume often confirms gap direction</li>
+                <li><strong>Support/Resistance:</strong> Previous levels can influence gap behavior</li>
+                <li><strong>Moving Averages:</strong> Use as dynamic support/resistance</li>
+                <li><strong>RSI:</strong> Oversold/overbought conditions can signal reversals</li>
+            </ul>
+
+            <h2>Real-World Example: Monday Morning Gap</h2>
+
+            <p>Let's examine a typical Monday morning scenario:</p>
+
+            <ol>
+                <li><strong>Pre-market:</strong> Stock gaps down 0.8% on light volume</li>
+                <li><strong>Market open:</strong> Volume increases, price continues lower</li>
+                <li><strong>First 30 minutes:</strong> Price finds support and begins to recover</li>
+                <li><strong>Mid-morning:</strong> Gap fills completely, trend continues</li>
+            </ol>
+
+            <p>This pattern occurs frequently with small gaps, providing consistent trading opportunities for prepared traders.</p>
+
+            <h2>Conclusion: The Sweet Spot Strategy</h2>
+
+            <p>The 0.5-1.0% gap range represents a sweet spot for gap traders. These gaps offer:</p>
+
+            <ul>
+                <li><strong>High probability setups</strong> with consistent fill rates</li>
+                <li><strong>Manageable risk</strong> compared to larger gaps</li>
+                <li><strong>Clear entry and exit points</strong> for systematic trading</li>
+                <li><strong>Predictable behavior patterns</strong> across different market conditions</li>
+            </ul>
+
+            <p>By focusing on this specific gap range and combining it with proper risk management and technical analysis, traders can develop a systematic approach to gap trading that capitalizes on these high-probability setups.</p>
+
+            <div class="highlight-box">
+                <h4>📈 Next Steps</h4>
+                <p>Ready to put this knowledge into practice? Start by analyzing historical small gaps in your preferred timeframe, develop a systematic approach, and always prioritize risk management over potential profits.</p>
+            </div>
+        </article>
+
+        <div class="cta-section">
+            <h3>Ready to Master Gap Trading?</h3>
+            <p>Access our comprehensive gap analysis tools and start identifying high-probability trading setups today.</p>
+            <div class="cta-buttons">
+                <a href="/sample" class="signup-btn">🚀 Try Sample Features</a>
+                <a href="/register" class="sample-btn">📈 Get Full Access</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
+            <p>More coming soon</p>
+        </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Footer Logo" class="footer-logo">
+        <img src="{{ url_for('static', filename='buttom2.png') }}" alt="Left Footer Image" class="buttom2-image">
+        <img src="{{ url_for('static', filename='buttom1.png') }}" alt="Right Footer Image" class="buttom1-image">
+    </footer>
+    
+    <div class="disclaimer-section">
+        <div class="footer-links">
+            <a href="/about">About Us</a>
+            <a href="/blog">Blog</a>
+            <a href="/education">Education</a>
+            <a href="/faq">FAQ</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
+            <a href="/contact">Contact Us</a>
+        </div>
+        <p>DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}?v=50"></script>
+</body>
+</html>
