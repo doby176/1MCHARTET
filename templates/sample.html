@@ -48,14 +48,32 @@
     <main>
         <div class="card">
             <div class="tabs">
-                <button class="tab-button active" onclick="openTab('market-simulator')">Market Simulator (Sample)</button>
-                <button class="tab-button" onclick="openTab('gap-analysis')">Gap Analysis (Sample)</button>
-                <button class="tab-button" onclick="openTab('events-analysis')">Events Analysis (Sample)</button>
-                <button class="tab-button" onclick="openTab('gap-insights')">Gap Insights (Premium)</button>
+                <!-- Main Category Tabs -->
+                <div class="main-tabs">
+                    <button class="main-tab-button active" onclick="openMainTab('data-statistics')">📊 Data Statistics</button>
+                    <button class="main-tab-button" onclick="openMainTab('backtest-analysis')">🔍 Backtest Analysis</button>
+                    <button class="main-tab-button" onclick="openMainTab('market-simulator')">🎮 Market Simulator</button>
+                </div>
+                
+                <!-- Sub-tabs for Data Statistics -->
+                <div id="data-statistics-subtabs" class="sub-tabs active">
+                    <button class="sub-tab-button active" onclick="openSubTab('gap-insights')">Gap Insights (Premium)</button>
+                </div>
+                
+                <!-- Sub-tabs for Backtest Analysis -->
+                <div id="backtest-analysis-subtabs" class="sub-tabs">
+                    <button class="sub-tab-button active" onclick="openSubTab('gap-analysis')">Gap Analysis (Sample)</button>
+                    <button class="sub-tab-button" onclick="openSubTab('events-analysis')">Events Analysis (Sample)</button>
+                </div>
+                
+                <!-- Sub-tabs for Market Simulator -->
+                <div id="market-simulator-subtabs" class="sub-tabs">
+                    <button class="sub-tab-button active" onclick="openSubTab('simulator')">Trading Simulator (Sample)</button>
+                </div>
             </div>
 
             <!-- Market Simulator Section -->
-            <div id="market-simulator" class="tab-content active">
+            <div id="simulator" class="tab-content active">
                 <div class="sample-notice">
                     <h3>🎯 Market Simulator - Sample Version</h3>
                     <p><strong>Sample includes:</strong> QQQ & NVDA only | 2023-2024 data only</p>
@@ -423,49 +441,96 @@
                 </div>
             </div>
 
-            <!-- Gap Insights Section -->
+            <!-- Data Statistics Section -->
             <div id="gap-insights" class="tab-content">
                 <div class="premium-notice" style="text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white; margin: 20px 0;">
-                    <div style="max-width: 800px; margin: 0 auto;">
-                        <h2 style="font-size: 2.5em; margin-bottom: 20px; color: #fff;">💎 Gap Insights - Premium Feature</h2>
+                    <div style="max-width: 1000px; margin: 0 auto;">
+                        <h2 style="font-size: 2.5em; margin-bottom: 20px; color: #fff;">💎 Data Statistics - Premium Features</h2>
                         <p style="font-size: 1.3em; margin-bottom: 30px; line-height: 1.6;">
-                            <strong>The Most Powerful Section on 1MChart</strong><br>
-                            Get actionable data from ALL NASDAQ gaps with comprehensive analytics, statistics, and insights.
+                            <strong>The Most Powerful Analytics on 1MChart</strong><br>
+                            Get actionable insights from ALL NASDAQ data with comprehensive analytics, statistics, and market intelligence.
                         </p>
                         
                         <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 10px; margin: 30px 0; backdrop-filter: blur(10px);">
                             <h3 style="color: #fff; margin-bottom: 20px;">🚀 What You'll Get:</h3>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; text-align: left;">
-                                <div>
-                                    <strong>📊 Gap Fill Rates</strong><br>
-                                    <small>Historical gap fill percentages by size and day</small>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; text-align: left;">
+                                
+                                <!-- Gap Insights Section -->
+                                <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; border-left: 4px solid #ffd700;">
+                                    <h4 style="color: #ffd700; margin-bottom: 15px;">📊 Gap Insights</h4>
+                                    <div style="margin-bottom: 10px;">
+                                        <strong>🎯 Gap Fill Rates</strong><br>
+                                        <small>Historical gap fill percentages by size and day</small>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <strong>📈 Median Moves</strong><br>
+                                        <small>Average price moves before gap fills</small>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <strong>🔥 Max Moves</strong><br>
+                                        <small>Maximum unfilled gap movements</small>
+                                    </div>
+                                    <div>
+                                        <strong>⚡ Strategy Testing</strong><br>
+                                        <small>Test gap strategies with live data</small>
+                                    </div>
                                 </div>
-                                <div>
-                                    <strong>📈 Median Moves</strong><br>
-                                    <small>Average price moves before gap fills</small>
+                                
+                                <!-- Previous High/Low Insights Section -->
+                                <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; border-left: 4px solid #00ff88;">
+                                    <h4 style="color: #00ff88; margin-bottom: 15px;">📈 Previous High/Low Insights</h4>
+                                    <div style="margin-bottom: 10px;">
+                                        <strong>🏔️ High/Low Analysis</strong><br>
+                                        <small>Previous day high/low impact on current trading</small>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <strong>📊 Breakout Statistics</strong><br>
+                                        <small>Success rates of high/low breakouts</small>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <strong>🎯 Support/Resistance</strong><br>
+                                        <small>Key levels for intraday trading</small>
+                                    </div>
+                                    <div>
+                                        <strong>⚡ Real-time Alerts</strong><br>
+                                        <small>Get notified of key level breaks</small>
+                                    </div>
                                 </div>
-                                <div>
-                                    <strong>🎯 Max Moves</strong><br>
-                                    <small>Maximum unfilled gap movements</small>
-                                </div>
-                                <div>
-                                    <strong>⚡ Live Testing</strong><br>
-                                    <small>Test strategies with replay & simulator</small>
+                                
+                                <!-- News Event Insights Section -->
+                                <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; border-left: 4px solid #ff6b6b;">
+                                    <h4 style="color: #ff6b6b; margin-bottom: 15px;">📰 News Event Insights</h4>
+                                    <div style="margin-bottom: 10px;">
+                                        <strong>📊 Event Impact Analysis</strong><br>
+                                        <small>CPI, FOMC, NFP market reactions</small>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <strong>📈 Volatility Patterns</strong><br>
+                                        <small>Pre/post event price movements</small>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <strong>🎯 Trading Opportunities</strong><br>
+                                        <small>Best times to trade around events</small>
+                                    </div>
+                                    <div>
+                                        <strong>⚡ Event Calendar</strong><br>
+                                        <small>Never miss important market events</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
                         <div style="margin: 40px 0;">
                             <p style="font-size: 1.4em; margin-bottom: 25px;">
-                                <strong>🔥 Turn Gap Data Into Profit</strong><br>
-                                <small style="font-size: 0.9em;">Professional traders use this data to make informed gap trading decisions</small>
+                                <strong>🔥 Turn Data Into Profit</strong><br>
+                                <small style="font-size: 0.9em;">Professional traders use this comprehensive data to make informed trading decisions</small>
                             </p>
                             
                             <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
-                                <a href="/register" style="background: #28a745; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: all 0.3s ease; display: inline-block;">
+                                <a href="/register" class="upgrade-btn" style="background: #28a745; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: all 0.3s ease; display: inline-block; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
                                     🚀 Sign Up FREE - Full Access
                                 </a>
-                                <a href="/" style="background: rgba(255,255,255,0.2); color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: all 0.3s ease; display: inline-block; backdrop-filter: blur(10px);">
+                                <a href="/" class="upgrade-btn" style="background: rgba(255,255,255,0.2); color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1em; transition: all 0.3s ease; display: inline-block; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3);">
                                     ← Back to Home
                                 </a>
                             </div>
@@ -473,7 +538,7 @@
                         
                         <div style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 8px; backdrop-filter: blur(10px);">
                             <p style="margin: 0; font-size: 0.9em; opacity: 0.9;">
-                                <strong>💡 Pro Tip:</strong> Gap Insights combined with our Market Simulator and Replay features create the ultimate gap trading strategy development environment.
+                                <strong>💡 Pro Tip:</strong> Data Statistics combined with our Market Simulator and Replay features create the ultimate trading strategy development environment.
                             </p>
                         </div>
                     </div>
@@ -482,12 +547,9 @@
         </div>
     </main>
     <footer class="footer">
-        <div class="footer-content">
-            <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
-            <p>More coming soon</p>
-        </div>
-        <img src="/static/buttom2.png" alt="Left Footer Image" class="buttom2-image">
-        <img src="/static/buttom1.png" alt="Right Footer Image" class="buttom1-image">
+        <h2>1MChart - THE EDGE LIES IN THE DATA</h2>
+        <p>More coming soon</p>
+        <p class="disclaimer">DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
         <img src="/static/logo-new.png" alt="1MChart Footer Logo" class="footer-logo">
     </footer>
 
@@ -495,6 +557,53 @@
         // Set sample mode flag
         window.SAMPLE_MODE = true;
         
+        // New function to open main tabs
+        function openMainTab(mainTabId) {
+            console.log(`Opening main tab: ${mainTabId}`);
+            
+            // Update main tab buttons
+            document.querySelectorAll('.main-tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelector(`.main-tab-button[onclick="openMainTab('${mainTabId}')"]`).classList.add('active');
+
+            // Update sub-tabs visibility
+            document.querySelectorAll('.sub-tabs').forEach(subTabs => {
+                subTabs.classList.remove('active');
+            });
+            document.getElementById(`${mainTabId}-subtabs`).classList.add('active');
+
+            // Close all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Open the first sub-tab of the selected main tab
+            const firstSubTab = document.querySelector(`#${mainTabId}-subtabs .sub-tab-button`);
+            if (firstSubTab) {
+                const subTabId = firstSubTab.getAttribute('onclick').match(/openSubTab\('([^']+)'\)/)[1];
+                openSubTab(subTabId);
+            }
+        }
+
+        // New function to open sub-tabs
+        function openSubTab(subTabId) {
+            console.log(`Opening sub tab: ${subTabId}`);
+            
+            // Update sub-tab buttons
+            document.querySelectorAll('.sub-tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelector(`.sub-tab-button[onclick="openSubTab('${subTabId}')"]`).classList.add('active');
+
+            // Update tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(subTabId).classList.add('active');
+        }
+        
+        // Legacy function for backward compatibility
         function openTab(tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tab-content");
@@ -513,6 +622,13 @@
                 targetButton.classList.add("active");
             }
         }
+        
+        // Initialize the page with the correct tab structure
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure Data Statistics is the active main tab and gap-insights is the active sub-tab
+            openMainTab('data-statistics');
+            openSubTab('gap-insights');
+        });
         
         // Ensure proper event handling after scripts load
         window.addEventListener('load', function() {
