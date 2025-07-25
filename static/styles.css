@@ -1304,12 +1304,18 @@ form button:disabled::before {
     font-weight: var(--font-weight-semibold);
     transition: var(--transition-fast);
     box-shadow: var(--shadow-light);
-    border: 1px solid transparent;
+    border: 2px solid var(--white);
+    background: transparent;
+    color: var(--white);
+    display: inline-block;
+    margin: 0 var(--spacing-xs);
 }
 
 .auth-btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-medium);
+    background: var(--white);
+    color: var(--primary-blue);
 }
 
 /* Hero Section */
@@ -1341,10 +1347,18 @@ form button:disabled::before {
 }
 
 .free-trial-text {
-    font-size: 1.2rem;
-    font-weight: var(--font-weight-semibold);
+    font-size: 1.4rem;
+    font-weight: var(--font-weight-bold);
     color: var(--accent-green);
     margin-bottom: var(--spacing-xl);
+    text-shadow: 0 2px 4px rgba(0, 179, 134, 0.3);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 
 .cta-buttons {
@@ -1367,13 +1381,13 @@ form button:disabled::before {
 }
 
 .sample-btn {
-    background: var(--white);
-    color: var(--primary-blue);
-    border-color: var(--primary-blue);
+    background: var(--accent-green);
+    color: var(--white);
+    border-color: var(--accent-green);
 }
 
 .sample-btn:hover {
-    background: var(--primary-blue);
+    background: #00a375;
     color: var(--white);
     transform: translateY(-3px);
     box-shadow: var(--shadow-heavy);
@@ -1635,6 +1649,26 @@ footer p {
     text-align: center;
     padding: var(--spacing-md) var(--spacing-lg);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-links {
+    margin-bottom: var(--spacing-md);
+}
+
+.footer-links a {
+    color: var(--white);
+    text-decoration: none;
+    margin: 0 var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-fast);
+    font-weight: var(--font-weight-medium);
+}
+
+.footer-links a:hover {
+    color: var(--secondary-blue);
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
 }
 
 /* Trade Summary Styling */
