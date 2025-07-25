@@ -1305,11 +1305,31 @@ form button:disabled::before {
     transition: var(--transition-fast);
     box-shadow: var(--shadow-light);
     border: 1px solid transparent;
+    background: var(--button-gradient);
+    color: var(--white);
+    display: inline-block;
+    margin: 0 var(--spacing-xs);
 }
 
 .auth-btn:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-medium);
+    background: var(--primary-dark);
+}
+
+.header-top {
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
 }
 
 /* Hero Section */
@@ -1637,6 +1657,34 @@ footer p {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.footer-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+}
+
+.footer-links a {
+    color: var(--white);
+    text-decoration: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: var(--transition-fast);
+    font-size: 0.9rem;
+    font-weight: var(--font-weight-medium);
+}
+
+.footer-links a:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
 /* Trade Summary Styling */
 #trade-summary {
     background: #f8f9fa;
@@ -1908,6 +1956,29 @@ footer p {
          flex-direction: column;
          align-items: flex-start;
      }
+
+    .footer-links {
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm) 0;
+    }
+
+    .footer-links a {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.8rem;
+    }
+
+    .header-top {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .auth-buttons {
+        gap: var(--spacing-xs);
+    }
+
+    .auth-btn {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.9rem;
+    }
      
              /* Mobile Chart Fixes */
     #chart-simulator, 
