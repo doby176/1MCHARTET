@@ -525,6 +525,21 @@ def contact_post():
     # Redirect back to contact page with success message
     return redirect(url_for('contact'))
 
+@app.route('/blog')
+def blog():
+    """Blog page route"""
+    return render_template('blog.html')
+
+@app.route('/faq')
+def faq():
+    """FAQ page route"""
+    return render_template('faq.html')
+
+@app.route('/education')
+def education():
+    """Educational resources page route"""
+    return render_template('education.html')
+
 @app.route('/api/sample/gap_bins', methods=['GET'])
 def get_sample_gap_bins_api():
     """Return limited gap bins for sample mode"""
