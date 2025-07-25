@@ -1067,28 +1067,30 @@ def get_gap_insights():
 @app.route('/api/previous_high_low_insights', methods=['GET'])
 @limiter.limit("3 per 12 hours")
 def get_previous_high_low_insights():
-    """API endpoint to get previous high/low insights from previuos_high_low.csv"""
+    # Check gap insights action limit (separate 2-click limit)
+    if not is_sample_mode():
+        # Main site - check gap insights limit
+        main_action = request.args.get('main_action')
+        if main_action == 'get_insights':
+            if not check_gap_insights_limit():
+                logging.info(f"Previous high/low insights limit exceeded for user: {session.get('user_id')}")
+                return jsonify({
+                    'error': 'Previous High/Low Insights limit reached: You\'ve used your 2 free Previous High/Low Insights. Please wait 12 hours or upgrade your plan.',
+                    'limit_reached': True
+                }), 429
+    
     try:
         open_position = request.args.get('open_position')
         day_of_week = request.args.get('day_of_week')
-        
-        # Check if main action limit is reached (for Get Insights button)
-        if not check_main_action_limit():
-            return jsonify({
-                'error': 'Action limit exceeded: You have reached the limit of 10 main actions per 12 hours. Please wait 12 hours or upgrade your plan.',
-                'limit_reached': True
-            }), 429
-        
         logging.debug(f"Fetching previous high/low insights for open_position={open_position}, day_of_week={day_of_week}")
         
-        # Path to the previous high/low CSV file
-        previous_high_low_path = os.path.join(os.path.dirname(__file__), 'data', 'previuos_high_low.csv')
+        # Path to the previous high/low data CSV file
+        previous_high_low_path = os.path.join(DATA_DIR, "previuos_high_low.csv")
         
         if not os.path.exists(previous_high_low_path):
             logging.error(f"Previous high/low data file not found: {previous_high_low_path}")
             return jsonify({'error': 'Previous high/low data file not found. Please contact support.'}), 404
         
-        # Read CSV data using pandas
         try:
             df = pd.read_csv(previous_high_low_path)
             logging.debug(f"Loaded previous high/low data with shape: {df.shape}")
@@ -1096,30 +1098,29 @@ def get_previous_high_low_insights():
             logging.error(f"Error reading previous high/low data file {previous_high_low_path}: {str(e)}")
             return jsonify({'error': f'Failed to load previous high/low data: {str(e)}'}), 500
         
-        # Validate required columns
         required_columns = [
             'open_position', 'day_of_week', 'continuation_move_pct', 'reversal_move_pct',
             'continuation_move_pct_60min', 'reversal_move_pct_60min'
         ]
         
-        missing_columns = [col for col in required_columns if col not in df.columns]
-        if missing_columns:
-            logging.error(f"Invalid previous high/low data format: missing columns {missing_columns}")
-            return jsonify({'error': f'Invalid previous high/low data format: missing columns {missing_columns}'}), 400
+        if not all(col in df.columns for col in required_columns):
+            logging.error("Invalid previous high/low data format: missing required columns")
+            return jsonify({'error': 'Invalid previous high/low data format'}), 400
         
         # Filter data based on parameters
         filtered_df = df.copy()
+        
         if open_position:
             filtered_df = filtered_df[filtered_df['open_position'] == open_position]
         
         if day_of_week:
             filtered_df = filtered_df[filtered_df['day_of_week'] == day_of_week]
         
-        if filtered_df.empty:
-            logging.debug(f"No previous high/low data found for open_position={open_position}, day_of_week={day_of_week}")
-            return jsonify({'insights': {}, 'message': f'No previous high/low data found for the selected criteria'})
+        logging.debug(f"Filtered DataFrame shape: {filtered_df.shape}")
         
-        logging.debug(f"Filtered data rows: {len(filtered_df)}")
+        if filtered_df.empty:
+            logging.debug(f"No data found for open_position={open_position}, day_of_week={day_of_week}")
+            return jsonify({'insights': {}, 'message': 'No data found for the selected criteria'})
         
         # Calculate insights for each metric
         insights = {}
@@ -1128,32 +1129,40 @@ def get_previous_high_low_insights():
         continuation_10min = filtered_df['continuation_move_pct'].dropna()
         reversal_10min = filtered_df['reversal_move_pct'].dropna()
         
-        if not continuation_10min.empty or not reversal_10min.empty:
+        if not continuation_10min.empty:
             insights['continuation_move_10min'] = {
-                'continuation_median': round(continuation_10min.median(), 2) if not continuation_10min.empty else None,
-                'continuation_average': round(continuation_10min.mean(), 2) if not continuation_10min.empty else None,
-                'continuation_description': 'Continuation move in first 10min',
-                'reversal_median': round(reversal_10min.median(), 2) if not reversal_10min.empty else None,
-                'reversal_average': round(reversal_10min.mean(), 2) if not reversal_10min.empty else None,
-                'reversal_description': 'Reversal move in first 10min',
-                'continuation_count': len(continuation_10min),
-                'reversal_count': len(reversal_10min)
+                'median': round(continuation_10min.median(), 2),
+                'average': round(continuation_10min.mean(), 2),
+                'description': 'Continuation move in first 10 minutes (%)',
+                'count': len(continuation_10min)
+            }
+        
+        if not reversal_10min.empty:
+            insights['reversal_move_10min'] = {
+                'median': round(reversal_10min.median(), 2),
+                'average': round(reversal_10min.mean(), 2),
+                'description': 'Reversal move in first 10 minutes (%)',
+                'count': len(reversal_10min)
             }
         
         # 2. Continuation move in first 60min
         continuation_60min = filtered_df['continuation_move_pct_60min'].dropna()
         reversal_60min = filtered_df['reversal_move_pct_60min'].dropna()
         
-        if not continuation_60min.empty or not reversal_60min.empty:
+        if not continuation_60min.empty:
             insights['continuation_move_60min'] = {
-                'continuation_median': round(continuation_60min.median(), 2) if not continuation_60min.empty else None,
-                'continuation_average': round(continuation_60min.mean(), 2) if not continuation_60min.empty else None,
-                'continuation_description': 'Continuation move in first 60min',
-                'reversal_median': round(reversal_60min.median(), 2) if not reversal_60min.empty else None,
-                'reversal_average': round(reversal_60min.mean(), 2) if not reversal_60min.empty else None,
-                'reversal_description': 'Reversal move in first 60min',
-                'continuation_count': len(continuation_60min),
-                'reversal_count': len(reversal_60min)
+                'median': round(continuation_60min.median(), 2),
+                'average': round(continuation_60min.mean(), 2),
+                'description': 'Continuation move in first 60 minutes (%)',
+                'count': len(continuation_60min)
+            }
+        
+        if not reversal_60min.empty:
+            insights['reversal_move_60min'] = {
+                'median': round(reversal_60min.median(), 2),
+                'average': round(reversal_60min.mean(), 2),
+                'description': 'Reversal move in first 60 minutes (%)',
+                'count': len(reversal_60min)
             }
         
         logging.debug(f"Calculated insights: {list(insights.keys())}")
