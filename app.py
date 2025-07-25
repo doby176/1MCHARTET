@@ -486,6 +486,45 @@ def sample():
     logging.debug("Rendering sample.html")
     return render_template('sample.html')
 
+@app.route('/about')
+def about():
+    """About us page"""
+    logging.debug("Rendering about.html")
+    return render_template('about.html')
+
+@app.route('/privacy')
+def privacy():
+    """Privacy policy page"""
+    logging.debug("Rendering privacy.html")
+    return render_template('privacy.html')
+
+@app.route('/terms')
+def terms():
+    """Terms of service page"""
+    logging.debug("Rendering terms.html")
+    return render_template('terms.html')
+
+@app.route('/contact')
+def contact():
+    """Contact us page"""
+    logging.debug("Rendering contact.html")
+    return render_template('contact.html')
+
+@app.route('/contact', methods=['POST'])
+def contact_post():
+    """Handle contact form submission"""
+    name = request.form.get('name')
+    email = request.form.get('email')
+    subject = request.form.get('subject')
+    message = request.form.get('message')
+    
+    # Here you would typically send an email or store the message
+    # For now, we'll just log it
+    logging.info(f"Contact form submission: {name} ({email}) - {subject}: {message}")
+    
+    # Redirect back to contact page with success message
+    return redirect(url_for('contact'))
+
 @app.route('/api/sample/gap_bins', methods=['GET'])
 def get_sample_gap_bins_api():
     """Return limited gap bins for sample mode"""
@@ -1723,82 +1762,78 @@ def should_refresh_qqq_data():
 
 def scrape_qqq_data():
     """Scrape QQQ data from CNBC website with market-aware caching"""
-    # DISABLED: Uncomment the lines below to re-enable scraping
-    # global qqq_data_cache
-    # 
-    # # Check if we need to refresh based on market conditions
-    # if not should_refresh_qqq_data():
-    #     logging.info("Returning cached QQQ data (market-aware cache)")
-    #     return qqq_data_cache['data']
-    # 
-    # try:
-    #     logging.info("Performing single QQQ data scrape from CNBC")
-    #     url = "https://www.cnbc.com/quotes/QQQ"
-    #     headers = {
-    #         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    #     }
-    #     
-    #     response = requests.get(url, headers=headers, timeout=10)
-    #     response.raise_for_status()
-    #     
-    #     soup = BeautifulSoup(response.content, 'html.parser')
-    #     
-    #     # Find the Summary section with Key Stats
-    #     summary_section = soup.find('div', class_='Summary-subsection')
-    #     if not summary_section:
-    #         return None
-    #     
-    #     # Look for the Key Stats title
-    #     key_stats_title = summary_section.find('h3', class_='Summary-title', string=lambda text: text and 'KEY STATS' in text.upper())
-    #     if not key_stats_title:
-    #         return None
-    #     
-    #     # Find the stats list
-    #     stats_list = summary_section.find('ul', class_='Summary-data')
-    #     if not stats_list:
-    #         return None
-    #     
-    #     # Extract the data
-    #     data = {}
-    #     stats_items = stats_list.find_all('li', class_='Summary-stat')
-    #     
-    #     for item in stats_items:
-    #         label_elem = item.find('span', class_='Summary-label')
-    #         value_elem = item.find('span', class_='Summary-value')
-    #         
-    #         if label_elem and value_elem:
-    #             label = label_elem.get_text(strip=True)
-    #             value = value_elem.get_text(strip=True)
-    #             
-    #             if label in ['Open', 'Prev Close']:
-    #                     data[label] = value
-    #     
-    #     # Calculate gap percentage if we have both Open and Prev Close
-    #     if 'Open' in data and 'Prev Close' in data:
-    #         try:
-    #             open_price = float(data['Open'])
-    #             prev_close = float(data['Prev Close'])
-    #             gap_percentage = ((open_price - prev_close) / prev_close) * 100
-    #             data['Gap %'] = f"{gap_percentage:.2f}%"
-    #             data['Gap Value'] = gap_percentage  # Store numeric value for calculations
-    #         except (ValueError, ZeroDivisionError):
-    #             data['Gap %'] = "N/A"
-    #             data['Gap Value'] = None
-    #     
-    #     # Cache the data with market date
-    #     qqq_data_cache['data'] = data
-    #     qqq_data_cache['timestamp'] = time.time()
-    #     qqq_data_cache['market_date'] = get_market_date()
-    #     
-    #     logging.info(f"QQQ data scraped and cached successfully for market date: {qqq_data_cache['market_date']}")
-    #     return data
-    #     
-    # except Exception as e:
-    #     logging.error(f"Error scraping QQQ data: {str(e)}")
-    #     return None
+    global qqq_data_cache
     
-    # Return None when disabled
-    return None
+    # Check if we need to refresh based on market conditions
+    if not should_refresh_qqq_data():
+        logging.info("Returning cached QQQ data (market-aware cache)")
+        return qqq_data_cache['data']
+    
+    try:
+        logging.info("Performing single QQQ data scrape from CNBC")
+        url = "https://www.cnbc.com/quotes/QQQ"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Find the Summary section with Key Stats
+        summary_section = soup.find('div', class_='Summary-subsection')
+        if not summary_section:
+            return None
+        
+        # Look for the Key Stats title
+        key_stats_title = summary_section.find('h3', class_='Summary-title', string=lambda text: text and 'KEY STATS' in text.upper())
+        if not key_stats_title:
+            return None
+        
+        # Find the stats list
+        stats_list = summary_section.find('ul', class_='Summary-data')
+        if not stats_list:
+            return None
+        
+        # Extract the data
+        data = {}
+        stats_items = stats_list.find_all('li', class_='Summary-stat')
+        
+        for item in stats_items:
+            label_elem = item.find('span', class_='Summary-label')
+            value_elem = item.find('span', class_='Summary-value')
+            
+            if label_elem and value_elem:
+                label = label_elem.get_text(strip=True)
+                value = value_elem.get_text(strip=True)
+                
+                if label in ['Open', 'Prev Close']:
+                        data[label] = value
+        
+        # Calculate gap percentage if we have both Open and Prev Close
+        if 'Open' in data and 'Prev Close' in data:
+            try:
+                open_price = float(data['Open'])
+                prev_close = float(data['Prev Close'])
+                gap_percentage = ((open_price - prev_close) / prev_close) * 100
+                data['Gap %'] = f"{gap_percentage:.2f}%"
+                data['Gap Value'] = gap_percentage  # Store numeric value for calculations
+            except (ValueError, ZeroDivisionError):
+                data['Gap %'] = "N/A"
+                data['Gap Value'] = None
+        
+        # Cache the data with market date
+        qqq_data_cache['data'] = data
+        qqq_data_cache['timestamp'] = time.time()
+        qqq_data_cache['market_date'] = get_market_date()
+        
+        logging.info(f"QQQ data scraped and cached successfully for market date: {qqq_data_cache['market_date']}")
+        return data
+        
+    except Exception as e:
+        logging.error(f"Error scraping QQQ data: {str(e)}")
+        return None
 
 @app.route('/api/qqq_data', methods=['GET'])
 @limiter.limit("10 per hour")

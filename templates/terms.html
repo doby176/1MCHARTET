@@ -12,52 +12,72 @@
         .legal-page {
             max-width: 800px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: var(--spacing-xxl) var(--spacing-lg);
             line-height: 1.6;
         }
         .legal-page h1 {
             color: var(--primary-blue);
-            margin-bottom: 30px;
+            margin-bottom: var(--spacing-xl);
             text-align: center;
+            font-size: 2.2rem;
+            font-weight: var(--font-weight-bold);
         }
         .legal-page h2 {
             color: var(--secondary-blue);
-            margin-top: 30px;
-            margin-bottom: 15px;
+            margin-top: var(--spacing-xl);
+            margin-bottom: var(--spacing-md);
+            font-size: 1.5rem;
+            font-weight: var(--font-weight-semibold);
+        }
+        .legal-page h3 {
+            color: var(--primary-blue);
+            margin-top: var(--spacing-lg);
+            margin-bottom: var(--spacing-sm);
+            font-size: 1.2rem;
+            font-weight: var(--font-weight-semibold);
         }
         .legal-page p {
-            margin-bottom: 15px;
+            margin-bottom: var(--spacing-md);
+            color: var(--charcoal);
+            font-size: 1rem;
         }
         .legal-page ul {
-            margin-bottom: 15px;
-            padding-left: 20px;
+            margin-bottom: var(--spacing-md);
+            padding-left: var(--spacing-lg);
         }
         .legal-page li {
-            margin-bottom: 8px;
+            margin-bottom: var(--spacing-sm);
+            color: var(--charcoal);
         }
         .back-link {
             display: inline-block;
-            margin-bottom: 30px;
+            margin-bottom: var(--spacing-xl);
             color: var(--primary-blue);
             text-decoration: none;
-            font-weight: 500;
+            font-weight: var(--font-weight-medium);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            transition: var(--transition-fast);
         }
         .back-link:hover {
-            text-decoration: underline;
+            background: var(--light-grey);
+            text-decoration: none;
         }
         .last-updated {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 30px;
+            background: var(--light-grey);
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            margin-top: var(--spacing-xl);
             font-style: italic;
+            border: 1px solid var(--medium-grey);
         }
         .important-notice {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
+            background: linear-gradient(145deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #ffc107;
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            margin: var(--spacing-lg) 0;
+            box-shadow: var(--shadow-light);
         }
     </style>
 </head>
