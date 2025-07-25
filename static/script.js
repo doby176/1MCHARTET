@@ -5425,65 +5425,135 @@ function displayPreviousHighLowInsights(insights, container) {
                     </div>
                 </div>
             </div>
+    `;
+    
+    // Previous High Section
+    html += `
+        <div class="direction-section">
+            <h4 class="direction-title">Previous High of Day</h4>
             <div class="insights-row two-metrics">
     `;
     
-    // Add continuation move 10min
-    const continuation10min = insights.continuation_move_10min;
+    // Add Previous High continuation move 10min
+    const highContinuation10min = insights.previous_high.continuation_move_10min;
     html += `
         <div class="insight-metric">
-            <div class="metric-name">${continuation10min.description}</div>
-            <div class="metric-median">${continuation10min.median}%</div>
-            <div class="metric-average">Avg: ${continuation10min.average}%</div>
-            <div class="metric-direction-bias">Bias: ${continuation10min.direction_bias}</div>
-            <div class="metric-counts">${continuation10min.positive_count}/${continuation10min.total_count} positive moves</div>
+            <div class="metric-name">${highContinuation10min.description}</div>
+            <div class="metric-median">${highContinuation10min.median}%</div>
+            <div class="metric-average">Avg: ${highContinuation10min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${highContinuation10min.direction_bias}</div>
+            <div class="metric-counts">${highContinuation10min.samples} samples</div>
             <div class="metric-description">Median continuation move in first 10 minutes</div>
         </div>
     `;
     
-    // Add reversal move 10min
-    const reversal10min = insights.reversal_move_10min;
+    // Add Previous High reversal move 10min
+    const highReversal10min = insights.previous_high.reversal_move_10min;
     html += `
         <div class="insight-metric">
-            <div class="metric-name">${reversal10min.description}</div>
-            <div class="metric-median">${reversal10min.median}%</div>
-            <div class="metric-average">Avg: ${reversal10min.average}%</div>
-            <div class="metric-direction-bias">Bias: ${reversal10min.direction_bias}</div>
-            <div class="metric-counts">${reversal10min.positive_count}/${reversal10min.total_count} positive moves</div>
+            <div class="metric-name">${highReversal10min.description}</div>
+            <div class="metric-median">${highReversal10min.median}%</div>
+            <div class="metric-average">Avg: ${highReversal10min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${highReversal10min.direction_bias}</div>
+            <div class="metric-counts">${highReversal10min.samples} samples</div>
             <div class="metric-description">Median reversal move in first 10 minutes</div>
         </div>
     `;
     
     html += `</div><div class="insights-row two-metrics">`;
     
-    // Add continuation move 60min
-    const continuation60min = insights.continuation_move_60min;
+    // Add Previous High continuation move 60min
+    const highContinuation60min = insights.previous_high.continuation_move_60min;
     html += `
         <div class="insight-metric">
-            <div class="metric-name">${continuation60min.description}</div>
-            <div class="metric-median">${continuation60min.median}%</div>
-            <div class="metric-average">Avg: ${continuation60min.average}%</div>
-            <div class="metric-direction-bias">Bias: ${continuation60min.direction_bias}</div>
-            <div class="metric-counts">${continuation60min.positive_count}/${continuation60min.total_count} positive moves</div>
+            <div class="metric-name">${highContinuation60min.description}</div>
+            <div class="metric-median">${highContinuation60min.median}%</div>
+            <div class="metric-average">Avg: ${highContinuation60min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${highContinuation60min.direction_bias}</div>
+            <div class="metric-counts">${highContinuation60min.samples} samples</div>
             <div class="metric-description">Median continuation move in first 60 minutes</div>
         </div>
     `;
     
-    // Add reversal move 60min
-    const reversal60min = insights.reversal_move_60min;
+    // Add Previous High reversal move 60min
+    const highReversal60min = insights.previous_high.reversal_move_60min;
     html += `
         <div class="insight-metric">
-            <div class="metric-name">${reversal60min.description}</div>
-            <div class="metric-median">${reversal60min.median}%</div>
-            <div class="metric-average">Avg: ${reversal60min.average}%</div>
-            <div class="metric-direction-bias">Bias: ${reversal60min.direction_bias}</div>
-            <div class="metric-counts">${reversal60min.positive_count}/${reversal60min.total_count} positive moves</div>
+            <div class="metric-name">${highReversal60min.description}</div>
+            <div class="metric-median">${highReversal60min.median}%</div>
+            <div class="metric-average">Avg: ${highReversal60min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${highReversal60min.direction_bias}</div>
+            <div class="metric-counts">${highReversal60min.samples} samples</div>
+            <div class="metric-description">Median reversal move in first 60 minutes</div>
+        </div>
+    `;
+    
+    html += `</div></div>`;
+    
+    // Previous Low Section
+    html += `
+        <div class="direction-section">
+            <h4 class="direction-title">Previous Low of Day</h4>
+            <div class="insights-row two-metrics">
+    `;
+    
+    // Add Previous Low continuation move 10min
+    const lowContinuation10min = insights.previous_low.continuation_move_10min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${lowContinuation10min.description}</div>
+            <div class="metric-median">${lowContinuation10min.median}%</div>
+            <div class="metric-average">Avg: ${lowContinuation10min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${lowContinuation10min.direction_bias}</div>
+            <div class="metric-counts">${lowContinuation10min.samples} samples</div>
+            <div class="metric-description">Median continuation move in first 10 minutes</div>
+        </div>
+    `;
+    
+    // Add Previous Low reversal move 10min
+    const lowReversal10min = insights.previous_low.reversal_move_10min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${lowReversal10min.description}</div>
+            <div class="metric-median">${lowReversal10min.median}%</div>
+            <div class="metric-average">Avg: ${lowReversal10min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${lowReversal10min.direction_bias}</div>
+            <div class="metric-counts">${lowReversal10min.samples} samples</div>
+            <div class="metric-description">Median reversal move in first 10 minutes</div>
+        </div>
+    `;
+    
+    html += `</div><div class="insights-row two-metrics">`;
+    
+    // Add Previous Low continuation move 60min
+    const lowContinuation60min = insights.previous_low.continuation_move_60min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${lowContinuation60min.description}</div>
+            <div class="metric-median">${lowContinuation60min.median}%</div>
+            <div class="metric-average">Avg: ${lowContinuation60min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${lowContinuation60min.direction_bias}</div>
+            <div class="metric-counts">${lowContinuation60min.samples} samples</div>
+            <div class="metric-description">Median continuation move in first 60 minutes</div>
+        </div>
+    `;
+    
+    // Add Previous Low reversal move 60min
+    const lowReversal60min = insights.previous_low.reversal_move_60min;
+    html += `
+        <div class="insight-metric">
+            <div class="metric-name">${lowReversal60min.description}</div>
+            <div class="metric-median">${lowReversal60min.median}%</div>
+            <div class="metric-average">Avg: ${lowReversal60min.average}%</div>
+            <div class="metric-direction-bias">Bias: ${lowReversal60min.direction_bias}</div>
+            <div class="metric-counts">${lowReversal60min.samples} samples</div>
             <div class="metric-description">Median reversal move in first 60 minutes</div>
         </div>
     `;
     
     html += `
             </div>
+        </div>
         </div>
     `;
     

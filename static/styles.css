@@ -2513,3 +2513,26 @@ footer p {
     color: var(--text-primary);
     font-weight: 500;
 }
+
+/* Direction Section Styles */
+.direction-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.direction-section:last-child {
+    margin-bottom: 0;
+}
+
+.direction-title {
+    margin: 0 0 20px 0;
+    color: var(--text-primary);
+    font-size: 1.2em;
+    font-weight: 600;
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent-color);
+}

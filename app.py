@@ -1065,7 +1065,7 @@ def get_gap_insights():
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/previous_high_low_insights', methods=['GET'])
-@limiter.limit("3 per 12 hours")
+@limiter.limit("5 per 12 hours")
 def get_previous_high_low_insights():
     """API endpoint for NASDAQ Previous High/Low of Day insights"""
     try:
@@ -1112,60 +1112,96 @@ def get_previous_high_low_insights():
             logging.debug(f"No data found for open_position={open_position}, day_of_week={day_of_week}")
             return jsonify({'insights': {}, 'message': 'No data found for the selected criteria'})
         
-        # Calculate insights for 10-minute moves
-        continuation_10min_median = filtered_df['continuation_move_pct'].median()
-        continuation_10min_average = filtered_df['continuation_move_pct'].mean()
-        reversal_10min_median = filtered_df['reversal_move_pct'].median()
-        reversal_10min_average = filtered_df['reversal_move_pct'].mean()
+        # Calculate insights for Previous High direction
+        df_high = filtered_df[filtered_df['touch_type'] == 'Previous High']
         
-        # Calculate insights for 60-minute moves
-        continuation_60min_median = filtered_df['continuation_move_pct_60min'].median()
-        continuation_60min_average = filtered_df['continuation_move_pct_60min'].mean()
-        reversal_60min_median = filtered_df['reversal_move_pct_60min'].median()
-        reversal_60min_average = filtered_df['reversal_move_pct_60min'].mean()
+        # 10-minute moves for Previous High
+        high_continuation_10min_median = df_high['continuation_move_pct'].median() if len(df_high) > 0 else 0
+        high_continuation_10min_average = df_high['continuation_move_pct'].mean() if len(df_high) > 0 else 0
+        high_reversal_10min_median = df_high['reversal_move_pct'].median() if len(df_high) > 0 else 0
+        high_reversal_10min_average = df_high['reversal_move_pct'].mean() if len(df_high) > 0 else 0
         
-        # Calculate direction bias for 10-minute moves
-        continuation_10min_count = len(filtered_df[filtered_df['continuation_move_pct'] > 0])
-        reversal_10min_count = len(filtered_df[filtered_df['reversal_move_pct'] > 0])
-        total_10min_count = len(filtered_df)
+        # 60-minute moves for Previous High
+        high_continuation_60min_median = df_high['continuation_move_pct_60min'].median() if len(df_high) > 0 else 0
+        high_continuation_60min_average = df_high['continuation_move_pct_60min'].mean() if len(df_high) > 0 else 0
+        high_reversal_60min_median = df_high['reversal_move_pct_60min'].median() if len(df_high) > 0 else 0
+        high_reversal_60min_average = df_high['reversal_move_pct_60min'].mean() if len(df_high) > 0 else 0
         
-        # Calculate direction bias for 60-minute moves
-        continuation_60min_count = len(filtered_df[filtered_df['continuation_move_pct_60min'] > 0])
-        reversal_60min_count = len(filtered_df[filtered_df['reversal_move_pct_60min'] > 0])
-        total_60min_count = len(filtered_df)
+        # Calculate insights for Previous Low direction
+        df_low = filtered_df[filtered_df['touch_type'] == 'Previous Low']
+        
+        # 10-minute moves for Previous Low
+        low_continuation_10min_median = df_low['continuation_move_pct'].median() if len(df_low) > 0 else 0
+        low_continuation_10min_average = df_low['continuation_move_pct'].mean() if len(df_low) > 0 else 0
+        low_reversal_10min_median = df_low['reversal_move_pct'].median() if len(df_low) > 0 else 0
+        low_reversal_10min_average = df_low['reversal_move_pct'].mean() if len(df_low) > 0 else 0
+        
+        # 60-minute moves for Previous Low
+        low_continuation_60min_median = df_low['continuation_move_pct_60min'].median() if len(df_low) > 0 else 0
+        low_continuation_60min_average = df_low['continuation_move_pct_60min'].mean() if len(df_low) > 0 else 0
+        low_reversal_60min_median = df_low['reversal_move_pct_60min'].median() if len(df_low) > 0 else 0
+        low_reversal_60min_average = df_low['reversal_move_pct_60min'].mean() if len(df_low) > 0 else 0
         
         insights = {
-            'continuation_move_10min': {
-                'median': round(continuation_10min_median, 2) if not pd.isna(continuation_10min_median) else 0,
-                'average': round(continuation_10min_average, 2) if not pd.isna(continuation_10min_average) else 0,
-                'description': 'Continuation move in first 10 minutes',
-                'direction_bias': 'Positive' if continuation_10min_median > 0 else 'Negative',
-                'positive_count': continuation_10min_count,
-                'total_count': total_10min_count
+            'previous_high': {
+                'continuation_move_10min': {
+                    'median': round(high_continuation_10min_median, 2) if not pd.isna(high_continuation_10min_median) else 0,
+                    'average': round(high_continuation_10min_average, 2) if not pd.isna(high_continuation_10min_average) else 0,
+                    'description': 'Continuation move in first 10 minutes',
+                    'direction_bias': 'Positive' if high_continuation_10min_median > 0 else 'Negative',
+                    'samples': len(df_high)
+                },
+                'reversal_move_10min': {
+                    'median': round(high_reversal_10min_median, 2) if not pd.isna(high_reversal_10min_median) else 0,
+                    'average': round(high_reversal_10min_average, 2) if not pd.isna(high_reversal_10min_average) else 0,
+                    'description': 'Reversal move in first 10 minutes',
+                    'direction_bias': 'Positive' if high_reversal_10min_median > 0 else 'Negative',
+                    'samples': len(df_high)
+                },
+                'continuation_move_60min': {
+                    'median': round(high_continuation_60min_median, 2) if not pd.isna(high_continuation_60min_median) else 0,
+                    'average': round(high_continuation_60min_average, 2) if not pd.isna(high_continuation_60min_average) else 0,
+                    'description': 'Continuation move in first 60 minutes',
+                    'direction_bias': 'Positive' if high_continuation_60min_median > 0 else 'Negative',
+                    'samples': len(df_high)
+                },
+                'reversal_move_60min': {
+                    'median': round(high_reversal_60min_median, 2) if not pd.isna(high_reversal_60min_median) else 0,
+                    'average': round(high_reversal_60min_average, 2) if not pd.isna(high_reversal_60min_average) else 0,
+                    'description': 'Reversal move in first 60 minutes',
+                    'direction_bias': 'Positive' if high_reversal_60min_median > 0 else 'Negative',
+                    'samples': len(df_high)
+                }
             },
-            'reversal_move_10min': {
-                'median': round(reversal_10min_median, 2) if not pd.isna(reversal_10min_median) else 0,
-                'average': round(reversal_10min_average, 2) if not pd.isna(reversal_10min_average) else 0,
-                'description': 'Reversal move in first 10 minutes',
-                'direction_bias': 'Positive' if reversal_10min_median > 0 else 'Negative',
-                'positive_count': reversal_10min_count,
-                'total_count': total_10min_count
-            },
-            'continuation_move_60min': {
-                'median': round(continuation_60min_median, 2) if not pd.isna(continuation_60min_median) else 0,
-                'average': round(continuation_60min_average, 2) if not pd.isna(continuation_60min_average) else 0,
-                'description': 'Continuation move in first 60 minutes',
-                'direction_bias': 'Positive' if continuation_60min_median > 0 else 'Negative',
-                'positive_count': continuation_60min_count,
-                'total_count': total_60min_count
-            },
-            'reversal_move_60min': {
-                'median': round(reversal_60min_median, 2) if not pd.isna(reversal_60min_median) else 0,
-                'average': round(reversal_60min_average, 2) if not pd.isna(reversal_60min_average) else 0,
-                'description': 'Reversal move in first 60 minutes',
-                'direction_bias': 'Positive' if reversal_60min_median > 0 else 'Negative',
-                'positive_count': reversal_60min_count,
-                'total_count': total_60min_count
+            'previous_low': {
+                'continuation_move_10min': {
+                    'median': round(low_continuation_10min_median, 2) if not pd.isna(low_continuation_10min_median) else 0,
+                    'average': round(low_continuation_10min_average, 2) if not pd.isna(low_continuation_10min_average) else 0,
+                    'description': 'Continuation move in first 10 minutes',
+                    'direction_bias': 'Positive' if low_continuation_10min_median > 0 else 'Negative',
+                    'samples': len(df_low)
+                },
+                'reversal_move_10min': {
+                    'median': round(low_reversal_10min_median, 2) if not pd.isna(low_reversal_10min_median) else 0,
+                    'average': round(low_reversal_10min_average, 2) if not pd.isna(low_reversal_10min_average) else 0,
+                    'description': 'Reversal move in first 10 minutes',
+                    'direction_bias': 'Positive' if low_reversal_10min_median > 0 else 'Negative',
+                    'samples': len(df_low)
+                },
+                'continuation_move_60min': {
+                    'median': round(low_continuation_60min_median, 2) if not pd.isna(low_continuation_60min_median) else 0,
+                    'average': round(low_continuation_60min_average, 2) if not pd.isna(low_continuation_60min_average) else 0,
+                    'description': 'Continuation move in first 60 minutes',
+                    'direction_bias': 'Positive' if low_continuation_60min_median > 0 else 'Negative',
+                    'samples': len(df_low)
+                },
+                'reversal_move_60min': {
+                    'median': round(low_reversal_60min_median, 2) if not pd.isna(low_reversal_60min_median) else 0,
+                    'average': round(low_reversal_60min_average, 2) if not pd.isna(low_reversal_60min_average) else 0,
+                    'description': 'Reversal move in first 60 minutes',
+                    'direction_bias': 'Positive' if low_reversal_60min_median > 0 else 'Negative',
+                    'samples': len(df_low)
+                }
             },
             'data_summary': {
                 'open_position': open_position,
