@@ -86,7 +86,7 @@
                 </div>
             </div>
             <!-- Market Simulator Section -->
-            <div id="simulator" class="tab-content active">
+            <div id="simulator" class="tab-content">
                 <h2>Market Simulator</h2>
                 <p>Simulate trading with historical Nasdaq data using candlestick charts and interactive replay controls.</p>
                 <form id="stock-form-simulator">
@@ -309,7 +309,7 @@
                 </form>
             </div>
             <!-- Nasdaq Gap Insights Section -->
-            <div id="gap-insights" class="tab-content">
+            <div id="gap-insights" class="tab-content active">
                 <h2>Nasdaq Gap Insights</h2>
                 <p>Optimize gap trading with Nasdaq insights: gap fill rates, median moves before filling, and max moves for unfilled gaps, powered by precise 1-minute data analytics.</p>
                 
@@ -729,5 +729,13 @@
 
     </script>
     <script src="/static/script.js?v=76"></script>
+    <script>
+        // Initialize the page with the correct tab structure
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure Data Statistics is the active main tab and gap-insights is the active sub-tab
+            openMainTab('data-statistics');
+            openSubTab('gap-insights');
+        });
+    </script>
 </body>
 </html>

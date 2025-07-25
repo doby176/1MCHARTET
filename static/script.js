@@ -4083,7 +4083,7 @@ async function loadGapDates(event) {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log(`Clicked gap date: ${date}`);
-                openTab('gap-analysis');
+                openSubTab('gap-analysis');
                 document.getElementById('ticker-select-gap').value = 'QQQ';
                 document.getElementById('date-gap').value = date;
                 loadChart(new Event('submit'), 'gap-analysis');
@@ -4298,7 +4298,7 @@ async function loadEventDates(event) {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log(`Clicked event date: ${date}`);
-                openTab('events-analysis');
+                openSubTab('events-analysis');
                 document.getElementById('ticker-select-events').value = 'QQQ';
                 document.getElementById('date-events').value = date;
                 loadChart(new Event('submit'), 'events-analysis');
@@ -4450,7 +4450,7 @@ async function loadEarningsDates(event) {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 console.log(`Clicked earnings date: ${date}`);
-                openTab('earnings-analysis');
+                openSubTab('earnings-analysis');
                 document.getElementById('earnings-ticker-select').value = ticker;
                 document.getElementById('date-gap').value = date;
                 loadChart(new Event('submit'), 'earnings-analysis');
