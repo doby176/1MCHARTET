@@ -619,14 +619,15 @@ def sitemap():
         changefreq = ET.SubElement(url, 'changefreq')
         changefreq.text = page['changefreq']
         lastmod = ET.SubElement(url, 'lastmod')
-        lastmod.text = '2024-12-01'  # Update this date when you make changes
+        lastmod.text = '2024-07-26'  # Update this date when you make changes
     
-    # Convert to string
-    sitemap_xml = ET.tostring(urlset, encoding='unicode')
+    # Convert to string with proper XML declaration
+    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(urlset, encoding='unicode')
     
     # Create response
     response = make_response(sitemap_xml)
-    response.headers['Content-Type'] = 'application/xml'
+    response.headers['Content-Type'] = 'application/xml; charset=utf-8'
+    response.headers['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
     return response
 
 @app.route('/robots.txt')
