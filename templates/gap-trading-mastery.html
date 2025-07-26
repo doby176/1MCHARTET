@@ -65,6 +65,17 @@
     </script>
 </head>
 <body>
+    <header class="landing-header">
+        <div class="header-top">
+            <div class="auth-buttons">
+                <a href="{{ url_for('login') }}" class="auth-btn">Log In</a>
+                <a href="{{ url_for('landing') }}" class="auth-btn">Sign Up</a>
+            </div>
+        </div>
+        <img src="{{ url_for('static', filename='logo-new.png') }}" alt="1MChart Logo" class="logo">
+        <h1>Gap Trading Mastery: High-Volume Setups with 100% Success Rate</h1>
+    </header>
+
     <!-- Breadcrumb Navigation -->
     <nav class="breadcrumb-nav" aria-label="Breadcrumb">
         <div class="breadcrumb-container">
@@ -76,7 +87,7 @@
         </div>
     </nav>
     
-    <div class="article-main">
+    <main class="article-main">
         <article class="article-content">
             <!-- Article Header -->
             <div class="article-header">
@@ -543,7 +554,7 @@
                 </div>
             </section>
         </article>
-    </div>
+    </main>
     <!-- AdSense Unit 4 -->
     <div class="adsense-unit">
         <ins class="adsbygoogle"
