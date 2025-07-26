@@ -62,7 +62,7 @@
     <!-- AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+            <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='71') }}">
 </head>
 <body>
     <!-- Breadcrumb Navigation -->
@@ -116,20 +116,20 @@
                         psychological barriers that traders can exploit for consistent profits.
                     </p>
                     
-                    <div class="stats-grid">
-                        <div class="stat-card">
+                    <div class="key-stats-highlight">
+                        <div class="stat-item">
                             <div class="stat-number">367</div>
                             <div class="stat-label">Economic Events Analyzed</div>
                         </div>
-                        <div class="stat-card">
+                        <div class="stat-item">
                             <div class="stat-number">73.2%</div>
                             <div class="stat-label">Level Touch Rate</div>
                         </div>
-                        <div class="stat-card">
+                        <div class="stat-item">
                             <div class="stat-number">41.8%</div>
                             <div class="stat-label">Return to Opposite Level</div>
                         </div>
-                        <div class="stat-card">
+                        <div class="stat-item">
                             <div class="stat-number">58.7%</div>
                             <div class="stat-label">Support/Resistance Hold Rate</div>
                         </div>
@@ -155,8 +155,8 @@
                         opportunities for <strong>swing trading</strong> strategies.
                     </p>
                     
-                    <div class="highlight-box">
-                        <h4>🎯 Critical Trading Insight</h4>
+                    <div class="strategy-box">
+                        <h3>🎯 Critical Trading Insight</h3>
                         <p>Premarket levels act as psychological barriers that influence <strong>market timing</strong> 
                         and <strong>risk management</strong> decisions. Understanding these patterns can significantly 
                         improve your <strong>trading psychology</strong> and decision-making process.</p>
@@ -166,7 +166,8 @@
                 <div class="article-section">
                     <h2>Event Type Performance Analysis</h2>
                     
-                    <table class="performance-table">
+                    <div class="data-table">
+                        <table>
                         <thead>
                             <tr>
                                 <th>Economic Event</th>
@@ -200,6 +201,7 @@
                             </tr>
                         </tbody>
                     </table>
+                    </div>
                 </div>
 
                 <div class="article-section">
@@ -210,22 +212,22 @@
                         as <strong>support and resistance</strong> zones:
                     </p>
                     
-                    <div class="strategy-card">
-                        <h4>📈 Bull Market Conditions</h4>
+                    <div class="strategy-box">
+                        <h3>📈 Bull Market Conditions</h3>
                         <p>During bullish periods, premarket highs act as <strong>resistance levels</strong> 
                         that are more likely to be broken, while premarket lows serve as strong 
                         <strong>support levels</strong> that hold more frequently.</p>
                     </div>
                     
-                    <div class="strategy-card">
-                        <h4>📉 Bear Market Conditions</h4>
+                    <div class="strategy-box">
+                        <h3>📉 Bear Market Conditions</h3>
                         <p>Bear market conditions show the opposite pattern, with premarket lows acting 
                         as <strong>support levels</strong> that are more likely to be broken, while 
                         premarket highs serve as strong <strong>resistance levels</strong>.</p>
                     </div>
                     
-                    <div class="strategy-card">
-                        <h4>🔄 Sideways Market Conditions</h4>
+                    <div class="strategy-box">
+                        <h3>🔄 Sideways Market Conditions</h3>
                         <p>Range-bound markets show the highest respect for premarket levels, with 
                         both highs and lows acting as reliable <strong>support and resistance</strong> 
                         zones for <strong>technical analysis</strong>.</p>
@@ -240,7 +242,7 @@
                         and <strong>trading psychology</strong>:
                     </p>
                     
-                    <ul style="color: var(--charcoal); font-size: 1.1rem; line-height: 1.7; margin: var(--spacing-lg) 0;">
+                    <ul>
                         <li><strong>High Touch Rate:</strong> 73.2% of events touch premarket levels</li>
                         <li><strong>Opposite Level Returns:</strong> 41.8% return to opposite premarket level</li>
                         <li><strong>Level Respect:</strong> 58.7% of touches result in bounces/rejections</li>
@@ -286,20 +288,20 @@
                     
                     <div class="key-stats-highlight">
                         <div class="stat-item">
-                            <span class="stat-number">95.9%</span>
-                            <span class="stat-label">Touch Rate</span>
+                            <div class="stat-number">95.9%</div>
+                            <div class="stat-label">Touch Rate</div>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">49.7%</span>
-                            <span class="stat-label">Same Direction Success</span>
+                            <div class="stat-number">49.7%</div>
+                            <div class="stat-label">Same Direction Success</div>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">48.6%</span>
-                            <span class="stat-label">Opposite Direction Success</span>
+                            <div class="stat-number">48.6%</div>
+                            <div class="stat-label">Opposite Direction Success</div>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-number">177</span>
-                            <span class="stat-label">Extreme Moves (>1%)</span>
+                            <div class="stat-number">177</div>
+                            <div class="stat-label">Extreme Moves (>1%)</div>
                         </div>
                     </div>
                     
@@ -307,7 +309,7 @@
                     <p>
                         When price touches a premarket level and continues in the same direction, our data shows:
                     </p>
-                    <ul style="color: var(--charcoal); font-size: 1.1rem; line-height: 1.7; margin: var(--spacing-lg) 0;">
+                    <ul>
                         <li><strong>Success Rate:</strong> 49.7% of same direction moves are profitable</li>
                         <li><strong>Average Move:</strong> -0.0376% (slight negative bias)</li>
                         <li><strong>Range:</strong> -5.0964% to +2.7467% (extreme volatility possible)</li>
@@ -318,7 +320,7 @@
                     <p>
                         When price touches a premarket level and reverses direction, our data reveals:
                     </p>
-                    <ul style="color: var(--charcoal); font-size: 1.1rem; line-height: 1.7; margin: var(--spacing-lg) 0;">
+                    <ul>
                         <li><strong>Success Rate:</strong> 48.6% of opposite direction moves are profitable</li>
                         <li><strong>Average Move:</strong> +0.0206% (slight positive bias)</li>
                         <li><strong>Range:</strong> -5.7636% to +6.1412% (larger reversal potential)</li>
@@ -363,7 +365,7 @@
                         Our analysis identified 177 extreme moves (>1%) across both directions, highlighting 
                         the importance of proper <strong>risk management</strong>:
                     </p>
-                    <ul style="color: var(--charcoal); font-size: 1.1rem; line-height: 1.7; margin: var(--spacing-lg) 0;">
+                    <ul>
                         <li><strong>Same Direction Extremes:</strong> 74 events (21% of touches)</li>
                         <li><strong>Opposite Direction Extremes:</strong> 103 events (29% of touches)</li>
                         <li><strong>Largest Same Move:</strong> +2.7467% (NFP High touch)</li>
@@ -375,7 +377,7 @@
                     <p>
                         Based on this comprehensive movement analysis, traders should:
                     </p>
-                    <ul style="color: var(--charcoal); font-size: 1.1rem; line-height: 1.7; margin: var(--spacing-lg) 0;">
+                    <ul>
                         <li><strong>Use Event-Specific Strategies:</strong> NFP favors continuation, PPI favors reversal</li>
                         <li><strong>Implement Strict Risk Management:</strong> Account for 3-6% extreme moves</li>
                         <li><strong>Monitor Both Directions:</strong> Success rates are nearly equal</li>
