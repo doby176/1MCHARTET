@@ -1,0 +1,29 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://onemchart.onrender.com/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Allow all important pages
+Allow: /blog
+Allow: /education
+Allow: /about
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /faq
+
+# Allow all article pages
+Allow: /gap-trading-fundamentals
+Allow: /advanced-gap-timing
+Allow: /gap-trading-mastery
+Allow: /day-trading-time-analysis
+Allow: /previous-low-reversal-trading
+Allow: /advanced-position-analysis
+
+# Allow static assets
+Allow: /static/
+Allow: /favicon.ico

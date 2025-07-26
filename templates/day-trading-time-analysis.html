@@ -32,6 +32,38 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=72">
     <title>Day Trading Time Analysis: The Ultimate Guide to Optimal Trading Hours | 1MChart</title>
+    
+    <!-- Schema Markup for Rich Results -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Day Trading Time Analysis: The Ultimate Guide to Optimal Trading Hours",
+        "description": "Master market timing with our comprehensive analysis of 2,161+ trading scenarios. Discover why 14:00 is optimal and Wednesday delivers exceptional results.",
+        "image": "{{ url_for('static', filename='Figure_2.png', _external=True) }}",
+        "author": {
+            "@type": "Organization",
+            "name": "1MChart Trading Education Team"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "1MChart",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "{{ url_for('static', filename='logo-new.png', _external=True) }}"
+            }
+        },
+        "datePublished": "2024-12-01",
+        "dateModified": "2024-12-01",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "{{ request.url }}"
+        },
+        "keywords": "day trading time analysis, best time to trade stocks, trading hours, optimal trading time, day trading schedule, trading time patterns, market timing, trading session analysis, intraday trading hours",
+        "articleSection": "Trading Education",
+        "wordCount": "3200"
+    }
+    </script>
 </head>
 <body>
     <header class="landing-header">
@@ -46,6 +78,17 @@
     </header>
 
     <main class="article-main">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+            <div class="breadcrumb-container">
+                <a href="/" class="breadcrumb-link">Home</a>
+                <span class="breadcrumb-separator">›</span>
+                <a href="/education" class="breadcrumb-link">Education</a>
+                <span class="breadcrumb-separator">›</span>
+                <span class="breadcrumb-current">Day Trading Time Analysis</span>
+            </div>
+        </nav>
+        
         <!-- Ad Banner at Top -->
         <div class="ad-container">
             <ins class="adsbygoogle"
