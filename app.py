@@ -560,6 +560,11 @@ def day_trading_time_analysis():
     """Educational article about Day Trading Time Analysis"""
     return render_template('day-trading-time-analysis.html')
 
+@app.route('/advanced-position-analysis')
+def advanced_position_analysis():
+    """Educational article about Advanced Position Analysis"""
+    return render_template('advanced-position-analysis.html')
+
 @app.route('/api/sample/gap_bins', methods=['GET'])
 def get_sample_gap_bins_api():
     """Return limited gap bins for sample mode"""
