@@ -585,7 +585,7 @@ def news_event_keylevels():
     """Educational article about Premarket Level Trading and Support/Resistance Analysis"""
     return render_template('news_event_keylevels.html')
 
-@app.route('/news-event')
+@app.route('/news-event_main')
 def news_event():
     """Educational article about Key News Events Trading"""
     return render_template('news_event.html')
