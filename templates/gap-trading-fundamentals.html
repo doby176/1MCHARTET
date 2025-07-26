@@ -6,7 +6,7 @@
     <title>Gap Trading Fundamentals: The Complete Guide to Gap Size Analysis | Trading Education</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Master gap trading with our comprehensive guide to gap size analysis. Learn fill rates, reversal patterns, and strategies for 0.15% to 1.5%+ gaps. Based on 1,929+ real trading scenarios.">
+    <meta name="description" content="Master gap trading strategies for beginners with our comprehensive guide to gap size analysis. Learn gap fill statistics, reversal patterns, and trading strategies for 0.15% to 1.5%+ gaps. Based on 1,929+ real trading scenarios from Nasdaq data.">
     <meta name="keywords" content="gap trading, gap analysis, trading strategy, day trading, gap fill, gap reversal, trading education, market analysis">
     <meta name="author" content="Trading Education Team">
     <meta name="robots" content="index, follow">
@@ -38,8 +38,51 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    
+    <!-- Schema Markup for Rich Results -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Gap Trading Fundamentals: The Complete Guide to Gap Size Analysis",
+        "description": "Master gap trading with our comprehensive guide to gap size analysis. Learn fill rates, reversal patterns, and strategies for 0.15% to 1.5%+ gaps. Based on 1,929+ real trading scenarios.",
+        "image": "{{ url_for('static', filename='blog_1.png', _external=True) }}",
+        "author": {
+            "@type": "Organization",
+            "name": "1MChart Trading Education Team"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "1MChart",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "{{ url_for('static', filename='logo-new.png', _external=True) }}"
+            }
+        },
+        "datePublished": "2024-12-01",
+        "dateModified": "2024-12-01",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "{{ request.url }}"
+        },
+        "keywords": "gap trading, gap analysis, trading strategy, day trading, gap fill, gap reversal, trading education, market analysis, nasdaq gap trading, gap fill statistics",
+        "articleSection": "Trading Education",
+        "wordCount": "3500"
+    }
+    </script>
 </head>
 <body>
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+        <div class="breadcrumb-container">
+            <a href="/" class="breadcrumb-link">Home</a>
+            <span class="breadcrumb-separator">›</span>
+            <a href="/blog" class="breadcrumb-link">Blog</a>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-current">Gap Trading Fundamentals</span>
+        </div>
+    </nav>
+    
     <div class="article-main">
         <article class="article-content">
             <!-- Article Header -->

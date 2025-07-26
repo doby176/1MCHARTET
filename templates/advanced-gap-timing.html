@@ -6,7 +6,7 @@
     <title>Advanced Gap Timing: The 14:00 Strategy That Works 70% of the Time | Trading Education</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Master advanced gap timing strategies with our 14:00 strategy that achieves 70% success rates. Learn fast fills, high-volume setups, and timing optimization based on 1,929+ trading scenarios.">
+    <meta name="description" content="Master gap trading timing strategies with our 14:00 strategy that achieves 70% success rates. Learn fast fills, high-volume setups, and Wednesday gap trading patterns based on 1,929+ real trading scenarios.">
     <meta name="keywords" content="gap timing, 14:00 strategy, trading timing, gap trading, fast fills, high volume trading, trading strategy, day trading">
     <meta name="author" content="Trading Education Team">
     <meta name="robots" content="index, follow">
@@ -38,8 +38,51 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    
+    <!-- Schema Markup for Rich Results -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Advanced Gap Timing: The 14:00 Strategy That Works 70% of the Time",
+        "description": "Master advanced gap timing strategies with our 14:00 strategy that achieves 70% success rates. Learn fast fills, high-volume setups, and timing optimization based on 1,929+ trading scenarios.",
+        "image": "{{ url_for('static', filename='blog_1.png', _external=True) }}",
+        "author": {
+            "@type": "Organization",
+            "name": "1MChart Trading Education Team"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "1MChart",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "{{ url_for('static', filename='logo-new.png', _external=True) }}"
+            }
+        },
+        "datePublished": "2024-12-01",
+        "dateModified": "2024-12-01",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "{{ request.url }}"
+        },
+        "keywords": "gap timing, 14:00 strategy, trading timing, gap trading, fast fills, high volume trading, trading strategy, day trading, gap trading timing, Wednesday gap strategy",
+        "articleSection": "Trading Strategy",
+        "wordCount": "2800"
+    }
+    </script>
 </head>
 <body>
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+        <div class="breadcrumb-container">
+            <a href="/" class="breadcrumb-link">Home</a>
+            <span class="breadcrumb-separator">›</span>
+            <a href="/blog" class="breadcrumb-link">Blog</a>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-current">Advanced Gap Timing</span>
+        </div>
+    </nav>
+    
     <div class="article-main">
         <article class="article-content">
             <!-- Article Header -->

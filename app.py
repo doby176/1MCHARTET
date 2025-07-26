@@ -580,6 +580,74 @@ def gap_trading_mastery():
     """Educational article about Gap Trading Mastery"""
     return render_template('gap-trading-mastery.html')
 
+@app.route('/sitemap.xml')
+def sitemap():
+    """Generate XML sitemap for SEO"""
+    from flask import make_response
+    import xml.etree.ElementTree as ET
+    
+    # Create XML structure
+    urlset = ET.Element('urlset')
+    urlset.set('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9')
+    
+    # Define your pages
+    pages = [
+        {'loc': 'https://onemchart.onrender.com/', 'priority': '1.0', 'changefreq': 'weekly'},
+        {'loc': 'https://onemchart.onrender.com/blog', 'priority': '0.9', 'changefreq': 'weekly'},
+        {'loc': 'https://onemchart.onrender.com/education', 'priority': '0.9', 'changefreq': 'weekly'},
+        {'loc': 'https://onemchart.onrender.com/about', 'priority': '0.7', 'changefreq': 'monthly'},
+        {'loc': 'https://onemchart.onrender.com/contact', 'priority': '0.7', 'changefreq': 'monthly'},
+        {'loc': 'https://onemchart.onrender.com/privacy', 'priority': '0.5', 'changefreq': 'yearly'},
+        {'loc': 'https://onemchart.onrender.com/terms', 'priority': '0.5', 'changefreq': 'yearly'},
+        {'loc': 'https://onemchart.onrender.com/faq', 'priority': '0.6', 'changefreq': 'monthly'},
+        # Blog articles
+        {'loc': 'https://onemchart.onrender.com/gap-trading-fundamentals', 'priority': '0.8', 'changefreq': 'monthly'},
+        {'loc': 'https://onemchart.onrender.com/advanced-gap-timing', 'priority': '0.8', 'changefreq': 'monthly'},
+        {'loc': 'https://onemchart.onrender.com/gap-trading-mastery', 'priority': '0.8', 'changefreq': 'monthly'},
+        # Education articles
+        {'loc': 'https://onemchart.onrender.com/day-trading-time-analysis', 'priority': '0.8', 'changefreq': 'monthly'},
+        {'loc': 'https://onemchart.onrender.com/previous-low-reversal-trading', 'priority': '0.8', 'changefreq': 'monthly'},
+        {'loc': 'https://onemchart.onrender.com/advanced-position-analysis', 'priority': '0.8', 'changefreq': 'monthly'},
+    ]
+    
+    for page in pages:
+        url = ET.SubElement(urlset, 'url')
+        loc = ET.SubElement(url, 'loc')
+        loc.text = page['loc']
+        priority = ET.SubElement(url, 'priority')
+        priority.text = page['priority']
+        changefreq = ET.SubElement(url, 'changefreq')
+        changefreq.text = page['changefreq']
+        lastmod = ET.SubElement(url, 'lastmod')
+        lastmod.text = '2024-12-01'  # Update this date when you make changes
+    
+    # Convert to string
+    sitemap_xml = ET.tostring(urlset, encoding='unicode')
+    
+    # Create response
+    response = make_response(sitemap_xml)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
+
+@app.route('/robots.txt')
+def robots_txt():
+    """Generate robots.txt for SEO"""
+    from flask import make_response
+    
+    robots_content = """User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://onemchart.onrender.com/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+"""
+    
+    response = make_response(robots_content)
+    response.headers['Content-Type'] = 'text/plain'
+    return response
+
 @app.route('/api/sample/gap_bins', methods=['GET'])
 def get_sample_gap_bins_api():
     """Return limited gap bins for sample mode"""
