@@ -212,7 +212,7 @@
         <div class="contact-grid">
             <div class="contact-form">
                 <h3>Send Us a Message</h3>
-                <form action="/contact" method="POST">
+                <form id="contactForm" onsubmit="sendEmail(event)">
                     <div class="form-group">
                         <label for="name">Full Name *</label>
                         <input type="text" id="name" name="name" required>
@@ -242,7 +242,8 @@
                         <textarea id="message" name="message" placeholder="Please describe your inquiry in detail..." required></textarea>
                     </div>
                     
-                    <button type="submit" class="submit-btn">Send Message</button>
+                    <button type="submit" class="submit-btn" id="submitBtn">Send Message</button>
+                    <div id="formStatus" style="display: none; margin-top: 15px; padding: 10px; border-radius: 5px;"></div>
                 </form>
             </div>
             
@@ -253,7 +254,7 @@
                     <i>📧</i>
                     <div>
                         <strong>Email Contact</strong><br>
-                        <a href="mailto:onemchart.onemchart@mail.com">onemchart.onemchart@mail.com</a>
+                        <a href="mailto:1mchart@protonmail.com">1mchart@protonmail.com</a>
                     </div>
                 </div>
                 
@@ -310,7 +311,7 @@
             
             <div class="faq-item">
                 <h4>How do I get technical support?</h4>
-                <p>For technical support, please email us at onemchart.onemchart@mail.com with a detailed description of your issue. Include screenshots if possible, and we'll respond within 24 hours during business days.</p>
+                <p>For technical support, please email us at 1mchart@protonmail.com with a detailed description of your issue. Include screenshots if possible, and we'll respond within 24 hours during business days.</p>
             </div>
             
             <div class="faq-item">
@@ -365,5 +366,72 @@
         </div>
         <p>DISCLAIMER: The author takes no responsibility for your use of any information provided on this site. All information provided is for educational purposes and is not investment advice or buy/sell recommendations.</p>
     </div>
+
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            // Initialize EmailJS with your public key
+            emailjs.init("YOUR_PUBLIC_KEY_HERE"); // Replace with your actual EmailJS public key
+        })();
+        
+        function sendEmail(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const formStatus = document.getElementById('formStatus');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+            formStatus.style.display = 'block';
+            formStatus.style.backgroundColor = '#e8f5e8';
+            formStatus.style.color = '#2d5a2d';
+            formStatus.style.border = '1px solid #4caf50';
+            formStatus.textContent = 'Sending your message...';
+            
+            // Get form data
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                subject: document.getElementById('subject').value,
+                message: document.getElementById('message').value
+            };
+            
+            // Send email using EmailJS
+            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+                from_name: formData.name,
+                from_email: formData.email,
+                subject: formData.subject,
+                message: formData.message,
+                to_email: '1mchart@protonmail.com'
+            })
+            .then(function(response) {
+                // Success
+                formStatus.style.backgroundColor = '#e8f5e8';
+                formStatus.style.color = '#2d5a2d';
+                formStatus.style.border = '1px solid #4caf50';
+                formStatus.textContent = '✅ Message sent successfully! We\'ll get back to you within 24 hours.';
+                
+                // Reset form
+                document.getElementById('contactForm').reset();
+                
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Message';
+            })
+            .catch(function(error) {
+                // Error
+                formStatus.style.backgroundColor = '#ffebee';
+                formStatus.style.color = '#c62828';
+                formStatus.style.border = '1px solid #f44336';
+                formStatus.textContent = '❌ Error sending message. Please try again or email us directly at 1mchart@protonmail.com';
+                
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Message';
+            });
+        }
+    </script>
 </body>
 </html>

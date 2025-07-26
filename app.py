@@ -575,6 +575,11 @@ def advanced_gap_timing():
     """Educational article about Advanced Gap Timing"""
     return render_template('advanced-gap-timing.html')
 
+@app.route('/gap-trading-mastery')
+def gap_trading_mastery():
+    """Educational article about Gap Trading Mastery"""
+    return render_template('gap-trading-mastery.html')
+
 @app.route('/api/sample/gap_bins', methods=['GET'])
 def get_sample_gap_bins_api():
     """Return limited gap bins for sample mode"""
