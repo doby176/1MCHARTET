@@ -565,6 +565,11 @@ def advanced_position_analysis():
     """Educational article about Advanced Position Analysis"""
     return render_template('advanced-position-analysis.html')
 
+@app.route('/gap-trading-fundamentals')
+def gap_trading_fundamentals():
+    """Educational article about Gap Trading Fundamentals"""
+    return render_template('gap-trading-fundamentals.html')
+
 @app.route('/api/sample/gap_bins', methods=['GET'])
 def get_sample_gap_bins_api():
     """Return limited gap bins for sample mode"""
