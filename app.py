@@ -580,55 +580,22 @@ def gap_trading_mastery():
     """Educational article about Gap Trading Mastery"""
     return render_template('gap-trading-mastery.html')
 
+@app.route('/news-event-keylevels')
+def news_event_keylevels():
+    """Educational article about Premarket Level Trading and Support/Resistance Analysis"""
+    return render_template('news_event_keylevels.html')
+
+@app.route('/news-event')
+def news_event():
+    """Educational article about Key News Events Trading"""
+    return render_template('news_event.html')
+
 @app.route('/sitemap.xml')
 def sitemap():
-    """Generate XML sitemap for SEO"""
-    from flask import make_response
-    import xml.etree.ElementTree as ET
+    """Serve static XML sitemap for SEO"""
+    from flask import send_from_directory
     
-    # Create XML structure
-    urlset = ET.Element('urlset')
-    urlset.set('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9')
-    
-    # Define your pages
-    pages = [
-        {'loc': 'https://onemchart.onrender.com/', 'priority': '1.0', 'changefreq': 'weekly'},
-        {'loc': 'https://onemchart.onrender.com/blog', 'priority': '0.9', 'changefreq': 'weekly'},
-        {'loc': 'https://onemchart.onrender.com/education', 'priority': '0.9', 'changefreq': 'weekly'},
-        {'loc': 'https://onemchart.onrender.com/about', 'priority': '0.7', 'changefreq': 'monthly'},
-        {'loc': 'https://onemchart.onrender.com/contact', 'priority': '0.7', 'changefreq': 'monthly'},
-        {'loc': 'https://onemchart.onrender.com/privacy', 'priority': '0.5', 'changefreq': 'yearly'},
-        {'loc': 'https://onemchart.onrender.com/terms', 'priority': '0.5', 'changefreq': 'yearly'},
-        {'loc': 'https://onemchart.onrender.com/faq', 'priority': '0.6', 'changefreq': 'monthly'},
-        # Blog articles
-        {'loc': 'https://onemchart.onrender.com/gap-trading-fundamentals', 'priority': '0.8', 'changefreq': 'monthly'},
-        {'loc': 'https://onemchart.onrender.com/advanced-gap-timing', 'priority': '0.8', 'changefreq': 'monthly'},
-        {'loc': 'https://onemchart.onrender.com/gap-trading-mastery', 'priority': '0.8', 'changefreq': 'monthly'},
-        # Education articles
-        {'loc': 'https://onemchart.onrender.com/day-trading-time-analysis', 'priority': '0.8', 'changefreq': 'monthly'},
-        {'loc': 'https://onemchart.onrender.com/previous-low-reversal-trading', 'priority': '0.8', 'changefreq': 'monthly'},
-        {'loc': 'https://onemchart.onrender.com/advanced-position-analysis', 'priority': '0.8', 'changefreq': 'monthly'},
-    ]
-    
-    for page in pages:
-        url = ET.SubElement(urlset, 'url')
-        loc = ET.SubElement(url, 'loc')
-        loc.text = page['loc']
-        priority = ET.SubElement(url, 'priority')
-        priority.text = page['priority']
-        changefreq = ET.SubElement(url, 'changefreq')
-        changefreq.text = page['changefreq']
-        lastmod = ET.SubElement(url, 'lastmod')
-        lastmod.text = '2024-07-26'  # Update this date when you make changes
-    
-    # Convert to string with proper XML declaration
-    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>\n' + ET.tostring(urlset, encoding='unicode')
-    
-    # Create response
-    response = make_response(sitemap_xml)
-    response.headers['Content-Type'] = 'application/xml; charset=utf-8'
-    response.headers['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
-    return response
+    return send_from_directory('static', 'sitemap.xml', mimetype='application/xml; charset=utf-8')
 
 @app.route('/robots.txt')
 def robots_txt():
