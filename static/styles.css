@@ -3229,6 +3229,189 @@ footer p {
     color: var(--primary-dark);
 }
 
+/* Psychology Breakdown Styles */
+.psychology-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin: var(--spacing-lg) 0;
+}
+
+.psychology-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-lg);
+    text-align: center;
+}
+
+.psychology-item h4 {
+    color: var(--primary-blue);
+    margin-bottom: var(--spacing-md);
+}
+
+/* Hourly Breakdown Styles */
+.hourly-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin: var(--spacing-lg) 0;
+}
+
+.hour-item {
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    border: 2px solid transparent;
+}
+
+.hour-item.optimal {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: var(--white);
+    border-color: #28a745;
+}
+
+.hour-item.good {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+    color: var(--white);
+    border-color: #17a2b8;
+}
+
+.hour-item.neutral {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: var(--white);
+    border-color: #6c757d;
+}
+
+.hour-item.avoid {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    color: var(--white);
+    border-color: #dc3545;
+}
+
+.hour-item h4 {
+    color: inherit;
+    margin-bottom: var(--spacing-md);
+    font-size: 1.2rem;
+}
+
+.hour-stats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+.hour-stats .stat {
+    font-weight: var(--font-weight-semibold);
+    font-size: 0.9rem;
+}
+
+/* Day Highlight Styles */
+.day-highlight {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius-sm);
+}
+
+.highlight-text {
+    font-weight: var(--font-weight-bold);
+    font-size: 0.9rem;
+}
+
+/* Outlier Analysis Styles */
+.outlier-analysis {
+    margin: var(--spacing-lg) 0;
+}
+
+.outlier-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+    margin: var(--spacing-md) 0;
+}
+
+.outlier-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-light);
+}
+
+.outlier-item h4 {
+    color: var(--primary-blue);
+    margin-bottom: var(--spacing-md);
+    font-size: 1.1rem;
+}
+
+.outlier-stats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+.outlier-stats .stat {
+    font-weight: var(--font-weight-semibold);
+    font-size: 0.9rem;
+    color: var(--charcoal);
+}
+
+/* Weekly Schedule Styles */
+.weekly-schedule {
+    margin: var(--spacing-lg) 0;
+}
+
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin: var(--spacing-md) 0;
+}
+
+.schedule-day {
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    text-align: center;
+    border: 2px solid transparent;
+}
+
+.schedule-day.best {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: var(--white);
+    border-color: #28a745;
+}
+
+.schedule-day.good {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+    color: var(--white);
+    border-color: #17a2b8;
+}
+
+.schedule-day.neutral {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: var(--white);
+    border-color: #6c757d;
+}
+
+.schedule-day.avoid {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    color: var(--white);
+    border-color: #dc3545;
+}
+
+.schedule-day h4 {
+    color: inherit;
+    margin-bottom: var(--spacing-sm);
+    font-size: 1.1rem;
+}
+
+.schedule-day p {
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.9rem;
+}
+
 /* Article Image Styles */
 .article-image {
     margin: var(--spacing-xl) 0;
@@ -3315,5 +3498,21 @@ footer p {
     .image-caption {
         font-size: 0.85rem;
         padding: 0 var(--spacing-sm);
+    }
+
+    .psychology-breakdown {
+        grid-template-columns: 1fr;
+    }
+
+    .hourly-breakdown {
+        grid-template-columns: 1fr;
+    }
+
+    .outlier-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .schedule-grid {
+        grid-template-columns: 1fr;
     }
 }
