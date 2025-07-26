@@ -555,6 +555,11 @@ def previous_low_reversal_trading():
     """Educational article about Previous Low Reversal Trading strategy"""
     return render_template('previous-low-reversal-trading.html')
 
+@app.route('/day-trading-time-analysis')
+def day_trading_time_analysis():
+    """Educational article about Day Trading Time Analysis"""
+    return render_template('day-trading-time-analysis.html')
+
 @app.route('/api/sample/gap_bins', methods=['GET'])
 def get_sample_gap_bins_api():
     """Return limited gap bins for sample mode"""
