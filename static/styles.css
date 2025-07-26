@@ -2808,7 +2808,7 @@ footer p {
     padding: var(--spacing-lg);
     background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-green) 100%);
     border-radius: var(--border-radius-lg);
-    color: var(--white);
+    color: var(--white) !important;
 }
 
 .stat-item {
@@ -2820,13 +2820,13 @@ footer p {
     font-size: 2rem;
     font-weight: var(--font-weight-bold);
     margin-bottom: var(--spacing-xs);
-    color: var(--white);
+    color: var(--white) !important;
 }
 
 .stat-label {
     font-size: 0.9rem;
     opacity: 0.9;
-    color: var(--white);
+    color: var(--white) !important;
 }
 
 .article-section {
@@ -3707,4 +3707,13 @@ footer p {
         padding: 0 var(--spacing-md);
         font-size: 0.8rem;
     }
+}
+
+/* AdSense Units */
+.adsense-unit {
+    margin: var(--spacing-xl) 0;
+    text-align: center;
+    background: var(--light-grey);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-md);
 }
