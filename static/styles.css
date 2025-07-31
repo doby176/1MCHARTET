@@ -3561,13 +3561,21 @@ footer p {
 
 /* Article Image Styles */
 .article-image {
-    margin: var(--spacing-xl) 0;
+    max-width: 800px;
+    width: 100%;
+    height: auto;
+    margin: var(--spacing-xl) auto;
     text-align: center;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-light);
+    display: block;
 }
 
 .featured-image {
-    max-width: 100%;
+    max-width: 800px;
+    width: 100%;
     height: auto;
+    margin: 0 auto;
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-medium);
     border: 2px solid var(--border-color);
@@ -3635,11 +3643,13 @@ footer p {
     }
 
     .article-image {
-        margin: var(--spacing-lg) 0;
+        margin: var(--spacing-lg) auto;
+        max-width: 100%;
     }
 
     .featured-image {
         border-radius: var(--border-radius-md);
+        max-width: 100%;
     }
 
     .image-caption {
