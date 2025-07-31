@@ -590,6 +590,16 @@ def premarket_newsevent():
     """Educational article about Key News Events Trading - Fixed"""
     return render_template('premarket_newsevent.html')
 
+@app.route('/nasdaq-previous-high-low-analysis')
+def nasdaq_previous_high_low_analysis():
+    """Educational article about NASDAQ Previous High/Low Analysis"""
+    return render_template('NASDAQ_Previous_High_Low_Analysis_Article.html')
+
+@app.route('/qqq-gap-analysis')
+def qqq_gap_analysis():
+    """Educational article about QQQ Gap Analysis"""
+    return render_template('qqq-gap-analysis.html')
+
 @app.route('/sitemap.xml')
 def sitemap():
     """Serve static XML sitemap for SEO"""
