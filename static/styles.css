@@ -2820,13 +2820,13 @@ footer p {
     font-size: 2rem;
     font-weight: var(--font-weight-bold);
     margin-bottom: var(--spacing-xs);
-    color: var(--white) !important;
+    color: var(--charcoal) !important;
 }
 
 .stat-label {
     font-size: 0.9rem;
     opacity: 0.9;
-    color: var(--white) !important;
+    color: var(--dark-grey) !important;
 }
 
 .article-section {
@@ -2912,6 +2912,16 @@ footer p {
 .data-table th {
     background: var(--primary-blue);
     color: var(--white);
+    font-weight: var(--font-weight-semibold);
+}
+
+.data-table .positive {
+    color: var(--accent-green);
+    font-weight: var(--font-weight-semibold);
+}
+
+.data-table .negative {
+    color: var(--accent-red);
     font-weight: var(--font-weight-semibold);
 }
 
@@ -3727,3 +3737,34 @@ footer p {
     padding: var(--spacing-lg);
     border-radius: var(--border-radius-md);
 }
+
+/* Fix for white text on white background */
+.data-table .positive {
+    color: var(--accent-green) !important;
+    font-weight: var(--font-weight-semibold);
+}
+
+.data-table .negative {
+    color: var(--accent-red) !important;
+    font-weight: var(--font-weight-semibold);
+}
+
+/* Fix for CTA section text */
+.cta-section h3,
+.cta-section p {
+    color: var(--charcoal) !important;
+}
+/* Fix for white text on white background */
+.data-table .positive {
+    font-weight: var(--font-weight-semibold);
+}
+
+.data-table .negative {
+    font-weight: var(--font-weight-semibold);
+}
+
+/* Fix for CTA section text */
+.cta-section h3,
+.cta-section p {
+}
+/* Fix for white text on white background */
