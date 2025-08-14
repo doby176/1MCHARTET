@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QQQ Gap Analysis: Unveiling Hidden Patterns in Nasdaq's Opening Gaps | 1MChart Blog</title>
     <meta name="description" content="Discover the science behind QQQ gap trading with data-driven insights from over 1,900 historical gap occurrences. Learn proven strategies for trading opening gaps.">
+    <!-- Google AdSense -->
+    <meta name="google-adsense-account" content="ca-pub-9416785017460416">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9416785017460416" crossorigin="anonymous"></script>
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=70">
@@ -167,6 +170,11 @@
             border: 1px solid var(--medium-grey);
         }
         
+        .adsense-unit {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
         @media (max-width: 768px) {
             .blog-header h1 {
                 font-size: 2rem;
@@ -225,9 +233,9 @@
 
             <h2>Key Findings: Gap Fill Rates by Size</h2>
 
-                                            <img src="{{ url_for('static', filename='qqq_fill_rates_by_size.png') }}" 
-                   alt="QQQ Gap Fill Rates by Size" 
-                   style="max-width: 800px; width: 100%; height: auto; display: block; margin: 20px auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <img src="{{ url_for('static', filename='qqq_fill_rates_by_size.png') }}" 
+                 alt="QQQ Gap Fill Rates by Size" 
+                 style="width: 100%; max-width: 800px; height: auto; margin: 20px 0; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
 
             <div class="stats-grid">
                 <div class="stat-card">
@@ -250,6 +258,17 @@
                     <div class="stat-number">19.8%</div>
                     <div class="stat-label">Massive Gaps (1.5%+)</div>
                 </div>
+            </div>
+
+            <!-- AdSense Unit 1 -->
+            <div class="adsense-unit">
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-9416785017460416"
+                     data-ad-slot="5487535867"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsense-unit || []).push({});</script>
             </div>
 
             <h3>Small Gaps (0.15-0.35%): The Most Reliable</h3>
@@ -280,9 +299,9 @@
 
             <h2>Day-of-Week Patterns: When Gaps Behave Differently</h2>
 
-                                            <img src="{{ url_for('static', filename='qqq_day_of_week_analysis.png') }}" 
-                   alt="QQQ Day of Week Gap Analysis" 
-                   style="max-width: 800px; width: 100%; height: auto; display: block; margin: 20px auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+            <img src="{{ url_for('static', filename='qqq_day_of_week_analysis.png') }}" 
+                 alt="QQQ Day of Week Gap Analysis" 
+                 style="width: 100%; max-width: 800px; height: auto; margin: 20px 0; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
 
             <h3>Monday: The Gap Killer</h3>
             <p>Mondays show the lowest overall fill rates across all gap sizes. This is likely due to weekend news accumulation and institutional positioning.</p>
@@ -506,6 +525,17 @@
                 <a href="/sample" class="signup-btn">🚀 Try Sample Features</a>
                 <a href="/register" class="sample-btn">📈 Get Full Access</a>
             </div>
+        </div>
+
+        <!-- AdSense Unit 2 -->
+        <div class="adsense-unit">
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9416785017460416"
+                 data-ad-slot="5487535867"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsense-unit || []).push({});</script>
         </div>
     </main>
 
