@@ -464,13 +464,10 @@ def serve_ads_txt():
 
 @app.route('/')
 def home():
-    logging.debug("Rendering home.html")
-    return render_template('home.html')
+    return redirect(url_for('index'))
 
 @app.route('/dashboard')
 def index():
-    if not session.get('authenticated'):
-        return redirect(url_for('login'))
     logging.debug("Rendering index.html")
     return render_template('index.html')
 
