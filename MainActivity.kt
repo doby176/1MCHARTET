@@ -451,6 +451,13 @@ class MainActivity : AppCompatActivity() {
                 val imageHeight = imageProxy.height.toFloat().coerceAtLeast(1f)
                 var handled = false
 
+                val detectionRect = RectF(
+                    roiRectNorm.left,
+                    (roiRectNorm.top - 0.03f).coerceAtLeast(0f),
+                    roiRectNorm.right,
+                    (roiRectNorm.bottom + 0.05f).coerceAtMost(1f)
+                )
+
                 visionText.textBlocks.forEach { block ->
                     if (handled) return@forEach
                     val box = block.boundingBox ?: return@forEach
@@ -458,10 +465,10 @@ class MainActivity : AppCompatActivity() {
                     val blockTop = (box.top.coerceAtLeast(0)).toFloat() / imageHeight
                     val blockRight = (box.right.coerceAtMost(imageWidth.toInt())).toFloat() / imageWidth
                     val blockBottom = (box.bottom.coerceAtMost(imageHeight.toInt())).toFloat() / imageHeight
-                    val intersects = !(blockRight < roiRectNorm.left ||
-                            blockLeft > roiRectNorm.right ||
-                            blockBottom < roiRectNorm.top ||
-                            blockTop > roiRectNorm.bottom)
+                    val intersects = !(blockRight < detectionRect.left ||
+                            blockLeft > detectionRect.right ||
+                            blockBottom < detectionRect.top ||
+                            blockTop > detectionRect.bottom)
                     if (!intersects) return@forEach
 
                     val cleaned = block.text.replace(" ", "").replace("-", "")

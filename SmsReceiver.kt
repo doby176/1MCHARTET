@@ -103,9 +103,11 @@ class SmsReceiver : BroadcastReceiver() {
                 ?.use { cursor ->
                     val bodyCol = cursor.getColumnIndex(Telephony.Sms.BODY)
                     var count = 0
-                    while (cursor.moveToNext() && count < limit) {
-                        bodies.add(cursor.getString(bodyCol))
-                        count++
+                    if (cursor.moveToFirst()) {
+                        do {
+                            bodies.add(cursor.getString(bodyCol))
+                            count++
+                        } while (cursor.moveToNext() && count < limit)
                     }
                 }
             return bodies
