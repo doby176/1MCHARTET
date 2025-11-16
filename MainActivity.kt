@@ -453,9 +453,9 @@ class MainActivity : AppCompatActivity() {
 
                 val detectionRect = RectF(
                     roiRectNorm.left,
-                    (roiRectNorm.top - 0.03f).coerceAtLeast(0f),
+                    roiRectNorm.top,
                     roiRectNorm.right,
-                    (roiRectNorm.bottom + 0.05f).coerceAtMost(1f)
+                    (roiRectNorm.bottom + 0.08f).coerceAtMost(1f)
                 )
 
                 visionText.textBlocks.forEach { block ->
