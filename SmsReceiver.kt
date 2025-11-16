@@ -28,22 +28,20 @@ class SmsReceiver : BroadcastReceiver() {
     companion object {
         private const val TAG = "SMS_DEBUG"
 
-        fun forceParseRepliesForSender(
+        fun getLatestReply(
             context: Context,
-            sender10: String,
-            onReplyParsed: (ReplyData) -> Unit
-        ) {
-            Log.d(TAG, "FORCE-PARSE requested for $sender10")
+            sender10: String
+        ): ReplyData? {
             val uri = Telephony.Sms.Inbox.CONTENT_URI
             val projection = arrayOf(Telephony.Sms.BODY)
             val selection = "${Telephony.Sms.ADDRESS} = ? OR ${Telephony.Sms.ADDRESS} = ?"
             val selectionArgs = arrayOf(sender10, "+972${sender10.removePrefix("0")}")
 
-            context.contentResolver.query(uri, projection, selection, selectionArgs, "date DESC")
+            return context.contentResolver.query(uri, projection, selection, selectionArgs, "date DESC")
                 ?.use { cursor ->
                     if (!cursor.moveToFirst()) {
                         Log.d(TAG, "No SMS found for $sender10")
-                        return@use
+                        return null
                     }
                     val bodyCol = cursor.getColumnIndex(Telephony.Sms.BODY)
                     val bodies = mutableListOf<String>()
@@ -52,10 +50,26 @@ class SmsReceiver : BroadcastReceiver() {
                     } while (cursor.moveToNext())
 
                     val fullBody = bodies.joinToString("")
-                    val reply = SmsReceiver().parseReply(fullBody, fullBody)
-                    Log.d(TAG, "FORCE-PARSE result: $reply")
-                    onReplyParsed(reply)
-                } ?: Log.d(TAG, "Query failed or no permission")
+                    SmsReceiver().parseReply(fullBody, fullBody)
+                } ?: run {
+                    Log.d(TAG, "Query failed or no permission")
+                    null
+                }
+        }
+
+        fun forceParseRepliesForSender(
+            context: Context,
+            sender10: String,
+            onReplyParsed: (ReplyData) -> Unit
+        ) {
+            Log.d(TAG, "FORCE-PARSE requested for $sender10")
+            val reply = getLatestReply(context, sender10)
+            if (reply != null) {
+                Log.d(TAG, "FORCE-PARSE result: $reply")
+                onReplyParsed(reply)
+            } else {
+                Log.d(TAG, "FORCE-PARSE result: null")
+            }
         }
     }
 

@@ -34,8 +34,6 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -96,8 +94,6 @@ class MainActivity : AppCompatActivity() {
 
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
-    private val gson = Gson()
-
     private val defaultMessage = "היי 😊 משלוח בדרך 9:00-14:00. אפשר קומה/דירה+קוד? אם אין מישהו בבית להשאיר בדלת או בארון חשמל?"
 
     private val flashHandler = Handler(Looper.getMainLooper())
@@ -113,7 +109,6 @@ class MainActivity : AppCompatActivity() {
         lateinit var appContext: Context
 
         private const val PREF_NAME = "Scan2ChatPrefs"
-        private const val KEY_REPLIES = "saved_replies"
         private const val KEY_WHATSAPP_WARNING = "whatsapp_warning_shown"
         private const val MAX_BULK_PER_WINDOW = 30
         private const val RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000L
@@ -123,7 +118,6 @@ class MainActivity : AppCompatActivity() {
             replyMap[phone] = data
             onReplyUpdate?.invoke()
             Log.d("REPLY_SAVED", "Saved reply for $phone: $data")
-            saveRepliesToPrefs()
 
             Handler(Looper.getMainLooper()).post {
                 try {
@@ -132,22 +126,6 @@ class MainActivity : AppCompatActivity() {
                     Log.e("REPLY_SAVED", "Toast failed", e)
                 }
             }
-        }
-
-        private fun saveRepliesToPrefs() {
-            val prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-            val json = Gson().toJson(replyMap)
-            prefs.edit().putString(KEY_REPLIES, json).apply()
-        }
-
-        fun loadRepliesFromPrefs() {
-            val prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-            val json = prefs.getString(KEY_REPLIES, null) ?: return
-            val type = object : TypeToken<Map<String, ReplyData>>() {}.type
-            val saved = Gson().fromJson<Map<String, ReplyData>>(json, type)
-            replyMap.clear()
-            replyMap.putAll(saved)
-            onReplyUpdate?.invoke()
         }
 
         fun resetBulkMode() {
@@ -184,7 +162,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         appContext = this
-        loadRepliesFromPrefs()
         supportActionBar?.hide()
 
         previewView = findViewById(R.id.previewView)
@@ -299,7 +276,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showBulkSendDialog() {
         val eligibleNumbers = bulkQueue.filter { phone ->
-            replyMap[phone]?.apartment == null
+            fetchLatestReply(phone)?.apartment == null
         }
 
         if (eligibleNumbers.isEmpty()) {
@@ -483,7 +460,7 @@ class MainActivity : AppCompatActivity() {
                         }
 
                         val local10 = toLocal10Digit(normalized)
-                        val reply = replyMap[local10]
+                        val reply = fetchLatestReply(local10)
 
                         addNumberToBulkQueue(local10, reply)
 
@@ -556,6 +533,17 @@ class MainActivity : AppCompatActivity() {
         bulkQueue.clear()
         bulkLimitDialogShown = false
         updateBulkSendButton()
+    }
+
+    private fun fetchLatestReply(local10: String): ReplyData? {
+        val reply = SmsReceiver.getLatestReply(this, local10)
+        return if (reply != null) {
+            replyMap[local10] = reply
+            reply
+        } else {
+            replyMap.remove(local10)
+            null
+        }
     }
 
     private fun showRateLimitWaitMessage() {
@@ -725,7 +713,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showDeliveryPopup(phone: String) {
         val clean = toLocal10Digit(phone)
-        val reply = replyMap[clean]
+        val reply = fetchLatestReply(clean)
 
         val sb = SpannableStringBuilder()
         sb.append("לקוח: ${formatForDisplay(phone)}\n\n")
