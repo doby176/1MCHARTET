@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="20dp"
+    android:background="#000000">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Scan2Chat"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#00FF00"
+            android:layout_gravity="center"
+            android:paddingBottom="30dp"/>
+
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@mipmap/ic_launcher"
+            android:layout_marginBottom="30dp"/>
+
+        <!-- TRIAL BANNER -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#1E88E5"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="7 ימי ניסיון חינם – גישה מלאה!"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ללא כרטיס אשראי"
+                android:textColor="#BBDEFB"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="אימייל"
+            android:inputType="textEmailAddress"
+            android:padding="16dp"
+            android:background="#111111"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#888888"/>
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="סיסמה (6+ תווים)"
+            android:inputType="textPassword"
+            android:padding="16dp"
+            android:layout_marginTop="12dp"
+            android:background="#111111"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#888888"/>
+
+        <Button
+            android:id="@+id/btnLogin"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="התחברות / הרשמה אוטומטית"
+            android:textSize="18sp"
+            android:layout_marginTop="30dp"
+            android:backgroundTint="#00FF00"
+            android:textColor="#000000"/>
+
+        <Button
+            android:id="@+id/btnRegister"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="הרשמה בלבד"
+            android:textSize="18sp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="#0088FF"
+            android:textColor="#FFFFFF"/>
+
+        <TextView
+            android:id="@+id/tvForgot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="שכחת סיסמה?"
+            android:textColor="#00FF00"
+            android:layout_marginTop="20dp"
+            android:textSize="16sp"/>
+    </LinearLayout>
+</ScrollView>
