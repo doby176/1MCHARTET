@@ -98,9 +98,11 @@ class SmsReceiver : BroadcastReceiver() {
     }
 
     private fun parseReply(text: String, rawSms: String): ReplyData {
-        val lower = text.lowercase()
+        val cleanedOriginal = text
+            .lowercase()
             .replace(Regex("[\\s\\u200E]+"), " ")
             .replace(Regex("[^\\p{L}\\p{N}\\s*#:'.-]"), " ")
+        val lower = cleanedOriginal
 
         Log.d("PARSE_DEBUG", "Input: '$text'")
         Log.d("PARSE_DEBUG", "Cleaned: '$lower'")
@@ -115,10 +117,24 @@ class SmsReceiver : BroadcastReceiver() {
             if (fullCode.isNotEmpty()) fullCode else null
         } else null
 
-        val codeNearKod = regex("קוד\\s*[*:]?\\s*([*#]?\\d{3,5}[*#]?)", lower)
+        var code = codeFromPattern ?: regex("קוד\\s*[*:]?\\s*([*#]?\\d{3,5}[*#]?)", lower)
             ?: regex("([*#]?\\d{3,5}[*#]?)\\s*קוד", lower)
 
-        val code = codeFromPattern ?: codeNearKod
+        if (code == null) {
+            val digitsOnly = Regex("(?<!\\d)(\\d{4,5})(?!\\d)").find(lower)
+            if (digitsOnly != null) {
+                val candidate = digitsOnly.groupValues[1]
+                val idx = digitsOnly.range.first
+                val snippetStart = (idx - 10).coerceAtLeast(0)
+                val snippetEnd = (idx + 10).coerceAtMost(lower.length)
+                val snippet = lower.substring(snippetStart, snippetEnd)
+                val hasFloor = snippet.contains("קומ")
+                val hasApartment = snippet.contains("דיר")
+                if (!hasFloor && !hasApartment) {
+                    code = candidate
+                }
+            }
+        }
 
         val floor = regex("קומה\\s*(\\d+)", lower)
             ?: regex("קו['\"]?\\s*(\\d+)", lower)
