@@ -41,12 +41,12 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.net.URLEncoder
 import java.util.ArrayDeque
 import java.util.LinkedHashSet
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
-import java.net.URLEncoder
 
 
 class MainActivity : AppCompatActivity() {
@@ -62,6 +62,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etCustomMessage: EditText
     private lateinit var flashAlert: LinearLayout
     private lateinit var btnLogout: Button
+    private lateinit var tvWhatsAppWarning: TextView
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private var lastDetectedNumber: String? = null
     private var confirmedNumber: String? = null
@@ -71,6 +72,7 @@ class MainActivity : AppCompatActivity() {
     private var camera: Camera? = null
     private var mediaPlayer: MediaPlayer? = null
     private var bulkLimitDialogShown = false
+    private var whatsappWarningShown = false
 
     private var isBulkScanMode = false
 
@@ -112,6 +114,7 @@ class MainActivity : AppCompatActivity() {
 
         private const val PREF_NAME = "Scan2ChatPrefs"
         private const val KEY_REPLIES = "saved_replies"
+        private const val KEY_WHATSAPP_WARNING = "whatsapp_warning_shown"
         private const val MAX_BULK_PER_WINDOW = 30
         private const val RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000L
         private val sendTimestamps = ArrayDeque<Long>()
@@ -195,6 +198,11 @@ class MainActivity : AppCompatActivity() {
         etCustomMessage = findViewById(R.id.etCustomMessage)
         flashAlert = findViewById(R.id.flashAlert)
         btnLogout = findViewById(R.id.btnLogout)
+        tvWhatsAppWarning = findViewById(R.id.tvWhatsAppWarning)
+
+        val prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        whatsappWarningShown = prefs.getBoolean(KEY_WHATSAPP_WARNING, false)
+        tvWhatsAppWarning.visibility = if (whatsappWarningShown) View.VISIBLE else View.GONE
 
         tvDetected.text = "סריקה..."
 
@@ -217,6 +225,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnOpenWhatsApp.setOnClickListener {
+            showWhatsAppWarningIfNeeded()
             confirmedNumber?.let { openWhatsApp(it) }
                 ?: Toast.makeText(this, "לא זוהה מספר", Toast.LENGTH_SHORT).show()
         }
@@ -276,6 +285,16 @@ class MainActivity : AppCompatActivity() {
             btnBulkSend.text = "שליחה קבוצתית$suffix"
             btnBulkSend.setBackgroundColor(Color.parseColor("#9C27B0"))
         }
+    }
+
+    private fun showWhatsAppWarningIfNeeded() {
+        if (whatsappWarningShown) return
+        whatsappWarningShown = true
+        tvWhatsAppWarning.visibility = View.VISIBLE
+        getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_WHATSAPP_WARNING, true)
+            .apply()
     }
 
     private fun showBulkSendDialog() {
