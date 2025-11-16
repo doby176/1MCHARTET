@@ -48,6 +48,7 @@ import java.util.LinkedHashSet
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
+import kotlin.math.min
 
 
 class MainActivity : AppCompatActivity() {
@@ -473,6 +474,7 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread {
                         tvDetected.text = "סריקה..."
                         tvDetected.setBackgroundColor(Color.parseColor("#4CAF50"))
+                        scanOverlay.setActive(false)
                     }
                 }
             }
@@ -588,6 +590,10 @@ class MainActivity : AppCompatActivity() {
             top = (previewView.height * 0.2f).toInt()
             bottom = (previewView.height * 0.6f).toInt()
         }
+        val maxHeight = (previewView.height * 0.45f).toInt()
+        if (bottom - top > maxHeight) {
+            bottom = top + maxHeight
+        }
         if (right <= left) {
             left = (previewView.width * 0.2f).toInt()
             right = (previewView.width * 0.8f).toInt()
@@ -658,6 +664,7 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             tvDetected.text = "סריקה..."
             tvDetected.setBackgroundColor(Color.parseColor("#4CAF50"))
+            scanOverlay.setActive(false)
         }
     }
 

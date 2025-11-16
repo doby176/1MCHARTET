@@ -32,7 +32,7 @@ class SmsReceiver : BroadcastReceiver() {
             context: Context,
             sender10: String
         ): ReplyData? {
-            val uri = Telephony.Sms.Inbox.CONTENT_URI
+            val uri = Telephony.Sms.CONTENT_URI
             val projection = arrayOf(Telephony.Sms.BODY)
             val selection = "${Telephony.Sms.ADDRESS} = ? OR ${Telephony.Sms.ADDRESS} = ?"
             val selectionArgs = arrayOf(sender10, "+972${sender10.removePrefix("0")}")
