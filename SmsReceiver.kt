@@ -3,6 +3,7 @@ package com.scan2chat.app
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Telephony
 import android.telephony.SmsMessage
@@ -32,28 +33,59 @@ class SmsReceiver : BroadcastReceiver() {
             context: Context,
             sender10: String
         ): ReplyData? {
-            val uri = Telephony.Sms.CONTENT_URI
+            val inboundText = queryLatestBody(context, Telephony.Sms.Inbox.CONTENT_URI, sender10)
+            val inboundData = inboundText?.let { SmsReceiver().parseReply(it, it, allowDropHints = true) }
+
+            val sentText = queryLatestBody(context, Telephony.Sms.Sent.CONTENT_URI, sender10)
+            val sentData = sentText?.let { SmsReceiver().parseReply(it, it, allowDropHints = false) }
+
+            if (inboundData == null && sentData == null) {
+                Log.d(TAG, "No SMS found for $sender10")
+                return null
+            }
+
+            var finalData = inboundData ?: sentData!!.copy(
+                leaveAtDoor = false,
+                leaveAtBox = false,
+                isHome = false,
+                wantsUpdate = false,
+                specialNote = null
+            )
+
+            if (sentData != null) {
+                if (finalData.floor == null && sentData.floor != null) {
+                    finalData = finalData.copy(floor = sentData.floor)
+                }
+                if (finalData.apartment == null && sentData.apartment != null) {
+                    finalData = finalData.copy(apartment = sentData.apartment)
+                }
+                if (finalData.code == null && sentData.code != null) {
+                    finalData = finalData.copy(code = sentData.code)
+                }
+            }
+
+            finalData = finalData.copy(
+                rawSmsBody = inboundData?.rawSmsBody ?: sentData?.rawSmsBody.orEmpty(),
+                hasReplied = inboundData != null || (inboundData == null && sentData != null)
+            )
+
+            return finalData
+        }
+
+        private fun queryLatestBody(
+            context: Context,
+            uri: Uri,
+            sender10: String
+        ): String? {
             val projection = arrayOf(Telephony.Sms.BODY)
             val selection = "${Telephony.Sms.ADDRESS} = ? OR ${Telephony.Sms.ADDRESS} = ?"
             val selectionArgs = arrayOf(sender10, "+972${sender10.removePrefix("0")}")
 
             return context.contentResolver.query(uri, projection, selection, selectionArgs, "date DESC")
                 ?.use { cursor ->
-                    if (!cursor.moveToFirst()) {
-                        Log.d(TAG, "No SMS found for $sender10")
-                        return null
-                    }
+                    if (!cursor.moveToFirst()) return@use null
                     val bodyCol = cursor.getColumnIndex(Telephony.Sms.BODY)
-                    val bodies = mutableListOf<String>()
-                    do {
-                        bodies.add(cursor.getString(bodyCol))
-                    } while (cursor.moveToNext())
-
-                    val fullBody = bodies.joinToString("")
-                    SmsReceiver().parseReply(fullBody, fullBody)
-                } ?: run {
-                    Log.d(TAG, "Query failed or no permission")
-                    null
+                    cursor.getString(bodyCol)
                 }
         }
 
@@ -97,7 +129,7 @@ class SmsReceiver : BroadcastReceiver() {
         MainActivity.addReply(sender10, reply)
     }
 
-    private fun parseReply(text: String, rawSms: String): ReplyData {
+    private fun parseReply(text: String, rawSms: String, allowDropHints: Boolean = true): ReplyData {
         val cleanedOriginal = text
             .lowercase()
             .replace(Regex("[\\s\\u200E]+"), " ")
@@ -143,55 +175,61 @@ class SmsReceiver : BroadcastReceiver() {
         val apartment = regex("דירה\\s*(\\d+)", lower)
             ?: regex("בדירה\\s+(\\d+)", lower)
 
-        val explicitHome = lower.contains("בבית") ||
-                lower.contains("אני בבית") ||
-                lower.contains("אני פה") ||
-                lower.contains("אני כאן") ||
-                lower.contains("יש מישהו")
+        val explicitHome = allowDropHints && (
+                lower.contains("בבית") ||
+                        lower.contains("אני בבית") ||
+                        lower.contains("אני פה") ||
+                        lower.contains("אני כאן") ||
+                        lower.contains("יש מישהו"))
 
-        val noOneHome = lower.contains("אין אף אחד") ||
-                lower.contains("אין בבית") ||
-                lower.contains("אף אחד לא בבית") ||
-                lower.contains("לא יהיה אף אחד") ||
-                lower.contains("אין מישהו")
+        val noOneHome = allowDropHints && (
+                lower.contains("אין אף אחד") ||
+                        lower.contains("אין בבית") ||
+                        lower.contains("אף אחד לא בבית") ||
+                        lower.contains("לא יהיה אף אחד") ||
+                        lower.contains("אין מישהו"))
 
-        val yesMatch = Regex("""\bכן\b""").find(lower)
+        val yesMatch = if (allowDropHints) Regex("""\bכן\b""").find(lower) else null
         val yesOk = yesMatch?.let {
             val start = (it.range.first - 12).coerceAtLeast(0)
             val snippet = lower.substring(start, it.range.last + 1)
             !snippet.contains("לא")
         } ?: false
 
-        val isHome = (explicitHome || yesOk) && !noOneHome
+        val isHome = allowDropHints && (explicitHome || yesOk) && !noOneHome
 
-        val hasDoor = lower.contains("דלת")
-        val hasBox = lower.contains("ארון") || lower.contains("חשמל")
+        val hasDoor = allowDropHints && lower.contains("דלת")
+        val hasBox = allowDropHints && (lower.contains("ארון") || lower.contains("חשמל"))
 
         val leaveAtDoor = hasDoor
         val leaveAtBox = hasBox
 
-        val wantsUpdate = lower.contains("תעדכנו") ||
-                lower.contains("תעדכן") ||
-                lower.contains("עדכן אותי") ||
-                lower.contains("תגיד איפה") ||
-                lower.contains("תשלח איפה") ||
-                lower.contains("תשלח לי איפה")
+        val wantsUpdate = allowDropHints && (
+                lower.contains("תעדכנו") ||
+                        lower.contains("תעדכן") ||
+                        lower.contains("עדכן אותי") ||
+                        lower.contains("תגיד איפה") ||
+                        lower.contains("תשלח איפה") ||
+                        lower.contains("תשלח לי איפה"))
 
-        val hasIfNotHome = lower.contains("אם אין") ||
-                lower.contains("אם לא יהיה") ||
-                lower.contains("אם אף אחד") ||
-                lower.contains("אם לא בבית") ||
-                lower.contains("אם אין מישהו")
+        val hasIfNotHome = allowDropHints && (
+                lower.contains("אם אין") ||
+                        lower.contains("אם לא יהיה") ||
+                        lower.contains("אם אף אחד") ||
+                        lower.contains("אם לא בבית") ||
+                        lower.contains("אם אין מישהו"))
 
-        val specialNote = when {
-            lower.contains("אין קוד") && lower.contains("להתקשר") -> "אין קוד – להתקשר"
-            lower.contains("אין קוד") -> "אין קוד"
-            lower.contains("צריך להתקשר") -> "צריך להתקשר"
-            lower.contains("להתקשר אלי") -> "להתקשר אלי"
-            lower.contains("לדבר איתי") -> "לדבר איתי"
-            code == null -> "לא צוין קוד"
-            else -> null
-        }
+        val specialNote = if (allowDropHints) {
+            when {
+                lower.contains("אין קוד") && lower.contains("להתקשר") -> "אין קוד – להתקשר"
+                lower.contains("אין קוד") -> "אין קוד"
+                lower.contains("צריך להתקשר") -> "צריך להתקשר"
+                lower.contains("להתקשר אלי") -> "להתקשר אלי"
+                lower.contains("לדבר איתי") -> "לדבר איתי"
+                code == null -> "לא צוין קוד"
+                else -> null
+            }
+        } else null
 
         return ReplyData(
             floor = floor,
