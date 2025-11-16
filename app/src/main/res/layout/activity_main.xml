@@ -220,7 +220,7 @@
         android:background="#80000000"
         android:padding="16dp"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="24dp"
         app:layout_constraintBottom_toTopOf="@id/buttonContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">

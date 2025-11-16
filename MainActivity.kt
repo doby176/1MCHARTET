@@ -578,7 +578,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateScanWindowBounds() {
         if (previewView.width == 0 || previewView.height == 0) return
-        val marginPx = (12 * resources.displayMetrics.density).toInt()
+        val marginPx = (20 * resources.displayMetrics.density).toInt()
         var top = topBar.bottom + marginPx
         var bottom = detectionPanel.top - marginPx
         var left = (previewView.width * 0.1f).toInt()
