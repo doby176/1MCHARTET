@@ -77,7 +77,9 @@ class MainActivity : AppCompatActivity() {
     private var camera: Camera? = null
     private var mediaPlayer: MediaPlayer? = null
     private var bulkLimitDialogShown = false
-    private var whatsappWarningShown = false
+    private val whatsappWarningHideRunnable = Runnable {
+        tvWhatsAppWarning.visibility = View.GONE
+    }
     private val roiRectNorm = RectF(0f, 0f, 1f, 1f)
     private val scanWindowRectPx = Rect()
 
@@ -118,7 +120,6 @@ class MainActivity : AppCompatActivity() {
         lateinit var appContext: Context
 
         private const val PREF_NAME = "Scan2ChatPrefs"
-        private const val KEY_WHATSAPP_WARNING = "whatsapp_warning_shown"
         private const val MAX_BULK_PER_WINDOW = 30
         private const val RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000L
         private val sendTimestamps = ArrayDeque<Long>()
@@ -190,10 +191,6 @@ class MainActivity : AppCompatActivity() {
         buttonContainer = findViewById(R.id.buttonContainer)
         scanOverlay = findViewById(R.id.scanOverlay)
 
-        val prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
-        whatsappWarningShown = prefs.getBoolean(KEY_WHATSAPP_WARNING, false)
-        tvWhatsAppWarning.visibility = if (whatsappWarningShown) View.VISIBLE else View.GONE
-
         previewView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
                 if (previewView.width == 0 || previewView.height == 0) return
@@ -229,7 +226,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnOpenWhatsApp.setOnClickListener {
-            showWhatsAppWarningIfNeeded()
+            showWhatsAppWarning()
             confirmedNumber?.let { openWhatsApp(it) }
                 ?: Toast.makeText(this, "לא זוהה מספר", Toast.LENGTH_SHORT).show()
         }
@@ -291,14 +288,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showWhatsAppWarningIfNeeded() {
-        if (whatsappWarningShown) return
-        whatsappWarningShown = true
+    private fun showWhatsAppWarning() {
         tvWhatsAppWarning.visibility = View.VISIBLE
-        getSharedPreferences(PREF_NAME, MODE_PRIVATE)
-            .edit()
-            .putBoolean(KEY_WHATSAPP_WARNING, true)
-            .apply()
+        flashHandler.removeCallbacks(whatsappWarningHideRunnable)
+        flashHandler.postDelayed(whatsappWarningHideRunnable, 10_000)
     }
 
     private fun showBulkSendDialog() {
@@ -586,13 +579,13 @@ class MainActivity : AppCompatActivity() {
         if (previewView.width == 0 || previewView.height == 0) return
         val marginPx = (24 * resources.displayMetrics.density).toInt()
         var top = topBar.bottom + marginPx
-        var bottom = etCustomMessage.top - marginPx
+        var bottom = detectionPanel.top - marginPx
         var left = (previewView.width * 0.1f).toInt()
         var right = (previewView.width * 0.9f).toInt()
 
         if (bottom <= top) {
-            top = (previewView.height * 0.3f).toInt()
-            bottom = (previewView.height * 0.65f).toInt()
+            top = (previewView.height * 0.2f).toInt()
+            bottom = (previewView.height * 0.6f).toInt()
         }
         if (right <= left) {
             left = (previewView.width * 0.2f).toInt()
