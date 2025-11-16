@@ -454,9 +454,15 @@ class MainActivity : AppCompatActivity() {
                 visionText.textBlocks.forEach { block ->
                     if (handled) return@forEach
                     val box = block.boundingBox ?: return@forEach
-                    val cx = box.centerX().toFloat() / imageWidth
-                    val cy = box.centerY().toFloat() / imageHeight
-                    if (!roiRectNorm.contains(cx, cy)) return@forEach
+                    val blockLeft = (box.left.coerceAtLeast(0)).toFloat() / imageWidth
+                    val blockTop = (box.top.coerceAtLeast(0)).toFloat() / imageHeight
+                    val blockRight = (box.right.coerceAtMost(imageWidth.toInt())).toFloat() / imageWidth
+                    val blockBottom = (box.bottom.coerceAtMost(imageHeight.toInt())).toFloat() / imageHeight
+                    val intersects = !(blockRight < roiRectNorm.left ||
+                            blockLeft > roiRectNorm.right ||
+                            blockBottom < roiRectNorm.top ||
+                            blockTop > roiRectNorm.bottom)
+                    if (!intersects) return@forEach
 
                     val cleaned = block.text.replace(" ", "").replace("-", "")
                     val matcher = phonePattern.matcher(cleaned)

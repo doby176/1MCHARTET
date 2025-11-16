@@ -33,60 +33,82 @@ class SmsReceiver : BroadcastReceiver() {
             context: Context,
             sender10: String
         ): ReplyData? {
-            val inboundText = queryLatestBody(context, Telephony.Sms.Inbox.CONTENT_URI, sender10)
+            val inboundText = queryBodies(context, Telephony.Sms.Inbox.CONTENT_URI, sender10, 1).firstOrNull()
             val inboundData = inboundText?.let { SmsReceiver().parseReply(it, it, allowDropHints = true) }
 
-            val sentText = queryLatestBody(context, Telephony.Sms.Sent.CONTENT_URI, sender10)
-            val sentData = sentText?.let { SmsReceiver().parseReply(it, it, allowDropHints = false) }
+            val sentTexts = queryBodies(context, Telephony.Sms.Sent.CONTENT_URI, sender10, 5)
+            var sentAggregate: ReplyData? = null
+            for (body in sentTexts) {
+                val parsed = SmsReceiver().parseReply(body, body, allowDropHints = false)
+                val hasAny = parsed.floor != null || parsed.apartment != null || parsed.code != null
+                if (!hasAny) continue
+                if (sentAggregate == null) {
+                    sentAggregate = parsed
+                } else {
+                    sentAggregate = sentAggregate.copy(
+                        floor = sentAggregate.floor ?: parsed.floor,
+                        apartment = sentAggregate.apartment ?: parsed.apartment,
+                        code = sentAggregate.code ?: parsed.code
+                    )
+                }
+                if (sentAggregate.floor != null && sentAggregate.apartment != null && sentAggregate.code != null) break
+            }
 
-            if (inboundData == null && sentData == null) {
+            if (inboundData == null && sentAggregate == null) {
                 Log.d(TAG, "No SMS found for $sender10")
                 return null
             }
 
-            var finalData = inboundData ?: sentData!!.copy(
+            var finalData = inboundData ?: sentAggregate!!.copy(
                 leaveAtDoor = false,
                 leaveAtBox = false,
                 isHome = false,
                 wantsUpdate = false,
-                specialNote = null
+                specialNote = null,
+                hasReplied = false
             )
 
-            if (sentData != null) {
-                if (finalData.floor == null && sentData.floor != null) {
-                    finalData = finalData.copy(floor = sentData.floor)
+            if (sentAggregate != null) {
+                if (finalData.floor == null && sentAggregate.floor != null) {
+                    finalData = finalData.copy(floor = sentAggregate.floor)
                 }
-                if (finalData.apartment == null && sentData.apartment != null) {
-                    finalData = finalData.copy(apartment = sentData.apartment)
+                if (finalData.apartment == null && sentAggregate.apartment != null) {
+                    finalData = finalData.copy(apartment = sentAggregate.apartment)
                 }
-                if (finalData.code == null && sentData.code != null) {
-                    finalData = finalData.copy(code = sentData.code)
+                if (finalData.code == null && sentAggregate.code != null) {
+                    finalData = finalData.copy(code = sentAggregate.code)
                 }
             }
 
             finalData = finalData.copy(
-                rawSmsBody = inboundData?.rawSmsBody ?: sentData?.rawSmsBody.orEmpty(),
-                hasReplied = inboundData != null || (inboundData == null && sentData != null)
+                rawSmsBody = inboundData?.rawSmsBody ?: sentAggregate?.rawSmsBody.orEmpty(),
+                hasReplied = inboundData != null || (inboundData == null && sentAggregate != null)
             )
 
             return finalData
         }
 
-        private fun queryLatestBody(
+        private fun queryBodies(
             context: Context,
             uri: Uri,
-            sender10: String
-        ): String? {
+            sender10: String,
+            limit: Int
+        ): List<String> {
             val projection = arrayOf(Telephony.Sms.BODY)
             val selection = "${Telephony.Sms.ADDRESS} = ? OR ${Telephony.Sms.ADDRESS} = ?"
             val selectionArgs = arrayOf(sender10, "+972${sender10.removePrefix("0")}")
+            val bodies = mutableListOf<String>()
 
-            return context.contentResolver.query(uri, projection, selection, selectionArgs, "date DESC")
+            context.contentResolver.query(uri, projection, selection, selectionArgs, "date DESC")
                 ?.use { cursor ->
-                    if (!cursor.moveToFirst()) return@use null
                     val bodyCol = cursor.getColumnIndex(Telephony.Sms.BODY)
-                    cursor.getString(bodyCol)
+                    var count = 0
+                    while (cursor.moveToNext() && count < limit) {
+                        bodies.add(cursor.getString(bodyCol))
+                        count++
+                    }
                 }
+            return bodies
         }
 
         fun forceParseRepliesForSender(
