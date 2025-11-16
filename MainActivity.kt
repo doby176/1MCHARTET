@@ -201,6 +201,11 @@ class MainActivity : AppCompatActivity() {
                 previewView.viewTreeObserver.removeOnGlobalLayoutListener(this)
             }
         })
+        val roiLayoutListener = ViewTreeObserver.OnGlobalLayoutListener {
+            updateScanWindowBounds()
+        }
+        detectionPanel.viewTreeObserver.addOnGlobalLayoutListener(roiLayoutListener)
+        buttonContainer.viewTreeObserver.addOnGlobalLayoutListener(roiLayoutListener)
 
         tvDetected.text = "סריקה..."
 
