@@ -16,7 +16,7 @@ class ScanOverlayView @JvmOverloads constructor(
 
     private val windowRect = Rect()
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#80FFFFFF")
+        color = Color.parseColor("#80FF0000")
         style = Paint.Style.STROKE
         strokeWidth = resources.displayMetrics.density * 2
     }
@@ -24,6 +24,15 @@ class ScanOverlayView @JvmOverloads constructor(
     fun updateWindow(rect: Rect) {
         if (windowRect == rect) return
         windowRect.set(rect)
+        invalidate()
+    }
+
+    fun setActive(active: Boolean) {
+        borderPaint.color = if (active) {
+            Color.parseColor("#8000FF00")
+        } else {
+            Color.parseColor("#80FF0000")
+        }
         invalidate()
     }
 

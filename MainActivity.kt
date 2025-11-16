@@ -482,6 +482,7 @@ class MainActivity : AppCompatActivity() {
     private fun processDetectedNumber(raw: String): Boolean {
         val normalized = normalizePhone(raw) ?: return false
         if (normalized.length !in 11..13) return false
+        runOnUiThread { scanOverlay.setActive(true) }
 
         if (lastDetectedNumber != normalized) {
             lastDetectedNumber = normalized
@@ -578,7 +579,7 @@ class MainActivity : AppCompatActivity() {
     private fun updateScanWindowBounds() {
         if (previewView.width == 0 || previewView.height == 0) return
         val marginPx = (24 * resources.displayMetrics.density).toInt()
-        var top = topBar.bottom + marginPx
+        var top = topBar.bottom + marginPx / 2
         var bottom = detectionPanel.top - marginPx
         var left = (previewView.width * 0.1f).toInt()
         var right = (previewView.width * 0.9f).toInt()
