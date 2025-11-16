@@ -455,7 +455,7 @@ class MainActivity : AppCompatActivity() {
                     roiRectNorm.left,
                     roiRectNorm.top,
                     roiRectNorm.right,
-                    (roiRectNorm.bottom + 0.08f).coerceAtMost(1f)
+                    (roiRectNorm.bottom + 0.11f).coerceAtMost(1f)
                 )
 
                 visionText.textBlocks.forEach { block ->
