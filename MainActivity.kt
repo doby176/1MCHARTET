@@ -206,6 +206,7 @@ class MainActivity : AppCompatActivity() {
         }
         detectionPanel.viewTreeObserver.addOnGlobalLayoutListener(roiLayoutListener)
         buttonContainer.viewTreeObserver.addOnGlobalLayoutListener(roiLayoutListener)
+        etCustomMessage.viewTreeObserver.addOnGlobalLayoutListener(roiLayoutListener)
 
         tvDetected.text = "סריקה..."
 
@@ -583,15 +584,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateScanWindowBounds() {
         if (previewView.width == 0 || previewView.height == 0) return
-        val marginPx = (20 * resources.displayMetrics.density).toInt()
+        val marginPx = (24 * resources.displayMetrics.density).toInt()
         var top = topBar.bottom + marginPx
-        var bottom = detectionPanel.top - marginPx
+        var bottom = etCustomMessage.top - marginPx
         var left = (previewView.width * 0.1f).toInt()
         var right = (previewView.width * 0.9f).toInt()
 
         if (bottom <= top) {
             top = (previewView.height * 0.3f).toInt()
-            bottom = (previewView.height * 0.7f).toInt()
+            bottom = (previewView.height * 0.65f).toInt()
         }
         if (right <= left) {
             left = (previewView.width * 0.2f).toInt()
