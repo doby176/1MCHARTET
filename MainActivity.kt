@@ -7,6 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.Rect
+import android.graphics.RectF
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
@@ -19,6 +21,7 @@ import android.text.Spanned
 import android.text.style.ImageSpan
 import android.util.Log
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -61,6 +64,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var flashAlert: LinearLayout
     private lateinit var btnLogout: Button
     private lateinit var tvWhatsAppWarning: TextView
+    private lateinit var topBar: LinearLayout
+    private lateinit var detectionPanel: LinearLayout
+    private lateinit var buttonContainer: LinearLayout
+    private lateinit var scanOverlay: ScanOverlayView
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private var lastDetectedNumber: String? = null
     private var confirmedNumber: String? = null
@@ -71,6 +78,8 @@ class MainActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private var bulkLimitDialogShown = false
     private var whatsappWarningShown = false
+    private val roiRectNorm = RectF(0f, 0f, 1f, 1f)
+    private val scanWindowRectPx = Rect()
 
     private var isBulkScanMode = false
 
@@ -176,10 +185,22 @@ class MainActivity : AppCompatActivity() {
         flashAlert = findViewById(R.id.flashAlert)
         btnLogout = findViewById(R.id.btnLogout)
         tvWhatsAppWarning = findViewById(R.id.tvWhatsAppWarning)
+        topBar = findViewById(R.id.topBar)
+        detectionPanel = findViewById(R.id.detectionPanel)
+        buttonContainer = findViewById(R.id.buttonContainer)
+        scanOverlay = findViewById(R.id.scanOverlay)
 
         val prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
         whatsappWarningShown = prefs.getBoolean(KEY_WHATSAPP_WARNING, false)
         tvWhatsAppWarning.visibility = if (whatsappWarningShown) View.VISIBLE else View.GONE
+
+        previewView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                if (previewView.width == 0 || previewView.height == 0) return
+                updateScanWindowBounds()
+                previewView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+            }
+        })
 
         tvDetected.text = "סריקה..."
 
@@ -426,80 +447,100 @@ class MainActivity : AppCompatActivity() {
 
         TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS).process(image)
             .addOnSuccessListener { visionText ->
-                val text = visionText.text.replace(" ", "").replace("-", "")
-                val matcher = phonePattern.matcher(text)
-                if (matcher.find()) {
-                    val raw = matcher.group(0)
-                    val normalized = normalizePhone(raw) ?: return@addOnSuccessListener
-                    if (normalized.length !in 11..13) return@addOnSuccessListener
+                val imageWidth = imageProxy.width.toFloat().coerceAtLeast(1f)
+                val imageHeight = imageProxy.height.toFloat().coerceAtLeast(1f)
+                var handled = false
 
-                    if (lastDetectedNumber != normalized) {
-                        lastDetectedNumber = normalized
-                        detectionCount = 1
-                        confirmedNumber = null
-                    } else {
-                        detectionCount++
+                visionText.textBlocks.forEach { block ->
+                    if (handled) return@forEach
+                    val box = block.boundingBox ?: return@forEach
+                    val cx = box.centerX().toFloat() / imageWidth
+                    val cy = box.centerY().toFloat() / imageHeight
+                    if (!roiRectNorm.contains(cx, cy)) return@forEach
+
+                    val cleaned = block.text.replace(" ", "").replace("-", "")
+                    val matcher = phonePattern.matcher(cleaned)
+                    while (matcher.find()) {
+                        val raw = matcher.group(0)
+                        if (processDetectedNumber(raw)) {
+                            handled = true
+                            break
+                        }
                     }
+                }
 
+                if (!handled && detectionCount > 0 && lastDetectedNumber != null && confirmedNumber == null) {
+                    detectionCount = 0
                     runOnUiThread {
-                        val display = formatForDisplay(normalized)
-                        tvDetected.text = "$display (${detectionCount}/2)"
-                        tvDetected.setBackgroundColor(
-                            if (detectionCount >= 2) Color.parseColor("#4CAF50") else Color.parseColor("#FF9800")
-                        )
-                    }
-
-                    if (detectionCount >= 2 && confirmedNumber == null) {
-                        confirmedNumber = normalized
-                        runOnUiThread { playSound("beep") }
-
-                        val confirmedDisplay = formatForDisplay(normalized)
-                        runOnUiThread {
-                            tvDetected.text = confirmedDisplay
-                            tvDetected.setBackgroundColor(Color.parseColor("#4CAF50"))
-                        }
-
-                        val local10 = toLocal10Digit(normalized)
-                        val reply = fetchLatestReply(local10)
-
-                        addNumberToBulkQueue(local10, reply)
-
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            if (confirmedNumber == normalized) {
-                                when {
-                                    isBulkScanMode -> {
-                                        if (reply?.apartment == null) {
-                                            Toast.makeText(this, "נוסף: $confirmedDisplay", Toast.LENGTH_SHORT).show()
-                                        } else {
-                                            showAlreadyRepliedInBulkFlash()
-                                        }
-                                    }
-                                    isDeliveryMode -> {
-                                        SmsReceiver.forceParseRepliesForSender(this, local10) { addReply(local10, it) }
-                                        showDeliveryPopup(normalized)
-                                    }
-                                    else -> {
-                                        if (reply?.apartment != null) {
-                                            showAlreadyRepliedFlash()
-                                        } else {
-                                            sendSmsMessage(normalized, etCustomMessage.text.toString().trim().isNotEmpty())
-                                        }
-                                    }
-                                }
-                            }
-                        }, 800)
-                    }
-                } else {
-                    if (detectionCount > 0 && lastDetectedNumber != null && confirmedNumber == null) {
-                        detectionCount = 0
-                        runOnUiThread {
-                            tvDetected.text = "סריקה..."
-                            tvDetected.setBackgroundColor(Color.parseColor("#4CAF50"))
-                        }
+                        tvDetected.text = "סריקה..."
+                        tvDetected.setBackgroundColor(Color.parseColor("#4CAF50"))
                     }
                 }
             }
             .addOnCompleteListener { imageProxy.close() }
+    }
+
+    private fun processDetectedNumber(raw: String): Boolean {
+        val normalized = normalizePhone(raw) ?: return false
+        if (normalized.length !in 11..13) return false
+
+        if (lastDetectedNumber != normalized) {
+            lastDetectedNumber = normalized
+            detectionCount = 1
+            confirmedNumber = null
+        } else {
+            detectionCount++
+        }
+
+        runOnUiThread {
+            val display = formatForDisplay(normalized)
+            tvDetected.text = "$display (${detectionCount}/2)"
+            tvDetected.setBackgroundColor(
+                if (detectionCount >= 2) Color.parseColor("#4CAF50") else Color.parseColor("#FF9800")
+            )
+        }
+
+        if (detectionCount >= 2 && confirmedNumber == null) {
+            confirmedNumber = normalized
+            runOnUiThread { playSound("beep") }
+
+            val confirmedDisplay = formatForDisplay(normalized)
+            runOnUiThread {
+                tvDetected.text = confirmedDisplay
+                tvDetected.setBackgroundColor(Color.parseColor("#4CAF50"))
+            }
+
+            val local10 = toLocal10Digit(normalized)
+            val reply = fetchLatestReply(local10)
+
+            addNumberToBulkQueue(local10, reply)
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (confirmedNumber == normalized) {
+                    when {
+                        isBulkScanMode -> {
+                            if (reply?.apartment == null) {
+                                Toast.makeText(this, "נוסף: $confirmedDisplay", Toast.LENGTH_SHORT).show()
+                            } else {
+                                showAlreadyRepliedInBulkFlash()
+                            }
+                        }
+                        isDeliveryMode -> {
+                            SmsReceiver.forceParseRepliesForSender(this, local10) { addReply(local10, it) }
+                            showDeliveryPopup(normalized)
+                        }
+                        else -> {
+                            if (reply?.apartment != null) {
+                                showAlreadyRepliedFlash()
+                            } else {
+                                sendSmsMessage(normalized, etCustomMessage.text.toString().trim().isNotEmpty())
+                            }
+                        }
+                    }
+                }
+            }, 800)
+        }
+        return true
     }
 
     private fun addNumberToBulkQueue(local10: String, reply: ReplyData?) {
@@ -533,6 +574,33 @@ class MainActivity : AppCompatActivity() {
         bulkQueue.clear()
         bulkLimitDialogShown = false
         updateBulkSendButton()
+    }
+
+    private fun updateScanWindowBounds() {
+        if (previewView.width == 0 || previewView.height == 0) return
+        val marginPx = (12 * resources.displayMetrics.density).toInt()
+        var top = topBar.bottom + marginPx
+        var bottom = detectionPanel.top - marginPx
+        var left = (previewView.width * 0.1f).toInt()
+        var right = (previewView.width * 0.9f).toInt()
+
+        if (bottom <= top) {
+            top = (previewView.height * 0.3f).toInt()
+            bottom = (previewView.height * 0.7f).toInt()
+        }
+        if (right <= left) {
+            left = (previewView.width * 0.2f).toInt()
+            right = (previewView.width * 0.8f).toInt()
+        }
+
+        scanWindowRectPx.set(left, top, right, bottom)
+        scanOverlay.updateWindow(scanWindowRectPx)
+        roiRectNorm.set(
+            left.toFloat() / previewView.width,
+            top.toFloat() / previewView.height,
+            right.toFloat() / previewView.width,
+            bottom.toFloat() / previewView.height
+        )
     }
 
     private fun fetchLatestReply(local10: String): ReplyData? {
