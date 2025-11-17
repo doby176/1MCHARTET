@@ -35,6 +35,16 @@
 -keep class com.paypal.checkout.** { *; }
 -dontwarn com.paypal.checkout.**
 
+# PayPal ships CardinalCommerce (3DS) and minidev JSON helpers
+-keep class com.cardinalcommerce.** { *; }
+-dontwarn com.cardinalcommerce.**
+-keep class com.cardinalcommerce.dependencies.internal.minidev.** { *; }
+-dontwarn com.cardinalcommerce.dependencies.internal.minidev.**
+
+# Keep BouncyCastle providers used via ServiceLoader
+-keep class org.bouncycastle.** { *; }
+-dontwarn org.bouncycastle.**
+
 # ---- Keep generated R classes (Android resources) ----
 -keep class **.R {
     *;
