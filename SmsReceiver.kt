@@ -33,8 +33,12 @@ class SmsReceiver : BroadcastReceiver() {
             context: Context,
             sender10: String
         ): ReplyData? {
-            val inboundText = queryBodies(context, Telephony.Sms.Inbox.CONTENT_URI, sender10, 1).firstOrNull()
-            val inboundData = inboundText?.let { SmsReceiver().parseReply(it, it, allowDropHints = true) }
+            val inboundBodies = queryBodies(context, Telephony.Sms.Inbox.CONTENT_URI, sender10, 5)
+            var inboundAggregate: ReplyData? = null
+            for (body in inboundBodies) {
+                val parsed = SmsReceiver().parseReply(body, body, allowDropHints = true)
+                inboundAggregate = mergeReplies(inboundAggregate, parsed, includeDropHints = true)
+            }
 
             val sentTexts = queryBodies(context, Telephony.Sms.Sent.CONTENT_URI, sender10, 5)
             var sentAggregate: ReplyData? = null
@@ -42,29 +46,23 @@ class SmsReceiver : BroadcastReceiver() {
                 val parsed = SmsReceiver().parseReply(body, body, allowDropHints = false)
                 val hasAny = parsed.floor != null || parsed.apartment != null || parsed.code != null
                 if (!hasAny) continue
-                if (sentAggregate == null) {
-                    sentAggregate = parsed
-                } else {
-                    sentAggregate = sentAggregate.copy(
-                        floor = sentAggregate.floor ?: parsed.floor,
-                        apartment = sentAggregate.apartment ?: parsed.apartment,
-                        code = sentAggregate.code ?: parsed.code
-                    )
-                }
+                sentAggregate = mergeReplies(sentAggregate, parsed, includeDropHints = false)
                 if (sentAggregate.floor != null && sentAggregate.apartment != null && sentAggregate.code != null) break
             }
-
-            if (inboundData == null && sentAggregate == null) {
-                Log.d(TAG, "No SMS found for $sender10")
-                return null
-            }
-
-            var finalData = inboundData ?: sentAggregate!!.copy(
+            sentAggregate = sentAggregate?.copy(
                 leaveAtDoor = false,
                 leaveAtBox = false,
                 isHome = false,
                 wantsUpdate = false,
-                specialNote = null,
+                specialNote = null
+            )
+
+            if (inboundAggregate == null && sentAggregate == null) {
+                Log.d(TAG, "No SMS found for $sender10")
+                return null
+            }
+
+            var finalData = inboundAggregate ?: sentAggregate!!.copy(
                 hasReplied = false
             )
 
@@ -81,8 +79,8 @@ class SmsReceiver : BroadcastReceiver() {
             }
 
             finalData = finalData.copy(
-                rawSmsBody = inboundData?.rawSmsBody ?: sentAggregate?.rawSmsBody.orEmpty(),
-                hasReplied = inboundData != null || (inboundData == null && sentAggregate != null)
+                rawSmsBody = inboundAggregate?.rawSmsBody ?: sentAggregate?.rawSmsBody.orEmpty(),
+                hasReplied = inboundAggregate != null || (inboundAggregate == null && sentAggregate != null)
             )
 
             return finalData
@@ -111,6 +109,30 @@ class SmsReceiver : BroadcastReceiver() {
                     }
                 }
             return bodies
+        }
+
+        private fun mergeReplies(
+            current: ReplyData?,
+            incoming: ReplyData,
+            includeDropHints: Boolean
+        ): ReplyData {
+            if (current == null) return incoming
+            val combinedRaw = listOf(current.rawSmsBody, incoming.rawSmsBody)
+                .filter { it.isNotBlank() }
+                .distinct()
+                .joinToString("\n")
+
+            return current.copy(
+                floor = current.floor ?: incoming.floor,
+                apartment = current.apartment ?: incoming.apartment,
+                code = current.code ?: incoming.code,
+                leaveAtDoor = if (includeDropHints) current.leaveAtDoor || incoming.leaveAtDoor else current.leaveAtDoor,
+                leaveAtBox = if (includeDropHints) current.leaveAtBox || incoming.leaveAtBox else current.leaveAtBox,
+                isHome = if (includeDropHints) current.isHome || incoming.isHome else current.isHome,
+                wantsUpdate = if (includeDropHints) current.wantsUpdate || incoming.wantsUpdate else current.wantsUpdate,
+                specialNote = if (includeDropHints && current.specialNote == null) incoming.specialNote else current.specialNote,
+                rawSmsBody = combinedRaw
+            )
         }
 
         fun forceParseRepliesForSender(

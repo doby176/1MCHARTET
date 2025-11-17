@@ -222,13 +222,19 @@ class MainActivity : AppCompatActivity() {
 
         btnSend.setOnClickListener {
             confirmedNumber?.let { number ->
-                sendSmsMessage(number, useCustomMessage = etCustomMessage.text.toString().trim().isNotEmpty())
+                sendSmsMessage(
+                    number,
+                    useCustomMessage = etCustomMessage.text.toString().trim().isNotEmpty(),
+                    forceEmptyBody = isDeliveryMode
+                )
             } ?: Toast.makeText(this, "לא זוהה מספר", Toast.LENGTH_SHORT).show()
         }
 
         btnOpenWhatsApp.setOnClickListener {
-            showWhatsAppWarning()
-            confirmedNumber?.let { openWhatsApp(it) }
+            if (!isDeliveryMode) {
+                showWhatsAppWarning()
+            }
+            confirmedNumber?.let { openWhatsApp(it, includeBody = !isDeliveryMode) }
                 ?: Toast.makeText(this, "לא זוהה מספר", Toast.LENGTH_SHORT).show()
         }
 
@@ -732,7 +738,7 @@ class MainActivity : AppCompatActivity() {
         flashHandler.postDelayed(hideFlashRunnable, 2000)
     }
 
-    private fun sendSmsMessage(number: String, useCustomMessage: Boolean = false) {
+    private fun sendSmsMessage(number: String, useCustomMessage: Boolean = false, forceEmptyBody: Boolean = false) {
         val cleanPhone = number.replace("+", "")
         val local10 = toLocal10Digit(cleanPhone)
 
@@ -740,13 +746,17 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread { updateDeliveryButtonVisibility(); updateBulkSendButton() }
 
         Handler(Looper.getMainLooper()).postDelayed({
-            val finalMessage = if (useCustomMessage && etCustomMessage.text.toString().trim().isNotEmpty()) {
+            val finalMessage = if (!forceEmptyBody && useCustomMessage && etCustomMessage.text.toString().trim().isNotEmpty()) {
                 etCustomMessage.text.toString().trim()
-            } else defaultMessage
+            } else if (!forceEmptyBody) {
+                defaultMessage
+            } else ""
 
             try {
                 val smsIntent = Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:$cleanPhone")).apply {
-                    putExtra("sms_body", finalMessage)
+                    if (!forceEmptyBody && finalMessage.isNotEmpty()) {
+                        putExtra("sms_body", finalMessage)
+                    }
                 }
                 if (smsIntent.resolveActivity(packageManager) != null) {
                     startActivity(smsIntent)
@@ -759,17 +769,20 @@ class MainActivity : AppCompatActivity() {
         }, 800)
     }
 
-    private fun openWhatsApp(number: String) {
+    private fun openWhatsApp(number: String, includeBody: Boolean = true) {
         val cleanNumber = number.replace(Regex("[^+0-9]"), "")
-        val finalMessage = if (etCustomMessage.text.toString().trim().isNotEmpty()) {
+        val messageShouldInclude = includeBody && etCustomMessage.text.toString().trim().isNotEmpty()
+        val finalMessage = if (messageShouldInclude) {
             etCustomMessage.text.toString().trim()
         } else defaultMessage
 
-        val encodedMessage = try {
-            URLEncoder.encode(finalMessage, "UTF-8")
-        } catch (e: Exception) {
-            finalMessage
-        }
+        val encodedMessage = if (includeBody) {
+            try {
+                URLEncoder.encode(finalMessage, "UTF-8")
+            } catch (e: Exception) {
+                finalMessage
+            }
+        } else ""
 
         val waNumber = when {
             cleanNumber.startsWith("+972") -> cleanNumber.removePrefix("+")
@@ -777,7 +790,11 @@ class MainActivity : AppCompatActivity() {
             else -> cleanNumber
         }
 
-        val uri = "https://wa.me/$waNumber?text=$encodedMessage"
+        val uri = if (includeBody) {
+            "https://wa.me/$waNumber?text=$encodedMessage"
+        } else {
+            "https://wa.me/$waNumber"
+        }
 
         try {
             startActivity(
@@ -799,6 +816,18 @@ class MainActivity : AppCompatActivity() {
         return this
     }
 
+    private fun buildInstructionText(reply: ReplyData): String {
+        val lines = mutableListOf<String>()
+        if (reply.isHome) lines.add("יש מישהו בבית")
+        if (reply.leaveAtDoor) lines.add("להשאיר בדלת")
+        if (reply.leaveAtBox) lines.add("להשאיר בארון חשמל")
+        if (reply.specialNote != null && reply.specialNote.isNotBlank()) lines.add(reply.specialNote)
+        if (reply.wantsUpdate) lines.add("הלקוח ביקש עדכון לאחר המסירה")
+        val raw = reply.rawSmsBody.trim()
+        if (raw.isNotEmpty()) lines.add(raw)
+        return lines.joinToString("\n") { it.trim() }.trim()
+    }
+
     private fun showDeliveryPopup(phone: String) {
         val clean = toLocal10Digit(phone)
         val reply = fetchLatestReply(clean)
@@ -815,44 +844,16 @@ class MainActivity : AppCompatActivity() {
                 if (codeText.isNotEmpty()) {
                     sb.append("קוד: $codeText\n")
                 }
-            } else if (reply.specialNote != null) {
-                sb.append("${reply.specialNote}\n")
             } else {
                 sb.append("לא צוין קוד\n")
             }
             sb.append("\n")
 
-            if (reply.isHome) {
-                sb.appendWithIcon(R.drawable.ic_home, " בבית")
-                val raw = reply.rawSmsBody.lowercase()
-                val hasConditional = raw.contains("אם אין") ||
-                        raw.contains("אם לא יהיה") ||
-                        raw.contains("אם אף אחד") ||
-                        raw.contains("אם לא בבית") ||
-                        raw.contains("אם אין מישהו")
-
-                if (hasConditional && (reply.leaveAtDoor || reply.leaveAtBox)) {
-                    sb.append(" (אבל")
-                    if (reply.leaveAtDoor) sb.appendWithIcon(R.drawable.ic_door_real, " אם לא – בדלת")
-                    if (reply.leaveAtBox) {
-                        if (reply.leaveAtDoor) sb.append(" או")
-                        sb.appendWithIcon(R.drawable.ic_cabinet_real, " אם לא – בארון חשמל")
-                    }
-                    sb.append(")")
-                }
-                sb.append("\n")
-            } else {
-                if (reply.leaveAtDoor) sb.appendWithIcon(R.drawable.ic_door_real, " להשאיר בדלת\n")
-                if (reply.leaveAtBox) sb.appendWithIcon(R.drawable.ic_cabinet_real, " להשאיר בארון חשמל\n")
-                if (!reply.leaveAtDoor && !reply.leaveAtBox) sb.append("לא צוין לאן להשאיר\n")
-            }
-
-            if (reply.wantsUpdate) sb.append("בקשה מהלקוח: תעדכן איפה שמת\n")
-
-            if (reply.rawSmsBody.isNotEmpty()) {
-                sb.append("\n──────────────\n")
-                sb.append("הודעה מקורית:\n")
-                sb.append(reply.rawSmsBody.trim())
+            val instructions = buildInstructionText(reply)
+            if (instructions.isNotBlank()) {
+                sb.append("──────────────\n")
+                sb.append("הערות:\n")
+                sb.append(instructions)
                 sb.append("\n──────────────")
             }
         } else {
