@@ -818,15 +818,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildInstructionText(reply: ReplyData): String {
         if (!reply.hasReplied) return ""
-        val rawLines = reply.rawSmsBody
-            .split("\n", "\r")
-            .map { it.trim() }
+
+        var text = reply.rawSmsBody
+        val removalPatterns = listOf(
+            Regex("(?i)קוד(?:\\s*כניסה)?(?:\\s*מפתח)?\\s*[:：]?\\s*\\d+"),
+            Regex("(?i)קומה\\s*[:：]?\\s*\\d+"),
+            Regex("(?i)דירה\\s*[:：]?\\s*\\d+")
+        )
+        removalPatterns.forEach { pattern ->
+            text = pattern.replace(text, "")
+        }
+
+        text = text.replace(Regex("\\s{2,}"), " ")
+
+        val lines = text.split("\n", "\r")
+            .map { it.trim().trim(',', '.', '-', ':') }
             .filter { it.isNotEmpty() }
-            .filterNot {
-                val lowered = it.lowercase()
-                lowered.contains("קוד") || lowered.contains("קומ") || lowered.contains("דיר")
-            }
-        return rawLines.joinToString("\n") { it.trim() }.trim()
+
+        return lines.joinToString("\n")
     }
 
     private fun showDeliveryPopup(phone: String) {
