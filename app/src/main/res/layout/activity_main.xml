@@ -192,14 +192,27 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center">
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="12dp">
+
+            <Button
+                android:id="@+id/btnToggleSendMode"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:text="SMS Mode"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:backgroundTint="#FF9800"/>
 
             <Button
                 android:id="@+id/btnCall"
                 android:layout_width="0dp"
                 android:layout_height="56dp"
                 android:layout_weight="1"
-                android:maxWidth="240dp"
                 android:text="התקשר"
                 android:textColor="#FFFFFF"
                 android:textSize="16sp"

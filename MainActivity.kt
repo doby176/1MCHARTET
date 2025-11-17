@@ -6,6 +6,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.RectF
@@ -59,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnOpenWhatsApp: Button
     private lateinit var btnCall: Button
     private lateinit var btnClear: Button
+    private lateinit var btnToggleSendMode: Button
     private lateinit var btnDeliveryMode: Button
     private lateinit var btnBulkSend: Button
     private lateinit var etCustomMessage: EditText
@@ -85,6 +87,7 @@ class MainActivity : AppCompatActivity() {
     private val scanWindowRectPx = Rect()
 
     private var isBulkScanMode = false
+    private var isWhatsAppSendMode = false
 
     private val phonePattern = Pattern.compile("(\\+?972[0-9]{8,9}|05[0-9]{8})")
 
@@ -107,6 +110,8 @@ class MainActivity : AppCompatActivity() {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
     private val defaultMessage = "היי 😊 משלוח בדרך 9:00-14:00. אפשר קומה/דירה+קוד? אם אין מישהו בבית להשאיר בדלת או בארון חשמל?"
+    private val whatsappModeWarningText =
+        "מצב WhatsApp פעיל. שליחת הודעות מרובות מחשבון רגיל עלולה לגרום לחסימה של 24 שעות ואף לצמיתות. מומלץ להשתמש ב-WhatsApp Business ולהשאיר מרווח של לפחות 30 שניות בין הודעות. במצב זה השליחה הקבוצתית מושבתת."
 
     private val flashHandler = Handler(Looper.getMainLooper())
     private val hideFlashRunnable = Runnable { flashAlert.visibility = View.GONE }
@@ -181,6 +186,7 @@ class MainActivity : AppCompatActivity() {
         btnOpenWhatsApp = findViewById(R.id.btnOpenWhatsApp)
         btnCall = findViewById(R.id.btnCall)
         btnClear = findViewById(R.id.btnClear)
+        btnToggleSendMode = findViewById(R.id.btnToggleSendMode)
         btnDeliveryMode = findViewById(R.id.btnDeliveryMode)
         btnBulkSend = findViewById(R.id.btnBulkSend)
         etCustomMessage = findViewById(R.id.etCustomMessage)
@@ -207,6 +213,7 @@ class MainActivity : AppCompatActivity() {
         etCustomMessage.viewTreeObserver.addOnGlobalLayoutListener(roiLayoutListener)
 
         tvDetected.text = "סריקה..."
+        updateSendModeToggle()
 
         updateDeliveryButtonVisibility()
         updateBulkSendButton()
@@ -222,11 +229,18 @@ class MainActivity : AppCompatActivity() {
 
         btnSend.setOnClickListener {
             confirmedNumber?.let { number ->
-                sendSmsMessage(
-                    number,
-                    useCustomMessage = etCustomMessage.text.toString().trim().isNotEmpty(),
-                    forceEmptyBody = isDeliveryMode
-                )
+                if (isWhatsAppSendMode) {
+                    openWhatsApp(
+                        number,
+                        includeBody = !isDeliveryMode
+                    )
+                } else {
+                    sendSmsMessage(
+                        number,
+                        useCustomMessage = etCustomMessage.text.toString().trim().isNotEmpty(),
+                        forceEmptyBody = isDeliveryMode
+                    )
+                }
             } ?: Toast.makeText(this, "לא זוהה מספר", Toast.LENGTH_SHORT).show()
         }
 
@@ -246,15 +260,40 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnClear.setOnClickListener { resetScanState() }
+        btnToggleSendMode.setOnClickListener {
+            if (isDeliveryMode) {
+                Toast.makeText(this, "מצב WhatsApp זמין רק במצב סריקה רגיל", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            isWhatsAppSendMode = !isWhatsAppSendMode
+            if (isWhatsAppSendMode && isBulkScanMode) {
+                exitBulkScanMode()
+            }
+            updateSendModeToggle()
+            if (isWhatsAppSendMode) {
+                showWhatsAppWarning(whatsappModeWarningText, 10_000L)
+            } else {
+                hideWhatsAppWarning()
+            }
+        }
 
         btnDeliveryMode.setOnClickListener {
             if (isBulkScanMode) exitBulkScanMode()
             isDeliveryMode = !isDeliveryMode
+            if (isDeliveryMode && isWhatsAppSendMode) {
+                isWhatsAppSendMode = false
+                updateSendModeToggle()
+                Toast.makeText(this, "מצב WhatsApp כובה אוטומטית במצב חלוקה", Toast.LENGTH_SHORT).show()
+            }
             updateDeliveryButton()
             Toast.makeText(this, if (isDeliveryMode) "מצב משלוח הופעל" else "חזרת למצב סריקה", Toast.LENGTH_SHORT).show()
         }
 
         btnBulkSend.setOnClickListener {
+            if (isWhatsAppSendMode) {
+                Toast.makeText(this, "שליחה קבוצתית זמינה רק במצב SMS", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             if (isBulkScanMode) {
                 showBulkSendDialog()
             } else {
@@ -285,6 +324,16 @@ class MainActivity : AppCompatActivity() {
     private fun updateBulkSendButton() {
         val queueSize = bulkQueue.size
         btnBulkSend.visibility = View.VISIBLE
+        if (isWhatsAppSendMode) {
+            btnBulkSend.isEnabled = false
+            btnBulkSend.alpha = 0.4f
+            btnBulkSend.text = "שליחה קבוצתית (SMS בלבד)"
+            btnBulkSend.setBackgroundColor(Color.parseColor("#9C27B0"))
+            return
+        } else {
+            btnBulkSend.isEnabled = true
+            btnBulkSend.alpha = 1f
+        }
         if (isBulkScanMode) {
             btnBulkSend.text = "שלח לרשימה ($queueSize/30)"
             btnBulkSend.setBackgroundColor(Color.parseColor("#8E24AA"))
@@ -295,10 +344,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showWhatsAppWarning() {
+    private fun showWhatsAppWarning(message: String? = null, durationMs: Long = 10_000L) {
+        tvWhatsAppWarning.text = message ?: getString(R.string.whatsapp_warning)
         tvWhatsAppWarning.visibility = View.VISIBLE
         flashHandler.removeCallbacks(whatsappWarningHideRunnable)
-        flashHandler.postDelayed(whatsappWarningHideRunnable, 10_000)
+        flashHandler.postDelayed(whatsappWarningHideRunnable, durationMs)
+    }
+
+    private fun hideWhatsAppWarning() {
+        flashHandler.removeCallbacks(whatsappWarningHideRunnable)
+        tvWhatsAppWarning.visibility = View.GONE
     }
 
     private fun showBulkSendDialog() {
@@ -655,7 +710,9 @@ class MainActivity : AppCompatActivity() {
         contactedNumbers.clear()
         clearBulkQueue()
         replyMap.clear()
+        isWhatsAppSendMode = false
         updateDeliveryButtonVisibility()
+        updateSendModeToggle()
     }
 
     private fun showAlreadyRepliedInBulkFlash() {
@@ -739,11 +796,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendSmsMessage(number: String, useCustomMessage: Boolean = false, forceEmptyBody: Boolean = false) {
+        registerContact(number)
         val cleanPhone = number.replace("+", "")
-        val local10 = toLocal10Digit(cleanPhone)
-
-        contactedNumbers.add(local10)
-        runOnUiThread { updateDeliveryButtonVisibility(); updateBulkSendButton() }
 
         Handler(Looper.getMainLooper()).postDelayed({
             val finalMessage = if (!forceEmptyBody && useCustomMessage && etCustomMessage.text.toString().trim().isNotEmpty()) {
@@ -769,7 +823,17 @@ class MainActivity : AppCompatActivity() {
         }, 800)
     }
 
+    private fun registerContact(rawNumber: String) {
+        val normalized = normalizePhone(rawNumber) ?: rawNumber
+        val local10 = toLocal10Digit(normalized)
+        if (local10.isNotBlank()) {
+            contactedNumbers.add(local10)
+        }
+        runOnUiThread { updateDeliveryButtonVisibility(); updateBulkSendButton() }
+    }
+
     private fun openWhatsApp(number: String, includeBody: Boolean = true) {
+        registerContact(number)
         val cleanNumber = number.replace(Regex("[^+0-9]"), "")
         val messageShouldInclude = includeBody && etCustomMessage.text.toString().trim().isNotEmpty()
         val finalMessage = if (messageShouldInclude) {
@@ -886,6 +950,26 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateDeliveryButtonVisibility() {
         btnDeliveryMode.visibility = View.VISIBLE
+    }
+
+    private fun updateSendModeToggle() {
+        val smsColor = Color.parseColor("#128C7E")
+        val whatsappColor = Color.parseColor("#25D366")
+        val toggleSmsColor = Color.parseColor("#FF9800")
+        val toggleWhatsAppColor = Color.parseColor("#1EBE5D")
+
+        if (isWhatsAppSendMode) {
+            btnToggleSendMode.text = "מצב WhatsApp"
+            btnToggleSendMode.backgroundTintList = ColorStateList.valueOf(toggleWhatsAppColor)
+            btnSend.text = "שלח WhatsApp"
+            btnSend.backgroundTintList = ColorStateList.valueOf(whatsappColor)
+        } else {
+            btnToggleSendMode.text = "מצב SMS"
+            btnToggleSendMode.backgroundTintList = ColorStateList.valueOf(toggleSmsColor)
+            btnSend.text = "שלח SMS"
+            btnSend.backgroundTintList = ColorStateList.valueOf(smsColor)
+        }
+        updateBulkSendButton()
     }
 
     override fun onResume() {

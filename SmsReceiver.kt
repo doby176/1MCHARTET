@@ -160,7 +160,7 @@ class SmsReceiver : BroadcastReceiver() {
         if (messages.isEmpty()) return
 
         val sender = messages.first().originatingAddress ?: return
-        val body = messages.joinToString("") { it.messageBody }
+        val body = messages.joinToString("\n") { it.messageBody }
 
         Log.d(TAG, "From: $sender | Body: $body")
 
