@@ -609,7 +609,12 @@ class MainActivity : AppCompatActivity() {
                             if (reply?.apartment != null) {
                                 showAlreadyRepliedFlash()
                             } else {
-                                sendSmsMessage(normalized, etCustomMessage.text.toString().trim().isNotEmpty())
+                                val useCustom = etCustomMessage.text.toString().trim().isNotEmpty()
+                                if (isWhatsAppSendMode) {
+                                    openWhatsApp(normalized, includeBody = true)
+                                } else {
+                                    sendSmsMessage(normalized, useCustom)
+                                }
                             }
                         }
                     }
