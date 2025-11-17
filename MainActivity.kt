@@ -817,26 +817,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun buildInstructionText(reply: ReplyData): String {
-        val lines = mutableListOf<String>()
-        if (reply.isHome) lines.add("יש מישהו בבית")
-        if (reply.leaveAtDoor) lines.add("להשאיר בדלת")
-        if (reply.leaveAtBox) lines.add("להשאיר בארון חשמל")
-        if (reply.specialNote != null && reply.specialNote.isNotBlank()) lines.add(reply.specialNote)
-        if (reply.wantsUpdate) lines.add("הלקוח ביקש עדכון לאחר המסירה")
-
-        if (reply.hasReplied) {
-            val rawLines = reply.rawSmsBody
-                .split("\n", "\r")
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-                .filterNot {
-                    val lowered = it.lowercase()
-                    lowered.contains("קוד") || lowered.contains("קומ") || lowered.contains("דיר")
-                }
-            lines.addAll(rawLines)
-        }
-
-        return lines.joinToString("\n") { it.trim() }.trim()
+        if (!reply.hasReplied) return ""
+        val rawLines = reply.rawSmsBody
+            .split("\n", "\r")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .filterNot {
+                val lowered = it.lowercase()
+                lowered.contains("קוד") || lowered.contains("קומ") || lowered.contains("דיר")
+            }
+        return rawLines.joinToString("\n") { it.trim() }.trim()
     }
 
     private fun showDeliveryPopup(phone: String) {
