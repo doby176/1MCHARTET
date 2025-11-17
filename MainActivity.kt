@@ -823,8 +823,19 @@ class MainActivity : AppCompatActivity() {
         if (reply.leaveAtBox) lines.add("להשאיר בארון חשמל")
         if (reply.specialNote != null && reply.specialNote.isNotBlank()) lines.add(reply.specialNote)
         if (reply.wantsUpdate) lines.add("הלקוח ביקש עדכון לאחר המסירה")
-        val raw = reply.rawSmsBody.trim()
-        if (raw.isNotEmpty()) lines.add(raw)
+
+        if (reply.hasReplied) {
+            val rawLines = reply.rawSmsBody
+                .split("\n", "\r")
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .filterNot {
+                    val lowered = it.lowercase()
+                    lowered.contains("קוד") || lowered.contains("קומ") || lowered.contains("דיר")
+                }
+            lines.addAll(rawLines)
+        }
+
         return lines.joinToString("\n") { it.trim() }.trim()
     }
 
@@ -875,7 +886,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateDeliveryButtonVisibility() {
-        btnDeliveryMode.visibility = if (contactedNumbers.isNotEmpty()) View.VISIBLE else View.GONE
+        btnDeliveryMode.visibility = View.VISIBLE
     }
 
     override fun onResume() {
