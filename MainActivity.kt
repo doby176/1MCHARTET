@@ -6,10 +6,10 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.drawable.GradientDrawable
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
@@ -37,6 +37,8 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.annotation.ColorInt
+import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -323,23 +325,36 @@ class MainActivity : AppCompatActivity() {
     private fun updateBulkSendButton() {
         val queueSize = bulkQueue.size
         btnBulkSend.visibility = View.VISIBLE
-        if (isWhatsAppSendMode) {
-            btnBulkSend.isEnabled = false
-            btnBulkSend.alpha = 0.4f
-            btnBulkSend.text = "שליחה קבוצתית (SMS בלבד)"
-            btnBulkSend.setBackgroundColor(Color.parseColor("#9C27B0"))
-            return
-        } else {
-            btnBulkSend.isEnabled = true
-            btnBulkSend.alpha = 1f
+        when {
+            isWhatsAppSendMode -> {
+                btnBulkSend.text = "שליחה קבוצתית (SMS בלבד)"
+                styleButton(btnBulkSend, R.drawable.bg_button_secondary, enabled = false)
+            }
+            isBulkScanMode -> {
+                btnBulkSend.text = "שלח לרשימה ($queueSize/30)"
+                styleButton(btnBulkSend, R.drawable.bg_button_primary, enabled = true)
+            }
+            else -> {
+                val suffix = if (queueSize == 0) "" else " ($queueSize)"
+                btnBulkSend.text = "שליחה קבוצתית$suffix"
+                styleButton(btnBulkSend, R.drawable.bg_button_secondary, enabled = true)
+            }
         }
-        if (isBulkScanMode) {
-            btnBulkSend.text = "שלח לרשימה ($queueSize/30)"
-            btnBulkSend.setBackgroundColor(Color.parseColor("#8E24AA"))
+    }
+
+    private fun styleButton(button: Button, @DrawableRes backgroundRes: Int, enabled: Boolean = true) {
+        button.setBackgroundResource(backgroundRes)
+        button.isEnabled = enabled
+        button.alpha = if (enabled) 1f else 0.5f
+    }
+
+    private fun applyDetectedColor(@ColorInt color: Int) {
+        val drawable = ContextCompat.getDrawable(this, R.drawable.bg_detected_box)?.mutate()
+        if (drawable is GradientDrawable) {
+            drawable.setColor(color)
+            tvDetected.background = drawable
         } else {
-            val suffix = if (queueSize == 0) "" else " ($queueSize)"
-            btnBulkSend.text = "שליחה קבוצתית$suffix"
-            btnBulkSend.setBackgroundColor(Color.parseColor("#9C27B0"))
+            tvDetected.setBackgroundColor(color)
         }
     }
 
@@ -573,7 +588,7 @@ class MainActivity : AppCompatActivity() {
                     detectionCount = 0
                     runOnUiThread {
                         tvDetected.text = "סריקה..."
-                        tvDetected.setBackgroundColor(Color.parseColor("#4CAF50"))
+                        applyDetectedColor(Color.parseColor("#2ECC71"))
                         scanOverlay.setActive(false)
                     }
                 }
@@ -597,9 +612,8 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             val display = formatForDisplay(normalized)
             tvDetected.text = "$display (${detectionCount}/2)"
-            tvDetected.setBackgroundColor(
-                if (detectionCount >= 2) Color.parseColor("#4CAF50") else Color.parseColor("#FF9800")
-            )
+            val color = if (detectionCount >= 2) Color.parseColor("#2ECC71") else Color.parseColor("#FF9800")
+            applyDetectedColor(color)
         }
 
         if (detectionCount >= 2 && confirmedNumber == null) {
@@ -609,7 +623,7 @@ class MainActivity : AppCompatActivity() {
             val confirmedDisplay = formatForDisplay(normalized)
             runOnUiThread {
                 tvDetected.text = confirmedDisplay
-                tvDetected.setBackgroundColor(Color.parseColor("#4CAF50"))
+                applyDetectedColor(Color.parseColor("#2ECC71"))
             }
 
             val local10 = toLocal10Digit(normalized)
@@ -770,7 +784,7 @@ class MainActivity : AppCompatActivity() {
         detectionCount = 0
         runOnUiThread {
             tvDetected.text = "סריקה..."
-            tvDetected.setBackgroundColor(Color.parseColor("#4CAF50"))
+            applyDetectedColor(Color.parseColor("#2ECC71"))
             scanOverlay.setActive(false)
         }
     }
@@ -976,7 +990,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateDeliveryButton() {
         btnDeliveryMode.text = if (isDeliveryMode) "במצב חלוקה" else "יציאה לדרך"
-        btnDeliveryMode.setBackgroundColor(if (isDeliveryMode) Color.parseColor("#FF4CAF50") else Color.parseColor("#FF6C5CE7"))
+        val background = if (isDeliveryMode) R.drawable.bg_button_primary else R.drawable.bg_button_secondary
+        styleButton(btnDeliveryMode, background, enabled = true)
     }
 
     private fun updateDeliveryButtonVisibility() {
@@ -984,21 +999,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateSendModeToggle() {
-        val smsColor = Color.parseColor("#128C7E")
-        val whatsappColor = Color.parseColor("#25D366")
-        val toggleSmsColor = Color.parseColor("#FF9800")
-        val toggleWhatsAppColor = Color.parseColor("#1EBE5D")
-
         if (isWhatsAppSendMode) {
             btnToggleSendMode.text = "מצב WhatsApp"
-            btnToggleSendMode.backgroundTintList = ColorStateList.valueOf(toggleWhatsAppColor)
+            styleButton(btnToggleSendMode, R.drawable.bg_button_accent, enabled = true)
             btnSend.text = "שלח WhatsApp"
-            btnSend.backgroundTintList = ColorStateList.valueOf(whatsappColor)
+            styleButton(btnSend, R.drawable.bg_button_accent, enabled = true)
         } else {
             btnToggleSendMode.text = "מצב SMS"
-            btnToggleSendMode.backgroundTintList = ColorStateList.valueOf(toggleSmsColor)
+            styleButton(btnToggleSendMode, R.drawable.bg_button_secondary, enabled = true)
             btnSend.text = "שלח SMS"
-            btnSend.backgroundTintList = ColorStateList.valueOf(smsColor)
+            styleButton(btnSend, R.drawable.bg_button_primary, enabled = true)
         }
         updateBulkSendButton()
     }
