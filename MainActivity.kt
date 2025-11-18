@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.RectF
-import android.graphics.drawable.GradientDrawable
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
@@ -37,8 +36,6 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.annotation.ColorInt
-import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -342,21 +339,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun styleButton(button: Button, @DrawableRes backgroundRes: Int, enabled: Boolean = true) {
+    private fun styleButton(button: Button, backgroundRes: Int, enabled: Boolean = true) {
         button.setBackgroundResource(backgroundRes)
         button.isEnabled = enabled
         button.alpha = if (enabled) 1f else 0.5f
     }
 
-    private fun applyDetectedColor(@ColorInt color: Int) {
-        val drawable = ContextCompat.getDrawable(this, R.drawable.bg_detected_box)?.mutate()
-        if (drawable is GradientDrawable) {
-            drawable.setColor(color)
-            tvDetected.background = drawable
-        } else {
-            tvDetected.setBackgroundColor(color)
-        }
-    }
 
     private fun ensureSmsPermissions() {
         val missing = requiredSmsPermissions.filter {
@@ -588,7 +576,7 @@ class MainActivity : AppCompatActivity() {
                     detectionCount = 0
                     runOnUiThread {
                         tvDetected.text = "סריקה..."
-                        applyDetectedColor(Color.parseColor("#2ECC71"))
+                        tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
                         scanOverlay.setActive(false)
                     }
                 }
@@ -612,8 +600,11 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             val display = formatForDisplay(normalized)
             tvDetected.text = "$display (${detectionCount}/2)"
-            val color = if (detectionCount >= 2) Color.parseColor("#2ECC71") else Color.parseColor("#FF9800")
-            applyDetectedColor(color)
+            if (detectionCount >= 2) {
+                tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
+            } else {
+                tvDetected.setBackgroundColor(Color.parseColor("#FF9800"))
+            }
         }
 
         if (detectionCount >= 2 && confirmedNumber == null) {
@@ -623,7 +614,7 @@ class MainActivity : AppCompatActivity() {
             val confirmedDisplay = formatForDisplay(normalized)
             runOnUiThread {
                 tvDetected.text = confirmedDisplay
-                applyDetectedColor(Color.parseColor("#2ECC71"))
+                tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
             }
 
             val local10 = toLocal10Digit(normalized)
@@ -784,7 +775,7 @@ class MainActivity : AppCompatActivity() {
         detectionCount = 0
         runOnUiThread {
             tvDetected.text = "סריקה..."
-            applyDetectedColor(Color.parseColor("#2ECC71"))
+            tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
             scanOverlay.setActive(false)
         }
     }
