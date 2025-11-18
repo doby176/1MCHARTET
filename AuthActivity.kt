@@ -1,6 +1,7 @@
 package com.scan2chat.app
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -39,6 +40,7 @@ class AuthActivity : AppCompatActivity() {
         binding.btnLogin.setOnClickListener { tryLoginOrRegister() }
         binding.btnRegister.setOnClickListener { register() }
         binding.tvForgot.setOnClickListener { resetPassword() }
+        binding.tvSupport.setOnClickListener { composeSupportEmail() }
 
         // Press Enter on password field
         binding.etPassword.setOnEditorActionListener { _, actionId, _ ->
@@ -194,5 +196,17 @@ class AuthActivity : AppCompatActivity() {
                 }
                 finish()
             }
+    }
+
+    private fun composeSupportEmail() {
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("mailto:Scan2Chat@proton.me")
+            putExtra(Intent.EXTRA_SUBJECT, "Scan2Chat Support")
+        }
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivity(intent)
+        } else {
+            Toast.makeText(this, "לא נמצאה אפליקציית דוא\"ל", Toast.LENGTH_SHORT).show()
+        }
     }
 }

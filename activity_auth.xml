@@ -105,5 +105,16 @@
             android:textColor="#00FF00"
             android:layout_marginTop="20dp"
             android:textSize="16sp"/>
+
+        <TextView
+            android:id="@+id/tvSupport"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="תמיכה: Scan2Chat@proton.me"
+            android:textColor="#B0BEC5"
+            android:textSize="14sp"
+            android:layout_marginTop="12dp"
+            android:autoLink="email"
+            android:textColorLink="#00E5FF"/>
     </LinearLayout>
 </ScrollView>
