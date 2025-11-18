@@ -3,31 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_auth_gradient"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Scan2Chat"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:letterSpacing="0.05"
-            android:paddingBottom="4dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ניהול משלוחים חכם ומהיר"
-            android:textSize="16sp"
-            android:textColor="#9FB1C9"
-            android:paddingBottom="20dp"/>
+        android:gravity="center_horizontal"
+        android:layout_gravity="center_vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -35,6 +19,24 @@
             android:orientation="vertical"
             android:background="@drawable/bg_auth_card"
             android:elevation="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Scan2Chat"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:letterSpacing="0.05"
+                android:paddingBottom="4dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ניהול משלוחים חכם ומהיר"
+                android:textSize="15sp"
+                android:textColor="#9FB1C9"
+                android:paddingBottom="20dp"/>
 
             <!-- TRIAL BANNER -->
             <LinearLayout
