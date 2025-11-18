@@ -90,6 +90,10 @@ class MainActivity : AppCompatActivity() {
     private var isWhatsAppSendMode = false
 
     private val phonePattern = Pattern.compile("(\\+?972[0-9]{8,9}|05[0-9]{8})")
+    private val requiredSmsPermissions = arrayOf(
+        Manifest.permission.SEND_SMS,
+        Manifest.permission.READ_SMS
+    )
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -126,6 +130,7 @@ class MainActivity : AppCompatActivity() {
         lateinit var appContext: Context
 
         private const val PREF_NAME = "Scan2ChatPrefs"
+        private const val KEY_SMS_PERMISSION_EXPLAINED = "sms_perm_rationale"
         private const val MAX_BULK_PER_WINDOW = 30
         private const val RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000L
         private val sendTimestamps = ArrayDeque<Long>()
@@ -310,13 +315,7 @@ class MainActivity : AppCompatActivity() {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
 
-        val smsPermissions = arrayOf(
-            Manifest.permission.SEND_SMS,
-            Manifest.permission.RECEIVE_SMS,
-            Manifest.permission.READ_SMS
-        )
-        val missingSms = smsPermissions.filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
-        if (missingSms.isNotEmpty()) requestSmsPermissions.launch(missingSms.toTypedArray())
+        ensureSmsPermissions()
 
         checkAccessAndStart()
     }
@@ -341,6 +340,33 @@ class MainActivity : AppCompatActivity() {
             val suffix = if (queueSize == 0) "" else " ($queueSize)"
             btnBulkSend.text = "שליחה קבוצתית$suffix"
             btnBulkSend.setBackgroundColor(Color.parseColor("#9C27B0"))
+        }
+    }
+
+    private fun ensureSmsPermissions() {
+        val missing = requiredSmsPermissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        if (missing.isEmpty()) return
+
+        val prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        val explained = prefs.getBoolean(KEY_SMS_PERMISSION_EXPLAINED, false)
+        val requestAction = {
+            requestSmsPermissions.launch(missing.toTypedArray())
+        }
+
+        if (!explained) {
+            AlertDialog.Builder(this)
+                .setTitle("נדרשת הרשאת SMS")
+                .setMessage("כדי להציג את תגובות הלקוחות בתוך מצב משלוח, האפליקציה צריכה גישה לקריאת וסנכרון SMS שנשלחו אליך. הנתונים נשארים במכשיר בלבד.")
+                .setPositiveButton("להמשיך") { _, _ ->
+                    prefs.edit().putBoolean(KEY_SMS_PERMISSION_EXPLAINED, true).apply()
+                    requestAction()
+                }
+                .setNegativeButton("ביטול", null)
+                .show()
+        } else {
+            requestAction()
         }
     }
 

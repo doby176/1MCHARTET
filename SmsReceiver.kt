@@ -1,12 +1,8 @@
 package com.scan2chat.app
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import android.provider.Telephony
-import android.telephony.SmsMessage
 import android.util.Log
 import java.util.regex.Pattern
 
@@ -24,155 +20,129 @@ data class ReplyData(
     val timestamp: Long = System.currentTimeMillis()
 )
 
-class SmsReceiver : BroadcastReceiver() {
+object SmsReceiver {
 
-    companion object {
-        private const val TAG = "SMS_DEBUG"
+    private const val TAG = "SMS_DEBUG"
 
-        fun getLatestReply(
-            context: Context,
-            sender10: String
-        ): ReplyData? {
-            val inboundBodies = queryBodies(context, Telephony.Sms.Inbox.CONTENT_URI, sender10, 5)
-            var inboundAggregate: ReplyData? = null
-            for (body in inboundBodies) {
-                val parsed = SmsReceiver().parseReply(body, body, allowDropHints = true)
-                inboundAggregate = mergeReplies(inboundAggregate, parsed, includeDropHints = true)
-            }
-
-            val sentTexts = queryBodies(context, Telephony.Sms.Sent.CONTENT_URI, sender10, 5)
-            var sentAggregate: ReplyData? = null
-            for (body in sentTexts) {
-                val parsed = SmsReceiver().parseReply(body, body, allowDropHints = false)
-                val hasAny = parsed.floor != null || parsed.apartment != null || parsed.code != null
-                if (!hasAny) continue
-                sentAggregate = mergeReplies(sentAggregate, parsed, includeDropHints = false)
-                if (sentAggregate.floor != null && sentAggregate.apartment != null && sentAggregate.code != null) break
-            }
-            sentAggregate = sentAggregate?.copy(
-                leaveAtDoor = false,
-                leaveAtBox = false,
-                isHome = false,
-                wantsUpdate = false,
-                specialNote = null
-            )
-
-            if (inboundAggregate == null && sentAggregate == null) {
-                Log.d(TAG, "No SMS found for $sender10")
-                return null
-            }
-
-            var finalData = inboundAggregate ?: sentAggregate!!.copy(
-                hasReplied = false
-            )
-
-            if (sentAggregate != null) {
-                if (finalData.floor == null && sentAggregate.floor != null) {
-                    finalData = finalData.copy(floor = sentAggregate.floor)
-                }
-                if (finalData.apartment == null && sentAggregate.apartment != null) {
-                    finalData = finalData.copy(apartment = sentAggregate.apartment)
-                }
-                if (finalData.code == null && sentAggregate.code != null) {
-                    finalData = finalData.copy(code = sentAggregate.code)
-                }
-            }
-
-            finalData = finalData.copy(
-                rawSmsBody = inboundAggregate?.rawSmsBody ?: sentAggregate?.rawSmsBody.orEmpty(),
-                hasReplied = inboundAggregate != null || (inboundAggregate == null && sentAggregate != null)
-            )
-
-            return finalData
+    fun getLatestReply(
+        context: Context,
+        sender10: String
+    ): ReplyData? {
+        val inboundBodies = queryBodies(context, Telephony.Sms.Inbox.CONTENT_URI, sender10, 5)
+        var inboundAggregate: ReplyData? = null
+        inboundBodies.forEach { body ->
+            val parsed = parseReply(body, body, allowDropHints = true)
+            inboundAggregate = mergeReplies(inboundAggregate, parsed, includeDropHints = true)
         }
 
-        private fun queryBodies(
-            context: Context,
-            uri: Uri,
-            sender10: String,
-            limit: Int
-        ): List<String> {
-            val projection = arrayOf(Telephony.Sms.BODY)
-            val selection = "${Telephony.Sms.ADDRESS} = ? OR ${Telephony.Sms.ADDRESS} = ?"
-            val selectionArgs = arrayOf(sender10, "+972${sender10.removePrefix("0")}")
-            val bodies = mutableListOf<String>()
+        val sentTexts = queryBodies(context, Telephony.Sms.Sent.CONTENT_URI, sender10, 5)
+        var sentAggregate: ReplyData? = null
+        sentTexts.forEach { body ->
+            val parsed = parseReply(body, body, allowDropHints = false)
+            val hasAny = parsed.floor != null || parsed.apartment != null || parsed.code != null
+            if (!hasAny) return@forEach
+            sentAggregate = mergeReplies(sentAggregate, parsed, includeDropHints = false)
+            if (sentAggregate?.floor != null && sentAggregate?.apartment != null && sentAggregate?.code != null) return@forEach
+        }
+        sentAggregate = sentAggregate?.copy(
+            leaveAtDoor = false,
+            leaveAtBox = false,
+            isHome = false,
+            wantsUpdate = false,
+            specialNote = null
+        )
 
-            context.contentResolver.query(uri, projection, selection, selectionArgs, "date DESC")
-                ?.use { cursor ->
-                    val bodyCol = cursor.getColumnIndex(Telephony.Sms.BODY)
-                    var count = 0
-                    if (cursor.moveToFirst()) {
-                        do {
-                            bodies.add(cursor.getString(bodyCol))
-                            count++
-                        } while (cursor.moveToNext() && count < limit)
-                    }
-                }
-            return bodies
+        if (inboundAggregate == null && sentAggregate == null) {
+            Log.d(TAG, "No SMS found for $sender10")
+            return null
         }
 
-        private fun mergeReplies(
-            current: ReplyData?,
-            incoming: ReplyData,
-            includeDropHints: Boolean
-        ): ReplyData {
-            if (current == null) return incoming
-            val combinedRaw = listOf(current.rawSmsBody, incoming.rawSmsBody)
-                .filter { it.isNotBlank() }
-                .distinct()
-                .joinToString("\n")
+        var finalData = inboundAggregate ?: sentAggregate!!.copy(
+            hasReplied = false
+        )
 
-            return current.copy(
-                floor = current.floor ?: incoming.floor,
-                apartment = current.apartment ?: incoming.apartment,
-                code = current.code ?: incoming.code,
-                leaveAtDoor = if (includeDropHints) current.leaveAtDoor || incoming.leaveAtDoor else current.leaveAtDoor,
-                leaveAtBox = if (includeDropHints) current.leaveAtBox || incoming.leaveAtBox else current.leaveAtBox,
-                isHome = if (includeDropHints) current.isHome || incoming.isHome else current.isHome,
-                wantsUpdate = if (includeDropHints) current.wantsUpdate || incoming.wantsUpdate else current.wantsUpdate,
-                specialNote = if (includeDropHints && current.specialNote == null) incoming.specialNote else current.specialNote,
-                rawSmsBody = combinedRaw
-            )
-        }
-
-        fun forceParseRepliesForSender(
-            context: Context,
-            sender10: String,
-            onReplyParsed: (ReplyData) -> Unit
-        ) {
-            Log.d(TAG, "FORCE-PARSE requested for $sender10")
-            val reply = getLatestReply(context, sender10)
-            if (reply != null) {
-                Log.d(TAG, "FORCE-PARSE result: $reply")
-                onReplyParsed(reply)
-            } else {
-                Log.d(TAG, "FORCE-PARSE result: null")
+        sentAggregate?.let { sent ->
+            if (finalData.floor == null && sent.floor != null) {
+                finalData = finalData.copy(floor = sent.floor)
+            }
+            if (finalData.apartment == null && sent.apartment != null) {
+                finalData = finalData.copy(apartment = sent.apartment)
+            }
+            if (finalData.code == null && sent.code != null) {
+                finalData = finalData.copy(code = sent.code)
             }
         }
+
+        finalData = finalData.copy(
+            rawSmsBody = inboundAggregate?.rawSmsBody ?: sentAggregate?.rawSmsBody.orEmpty(),
+            hasReplied = inboundAggregate != null || (inboundAggregate == null && sentAggregate != null)
+        )
+
+        return finalData
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
+    private fun queryBodies(
+        context: Context,
+        uri: Uri,
+        sender10: String,
+        limit: Int
+    ): List<String> {
+        val projection = arrayOf(Telephony.Sms.BODY)
+        val selection = "${Telephony.Sms.ADDRESS} = ? OR ${Telephony.Sms.ADDRESS} = ?"
+        val selectionArgs = arrayOf(sender10, "+972${sender10.removePrefix("0")}")
+        val bodies = mutableListOf<String>()
 
-        Log.d(TAG, "SMS RECEIVED! Parsing...")
+        context.contentResolver.query(uri, projection, selection, selectionArgs, "date DESC")
+            ?.use { cursor ->
+                val bodyCol = cursor.getColumnIndex(Telephony.Sms.BODY)
+                var count = 0
+                if (cursor.moveToFirst()) {
+                    do {
+                        bodies.add(cursor.getString(bodyCol))
+                        count++
+                    } while (cursor.moveToNext() && count < limit)
+                }
+            }
+        return bodies
+    }
 
-        val messages = parseSmsMessages(intent.extras, intent.getStringExtra("format"))
-        if (messages.isEmpty()) return
+    private fun mergeReplies(
+        current: ReplyData?,
+        incoming: ReplyData,
+        includeDropHints: Boolean
+    ): ReplyData {
+        if (current == null) return incoming
+        val combinedRaw = listOf(current.rawSmsBody, incoming.rawSmsBody)
+            .filter { it.isNotBlank() }
+            .distinct()
+            .joinToString("\n")
 
-        val sender = messages.first().originatingAddress ?: return
-        val body = messages.joinToString("\n") { it.messageBody }
+        return current.copy(
+            floor = current.floor ?: incoming.floor,
+            apartment = current.apartment ?: incoming.apartment,
+            code = current.code ?: incoming.code,
+            leaveAtDoor = if (includeDropHints) current.leaveAtDoor || incoming.leaveAtDoor else current.leaveAtDoor,
+            leaveAtBox = if (includeDropHints) current.leaveAtBox || incoming.leaveAtBox else current.leaveAtBox,
+            isHome = if (includeDropHints) current.isHome || incoming.isHome else current.isHome,
+            wantsUpdate = if (includeDropHints) current.wantsUpdate || incoming.wantsUpdate else current.wantsUpdate,
+            specialNote = if (includeDropHints && current.specialNote == null) incoming.specialNote else current.specialNote,
+            rawSmsBody = combinedRaw
+        )
+    }
 
-        Log.d(TAG, "From: $sender | Body: $body")
-
-        val sender10 = toLocal10Digit(sender)
-        if (!MainActivity.contactedNumbers.contains(sender10)) {
-            Log.d(TAG, "IGNORED: $sender10 not in contacted list")
-            return
+    fun forceParseRepliesForSender(
+        context: Context,
+        sender10: String,
+        onReplyParsed: (ReplyData) -> Unit
+    ) {
+        Log.d(TAG, "FORCE-PARSE requested for $sender10")
+        val reply = getLatestReply(context, sender10)
+        if (reply != null) {
+            Log.d(TAG, "FORCE-PARSE result: $reply")
+            onReplyParsed(reply)
+        } else {
+            Log.d(TAG, "FORCE-PARSE result: null")
         }
-
-        val reply = parseReply(body, body)
-        Log.d(TAG, "PARSED (live): $reply")
-        MainActivity.addReply(sender10, reply)
     }
 
     private fun parseReply(text: String, rawSms: String, allowDropHints: Boolean = true): ReplyData {
@@ -293,40 +263,12 @@ class SmsReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun parseSmsMessages(bundle: Bundle?, format: String?): List<SmsMessage> {
-        if (bundle == null) return emptyList()
-        try {
-            val msgs = Telephony.Sms.Intents.getMessagesFromIntent(Intent().apply { putExtras(bundle) })
-            if (!msgs.isNullOrEmpty()) return msgs.toList()
-        } catch (e: Exception) {
-            Log.w(TAG, "getMessagesFromIntent failed", e)
-        }
-        val pdus = bundle.get("pdus") as Array<*>? ?: return emptyList()
-        return pdus.mapNotNull {
-            try {
-                SmsMessage.createFromPdu(it as ByteArray, format)
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-
     private fun regex(pattern: String, text: String): String? {
         return try {
             val m = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE).matcher(text)
             if (m.find()) m.group(1) else null
         } catch (e: Exception) {
             null
-        }
-    }
-
-    private fun toLocal10Digit(phone: String): String {
-        val digits = phone.replace(Regex("[^0-9]"), "")
-        return when {
-            digits.startsWith("972") && digits.length >= 12 -> "0" + digits.substring(3).take(9)
-            digits.startsWith("+972") && digits.length >= 13 -> "0" + digits.substring(4).take(9)
-            digits.startsWith("0") && digits.length >= 10 -> digits.take(10)
-            else -> digits.takeLast(10)
         }
     }
 }
