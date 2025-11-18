@@ -23,6 +23,7 @@ class AuthActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAuthBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        supportActionBar?.hide()
 
         FirebaseApp.initializeApp(this)
         auth = FirebaseAuth.getInstance()
