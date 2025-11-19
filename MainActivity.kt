@@ -587,29 +587,33 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                if (!handled && detectionCount > 0 && lastDetectedNumber != null && confirmedNumber == null) {
-                    detectionCount = 0
-                    runOnUiThread {
-                        tvDetected.text = "סריקה..."
-                        tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
-                        scanOverlay.setActive(false)
-                    }
-                }
+                // DON'T reset counter if no match found - incomplete scans return null and shouldn't reset progress
+                // Only reset if we've been idle for too long (handled elsewhere)
             }
             .addOnCompleteListener { imageProxy.close() }
     }
 
     private fun processDetectedNumber(raw: String): Boolean {
-        val normalized = normalizePhone(raw) ?: return false
+        val normalized = normalizePhone(raw)
+        
+        // If normalization fails (null), DON'T reset counter - just ignore this scan
+        if (normalized == null) {
+            Log.d("SCAN", "⚠️ Normalization returned null for '$raw' - IGNORING (counter preserved)")
+            return false
+        }
+        
         if (normalized.length !in 11..13) return false
         runOnUiThread { scanOverlay.setActive(true) }
 
+        // SMART MATCHING: Compare to last VALID scan, not just any scan
         if (lastDetectedNumber != normalized) {
             lastDetectedNumber = normalized
             detectionCount = 1
             confirmedNumber = null
+            Log.d("SCAN", "🆕 New number detected: $normalized (count reset to 1)")
         } else {
             detectionCount++
+            Log.d("SCAN", "✅ MATCH! Same number again: $normalized (count now: $detectionCount)")
         }
 
         runOnUiThread {
