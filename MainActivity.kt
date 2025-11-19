@@ -799,19 +799,25 @@ class MainActivity : AppCompatActivity() {
         
         Log.d("PHONE_NORMALIZE", "Input: '$raw' -> Cleaned: '$s' (${s.length} digits)")
         
-        // FIRST: Handle 9720 case BEFORE other cases
-        if (s.startsWith("9720") && s.length >= 12) {
-            // Has extra 0 at position 3: 9720526430819 (13) or 972052643081 (12)
-            // Remove it: 972 + (everything after position 3)
-            s = s.substring(0, 3) + s.substring(4)
-            Log.d("PHONE_NORMALIZE", "REMOVED extra 0 at pos 3: now '$s' (${s.length} digits)")
+        // FIRST: Handle 9720 case - but ONLY for 13-digit numbers (complete scans)
+        // 12-digit 9720 numbers are INCOMPLETE scans - reject them
+        if (s.startsWith("9720")) {
+            if (s.length == 13) {
+                // Complete scan: 9720526430819 (13 digits) - remove extra 0
+                s = s.substring(0, 3) + s.substring(4)  // becomes 972526430819 (12 digits)
+                Log.d("PHONE_NORMALIZE", "REMOVED extra 0: '${raw}' -> '$s' (${s.length} digits)")
+            } else if (s.length == 12) {
+                // Incomplete scan: 972052643081 (12 digits) - missing last digit, reject it
+                Log.d("PHONE_NORMALIZE", "INCOMPLETE SCAN (12 digits with 9720): '$s' - rejected")
+                return null
+            }
         }
         
         return when {
             // Israeli number with leading 0 (0526430819)
-            s.startsWith("05") && s.length >= 10 -> {
+            s.startsWith("05") && s.length == 10 -> {
                 val result = "+972" + s.substring(1)
-                Log.d("PHONE_NORMALIZE", "Case: 05... -> $result")
+                Log.d("PHONE_NORMALIZE", "Case: 05... (10 digits) -> $result")
                 result
             }
             // Israeli number without leading 0 (526430819 - 9 digits)
@@ -821,19 +827,19 @@ class MainActivity : AppCompatActivity() {
                 result
             }
             // Full international format (+972526430819)
-            s.startsWith("+972") && s.length >= 13 -> {
-                Log.d("PHONE_NORMALIZE", "Case: +972... -> $s")
+            s.startsWith("+972") && s.length == 13 -> {
+                Log.d("PHONE_NORMALIZE", "Case: +972... (13 digits) -> $s")
                 s
             }
-            // International without + (972...)
-            s.startsWith("972") && s.length >= 12 && !s.startsWith("+") -> {
-                // Now s is already corrected if it had 9720
+            // International without + (972... - must be exactly 12 digits)
+            s.startsWith("972") && s.length == 12 && !s.startsWith("+") -> {
+                // s is already corrected if it had 9720
                 val result = "+$s"
-                Log.d("PHONE_NORMALIZE", "Case: 972... -> $result")
+                Log.d("PHONE_NORMALIZE", "Case: 972... (12 digits) -> $result")
                 result
             }
             else -> {
-                Log.d("PHONE_NORMALIZE", "Case: No match -> null")
+                Log.d("PHONE_NORMALIZE", "No match for '$s' (${s.length} digits) -> null")
                 null
             }
         }
