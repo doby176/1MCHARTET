@@ -795,9 +795,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun normalizePhone(raw: String?): String? {
         if (raw == null) return null
-        val s = raw.replace(Regex("[^0-9+]"), "")
+        var s = raw.replace(Regex("[^0-9+]"), "")
         
-        Log.d("PHONE_NORMALIZE", "Input: '$raw' -> Cleaned: '$s'")
+        Log.d("PHONE_NORMALIZE", "Input: '$raw' -> Cleaned: '$s' (${s.length} digits)")
+        
+        // FIRST: Handle 9720 case BEFORE other cases
+        if (s.startsWith("9720") && s.length >= 12) {
+            // Has extra 0 at position 3: 9720526430819 (13) or 972052643081 (12)
+            // Remove it: 972 + (everything after position 3)
+            s = s.substring(0, 3) + s.substring(4)
+            Log.d("PHONE_NORMALIZE", "REMOVED extra 0 at pos 3: now '$s' (${s.length} digits)")
+        }
         
         return when {
             // Israeli number with leading 0 (0526430819)
@@ -819,23 +827,9 @@ class MainActivity : AppCompatActivity() {
             }
             // International without + (972...)
             s.startsWith("972") && s.length >= 12 && !s.startsWith("+") -> {
-                // Israeli format: Country code (972) + 9 digits = 12 total
-                // With extra 0: 9720 + 9 digits = 13 total (extra 0 at position 3)
-                val result = if (s.length == 13 && s[3] == '0' && s[4] == '5') {
-                    // Extra 0 detected at position 3
-                    // Example: 9720526430819 -> need to remove the 0 at position 3
-                    // Correct result: 972526430819 (12 digits) -> +972526430819 -> 0526430819 (10 digits)
-                    val corrected = s.substring(0, 3) + s.substring(4)  // Skip position 3
-                    Log.d("PHONE_NORMALIZE", "Extra 0 found: '$s' -> '$corrected'")
-                    "+$corrected"
-                } else if (s.length == 12) {
-                    // Standard format: 972526430819
-                    Log.d("PHONE_NORMALIZE", "Standard 972: '$s'")
-                    "+$s"
-                } else {
-                    Log.d("PHONE_NORMALIZE", "Unknown 972 format: '$s' (${s.length} digits)")
-                    "+$s"
-                }
+                // Now s is already corrected if it had 9720
+                val result = "+$s"
+                Log.d("PHONE_NORMALIZE", "Case: 972... -> $result")
                 result
             }
             else -> {
