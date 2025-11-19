@@ -341,6 +341,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun styleButton(button: Button, backgroundRes: Int, enabled: Boolean = true) {
         button.setBackgroundResource(backgroundRes)
+        button.backgroundTintList = null  // CRITICAL: Disable Material tint to show custom drawables
         button.isEnabled = enabled
         button.alpha = if (enabled) 1f else 0.5f
     }
