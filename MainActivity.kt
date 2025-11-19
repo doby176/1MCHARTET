@@ -692,8 +692,9 @@ class MainActivity : AppCompatActivity() {
     private fun updateScanWindowBounds() {
         if (previewView.width == 0 || previewView.height == 0) return
         val marginPx = (16 * resources.displayMetrics.density).toInt()
+        val bottomGapPx = (32 * resources.displayMetrics.density).toInt() // Larger gap at bottom
         var top = topBar.bottom + marginPx
-        var bottom = detectionPanel.top - marginPx
+        var bottom = detectionPanel.top - bottomGapPx // Increased gap to prevent overlap
         var left = (previewView.width * 0.1f).toInt()
         var right = (previewView.width * 0.9f).toInt()
 
@@ -944,37 +945,44 @@ class MainActivity : AppCompatActivity() {
         sb.append("לקוח: ${formatForDisplay(phone)}\n\n")
 
         if (reply?.hasReplied == true) {
-            if (reply.floor != null) sb.append("קומה: ${reply.floor}\n")
-            if (reply.apartment != null) sb.append("דירה: ${reply.apartment}\n")
+            if (reply.floor != null) sb.append("🏢 קומה: ${reply.floor}\n")
+            if (reply.apartment != null) sb.append("🚪 דירה: ${reply.apartment}\n")
 
             if (reply.code != null) {
                 val codeText = reply.code.trim()
                 if (codeText.isNotEmpty()) {
-                    sb.append("קוד: $codeText\n")
+                    sb.append("🔑 קוד: $codeText\n")
                 }
             } else {
-                sb.append("לא צוין קוד\n")
+                sb.append("❌ לא צוין קוד\n")
             }
             sb.append("\n")
 
             val instructions = buildInstructionText(reply)
             if (instructions.isNotBlank()) {
                 sb.append("──────────────\n")
-                sb.append("הערות:\n")
+                sb.append("📝 הערות:\n")
                 sb.append(instructions)
                 sb.append("\n──────────────")
             }
         } else {
-            sb.append("אין תגובה מהלקוח\n")
+            sb.append("⚠️ אין תגובה מהלקוח\n")
             sb.append("האם להשאיר בדלת?\n")
         }
 
-        AlertDialog.Builder(this)
-            .setTitle(if (reply?.hasReplied == true) "פרטי משלוח" else "אין תגובה")
+        val dialog = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog)
+            .setTitle(if (reply?.hasReplied == true) "📦 פרטי משלוח" else "⚠️ אין תגובה")
             .setMessage(sb)
-            .setPositiveButton("אוקיי", null)
-            .setNegativeButton(if (reply?.hasReplied != true) "לא, לחזור" else null, null)
-            .show()
+            .setPositiveButton("✅ אוקיי", null)
+            .setNegativeButton(if (reply?.hasReplied != true) "❌ לא, לחזור" else null, null)
+            .create()
+        
+        dialog.show()
+        
+        // Style the dialog for better appearance
+        dialog.window?.setBackgroundDrawableResource(android.R.drawable.dialog_holo_dark_frame)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.parseColor("#4CAF50"))
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.parseColor("#F44336"))
     }
 
     private fun updateDeliveryButton() {
