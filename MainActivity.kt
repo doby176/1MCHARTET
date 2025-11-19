@@ -691,20 +691,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateScanWindowBounds() {
         if (previewView.width == 0 || previewView.height == 0) return
-        val marginPx = (24 * resources.displayMetrics.density).toInt()
-        var top = topBar.bottom + marginPx / 2
+        val marginPx = (16 * resources.displayMetrics.density).toInt()
+        var top = topBar.bottom + marginPx
         var bottom = detectionPanel.top - marginPx
         var left = (previewView.width * 0.1f).toInt()
         var right = (previewView.width * 0.9f).toInt()
 
         if (bottom <= top) {
-            top = (previewView.height * 0.2f).toInt()
-            bottom = (previewView.height * 0.6f).toInt()
+            top = (previewView.height * 0.15f).toInt()
+            bottom = (previewView.height * 0.65f).toInt()
         }
-        val maxHeight = (previewView.height * 0.45f).toInt()
-        if (bottom - top > maxHeight) {
-            bottom = top + maxHeight
-        }
+        // Remove max height constraint to allow full scanning area
         if (right <= left) {
             left = (previewView.width * 0.2f).toInt()
             right = (previewView.width * 0.8f).toInt()
