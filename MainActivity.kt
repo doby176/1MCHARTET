@@ -796,24 +796,48 @@ class MainActivity : AppCompatActivity() {
     private fun normalizePhone(raw: String?): String? {
         if (raw == null) return null
         val s = raw.replace(Regex("[^0-9+]"), "")
+        
+        Log.d("PHONE_NORMALIZE", "Input: '$raw' -> Cleaned: '$s'")
+        
         return when {
             // Israeli number with leading 0 (0526430819)
-            s.startsWith("05") && s.length >= 10 -> "+972" + s.substring(1)
+            s.startsWith("05") && s.length >= 10 -> {
+                val result = "+972" + s.substring(1)
+                Log.d("PHONE_NORMALIZE", "Case: 05... -> $result")
+                result
+            }
             // Israeli number without leading 0 (526430819 - 9 digits)
-            s.startsWith("5") && s.length == 9 -> "+972" + s
+            s.startsWith("5") && s.length == 9 -> {
+                val result = "+972" + s
+                Log.d("PHONE_NORMALIZE", "Case: 5... (9 digits) -> $result")
+                result
+            }
             // Full international format (+972526430819)
-            s.startsWith("+972") && s.length >= 13 -> s
+            s.startsWith("+972") && s.length >= 13 -> {
+                Log.d("PHONE_NORMALIZE", "Case: +972... -> $s")
+                s
+            }
             // International without + (972...)
             s.startsWith("972") && s.length >= 12 && !s.startsWith("+") -> {
-                // Handle 9720526430819 issue - has extra 0
-                if (s.startsWith("9720") && s.length == 13) {
-                    // Remove the extra 0: 9720526430819 -> +972526430819
-                    "+972" + s.substring(4)
+                // Check if there's an extra 0 after 972
+                // Correct format: 9725xxxxxxxx (12 digits) OR 97205xxxxxxxx (13 digits with extra 0)
+                val result = if (s.startsWith("9720") && (s.length == 12 || s.length == 13)) {
+                    // Has extra 0 after 972
+                    // 972052643081 (12) -> remove 0 -> 97252643081 -> +97252643081
+                    // 9720526430819 (13) -> remove 0 -> 972526430819 -> +972526430819
+                    val withoutExtraZero = "972" + s.substring(4)
+                    Log.d("PHONE_NORMALIZE", "Case: 9720... (extra 0) -> Removed 0: '$withoutExtraZero'")
+                    "+$withoutExtraZero"
                 } else {
+                    Log.d("PHONE_NORMALIZE", "Case: 972... (normal) -> +$s")
                     "+$s"
                 }
+                result
             }
-            else -> null
+            else -> {
+                Log.d("PHONE_NORMALIZE", "Case: No match -> null")
+                null
+            }
         }
     }
 
