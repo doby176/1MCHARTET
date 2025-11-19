@@ -210,7 +210,8 @@
             android:layout_marginBottom="12dp"
             android:layoutDirection="rtl"
             android:textDirection="rtl"
-            android:gravity="end"
+            android:textAlignment="viewStart"
+            android:gravity="start|end"
             android:visibility="gone" />
 
         <LinearLayout

@@ -202,6 +202,9 @@ class MainActivity : AppCompatActivity() {
         buttonContainer = findViewById(R.id.buttonContainer)
         scanOverlay = findViewById(R.id.scanOverlay)
 
+        // Restore state if app was backgrounded
+        restoreSavedState()
+
         previewView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
                 if (previewView.width == 0 || previewView.height == 0) return
@@ -264,6 +267,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnClear.setOnClickListener { resetScanState() }
+        
+        // Add double-tap listener for manual phone entry
+        tvDetected.setOnClickListener { view ->
+            val now = System.currentTimeMillis()
+            if (now - tvDetected.tag as? Long? ?: 0L < 500) {
+                // Double tap detected
+                showManualPhoneEntryDialog()
+            }
+            tvDetected.tag = now
+        }
         btnToggleSendMode.setOnClickListener {
             if (isDeliveryMode) {
                 Toast.makeText(this, "מצב WhatsApp זמין רק במצב סריקה רגיל", Toast.LENGTH_SHORT).show()
@@ -783,9 +796,21 @@ class MainActivity : AppCompatActivity() {
         if (raw == null) return null
         val s = raw.replace(Regex("[^0-9+]"), "")
         return when {
+            // Israeli number with leading 0
             s.startsWith("05") && s.length >= 10 -> "+972" + s.substring(1)
+            // Israeli number without leading 0 (e.g., 526430819)
+            s.startsWith("5") && s.length >= 9 && !s.startsWith("97") -> "+972" + s
+            // Full international format
             s.startsWith("+972") && s.length >= 13 -> s
-            s.startsWith("972") && s.length >= 12 && !s.startsWith("+") -> "+$s"
+            // International without + (972...)
+            s.startsWith("972") && s.length >= 12 && !s.startsWith("+") -> {
+                // Handle 97205 issue - check if it's 9720 (should be 972)
+                if (s.startsWith("97205") && s.length == 13) {
+                    "+972" + s.substring(4) // Remove extra 0
+                } else {
+                    "+$s"
+                }
+            }
             else -> null
         }
     }
@@ -981,7 +1006,11 @@ class MainActivity : AppCompatActivity() {
         
         // Style the dialog for better appearance
         dialog.window?.setBackgroundDrawableResource(android.R.drawable.dialog_holo_dark_frame)
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.parseColor("#4CAF50"))
+        // Fix button colors - make OK button white/light gray instead of purple
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#4CAF50"))
+        }
         dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.parseColor("#F44336"))
     }
 
@@ -1031,6 +1060,8 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         camera?.cameraControl?.enableTorch(false)
+        // Save state when app goes to background
+        saveScanState()
     }
 
     override fun onDestroy() {
@@ -1038,5 +1069,98 @@ class MainActivity : AppCompatActivity() {
         mediaPlayer?.release()
         cameraExecutor.shutdown()
         flashHandler.removeCallbacksAndMessages(null)
+    }
+
+    private fun saveScanState() {
+        val prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        prefs.edit().apply {
+            putBoolean("isBulkScanMode", isBulkScanMode)
+            putBoolean("isWhatsAppSendMode", isWhatsAppSendMode)
+            putBoolean("isDeliveryMode", isDeliveryMode)
+            apply()
+        }
+    }
+
+    private fun restoreSavedState() {
+        val prefs = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+        isBulkScanMode = prefs.getBoolean("isBulkScanMode", false)
+        isWhatsAppSendMode = prefs.getBoolean("isWhatsAppSendMode", false)
+        isDeliveryMode = prefs.getBoolean("isDeliveryMode", false)
+        
+        // Update UI to reflect restored state
+        if (isBulkScanMode) {
+            isBulkMode = true
+            updateBulkSendButton()
+        }
+        if (isDeliveryMode) {
+            updateDeliveryButton()
+        }
+        updateSendModeToggle()
+    }
+
+    private fun showManualPhoneEntryDialog() {
+        val input = EditText(this).apply {
+            hint = "הזן מספר טלפון (לדוגמה: 0526430819)"
+            inputType = android.text.InputType.TYPE_CLASS_PHONE
+            layoutDirection = View.LAYOUT_DIRECTION_RTL
+            textDirection = View.TEXT_DIRECTION_RTL
+        }
+
+        val dialog = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog)
+            .setTitle("📱 הזנת מספר ידנית")
+            .setMessage("הזן מספר טלפון:")
+            .setView(input)
+            .setPositiveButton("✅ אישור") { _, _ ->
+                val phoneNumber = input.text.toString().trim()
+                val normalized = normalizePhone(phoneNumber)
+                if (normalized != null) {
+                    // Process as if scanned
+                    confirmedNumber = normalized
+                    val display = formatForDisplay(normalized)
+                    tvDetected.text = display
+                    tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
+                    playSound("beep")
+                    
+                    // Handle based on mode
+                    val local10 = toLocal10Digit(normalized)
+                    val reply = fetchLatestReply(local10)
+                    addNumberToBulkQueue(local10, reply)
+                    
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        when {
+                            isBulkScanMode -> {
+                                if (reply?.apartment == null) {
+                                    Toast.makeText(this, "נוסף: $display", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    showAlreadyRepliedInBulkFlash()
+                                }
+                            }
+                            isDeliveryMode -> {
+                                showDeliveryPopup(normalized)
+                            }
+                            else -> {
+                                if (reply?.apartment != null) {
+                                    showAlreadyRepliedFlash()
+                                } else {
+                                    val useCustom = etCustomMessage.text.toString().trim().isNotEmpty()
+                                    if (isWhatsAppSendMode) {
+                                        openWhatsApp(normalized, includeBody = true)
+                                    } else {
+                                        sendSmsMessage(normalized, useCustom)
+                                    }
+                                }
+                            }
+                        }
+                    }, 500)
+                } else {
+                    Toast.makeText(this, "מספר לא תקין", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("❌ ביטול", null)
+            .create()
+
+        dialog.show()
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.parseColor("#4CAF50"))
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.parseColor("#F44336"))
     }
 }

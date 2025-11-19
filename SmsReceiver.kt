@@ -185,11 +185,15 @@ object SmsReceiver {
         }
 
         val floor = regex("קומה\\s*(\\d+)", lower)
+            ?: regex("קןמה\\s*(\\d+)", lower)  // Typo: ן instead of ו
             ?: regex("קו['\"]?\\s*(\\d+)", lower)
             ?: regex("בקומה\\s+(\\d+)", lower)
+            ?: regex("בקןמה\\s+(\\d+)", lower)  // Typo: ן instead of ו
 
         val apartment = regex("דירה\\s*(\\d+)", lower)
+            ?: regex("דורה\\s*(\\d+)", lower)  // Typo: ו instead of י
             ?: regex("בדירה\\s+(\\d+)", lower)
+            ?: regex("בדורה\\s+(\\d+)", lower)  // Typo: ו instead of י
 
         val explicitHome = allowDropHints && (
                 lower.contains("בבית") ||
