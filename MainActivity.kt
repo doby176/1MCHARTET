@@ -819,21 +819,21 @@ class MainActivity : AppCompatActivity() {
             }
             // International without + (972...)
             s.startsWith("972") && s.length >= 12 && !s.startsWith("+") -> {
-                // Check if there's an extra 0 after 972 (position 3)
-                // Correct: 972 + 9 digits = 12 total (e.g., 972526430816)
-                // Wrong:   9720 + 9 digits = 13 total (e.g., 9720526430816 - has extra 0)
-                // Wrong:   9720 + 8 digits = 12 total (e.g., 972052643081 - has extra 0)
-                val result = if (s.startsWith("9720") && s.length >= 12) {
-                    // Has extra 0 at position 3 - remove it by skipping from position 0-2, then from 4 onwards
-                    val withoutExtraZero = s.substring(0, 3) + s.substring(4)
-                    // 972052643081 (12) -> "972" + "52643081" = "97252643081" (11) - WRONG! 
-                    // Actually we need: "972" + "526430816" to get 12 digits
-                    // The issue: substring(4) skips the 0 at position 3, giving us the rest
-                    Log.d("PHONE_NORMALIZE", "Case: 9720... (extra 0) -> Input: '$s' (${s.length} digits)")
-                    Log.d("PHONE_NORMALIZE", "Removed 0 at position 3: '$withoutExtraZero' (${withoutExtraZero.length} digits)")
-                    "+$withoutExtraZero"
+                // Israeli format: Country code (972) + 9 digits = 12 total
+                // With extra 0: 9720 + 9 digits = 13 total (extra 0 at position 3)
+                val result = if (s.length == 13 && s[3] == '0' && s[4] == '5') {
+                    // Extra 0 detected at position 3
+                    // Example: 9720526430819 -> need to remove the 0 at position 3
+                    // Correct result: 972526430819 (12 digits) -> +972526430819 -> 0526430819 (10 digits)
+                    val corrected = s.substring(0, 3) + s.substring(4)  // Skip position 3
+                    Log.d("PHONE_NORMALIZE", "Extra 0 found: '$s' -> '$corrected'")
+                    "+$corrected"
+                } else if (s.length == 12) {
+                    // Standard format: 972526430819
+                    Log.d("PHONE_NORMALIZE", "Standard 972: '$s'")
+                    "+$s"
                 } else {
-                    Log.d("PHONE_NORMALIZE", "Case: 972... (normal) -> +$s")
+                    Log.d("PHONE_NORMALIZE", "Unknown 972 format: '$s' (${s.length} digits)")
                     "+$s"
                 }
                 result
