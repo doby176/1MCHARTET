@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
     private var isBulkScanMode = false
     private var isWhatsAppSendMode = false
 
-    private val phonePattern = Pattern.compile("(\\+?972[0-9]{8,9}|0?5[0-9]{8})")
+    private val phonePattern = Pattern.compile("(\\+?972[0-9]{8,10}|0?5[0-9]{8})")
     private val requiredSmsPermissions = arrayOf(
         Manifest.permission.SEND_SMS,
         Manifest.permission.READ_SMS
