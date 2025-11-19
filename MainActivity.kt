@@ -271,7 +271,8 @@ class MainActivity : AppCompatActivity() {
         // Add double-tap listener for manual phone entry
         tvDetected.setOnClickListener { view ->
             val now = System.currentTimeMillis()
-            if (now - tvDetected.tag as? Long? ?: 0L < 500) {
+            val lastTap = tvDetected.tag as? Long ?: 0L
+            if (now - lastTap < 500) {
                 // Double tap detected
                 showManualPhoneEntryDialog()
             }
