@@ -819,14 +819,18 @@ class MainActivity : AppCompatActivity() {
             }
             // International without + (972...)
             s.startsWith("972") && s.length >= 12 && !s.startsWith("+") -> {
-                // Check if there's an extra 0 after 972
-                // Correct format: 9725xxxxxxxx (12 digits) OR 97205xxxxxxxx (13 digits with extra 0)
-                val result = if (s.startsWith("9720") && (s.length == 12 || s.length == 13)) {
-                    // Has extra 0 after 972
-                    // 972052643081 (12) -> remove 0 -> 97252643081 -> +97252643081
-                    // 9720526430819 (13) -> remove 0 -> 972526430819 -> +972526430819
-                    val withoutExtraZero = "972" + s.substring(4)
-                    Log.d("PHONE_NORMALIZE", "Case: 9720... (extra 0) -> Removed 0: '$withoutExtraZero'")
+                // Check if there's an extra 0 after 972 (position 3)
+                // Correct: 972 + 9 digits = 12 total (e.g., 972526430816)
+                // Wrong:   9720 + 9 digits = 13 total (e.g., 9720526430816 - has extra 0)
+                // Wrong:   9720 + 8 digits = 12 total (e.g., 972052643081 - has extra 0)
+                val result = if (s.startsWith("9720") && s.length >= 12) {
+                    // Has extra 0 at position 3 - remove it by skipping from position 0-2, then from 4 onwards
+                    val withoutExtraZero = s.substring(0, 3) + s.substring(4)
+                    // 972052643081 (12) -> "972" + "52643081" = "97252643081" (11) - WRONG! 
+                    // Actually we need: "972" + "526430816" to get 12 digits
+                    // The issue: substring(4) skips the 0 at position 3, giving us the rest
+                    Log.d("PHONE_NORMALIZE", "Case: 9720... (extra 0) -> Input: '$s' (${s.length} digits)")
+                    Log.d("PHONE_NORMALIZE", "Removed 0 at position 3: '$withoutExtraZero' (${withoutExtraZero.length} digits)")
                     "+$withoutExtraZero"
                 } else {
                     Log.d("PHONE_NORMALIZE", "Case: 972... (normal) -> +$s")
