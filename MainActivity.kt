@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
     private var isBulkScanMode = false
     private var isWhatsAppSendMode = false
 
-    private val phonePattern = Pattern.compile("(\\+?972[0-9]{8,9}|05[0-9]{8})")
+    private val phonePattern = Pattern.compile("(\\+?972[0-9]{8,9}|0?5[0-9]{8})")
     private val requiredSmsPermissions = arrayOf(
         Manifest.permission.SEND_SMS,
         Manifest.permission.READ_SMS
@@ -797,17 +797,18 @@ class MainActivity : AppCompatActivity() {
         if (raw == null) return null
         val s = raw.replace(Regex("[^0-9+]"), "")
         return when {
-            // Israeli number with leading 0
+            // Israeli number with leading 0 (0526430819)
             s.startsWith("05") && s.length >= 10 -> "+972" + s.substring(1)
-            // Israeli number without leading 0 (e.g., 526430819)
-            s.startsWith("5") && s.length >= 9 && !s.startsWith("97") -> "+972" + s
-            // Full international format
+            // Israeli number without leading 0 (526430819 - 9 digits)
+            s.startsWith("5") && s.length == 9 -> "+972" + s
+            // Full international format (+972526430819)
             s.startsWith("+972") && s.length >= 13 -> s
             // International without + (972...)
             s.startsWith("972") && s.length >= 12 && !s.startsWith("+") -> {
-                // Handle 97205 issue - check if it's 9720 (should be 972)
-                if (s.startsWith("97205") && s.length == 13) {
-                    "+972" + s.substring(4) // Remove extra 0
+                // Handle 9720526430819 issue - has extra 0
+                if (s.startsWith("9720") && s.length == 13) {
+                    // Remove the extra 0: 9720526430819 -> +972526430819
+                    "+972" + s.substring(4)
                 } else {
                     "+$s"
                 }
@@ -1042,10 +1043,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        resetBulkMode()
-        if (isBulkScanMode) {
-            exitBulkScanMode()
-        }
+        // Don't reset modes - they are now persisted
+        // resetBulkMode() and exitBulkScanMode() removed to preserve state
+        
         if (auth.currentUser == null) {
             startActivity(Intent(this, AuthActivity::class.java))
             finish()
@@ -1161,7 +1161,14 @@ class MainActivity : AppCompatActivity() {
             .create()
 
         dialog.show()
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.parseColor("#4CAF50"))
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.parseColor("#F44336"))
+        // Fix button colors - make them white text instead of purple
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#4CAF50"))
+        }
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#F44336"))
+        }
     }
 }
