@@ -45,6 +45,7 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.io.File
 import java.net.URLEncoder
 import java.util.ArrayDeque
 import java.util.LinkedHashSet
@@ -52,6 +53,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import kotlin.math.min
+import org.json.JSONObject
 
 
 class MainActivity : AppCompatActivity() {
@@ -76,6 +78,8 @@ class MainActivity : AppCompatActivity() {
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private var lastDetectedNumber: String? = null
     private var confirmedNumber: String? = null
+    private var lastDetectedAddress: String? = null
+    private var confirmedAddress: String? = null
     private var detectionCount = 0
     private var lastScanTime = 0L
     private val MIN_SCAN_INTERVAL = 300L
@@ -126,10 +130,12 @@ class MainActivity : AppCompatActivity() {
         val bulkQueue = LinkedHashSet<String>()
         val contactedNumbers = mutableSetOf<String>()
         val replyMap = mutableMapOf<String, ReplyData>()
+        val addressMap = mutableMapOf<String, String>() // phone -> address
         var isDeliveryMode = false
         var isBulkMode = false
         private var onReplyUpdate: (() -> Unit)? = null
         lateinit var appContext: Context
+        private val streetsList = mutableListOf<String>()
 
         private const val PREF_NAME = "Scan2ChatPrefs"
         private const val KEY_SMS_PERMISSION_EXPLAINED = "sms_perm_rationale"
@@ -178,6 +184,56 @@ class MainActivity : AppCompatActivity() {
             val wait = first + RATE_LIMIT_WINDOW_MS - System.currentTimeMillis()
             return if (wait <= 0L) null else wait
         }
+
+        // Levenshtein Distance for fuzzy string matching
+        fun levenshteinDistance(s1: String, s2: String): Int {
+            val len1 = s1.length
+            val len2 = s2.length
+            val dp = Array(len1 + 1) { IntArray(len2 + 1) }
+
+            for (i in 0..len1) dp[i][0] = i
+            for (j in 0..len2) dp[0][j] = j
+
+            for (i in 1..len1) {
+                for (j in 1..len2) {
+                    val cost = if (s1[i - 1] == s2[j - 1]) 0 else 1
+                    dp[i][j] = minOf(
+                        dp[i - 1][j] + 1,      // deletion
+                        dp[i][j - 1] + 1,      // insertion
+                        dp[i - 1][j - 1] + cost // substitution
+                    )
+                }
+            }
+            return dp[len1][len2]
+        }
+
+        // Calculate similarity percentage
+        fun similarity(s1: String, s2: String): Double {
+            val maxLen = maxOf(s1.length, s2.length)
+            if (maxLen == 0) return 100.0
+            val distance = levenshteinDistance(s1.lowercase(), s2.lowercase())
+            return (1.0 - distance.toDouble() / maxLen) * 100.0
+        }
+
+        // Find closest matching street name
+        fun findClosestStreet(scanned: String): Pair<String, Double>? {
+            if (streetsList.isEmpty() || scanned.isBlank()) return null
+            
+            var bestMatch: String? = null
+            var bestScore = 0.0
+
+            streetsList.forEach { street ->
+                val score = similarity(scanned, street)
+                if (score > bestScore) {
+                    bestScore = score
+                    bestMatch = street
+                }
+            }
+
+            return if (bestMatch != null && bestScore >= 60.0) {
+                Pair(bestMatch!!, bestScore)
+            } else null
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -186,6 +242,9 @@ class MainActivity : AppCompatActivity() {
 
         appContext = this
         supportActionBar?.hide()
+
+        // Load streets database
+        loadStreetsDatabase()
 
         previewView = findViewById(R.id.previewView)
         tvDetected = findViewById(R.id.tvDetected)
@@ -334,6 +393,28 @@ class MainActivity : AppCompatActivity() {
         ensureSmsPermissions()
 
         checkAccessAndStart()
+    }
+
+    private fun loadStreetsDatabase() {
+        try {
+            // Load from external file in workspace (for development)
+            val file = File("/sdcard/streets.json")
+            if (file.exists()) {
+                val jsonString = file.readText()
+                val jsonObject = JSONObject(jsonString)
+                val streetsArray = jsonObject.getJSONArray("streets")
+                
+                streetsList.clear()
+                for (i in 0 until streetsArray.length()) {
+                    streetsList.add(streetsArray.getString(i))
+                }
+                Log.d("STREETS_DB", "Loaded ${streetsList.size} streets from database")
+            } else {
+                Log.w("STREETS_DB", "streets.json not found at /sdcard/streets.json")
+            }
+        } catch (e: Exception) {
+            Log.e("STREETS_DB", "Error loading streets database", e)
+        }
     }
 
     private fun updateBulkSendButton() {
@@ -664,6 +745,7 @@ class MainActivity : AppCompatActivity() {
                             blockTop > detectionRect.bottom)
                     if (!intersects) return@forEach
 
+                    // Scan for phone numbers
                     val cleaned = block.text.replace(" ", "").replace("-", "")
                     val matcher = phonePattern.matcher(cleaned)
                     while (matcher.find()) {
@@ -673,12 +755,45 @@ class MainActivity : AppCompatActivity() {
                             break
                         }
                     }
+                    
+                    // Scan for addresses (if phone not yet handled in this block)
+                    if (!handled) {
+                        processDetectedAddress(block.text)
+                    }
                 }
 
                 // DON'T reset counter if no match found - incomplete scans return null and shouldn't reset progress
                 // Only reset if we've been idle for too long (handled elsewhere)
             }
             .addOnCompleteListener { imageProxy.close() }
+    }
+
+    private fun processDetectedAddress(text: String) {
+        // Pattern: Hebrew text followed by 1-3 digit number
+        // Example: "יואל כהן 8" or "התעשייה 13/3"
+        val addressPattern = Regex("[א-ת\\s'\"]+\\s+(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
+        val match = addressPattern.find(text) ?: return
+        
+        val fullMatch = match.value
+        // Extract street part (before numbers)
+        val streetPart = fullMatch.replace(Regex("\\d+.*"), "").trim()
+        
+        if (streetPart.length < 3) return // Too short to be valid
+        
+        // Find closest matching street using fuzzy matching
+        val matchResult = findClosestStreet(streetPart)
+        if (matchResult != null) {
+            val (correctedStreet, confidence) = matchResult
+            // Extract building/apartment numbers
+            val numbers = fullMatch.replace(Regex("[^0-9/\\s]+"), "").trim()
+            val correctedAddress = "$correctedStreet $numbers"
+            
+            // Update last detected address
+            if (lastDetectedAddress != correctedAddress) {
+                lastDetectedAddress = correctedAddress
+                Log.d("ADDRESS_SCAN", "🏠 Address detected: '$streetPart' → '$correctedStreet' (${"%.1f".format(confidence)}% match) → Full: $correctedAddress")
+            }
+        }
     }
 
     private fun processDetectedNumber(raw: String): Boolean {
@@ -706,7 +821,8 @@ class MainActivity : AppCompatActivity() {
 
         runOnUiThread {
             val display = formatForDisplay(normalized)
-            tvDetected.text = "$display (${detectionCount}/2)"
+            val addressInfo = if (lastDetectedAddress != null) " 🏠 $lastDetectedAddress" else ""
+            tvDetected.text = "$display$addressInfo (${detectionCount}/2)"
             if (detectionCount >= 2) {
                 tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
             } else {
@@ -716,16 +832,24 @@ class MainActivity : AppCompatActivity() {
 
         if (detectionCount >= 2 && confirmedNumber == null) {
             confirmedNumber = normalized
+            confirmedAddress = lastDetectedAddress
             runOnUiThread { playSound("beep") }
 
             val confirmedDisplay = formatForDisplay(normalized)
+            val addressDisplay = if (confirmedAddress != null) " 🏠 $confirmedAddress" else ""
             runOnUiThread {
-                tvDetected.text = confirmedDisplay
+                tvDetected.text = "$confirmedDisplay$addressDisplay"
                 tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
             }
 
             val local10 = toLocal10Digit(normalized)
             val reply = fetchLatestReply(local10)
+            
+            // Store address with phone number
+            if (confirmedAddress != null) {
+                addressMap[local10] = confirmedAddress!!
+                Log.d("ADDRESS_STORED", "Saved address for $local10: $confirmedAddress")
+            }
 
             addNumberToBulkQueue(local10, reply)
 
@@ -1081,9 +1205,14 @@ class MainActivity : AppCompatActivity() {
     private fun showDeliveryPopup(phone: String) {
         val clean = toLocal10Digit(phone)
         val reply = fetchLatestReply(clean)
+        val savedAddress = addressMap[clean]
 
         val sb = SpannableStringBuilder()
-        sb.append("לקוח: ${formatForDisplay(phone)}\n\n")
+        sb.append("לקוח: ${formatForDisplay(phone)}\n")
+        if (savedAddress != null) {
+            sb.append("🏠 כתובת: $savedAddress\n")
+        }
+        sb.append("\n")
 
         if (reply?.hasReplied == true) {
             if (reply.floor != null) sb.append("🏢 קומה: ${reply.floor}\n")
