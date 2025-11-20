@@ -918,9 +918,11 @@ class MainActivity : AppCompatActivity() {
     private fun processDetectedAddress(text: String) {
         Log.d("ADDRESS_DEBUG", "📝 Scanning text block: '$text'")
         
-        // Pattern: Hebrew text followed by 1-3 digit number
-        // Example: "יואל כהן 8" or "התעשייה 13/3"
-        val addressPattern = Regex("[א-ת\\s'\"]+\\s+(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
+        // Pattern: Hebrew OR English text followed by 1-3 digit number
+        // Hebrew: "יואל כהן 8" or "התעשייה 13/3"
+        // English: "ROTCHILD 6" or "Ben Gurion 25"
+        // Flexible spacing: "ROTCHILD 6" or "ROTCHILD6" (both work)
+        val addressPattern = Regex("[א-תa-zA-Z\\s'\"]+\\s*(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
         val match = addressPattern.find(text)
         
         if (match == null) {
