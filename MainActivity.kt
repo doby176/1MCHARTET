@@ -934,52 +934,64 @@ class MainActivity : AppCompatActivity() {
         // Limit to 3 words MAX to avoid matching entire paragraphs
         // Examples: "ASHOMER 26", "GOSH ATZION 8", "BEN GURION 15"
         val addressPattern = Regex("([א-תa-zA-Z]+(?:\\s+[א-תa-zA-Z]+){0,2})\\s+(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
-        val match = addressPattern.find(text)
         
-        if (match == null) {
-            Log.d("ADDRESS_DEBUG", "❌ No address pattern matched in: '$text'")
-            return
+        // ML Kit often returns multi-line blocks with garbage + address
+        // Try matching EACH LINE separately to extract clean addresses
+        val lines = text.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
+        
+        for (line in lines) {
+            Log.d("ADDRESS_DEBUG", "  🔍 Trying line: '$line'")
+            val match = addressPattern.find(line)
+            
+            if (match == null) {
+                Log.d("ADDRESS_DEBUG", "    ❌ No pattern match")
+                continue
+            }
+            
+            val streetPart = match.groupValues[1].trim()
+            val numberPart = match.groupValues[2].trim()
+            
+            Log.d("ADDRESS_DEBUG", "    ✅ Pattern matched: Street='$streetPart', Number='$numberPart'")
+            
+            if (streetPart.length < 3) {
+                Log.d("ADDRESS_DEBUG", "    ❌ Street too short (<3 chars)")
+                continue
+            }
+            
+            // CRITICAL: Only accept addresses that match our streets database!
+            // This prevents random words like "colon circumstance ASHOMER" from being accepted
+            if (streetsList.isEmpty()) {
+                Log.e("ADDRESS_DEBUG", "    ❌ Streets database is empty!")
+                return
+            }
+            
+            val fuzzyResult = findClosestStreet(streetPart)
+            if (fuzzyResult == null) {
+                Log.d("ADDRESS_DEBUG", "    ❌ No match in database (confidence < 60%), rejecting: '$streetPart'")
+                continue  // Try next line
+            }
+            
+            val (correctedStreet, confidence) = fuzzyResult
+            Log.d("ADDRESS_DEBUG", "    🔍 Fuzzy match: '$streetPart' → '$correctedStreet' (${confidence.toInt()}%)")
+            
+            if (confidence < 60.0) {
+                Log.d("ADDRESS_DEBUG", "    ❌ Confidence too low (${confidence.toInt()}%), rejecting")
+                continue  // Try next line
+            }
+            
+            // SUCCESS! We found a valid address on this line
+            val detectedAddress = "$correctedStreet $numberPart"
+            
+            // Update last detected address (don't overwrite confirmed address)
+            if (confirmedAddress == null && lastDetectedAddress != detectedAddress) {
+                lastDetectedAddress = detectedAddress
+                Log.d("ADDRESS_SCAN", "✅ 🏠 Address detected: $detectedAddress (${confidence.toInt()}% confidence)")
+                updateAddressDisplay()
+            }
+            return  // Stop after first valid address found
         }
         
-        val streetPart = match.groupValues[1].trim()
-        val numberPart = match.groupValues[2].trim()
-        
-        Log.d("ADDRESS_DEBUG", "✅ Pattern matched: Street='$streetPart', Number='$numberPart'")
-        
-        if (streetPart.length < 3) {
-            Log.d("ADDRESS_DEBUG", "❌ Street too short (<3 chars)")
-            return
-        }
-        
-        // CRITICAL: Only accept addresses that match our streets database!
-        // This prevents random words like "colon circumstance ASHOMER" from being accepted
-        if (streetsList.isEmpty()) {
-            Log.e("ADDRESS_DEBUG", "❌ Streets database is empty!")
-            return
-        }
-        
-        val fuzzyResult = findClosestStreet(streetPart)
-        if (fuzzyResult == null) {
-            Log.d("ADDRESS_DEBUG", "❌ No match in database (confidence < 60%), rejecting: '$streetPart'")
-            return  // REJECT if not in database
-        }
-        
-        val (correctedStreet, confidence) = fuzzyResult
-        Log.d("ADDRESS_DEBUG", "🔍 Fuzzy match: '$streetPart' → '$correctedStreet' (${confidence.toInt()}%)")
-        
-        if (confidence < 60.0) {
-            Log.d("ADDRESS_DEBUG", "❌ Confidence too low (${confidence.toInt()}%), rejecting address")
-            return  // REJECT if confidence too low
-        }
-        
-        val detectedAddress = "$correctedStreet $numberPart"
-        
-        // Update last detected address (don't overwrite confirmed address)
-        if (confirmedAddress == null && lastDetectedAddress != detectedAddress) {
-            lastDetectedAddress = detectedAddress
-            Log.d("ADDRESS_SCAN", "🏠 Address detected: $detectedAddress (${confidence.toInt()}% confidence)")
-            updateAddressDisplay()
-        }
+        Log.d("ADDRESS_DEBUG", "❌ No valid address found in any line")
     }
 
     private fun processDetectedNumber(raw: String): Boolean {
