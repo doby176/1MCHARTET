@@ -963,34 +963,31 @@ class MainActivity : AppCompatActivity() {
                 continue
             }
             
-            // CRITICAL: Only accept addresses that match our streets database!
-            // This prevents random words like "colon circumstance ASHOMER" from being accepted
-            if (streetsList.isEmpty()) {
-                Log.e("ADDRESS_DEBUG", "    ❌ Streets database is empty!")
-                return
+            // Try fuzzy matching to translate English → Hebrew
+            var finalStreetName = streetPart  // Default: use OCR text as-is
+            var confidence = 0.0
+            
+            if (streetsList.isNotEmpty()) {
+                val fuzzyResult = findClosestStreet(streetPart)
+                if (fuzzyResult != null && fuzzyResult.second >= 60.0) {
+                    // Match found! Use Hebrew translation
+                    finalStreetName = fuzzyResult.first
+                    confidence = fuzzyResult.second
+                    Log.d("ADDRESS_DEBUG", "    🔍 Fuzzy match: '$streetPart' → '$finalStreetName' (${confidence.toInt()}%)")
+                } else {
+                    // No match - keep English OCR text
+                    Log.d("ADDRESS_DEBUG", "    ℹ️ No DB match, keeping English: '$streetPart'")
+                }
             }
             
-            val fuzzyResult = findClosestStreet(streetPart)
-            if (fuzzyResult == null) {
-                Log.d("ADDRESS_DEBUG", "    ❌ No match in database (confidence < 60%), rejecting: '$streetPart'")
-                continue  // Try next line
-            }
-            
-            val (correctedStreet, confidence) = fuzzyResult
-            Log.d("ADDRESS_DEBUG", "    🔍 Fuzzy match: '$streetPart' → '$correctedStreet' (${confidence.toInt()}%)")
-            
-            if (confidence < 60.0) {
-                Log.d("ADDRESS_DEBUG", "    ❌ Confidence too low (${confidence.toInt()}%), rejecting")
-                continue  // Try next line
-            }
-            
-            // SUCCESS! We found a valid address on this line
-            val detectedAddress = "$correctedStreet $numberPart"
+            // SUCCESS! We found a valid address pattern on this line
+            val detectedAddress = "$finalStreetName $numberPart"
             
             // Update last detected address (don't overwrite confirmed address)
             if (confirmedAddress == null && lastDetectedAddress != detectedAddress) {
                 lastDetectedAddress = detectedAddress
-                Log.d("ADDRESS_SCAN", "✅ 🏠 Address detected: $detectedAddress (${confidence.toInt()}% confidence)")
+                val confidenceMsg = if (confidence > 0) " (${confidence.toInt()}% match)" else " (English - no translation)"
+                Log.d("ADDRESS_SCAN", "✅ 🏠 Address detected: $detectedAddress$confidenceMsg")
                 updateAddressDisplay()
             }
             return  // Stop after first valid address found
