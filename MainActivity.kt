@@ -972,7 +972,10 @@ class MainActivity : AppCompatActivity() {
             lastDetectedNumber = normalized
             detectionCount = 1
             confirmedNumber = null
-            Log.d("SCAN", "🆕 New number detected: $normalized (count reset to 1)")
+            // 🔥 FIX: Reset address when scanning NEW phone number!
+            lastDetectedAddress = null
+            confirmedAddress = null
+            Log.d("SCAN", "🆕 New number detected: $normalized (count reset to 1, address cleared)")
         } else {
             detectionCount++
             Log.d("SCAN", "✅ MATCH! Same number again: $normalized (count now: $detectionCount)")
@@ -1160,6 +1163,8 @@ class MainActivity : AppCompatActivity() {
     private fun resetScanState() {
         lastDetectedNumber = null
         confirmedNumber = null
+        lastDetectedAddress = null
+        confirmedAddress = null
         detectionCount = 0
         runOnUiThread {
             tvDetected.text = "סריקה..."
