@@ -930,9 +930,10 @@ class MainActivity : AppCompatActivity() {
     private fun processDetectedAddress(text: String) {
         Log.d("ADDRESS_DEBUG", "📝 Scanning text block: '$text'")
         
-        // Pattern: Match "word(s) number" (Hebrew OR English)
-        // Examples: "ROTCHILD 6", "הרצל 6", "התעשייה 13/5"
-        val addressPattern = Regex("([א-תa-zA-Z]+(?:\\s+[א-תa-zA-Z]+)*)\\s+(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
+        // Pattern: Match 1-3 words + number (Hebrew OR English)
+        // Limit to 3 words MAX to avoid matching entire paragraphs
+        // Examples: "ASHOMER 26", "GOSH ATZION 8", "BEN GURION 15"
+        val addressPattern = Regex("([א-תa-zA-Z]+(?:\\s+[א-תa-zA-Z]+){0,2})\\s+(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
         val match = addressPattern.find(text)
         
         if (match == null) {
