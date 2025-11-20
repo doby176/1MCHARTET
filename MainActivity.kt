@@ -396,19 +396,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadStreetsDatabase() {
+        Log.d("STREETS_DB", "🔄 Starting to load streets database...")
         try {
             // Load from embedded JSON string (no external file needed!)
+            Log.d("STREETS_DB", "📥 Getting JSON string...")
             val jsonString = getStreetsJSON()
+            Log.d("STREETS_DB", "📦 JSON length: ${jsonString.length} chars")
+            
             val jsonObject = JSONObject(jsonString)
             val streetsArray = jsonObject.getJSONArray("streets")
+            Log.d("STREETS_DB", "📋 JSON parsed, array size: ${streetsArray.length()}")
             
             streetsList.clear()
             for (i in 0 until streetsArray.length()) {
                 streetsList.add(streetsArray.getString(i))
             }
-            Log.d("STREETS_DB", "✅ Loaded ${streetsList.size} streets from embedded database")
+            Log.d("STREETS_DB", "✅ SUCCESS! Loaded ${streetsList.size} streets from embedded database")
+            Log.d("STREETS_DB", "🔍 First 5 streets: ${streetsList.take(5).joinToString(", ")}")
         } catch (e: Exception) {
-            Log.e("STREETS_DB", "❌ Error loading streets database", e)
+            Log.e("STREETS_DB", "❌ FATAL ERROR loading streets database: ${e.message}", e)
+            e.printStackTrace()
         }
     }
     
