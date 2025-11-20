@@ -60,10 +60,12 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var previewView: PreviewView
     private lateinit var tvDetected: TextView
+    private lateinit var tvAddress: TextView
     private lateinit var btnSend: Button
     private lateinit var btnOpenWhatsApp: Button
     private lateinit var btnCall: Button
     private lateinit var btnClear: Button
+    private lateinit var btnClearAddress: Button
     private lateinit var btnToggleSendMode: Button
     private lateinit var btnDeliveryMode: Button
     private lateinit var btnBulkSend: Button
@@ -248,10 +250,12 @@ class MainActivity : AppCompatActivity() {
 
         previewView = findViewById(R.id.previewView)
         tvDetected = findViewById(R.id.tvDetected)
+        tvAddress = findViewById(R.id.tvAddress)
         btnSend = findViewById(R.id.btnSend)
         btnOpenWhatsApp = findViewById(R.id.btnOpenWhatsApp)
         btnCall = findViewById(R.id.btnCall)
         btnClear = findViewById(R.id.btnClear)
+        btnClearAddress = findViewById(R.id.btnClearAddress)
         btnToggleSendMode = findViewById(R.id.btnToggleSendMode)
         btnDeliveryMode = findViewById(R.id.btnDeliveryMode)
         btnBulkSend = findViewById(R.id.btnBulkSend)
@@ -329,6 +333,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnClear.setOnClickListener { resetScanState() }
+        
+        btnClearAddress.setOnClickListener {
+            // Clear only the address, keep the phone number
+            lastDetectedAddress = null
+            confirmedAddress = null
+            updateAddressDisplay()
+            Toast.makeText(this, "כתובת נמחקה", Toast.LENGTH_SHORT).show()
+        }
         
         // Add double-tap listener for manual phone entry
         tvDetected.setOnClickListener { view ->
@@ -991,13 +1003,13 @@ class MainActivity : AppCompatActivity() {
 
         runOnUiThread {
             val display = formatForDisplay(normalized)
-            val addressInfo = if (lastDetectedAddress != null) " 🏠 $lastDetectedAddress" else ""
-            tvDetected.text = "$display$addressInfo (${detectionCount}/2)"
+            tvDetected.text = "$display (${detectionCount}/2)"
             if (detectionCount >= 2) {
                 tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
             } else {
                 tvDetected.setBackgroundColor(Color.parseColor("#FF9800"))
             }
+            updateAddressDisplay()
         }
 
         if (detectionCount >= 2 && confirmedNumber == null) {
@@ -1006,10 +1018,10 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread { playSound("beep") }
 
             val confirmedDisplay = formatForDisplay(normalized)
-            val addressDisplay = if (confirmedAddress != null) " 🏠 $confirmedAddress" else ""
             runOnUiThread {
-                tvDetected.text = "$confirmedDisplay$addressDisplay"
+                tvDetected.text = "$confirmedDisplay"
                 tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
+                updateAddressDisplay()
             }
 
             val local10 = toLocal10Digit(normalized)
@@ -1178,6 +1190,21 @@ class MainActivity : AppCompatActivity() {
             tvDetected.text = "סריקה..."
             tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
             scanOverlay.setActive(false)
+            updateAddressDisplay()
+        }
+    }
+    
+    private fun updateAddressDisplay() {
+        runOnUiThread {
+            if (lastDetectedAddress != null || confirmedAddress != null) {
+                val address = confirmedAddress ?: lastDetectedAddress
+                tvAddress.text = "🏠 $address"
+                tvAddress.visibility = View.VISIBLE
+                btnClearAddress.visibility = View.VISIBLE
+            } else {
+                tvAddress.visibility = View.GONE
+                btnClearAddress.visibility = View.GONE
+            }
         }
     }
 
