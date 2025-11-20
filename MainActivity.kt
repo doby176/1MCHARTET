@@ -397,24 +397,54 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadStreetsDatabase() {
         try {
-            // Load from external file in workspace (for development)
-            val file = File("/sdcard/streets.json")
-            if (file.exists()) {
-                val jsonString = file.readText()
-                val jsonObject = JSONObject(jsonString)
-                val streetsArray = jsonObject.getJSONArray("streets")
-                
-                streetsList.clear()
-                for (i in 0 until streetsArray.length()) {
-                    streetsList.add(streetsArray.getString(i))
-                }
-                Log.d("STREETS_DB", "Loaded ${streetsList.size} streets from database")
-            } else {
-                Log.w("STREETS_DB", "streets.json not found at /sdcard/streets.json")
+            // Load from embedded JSON string (no external file needed!)
+            val jsonString = getStreetsJSON()
+            val jsonObject = JSONObject(jsonString)
+            val streetsArray = jsonObject.getJSONArray("streets")
+            
+            streetsList.clear()
+            for (i in 0 until streetsArray.length()) {
+                streetsList.add(streetsArray.getString(i))
             }
+            Log.d("STREETS_DB", "✅ Loaded ${streetsList.size} streets from embedded database")
         } catch (e: Exception) {
-            Log.e("STREETS_DB", "Error loading streets database", e)
+            Log.e("STREETS_DB", "❌ Error loading streets database", e)
         }
+    }
+    
+    private fun getStreetsJSON(): String {
+        // Embedded directly in code - no external file needed!
+        return """
+        {
+          "streets": [
+            "הרצל", "בן גוריון", "ויצמן", "רוטשילד", "דיזנגוף", "אלנבי", "יפו",
+            "יהודה הלוי", "קינג ג'ורג'", "הרב קוק", "בן יהודה", "שינקין",
+            "אבן גבירול", "נחלת בנימין", "הכובש", "יואל כהן", "חנה ומיכאל לוין",
+            "מחלי הלוי", "התעשייה", "הנשיא", "ז'בוטינסקי", "הרב מימון", "סוקולוב",
+            "ארלוזורוב", "נורדאו", "בגרוניזוב", "מנחם בגין", "הרב ברלין",
+            "יהושע בן נון", "הרב עוזיאל", "משה שרת", "לוי אשכול", "גולדה מאיר",
+            "יצחק רבין", "דוד המלך", "שלמה המלך", "שאול המלך", "ירמיהו",
+            "ישעיהו", "יחזקאל", "דניאל", "שמואל", "אליהו הנביא", "בלפור",
+            "מאפו", "ביאליק", "אחד העם", "שמעון הצדיק", "רמב״ם", "רש״י",
+            "הרמב״ן", "הרב אלקלעי", "הרב קליר", "הרב הרצוג", "הרב גורן",
+            "הרב פרנקל", "הרב טאו", "הרב אבינר", "הרב לאו", "הרב שך",
+            "הרב עובדיה", "דרך חברון", "דרך יפו", "דרך בן גוריון", "דרך הרצל",
+            "דרך שלום", "דרך ירושלים", "דרך חיל", "דרך מנחם בגין",
+            "שדרות רוטשילד", "שדרות ירושלים", "שדרות בן גוריון", "שדרות הרצל",
+            "שדרות ויצמן", "שדרות יהודית", "רחוב הראשונים", "רחוב העצמאות",
+            "רחוב הגפן", "רחוב הזית", "רחוב התאנה", "רחוב הרימון", "רחוב התמר",
+            "רחוב האלון", "רחוב הארז", "רחוב הברוש", "רחוב האורן", "רחוב השקד",
+            "רחוב החרוב", "רחוב הדקל", "סמטת הכרם", "מעלה הזיתים", "מורד הזיתים",
+            "עליית הנוער", "דרך הגבעה", "מרדכי רוזנשטיין", "נירים", "אברבנאל",
+            "שלמה אלירז", "איינשטיין", "בר כוכבא", "הנחל", "קק״ל", "הגליל",
+            "יעקב דורי", "Herzl", "Ben Gurion", "Weizmann", "Rothschild", "Dizengoff",
+            "Allenby", "Jaffa", "Yehuda Halevi", "King George", "Rav Kook", "Ben Yehuda",
+            "Sheinkin", "Ibn Gabirol", "Nahalat Binyamin", "Mordechai Rozenshtein",
+            "Nirim", "Abarbanel", "Shlomo Aliraz", "Einstein", "Bar Kochba", "Hanahal",
+            "KKL", "Hagalil", "Yaakov Dori", "Van Buren", "Knox", "Harley"
+          ]
+        }
+        """.trimIndent()
     }
 
     private fun updateBulkSendButton() {
