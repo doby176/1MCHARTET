@@ -887,7 +887,10 @@ class MainActivity : AppCompatActivity() {
                             blockTop > detectionRect.bottom)
                     if (!intersects) return@forEach
 
-                    // Scan for phone numbers
+                    // ALWAYS scan for addresses FIRST (even if phone will be found)
+                    processDetectedAddress(block.text)
+                    
+                    // Then scan for phone numbers
                     val cleaned = block.text.replace(" ", "").replace("-", "")
                     val matcher = phonePattern.matcher(cleaned)
                     while (matcher.find()) {
@@ -896,11 +899,6 @@ class MainActivity : AppCompatActivity() {
                             handled = true
                             break
                         }
-                    }
-                    
-                    // Scan for addresses (if phone not yet handled in this block)
-                    if (!handled) {
-                        processDetectedAddress(block.text)
                     }
                 }
 
