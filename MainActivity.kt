@@ -227,10 +227,15 @@ class MainActivity : AppCompatActivity() {
             var bestScore = 0.0
 
             streetsList.forEach { street ->
-                // Match against English name
-                val score = similarity(scanned, street.en)
-                if (score > bestScore) {
-                    bestScore = score
+                // Match against BOTH English AND Hebrew names
+                val scoreEnglish = similarity(scanned, street.en)
+                val scoreHebrew = similarity(scanned, street.he)
+                
+                // Use whichever match is better
+                val maxScore = maxOf(scoreEnglish, scoreHebrew)
+                
+                if (maxScore > bestScore) {
+                    bestScore = maxScore
                     bestMatch = street
                 }
             }
