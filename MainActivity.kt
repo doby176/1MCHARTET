@@ -240,8 +240,8 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            return if (bestMatch != null && bestScore >= 60.0) {
-                // Return Hebrew translation!
+            // Return result if ANY match found (caller will check threshold)
+            return if (bestMatch != null && bestScore > 0.0) {
                 Pair(bestMatch!!.he, bestScore)
             } else null
         }
@@ -969,14 +969,15 @@ class MainActivity : AppCompatActivity() {
             
             if (streetsList.isNotEmpty()) {
                 val fuzzyResult = findClosestStreet(streetPart)
-                if (fuzzyResult != null && fuzzyResult.second >= 60.0) {
-                    // Match found! Use Hebrew translation
+                if (fuzzyResult != null && fuzzyResult.second >= 80.0) {
+                    // Match found with high confidence! Use Hebrew translation
                     finalStreetName = fuzzyResult.first
                     confidence = fuzzyResult.second
                     Log.d("ADDRESS_DEBUG", "    🔍 Fuzzy match: '$streetPart' → '$finalStreetName' (${confidence.toInt()}%)")
                 } else {
-                    // No match - keep English OCR text
-                    Log.d("ADDRESS_DEBUG", "    ℹ️ No DB match, keeping English: '$streetPart'")
+                    // No match or low confidence - keep English OCR text
+                    val confidenceInfo = if (fuzzyResult != null) " (${fuzzyResult.second.toInt()}% - too low)" else ""
+                    Log.d("ADDRESS_DEBUG", "    ℹ️ Keeping English: '$streetPart'$confidenceInfo")
                 }
             }
             
