@@ -27,6 +27,9 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.Camera
@@ -88,7 +91,7 @@ class MainActivity : AppCompatActivity() {
     private var isBulkScanMode = false
     private var isWhatsAppSendMode = false
 
-    private val phonePattern = Pattern.compile("(\\+?972[0-9]{8,10}|0?5[0-9]{8})")
+    private val phonePattern = Pattern.compile("(\\+?972[0-9]{8,10}|05[0-9]{8})")
     private val requiredSmsPermissions = arrayOf(
         Manifest.permission.SEND_SMS,
         Manifest.permission.READ_SMS
@@ -403,34 +406,122 @@ class MainActivity : AppCompatActivity() {
     private fun showBulkSendDialog() {
         val eligibleNumbers = bulkQueue.filter { phone ->
             fetchLatestReply(phone)?.apartment == null
-        }
+        }.toMutableList()
 
         if (eligibleNumbers.isEmpty()) {
             Toast.makeText(this, "אין מספרים חדשים – כולם כבר ענו עם דירה!", Toast.LENGTH_LONG).show()
             return
         }
 
-        val display = eligibleNumbers.map { formatForDisplay(it) }.toTypedArray()
-        val checked = BooleanArray(eligibleNumbers.size) { true }
+        // Create RecyclerView programmatically
+        val recyclerView = RecyclerView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(16, 16, 16, 16)
+            }
+            layoutManager = LinearLayoutManager(this@MainActivity)
+        }
 
-        AlertDialog.Builder(this)
-            .setTitle("בחר מספרים לשליחה (עד 30 בכל 5 דקות)")
-            .setMultiChoiceItems(display, checked) { _, which, isChecked -> checked[which] = isChecked }
-            .setPositiveButton("שלח עכשיו") { _, _ ->
-                val selected = eligibleNumbers.filterIndexed { i, _ -> checked[i] }
-                if (selected.isEmpty()) {
-                    Toast.makeText(this, "לא נבחרו מספרים", Toast.LENGTH_SHORT).show()
+        // Custom adapter with swipe-to-delete
+        val adapter = BulkNumbersAdapter(eligibleNumbers)
+        recyclerView.adapter = adapter
+
+        // Add swipe-to-delete functionality
+        val swipeHandler = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
+            override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean = false
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                val removedNumber = eligibleNumbers[position]
+                eligibleNumbers.removeAt(position)
+                adapter.notifyItemRemoved(position)
+                bulkQueue.remove(removedNumber)
+                updateBulkSendButton()
+                Toast.makeText(this@MainActivity, "מספר הוסר: ${formatForDisplay(removedNumber)}", Toast.LENGTH_SHORT).show()
+            }
+        }
+        ItemTouchHelper(swipeHandler).attachToRecyclerView(recyclerView)
+
+        // Create dialog with matching style
+        val dialog = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog)
+            .setTitle("📋 בחר מספרים לשליחה (עד 30 בכל 5 דקות)")
+            .setView(recyclerView)
+            .setPositiveButton("✅ שלח עכשיו", null)
+            .setNegativeButton("❌ בטל", null)
+            .setNeutralButton("🗑️ נקה הכל", null)
+            .create()
+
+        dialog.show()
+
+        // Style buttons to match delivery popup
+        dialog.window?.setBackgroundDrawableResource(android.R.drawable.dialog_holo_dark_frame)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#4CAF50"))
+            setOnClickListener {
+                if (eligibleNumbers.isEmpty()) {
+                    Toast.makeText(this@MainActivity, "לא נבחרו מספרים", Toast.LENGTH_SHORT).show()
                 } else {
-                    sendBulkSms(selected)
+                    sendBulkSms(eligibleNumbers)
                     exitBulkScanMode()
+                    dialog.dismiss()
                 }
             }
-            .setNegativeButton("בטל", null)
-            .setNeutralButton("נקה רשימה") { _, _ ->
+        }
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#F44336"))
+        }
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.apply {
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.parseColor("#FF9800"))
+            setOnClickListener {
+                eligibleNumbers.clear()
+                adapter.notifyDataSetChanged()
                 clearBulkQueue()
-                Toast.makeText(this, "הרשימה נוקתה", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "הרשימה נוקתה", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
             }
-            .show()
+        }
+    }
+
+    // Adapter for bulk numbers RecyclerView
+    private inner class BulkNumbersAdapter(private val numbers: MutableList<String>) : 
+        RecyclerView.Adapter<BulkNumbersAdapter.NumberViewHolder>() {
+
+        inner class NumberViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+            val textView: TextView = view.findViewById(android.R.id.text1)
+        }
+
+        override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): NumberViewHolder {
+            val view = TextView(parent.context).apply {
+                id = android.R.id.text1
+                layoutParams = android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                setPadding(32, 24, 32, 24)
+                textSize = 18f
+                setTextColor(Color.WHITE)
+                setBackgroundColor(Color.parseColor("#2C2C2C"))
+                gravity = android.view.Gravity.CENTER
+                textDirection = View.TEXT_DIRECTION_RTL
+            }
+            return NumberViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: NumberViewHolder, position: Int) {
+            holder.textView.text = "📱 ${formatForDisplay(numbers[position])}"
+            
+            // Add visual separator
+            val params = holder.textView.layoutParams as? android.view.ViewGroup.MarginLayoutParams
+            params?.setMargins(16, 8, 16, 8)
+            holder.textView.layoutParams = params
+        }
+
+        override fun getItemCount(): Int = numbers.size
     }
 
     private fun exitBulkScanMode() {
@@ -818,16 +909,10 @@ class MainActivity : AppCompatActivity() {
         }
         
         return when {
-            // Israeli number with leading 0 (0526430819)
+            // Israeli number with leading 0 (0526430819) - MUST start with 05
             s.startsWith("05") && s.length == 10 -> {
                 val result = "+972" + s.substring(1)
                 Log.d("PHONE_NORMALIZE", "Case: 05... (10 digits) -> $result")
-                result
-            }
-            // Israeli number without leading 0 (526430819 - 9 digits)
-            s.startsWith("5") && s.length == 9 -> {
-                val result = "+972" + s
-                Log.d("PHONE_NORMALIZE", "Case: 5... (9 digits) -> $result")
                 result
             }
             // Full international format (+972526430819)
