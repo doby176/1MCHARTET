@@ -918,49 +918,40 @@ class MainActivity : AppCompatActivity() {
     private fun processDetectedAddress(text: String) {
         Log.d("ADDRESS_DEBUG", "📝 Scanning text block: '$text'")
         
-        // Pattern: Hebrew OR English text followed by 1-3 digit number
-        // Hebrew: "יואל כהן 8" or "התעשייה 13/3"
-        // English: "ROTCHILD 6" or "Ben Gurion 25"
-        // Flexible spacing: "ROTCHILD 6" or "ROTCHILD6" (both work)
-        val addressPattern = Regex("[א-תa-zA-Z\\s'\"]+\\s*(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
-        val match = addressPattern.find(text)
+        // SIMPLE TEST: Match "word(s) number" pattern (no fuzzy matching yet)
+        // Pattern: Letters (no spaces inside) + space + 1-3 digit number
+        // Examples: "ROTCHILD 6", "הרצל 6", "התעשייה 13"
+        val simplePattern = Regex("([א-תa-zA-Z]+(?:\\s+[א-תa-zA-Z]+)*)\\s+(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
+        val match = simplePattern.find(text)
         
         if (match == null) {
-            Log.d("ADDRESS_DEBUG", "❌ No address pattern matched")
+            Log.d("ADDRESS_DEBUG", "❌ No address pattern matched in: '$text'")
             return
         }
         
         val fullMatch = match.value
-        Log.d("ADDRESS_DEBUG", "✅ Pattern matched: '$fullMatch'")
+        val streetPart = match.groupValues[1].trim()
+        val numberPart = match.groupValues[2].trim()
         
-        // Extract street part (before numbers)
-        val streetPart = fullMatch.replace(Regex("\\d+.*"), "").trim()
-        Log.d("ADDRESS_DEBUG", "🔍 Extracted street: '$streetPart' (${streetPart.length} chars)")
+        Log.d("ADDRESS_DEBUG", "✅ Pattern matched!")
+        Log.d("ADDRESS_DEBUG", "   Full: '$fullMatch'")
+        Log.d("ADDRESS_DEBUG", "   Street: '$streetPart'")
+        Log.d("ADDRESS_DEBUG", "   Numbers: '$numberPart'")
         
         if (streetPart.length < 3) {
             Log.d("ADDRESS_DEBUG", "❌ Street too short (<3 chars)")
             return
         }
         
-        Log.d("ADDRESS_DEBUG", "🔎 Searching ${streetsList.size} streets for match...")
+        // TEMPORARILY SKIP FUZZY MATCHING - just use what we got!
+        val detectedAddress = "$streetPart $numberPart"
         
-        // Find closest matching street using fuzzy matching
-        val matchResult = findClosestStreet(streetPart)
-        if (matchResult != null) {
-            val (correctedStreet, confidence) = matchResult
-            // Extract building/apartment numbers
-            val numbers = fullMatch.replace(Regex("[^0-9/\\s]+"), "").trim()
-            val correctedAddress = "$correctedStreet $numbers"
-            
-            Log.d("ADDRESS_SCAN", "🏠 Match found: '$streetPart' → '$correctedStreet' (${"%.1f".format(confidence)}% confidence)")
-            
-            // Update last detected address
-            if (lastDetectedAddress != correctedAddress) {
-                lastDetectedAddress = correctedAddress
-                Log.d("ADDRESS_SCAN", "✅ Address confirmed: $correctedAddress")
-            }
-        } else {
-            Log.d("ADDRESS_DEBUG", "❌ No fuzzy match found (confidence < 60%)")
+        Log.d("ADDRESS_SCAN", "🏠 Address detected (NO fuzzy matching): $detectedAddress")
+        
+        // Update last detected address
+        if (lastDetectedAddress != detectedAddress) {
+            lastDetectedAddress = detectedAddress
+            Log.d("ADDRESS_SCAN", "✅ Address confirmed: $detectedAddress")
         }
     }
 
