@@ -909,16 +909,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun processDetectedAddress(text: String) {
+        Log.d("ADDRESS_DEBUG", "📝 Scanning text block: '$text'")
+        
         // Pattern: Hebrew text followed by 1-3 digit number
         // Example: "יואל כהן 8" or "התעשייה 13/3"
         val addressPattern = Regex("[א-ת\\s'\"]+\\s+(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
-        val match = addressPattern.find(text) ?: return
+        val match = addressPattern.find(text)
+        
+        if (match == null) {
+            Log.d("ADDRESS_DEBUG", "❌ No address pattern matched")
+            return
+        }
         
         val fullMatch = match.value
+        Log.d("ADDRESS_DEBUG", "✅ Pattern matched: '$fullMatch'")
+        
         // Extract street part (before numbers)
         val streetPart = fullMatch.replace(Regex("\\d+.*"), "").trim()
+        Log.d("ADDRESS_DEBUG", "🔍 Extracted street: '$streetPart' (${streetPart.length} chars)")
         
-        if (streetPart.length < 3) return // Too short to be valid
+        if (streetPart.length < 3) {
+            Log.d("ADDRESS_DEBUG", "❌ Street too short (<3 chars)")
+            return
+        }
+        
+        Log.d("ADDRESS_DEBUG", "🔎 Searching ${streetsList.size} streets for match...")
         
         // Find closest matching street using fuzzy matching
         val matchResult = findClosestStreet(streetPart)
@@ -928,11 +943,15 @@ class MainActivity : AppCompatActivity() {
             val numbers = fullMatch.replace(Regex("[^0-9/\\s]+"), "").trim()
             val correctedAddress = "$correctedStreet $numbers"
             
+            Log.d("ADDRESS_SCAN", "🏠 Match found: '$streetPart' → '$correctedStreet' (${"%.1f".format(confidence)}% confidence)")
+            
             // Update last detected address
             if (lastDetectedAddress != correctedAddress) {
                 lastDetectedAddress = correctedAddress
-                Log.d("ADDRESS_SCAN", "🏠 Address detected: '$streetPart' → '$correctedStreet' (${"%.1f".format(confidence)}% match) → Full: $correctedAddress")
+                Log.d("ADDRESS_SCAN", "✅ Address confirmed: $correctedAddress")
             }
+        } else {
+            Log.d("ADDRESS_DEBUG", "❌ No fuzzy match found (confidence < 60%)")
         }
     }
 
