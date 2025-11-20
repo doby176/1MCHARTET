@@ -498,10 +498,12 @@ class MainActivity : AppCompatActivity() {
         override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): NumberViewHolder {
             val view = TextView(parent.context).apply {
                 id = android.R.id.text1
-                layoutParams = android.view.ViewGroup.LayoutParams(
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-                )
+                layoutParams = RecyclerView.LayoutParams(
+                    RecyclerView.LayoutParams.MATCH_PARENT,
+                    RecyclerView.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    setMargins(16, 8, 16, 8)
+                }
                 setPadding(32, 24, 32, 24)
                 textSize = 18f
                 setTextColor(Color.WHITE)
@@ -514,11 +516,6 @@ class MainActivity : AppCompatActivity() {
 
         override fun onBindViewHolder(holder: NumberViewHolder, position: Int) {
             holder.textView.text = "📱 ${formatForDisplay(numbers[position])}"
-            
-            // Add visual separator
-            val params = holder.textView.layoutParams as? android.view.ViewGroup.MarginLayoutParams
-            params?.setMargins(16, 8, 16, 8)
-            holder.textView.layoutParams = params
         }
 
         override fun getItemCount(): Int = numbers.size
