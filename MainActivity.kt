@@ -918,40 +918,48 @@ class MainActivity : AppCompatActivity() {
     private fun processDetectedAddress(text: String) {
         Log.d("ADDRESS_DEBUG", "📝 Scanning text block: '$text'")
         
-        // SIMPLE TEST: Match "word(s) number" pattern (no fuzzy matching yet)
-        // Pattern: Letters (no spaces inside) + space + 1-3 digit number
-        // Examples: "ROTCHILD 6", "הרצל 6", "התעשייה 13"
-        val simplePattern = Regex("([א-תa-zA-Z]+(?:\\s+[א-תa-zA-Z]+)*)\\s+(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
-        val match = simplePattern.find(text)
+        // Pattern: Match "word(s) number" (Hebrew OR English)
+        // Examples: "ROTCHILD 6", "הרצל 6", "התעשייה 13/5"
+        val addressPattern = Regex("([א-תa-zA-Z]+(?:\\s+[א-תa-zA-Z]+)*)\\s+(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
+        val match = addressPattern.find(text)
         
         if (match == null) {
             Log.d("ADDRESS_DEBUG", "❌ No address pattern matched in: '$text'")
             return
         }
         
-        val fullMatch = match.value
         val streetPart = match.groupValues[1].trim()
         val numberPart = match.groupValues[2].trim()
         
-        Log.d("ADDRESS_DEBUG", "✅ Pattern matched!")
-        Log.d("ADDRESS_DEBUG", "   Full: '$fullMatch'")
-        Log.d("ADDRESS_DEBUG", "   Street: '$streetPart'")
-        Log.d("ADDRESS_DEBUG", "   Numbers: '$numberPart'")
+        Log.d("ADDRESS_DEBUG", "✅ Pattern matched: Street='$streetPart', Number='$numberPart'")
         
         if (streetPart.length < 3) {
             Log.d("ADDRESS_DEBUG", "❌ Street too short (<3 chars)")
             return
         }
         
-        // TEMPORARILY SKIP FUZZY MATCHING - just use what we got!
-        val detectedAddress = "$streetPart $numberPart"
+        // Try fuzzy matching to correct OCR errors (NOTCHILD → ROTCHILD)
+        var finalStreet = streetPart
+        if (streetsList.isNotEmpty()) {
+            val fuzzyResult = findClosestStreet(streetPart)
+            if (fuzzyResult != null) {
+                val (correctedStreet, confidence) = fuzzyResult
+                Log.d("ADDRESS_DEBUG", "🔍 Fuzzy match: '$streetPart' → '$correctedStreet' (${confidence.toInt()}%)")
+                if (confidence >= 70.0) {
+                    finalStreet = correctedStreet
+                    Log.d("ADDRESS_SCAN", "✅ Used fuzzy match (${confidence.toInt()}% confidence)")
+                } else {
+                    Log.d("ADDRESS_DEBUG", "⚠️ Confidence too low (${confidence.toInt()}%), using OCR as-is")
+                }
+            }
+        }
         
-        Log.d("ADDRESS_SCAN", "🏠 Address detected (NO fuzzy matching): $detectedAddress")
+        val detectedAddress = "$finalStreet $numberPart"
         
         // Update last detected address
         if (lastDetectedAddress != detectedAddress) {
             lastDetectedAddress = detectedAddress
-            Log.d("ADDRESS_SCAN", "✅ Address confirmed: $detectedAddress")
+            Log.d("ADDRESS_SCAN", "🏠 Address confirmed: $detectedAddress")
         }
     }
 
