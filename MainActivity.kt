@@ -941,6 +941,8 @@ class MainActivity : AppCompatActivity() {
         
         // Zip code pattern: pure numeric, 4-7 digits (Israeli zip codes)
         val zipCodePattern = Regex("^\\d{4,7}$")
+        // Zip code embedded in text (e.g., "Street 7539411 IL")
+        val embeddedZipPattern = Regex("\\b(\\d{4,7})\\b")
 
         // ML Kit often returns multi-line blocks with garbage + address
         // Try matching EACH LINE separately to extract clean addresses
@@ -958,6 +960,15 @@ class MainActivity : AppCompatActivity() {
                 zipCodeIndices.add(index)
                 Log.d("ADDRESS_DEBUG", "    📮 Identified as ZIP CODE at index $index")
                 continue
+            }
+
+            // Check for embedded zip codes in the line (e.g., "Street 7539411 IL")
+            val embeddedZipMatch = embeddedZipPattern.find(line)
+            if (embeddedZipMatch != null) {
+                val zipCode = embeddedZipMatch.groupValues[1]
+                zipCodeIndices.add(index)
+                Log.d("ADDRESS_DEBUG", "    📮 Found embedded ZIP CODE '$zipCode' at index $index")
+                // Continue to check if there's also an address on this line
             }
 
             // SKIP lines that are mostly numbers (zip codes, tracking numbers)
@@ -978,11 +989,39 @@ class MainActivity : AppCompatActivity() {
             val streetPart = match.groupValues[1].trim()
             val numberPart = match.groupValues[2].trim()
 
+            // Check if the matched number is actually part of a zip code
+            // Look for zip codes (4-7 digits) near the matched number
+            val numberStartPos = match.range.last - numberPart.length + 1
+            val contextAfter = line.substring(minOf(numberStartPos + numberPart.length, line.length))
+            val zipCodeAfter = embeddedZipPattern.find(contextAfter)
+            
+            if (zipCodeAfter != null) {
+                val zipCode = zipCodeAfter.groupValues[1]
+                // Check if our matched number overlaps with or is part of the zip code
+                val matchedNumberDigits = numberPart.filter { it.isDigit() }
+                if (zipCode.startsWith(matchedNumberDigits) && zipCode.length >= 4) {
+                    Log.d("ADDRESS_DEBUG", "    ❌ Matched number '$numberPart' is part of zip code '$zipCode', rejecting")
+                    continue
+                }
+            }
+
             // REJECT if building number is too large (likely a zip code or tracking number)
             val buildingNumber = numberPart.split("/", " ")[0].toIntOrNull()
             if (buildingNumber != null && buildingNumber > 999) {
                 Log.d("ADDRESS_DEBUG", "    ❌ Building number too large ($buildingNumber), likely zip code")
                 continue
+            }
+
+            // Additional check: if line contains a zip code (4-7 digits), reject this match
+            // unless the number is clearly separated (not part of the zip)
+            if (embeddedZipMatch != null) {
+                val zipCode = embeddedZipMatch.groupValues[1]
+                val matchedNumberDigits = numberPart.filter { it.isDigit() }
+                // If the matched number digits appear at the start of the zip code, it's likely wrong
+                if (zipCode.startsWith(matchedNumberDigits) && matchedNumberDigits.length >= 3) {
+                    Log.d("ADDRESS_DEBUG", "    ❌ Number '$numberPart' appears to be start of zip code '$zipCode', rejecting")
+                    continue
+                }
             }
 
             if (streetPart.length < 3) {
