@@ -81,6 +81,7 @@ class MainActivity : AppCompatActivity() {
     private var lastDetectedAddress: String? = null
     private var confirmedAddress: String? = null
     private var detectionCount = 0
+    private var addressDetectionCount = 0
     private var lastScanTime = 0L
     private val MIN_SCAN_INTERVAL = 300L
     private var camera: Camera? = null
@@ -1079,10 +1080,25 @@ class MainActivity : AppCompatActivity() {
             Log.d("ADDRESS_DEBUG", "✅ Selected best address candidate: '$selectedAddress'")
         }
 
-        // Update last detected address (don't overwrite confirmed address)
-        if (selectedAddress != null && confirmedAddress == null && lastDetectedAddress != selectedAddress) {
-            lastDetectedAddress = selectedAddress
-            Log.d("ADDRESS_SCAN", "✅ 🏠 Address detected: $selectedAddress")
+        // Update last detected address with confirmation logic (similar to phone numbers)
+        if (selectedAddress != null && confirmedAddress == null) {
+            // Check if this matches the previously detected address
+            if (lastDetectedAddress == selectedAddress) {
+                // Same address detected again - increment count
+                addressDetectionCount++
+                Log.d("ADDRESS_SCAN", "✅ MATCH! Same address again: '$selectedAddress' (count now: $addressDetectionCount)")
+                
+                // Confirm address after 2 consecutive detections
+                if (addressDetectionCount >= 2) {
+                    confirmedAddress = selectedAddress
+                    Log.d("ADDRESS_SCAN", "✅ 🏠 Address CONFIRMED: $selectedAddress")
+                }
+            } else {
+                // Different address detected - reset and start over
+                lastDetectedAddress = selectedAddress
+                addressDetectionCount = 1
+                Log.d("ADDRESS_SCAN", "🆕 New address detected: '$selectedAddress' (count reset to 1)")
+            }
         } else if (selectedAddress == null) {
             Log.d("ADDRESS_DEBUG", "❌ No valid address found in any line")
         }
@@ -1108,6 +1124,7 @@ class MainActivity : AppCompatActivity() {
             // 🔥 FIX: Reset address when scanning NEW phone number!
             lastDetectedAddress = null
             confirmedAddress = null
+            addressDetectionCount = 0
             Log.d("SCAN", "🆕 New number detected: $normalized (count reset to 1, address cleared)")
         } else {
             detectionCount++
@@ -1297,6 +1314,7 @@ class MainActivity : AppCompatActivity() {
         lastDetectedAddress = null
         confirmedAddress = null
         detectionCount = 0
+        addressDetectionCount = 0
         runOnUiThread {
             tvDetected.text = "סריקה..."
             tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
