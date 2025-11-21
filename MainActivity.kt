@@ -978,59 +978,6 @@ class MainActivity : AppCompatActivity() {
             val streetPart = match.groupValues[1].trim()
             val numberPart = match.groupValues[2].trim()
 
-            // Filter out excluded words (building, apartment, etc.) from street names
-            val excludedWords = listOf(
-                "building", "uilding", "uildin", "ilding", // Handle OCR errors (missing first/last letters)
-                "apartment", "appartment", "partment", "apartmen", "apt", 
-                "floor", "fl", "loor", "floo",
-                "unit", "unit", "nit", "uni",
-                "suite", "uite", "suit",
-                "room", "oom", "roo",
-                "בילדינג", "בניין", "דירה", "קומה", "יחידה", "סוויטה", "חדר"
-            )
-            
-            val streetPartLower = streetPart.lowercase().trim()
-            
-            // Check if street part starts with, ends with, or contains excluded words
-            // Also handle OCR errors by checking if excluded word is contained in street part
-            val containsExcluded = excludedWords.any { excluded ->
-                val excludedLower = excluded.lowercase()
-                streetPartLower == excludedLower || // Exact match
-                streetPartLower.startsWith(excludedLower) || // Starts with excluded word
-                streetPartLower.endsWith(excludedLower) || // Ends with excluded word
-                streetPartLower.contains(excludedLower) || // Contains excluded word
-                excludedLower.contains(streetPartLower) || // Street part is substring of excluded word (OCR error)
-                // Handle OCR errors: check if street part matches end of excluded word (missing first letter)
-                (streetPartLower.length >= 4 && excludedLower.length > streetPartLower.length && 
-                 excludedLower.endsWith(streetPartLower)) || // "uilding" matches end of "building"
-                // Handle OCR errors: check if street part matches start of excluded word (missing last letter)
-                (streetPartLower.length >= 4 && excludedLower.length > streetPartLower.length && 
-                 excludedLower.startsWith(streetPartLower)) // "buildin" matches start of "building"
-            }
-            
-            if (containsExcluded) {
-                Log.d("ADDRESS_DEBUG", "    ❌ Street part '$streetPart' contains/excludes excluded word, skipping")
-                continue
-            }
-            
-            // Also check individual words in the street part
-            val words = streetPart.split("\\s+".toRegex()).map { it.lowercase().trim() }
-            val hasExcludedWord = words.any { word ->
-                excludedWords.any { excluded ->
-                    val excludedLower = excluded.lowercase()
-                    word == excludedLower ||
-                    word.contains(excludedLower) ||
-                    excludedLower.contains(word) ||
-                    (word.length >= 3 && excludedLower.length > word.length && excludedLower.endsWith(word)) ||
-                    (word.length >= 3 && excludedLower.length > word.length && excludedLower.startsWith(word))
-                }
-            }
-            
-            if (hasExcludedWord) {
-                Log.d("ADDRESS_DEBUG", "    ❌ Street part '$streetPart' contains excluded word in its words, skipping")
-                continue
-            }
-
             // Check if the matched number is actually part of a zip code
             // Look for zip codes (4-7 digits) near the matched number
             val numberStartPos = match.range.last - numberPart.length + 1
@@ -1139,10 +1086,10 @@ class MainActivity : AppCompatActivity() {
             if (lastDetectedAddress == selectedAddress) {
                 // Same address detected again - increment count
                 addressDetectionCount++
-                Log.d("ADDRESS_SCAN", "✅ MATCH! Same address again: '$selectedAddress' (count now: $addressDetectionCount)")
-                
-                // Confirm address after 2 consecutive detections
-                if (addressDetectionCount >= 2) {
+                Log.d("ADDRESS_SCAN", "✅ MATCH! Same address again: '$selectedAddress' (count now: $addressDetectionCount/4)")
+
+                // Confirm address after 4 consecutive detections
+                if (addressDetectionCount >= 4) {
                     confirmedAddress = selectedAddress
                     Log.d("ADDRESS_SCAN", "✅ 🏠 Address CONFIRMED: $selectedAddress")
                 }
