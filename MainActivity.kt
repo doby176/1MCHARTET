@@ -978,6 +978,34 @@ class MainActivity : AppCompatActivity() {
             val streetPart = match.groupValues[1].trim()
             val numberPart = match.groupValues[2].trim()
 
+            // Filter out excluded words (building, apartment, etc.) from street names
+            val excludedWords = listOf(
+                "building", "בילדינג", "בניין",
+                "apartment", "appartment", "apt", "דירה",
+                "floor", "fl", "קומה",
+                "unit", "יחידה",
+                "suite", "סוויטה",
+                "room", "חדר"
+            )
+            
+            val streetPartLower = streetPart.lowercase()
+            val startsWithExcluded = excludedWords.any { excluded ->
+                streetPartLower.startsWith(excluded.lowercase()) || 
+                streetPartLower == excluded.lowercase()
+            }
+            
+            if (startsWithExcluded) {
+                Log.d("ADDRESS_DEBUG", "    ❌ Street part '$streetPart' starts with excluded word, skipping")
+                continue
+            }
+            
+            // Also check if street part contains only excluded words (e.g., "building 5")
+            val words = streetPart.split("\\s+".toRegex())
+            if (words.size == 1 && excludedWords.any { it.lowercase() == streetPartLower }) {
+                Log.d("ADDRESS_DEBUG", "    ❌ Street part '$streetPart' is an excluded word, skipping")
+                continue
+            }
+
             // Check if the matched number is actually part of a zip code
             // Look for zip codes (4-7 digits) near the matched number
             val numberStartPos = match.range.last - numberPart.length + 1
