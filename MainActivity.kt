@@ -60,12 +60,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var previewView: PreviewView
     private lateinit var tvDetected: TextView
-    private lateinit var tvAddress: TextView
     private lateinit var btnSend: Button
     private lateinit var btnOpenWhatsApp: Button
     private lateinit var btnCall: Button
     private lateinit var btnClear: Button
-    private lateinit var btnClearAddress: Button
     private lateinit var btnToggleSendMode: Button
     private lateinit var btnDeliveryMode: Button
     private lateinit var btnBulkSend: Button
@@ -93,7 +91,6 @@ class MainActivity : AppCompatActivity() {
     }
     private val roiRectNorm = RectF(0f, 0f, 1f, 1f)
     private val scanWindowRectPx = Rect()
-    private var fixedScanBottom: Int? = null // Store fixed bottom position for scanning zone
 
     private var isBulkScanMode = false
     private var isWhatsAppSendMode = false
@@ -260,12 +257,10 @@ class MainActivity : AppCompatActivity() {
 
         previewView = findViewById(R.id.previewView)
         tvDetected = findViewById(R.id.tvDetected)
-        tvAddress = findViewById(R.id.tvAddress)
         btnSend = findViewById(R.id.btnSend)
         btnOpenWhatsApp = findViewById(R.id.btnOpenWhatsApp)
         btnCall = findViewById(R.id.btnCall)
         btnClear = findViewById(R.id.btnClear)
-        btnClearAddress = findViewById(R.id.btnClearAddress)
         btnToggleSendMode = findViewById(R.id.btnToggleSendMode)
         btnDeliveryMode = findViewById(R.id.btnDeliveryMode)
         btnBulkSend = findViewById(R.id.btnBulkSend)
@@ -343,14 +338,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnClear.setOnClickListener { resetScanState() }
-
-        btnClearAddress.setOnClickListener {
-            // Clear only the address, keep the phone number
-            lastDetectedAddress = null
-            confirmedAddress = null
-            updateAddressDisplay()
-            Toast.makeText(this, "כתובת נמחקה", Toast.LENGTH_SHORT).show()
-        }
 
         // Add double-tap listener for manual phone entry
         tvDetected.setOnClickListener { view ->
@@ -1128,7 +1115,7 @@ class MainActivity : AppCompatActivity() {
             Log.d("SCAN", "✅ MATCH! Same number again: $normalized (count now: $detectionCount)")
         }
 
-        runOnUiThread {
+            runOnUiThread {
             val display = formatForDisplay(normalized)
             tvDetected.text = "$display (${detectionCount}/2)"
             if (detectionCount >= 2) {
@@ -1136,7 +1123,6 @@ class MainActivity : AppCompatActivity() {
             } else {
                 tvDetected.setBackgroundColor(Color.parseColor("#FF9800"))
             }
-            updateAddressDisplay()
         }
 
         if (detectionCount >= 2 && confirmedNumber == null) {
@@ -1148,7 +1134,6 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 tvDetected.text = "$confirmedDisplay"
                 tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
-                updateAddressDisplay()
             }
 
             val local10 = toLocal10Digit(normalized)
@@ -1233,28 +1218,13 @@ class MainActivity : AppCompatActivity() {
         val marginPx = (16 * resources.displayMetrics.density).toInt()
         val bottomGapPx = (32 * resources.displayMetrics.density).toInt() // Larger gap at bottom
         var top = topBar.bottom + marginPx
-        
-        // FIX: Use fixed bottom position to prevent scanning zone from shrinking when address is detected
-        // Calculate bottom based on detectionPanel's INITIAL position (before address is shown)
-        // or use a fixed position if already calculated
-        var bottom = if (fixedScanBottom != null) {
-            fixedScanBottom!!
-        } else {
-            // First time: calculate based on detectionPanel position
-            val calculatedBottom = detectionPanel.top - bottomGapPx
-            // Store it as fixed position so it doesn't change when detectionPanel expands
-            fixedScanBottom = calculatedBottom
-            calculatedBottom
-        }
-        
+        var bottom = detectionPanel.top - bottomGapPx // Increased gap to prevent overlap
         var left = (previewView.width * 0.1f).toInt()
         var right = (previewView.width * 0.9f).toInt()
 
         if (bottom <= top) {
             top = (previewView.height * 0.15f).toInt()
             bottom = (previewView.height * 0.65f).toInt()
-            // Update fixed position if we had to use fallback
-            fixedScanBottom = bottom
         }
         // Remove max height constraint to allow full scanning area
         if (right <= left) {
@@ -1328,29 +1298,10 @@ class MainActivity : AppCompatActivity() {
         lastDetectedAddress = null
         confirmedAddress = null
         detectionCount = 0
-        // Reset fixed scan bottom to allow recalculation if layout changes
-        fixedScanBottom = null
         runOnUiThread {
             tvDetected.text = "סריקה..."
             tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
             scanOverlay.setActive(false)
-            updateAddressDisplay()
-            // Recalculate scan window bounds with fresh position
-            updateScanWindowBounds()
-        }
-    }
-
-    private fun updateAddressDisplay() {
-        runOnUiThread {
-            if (lastDetectedAddress != null || confirmedAddress != null) {
-                val address = confirmedAddress ?: lastDetectedAddress
-                tvAddress.text = "🏠 $address"
-                tvAddress.visibility = View.VISIBLE
-                btnClearAddress.visibility = View.VISIBLE
-            } else {
-                tvAddress.visibility = View.GONE
-                btnClearAddress.visibility = View.GONE
-            }
         }
     }
 
