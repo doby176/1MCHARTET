@@ -1083,7 +1083,6 @@ class MainActivity : AppCompatActivity() {
         if (selectedAddress != null && confirmedAddress == null && lastDetectedAddress != selectedAddress) {
             lastDetectedAddress = selectedAddress
             Log.d("ADDRESS_SCAN", "✅ 🏠 Address detected: $selectedAddress")
-            updateAddressDisplay()
         } else if (selectedAddress == null) {
             Log.d("ADDRESS_DEBUG", "❌ No valid address found in any line")
         }
@@ -1115,7 +1114,7 @@ class MainActivity : AppCompatActivity() {
             Log.d("SCAN", "✅ MATCH! Same number again: $normalized (count now: $detectionCount)")
         }
 
-            runOnUiThread {
+        runOnUiThread {
             val display = formatForDisplay(normalized)
             tvDetected.text = "$display (${detectionCount}/2)"
             if (detectionCount >= 2) {
