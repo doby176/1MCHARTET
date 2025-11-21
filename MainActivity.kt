@@ -936,9 +936,8 @@ class MainActivity : AppCompatActivity() {
         Log.d("ADDRESS_DEBUG", "📝 Scanning text block: '$text'")
         
         // Pattern: Match 1-3 words + number (Hebrew OR English)
-        // Limit to 3 words MAX to avoid matching entire paragraphs
-        // Examples: "ASHOMER 26", "GOSH ATZION 8", "BEN GURION 15"
-        val addressPattern = Regex("([א-תa-zA-Z]+(?:\\s+[א-תa-zA-Z]+){0,2})\\s+(\\d{1,3}(?:[/\\s]\\d{1,3})?)")
+        // Building number: 1-3 digits, optionally apartment (e.g., "26/4")
+        val addressPattern = Regex("([א-תa-zA-Z]+(?:\\s+[א-תa-zA-Z]+){0,2})\\s+(\\d{1,3}(?:[/\\s]\\d{1,2})?)")
         
         // ML Kit often returns multi-line blocks with garbage + address
         // Try matching EACH LINE separately to extract clean addresses
@@ -946,6 +945,15 @@ class MainActivity : AppCompatActivity() {
         
         for (line in lines) {
             Log.d("ADDRESS_DEBUG", "  🔍 Trying line: '$line'")
+            
+            // SKIP lines that are mostly numbers (zip codes, tracking numbers)
+            val digitCount = line.count { it.isDigit() }
+            val totalChars = line.length
+            if (digitCount.toDouble() / totalChars > 0.6) {
+                Log.d("ADDRESS_DEBUG", "    ❌ Line is mostly numbers (${(digitCount.toDouble() / totalChars * 100).toInt()}%), skipping")
+                continue
+            }
+            
             val match = addressPattern.find(line)
             
             if (match == null) {
@@ -955,6 +963,13 @@ class MainActivity : AppCompatActivity() {
             
             val streetPart = match.groupValues[1].trim()
             val numberPart = match.groupValues[2].trim()
+            
+            // REJECT if building number is too large (likely a zip code or tracking number)
+            val buildingNumber = numberPart.split("/", " ")[0].toIntOrNull()
+            if (buildingNumber != null && buildingNumber > 999) {
+                Log.d("ADDRESS_DEBUG", "    ❌ Building number too large ($buildingNumber), likely zip code")
+                continue
+            }
             
             Log.d("ADDRESS_DEBUG", "    ✅ Pattern matched: Street='$streetPart', Number='$numberPart'")
             
