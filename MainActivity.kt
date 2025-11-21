@@ -93,6 +93,7 @@ class MainActivity : AppCompatActivity() {
     }
     private val roiRectNorm = RectF(0f, 0f, 1f, 1f)
     private val scanWindowRectPx = Rect()
+    private var fixedScanBottom: Int? = null // Store fixed bottom position for scanning zone
 
     private var isBulkScanMode = false
     private var isWhatsAppSendMode = false
@@ -1232,13 +1233,28 @@ class MainActivity : AppCompatActivity() {
         val marginPx = (16 * resources.displayMetrics.density).toInt()
         val bottomGapPx = (32 * resources.displayMetrics.density).toInt() // Larger gap at bottom
         var top = topBar.bottom + marginPx
-        var bottom = detectionPanel.top - bottomGapPx // Increased gap to prevent overlap
+        
+        // FIX: Use fixed bottom position to prevent scanning zone from shrinking when address is detected
+        // Calculate bottom based on detectionPanel's INITIAL position (before address is shown)
+        // or use a fixed position if already calculated
+        var bottom = if (fixedScanBottom != null) {
+            fixedScanBottom!!
+        } else {
+            // First time: calculate based on detectionPanel position
+            val calculatedBottom = detectionPanel.top - bottomGapPx
+            // Store it as fixed position so it doesn't change when detectionPanel expands
+            fixedScanBottom = calculatedBottom
+            calculatedBottom
+        }
+        
         var left = (previewView.width * 0.1f).toInt()
         var right = (previewView.width * 0.9f).toInt()
 
         if (bottom <= top) {
             top = (previewView.height * 0.15f).toInt()
             bottom = (previewView.height * 0.65f).toInt()
+            // Update fixed position if we had to use fallback
+            fixedScanBottom = bottom
         }
         // Remove max height constraint to allow full scanning area
         if (right <= left) {
@@ -1312,11 +1328,15 @@ class MainActivity : AppCompatActivity() {
         lastDetectedAddress = null
         confirmedAddress = null
         detectionCount = 0
+        // Reset fixed scan bottom to allow recalculation if layout changes
+        fixedScanBottom = null
         runOnUiThread {
             tvDetected.text = "סריקה..."
             tvDetected.setBackgroundResource(R.drawable.bg_detected_box)
             scanOverlay.setActive(false)
             updateAddressDisplay()
+            // Recalculate scan window bounds with fresh position
+            updateScanWindowBounds()
         }
     }
 
