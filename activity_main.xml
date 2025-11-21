@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:fitsSystemWindows="true">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <com.scan2chat.app.ScanOverlayView
+        android:id="@+id/scanOverlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clickable="false"
+        android:focusable="false"
+        android:importantForAccessibility="no"
+        android:layout_margin="0dp"
+        android:elevation="6dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <LinearLayout
+        android:id="@+id/flashAlert"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="#4CAF50"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:elevation="12dp"
+        android:translationZ="12dp"
+        android:padding="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/tvFlashMain"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="כבר התקבלה תשובה בעבר!"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvFlashSub"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ההודעה לא נשלחת"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tvFlashExtra"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="לשליחה חוזרת – לחץ 'שלח SMS' שוב"
+            android:textColor="#E8F5E9"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp"
+            android:textStyle="italic" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_margin="20dp"
+        android:background="@drawable/bg_card_dark"
+        android:padding="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <Button
+            android:id="@+id/btnBulkSend"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="שליחה קבוצתית"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:paddingHorizontal="4dp"
+            android:background="@drawable/bg_button_secondary"
+            app:backgroundTint="@null"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <Button
+            android:id="@+id/btnDeliveryMode"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="יציאה לדרך"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:paddingHorizontal="4dp"
+            android:background="@drawable/bg_button_secondary"
+            app:backgroundTint="@null"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="התנתק"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:paddingHorizontal="8dp"
+            android:background="@drawable/bg_button_secondary"
+            app:backgroundTint="@null" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvModeHint"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="בחר מצב פעולה וסרוק את המדבקות באזור המסגרת הירוקה."
+        android:textColor="#B0BEC5"
+        android:textSize="13sp"
+        android:paddingHorizontal="24dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginHorizontal="32dp"
+        android:layout_marginBottom="48dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="12dp">
+
+            <Button
+                android:id="@+id/btnSend"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:text="שלח SMS"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="4dp"
+                android:background="@drawable/bg_button_primary"
+                app:backgroundTint="@null"
+                app:icon="@drawable/ic_whatsapp"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp"
+                app:iconTint="#FFFFFF"/>
+
+            <Button
+                android:id="@+id/btnOpenWhatsApp"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="פתח WhatsApp"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="4dp"
+                android:background="@drawable/bg_button_secondary"
+                app:backgroundTint="@null"
+                app:icon="@drawable/ic_whatsapp"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp"
+                app:iconTint="#FFFFFF"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvWhatsAppWarning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/whatsapp_warning"
+            android:textColor="#FFB300"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:padding="8dp"
+            android:background="@drawable/bg_warning_banner"
+            android:layout_marginBottom="12dp"
+            android:layoutDirection="rtl"
+            android:textDirection="rtl"
+            android:textAlignment="viewStart"
+            android:gravity="start|end"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="12dp">
+
+            <Button
+                android:id="@+id/btnToggleSendMode"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:text="SMS Mode"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="4dp"
+                android:background="@drawable/bg_button_secondary"
+                app:backgroundTint="@null"/>
+
+            <Button
+                android:id="@+id/btnCall"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="התקשר"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="4dp"
+                android:background="@drawable/bg_button_secondary"
+                app:backgroundTint="@null"
+                app:icon="@android:drawable/ic_menu_call"
+                app:iconGravity="textStart"
+                app:iconPadding="4dp"
+                app:iconTint="#FFFFFF"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/detectionPanel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_card_dark"
+        android:padding="18dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@id/buttonContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/tvDetected"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="סריקה..."
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_detected_box"
+                android:padding="12dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnClear" />
+
+            <Button
+                android:id="@+id/btnClear"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="x"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:backgroundTint="#666666"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginStart="8dp" />
+
+            <!-- Address display with delete button -->
+            <TextView
+                android:id="@+id/tvAddress"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="🏠 Address"
+                android:textColor="#4CAF50"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_card_dark"
+                android:padding="8dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/tvDetected"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnClearAddress"
+                tools:visibility="visible"
+                tools:text="🏠 ROTCHILD 6" />
+
+            <Button
+                android:id="@+id/btnClearAddress"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:text="✕"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:backgroundTint="#FF5722"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/tvDetected"
+                app:layout_constraintEnd_toEndOf="parent"
+                tools:visibility="visible" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <EditText
+            android:id="@+id/etCustomMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="הקלד הודעה מותאמת אישית (לא חובה)"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#AAAAAA"
+            android:background="@drawable/bg_input_dark"
+            android:padding="12dp"
+            android:minLines="3"
+            android:gravity="top|start"
+            android:inputType="textMultiLine" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
