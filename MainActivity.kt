@@ -938,18 +938,32 @@ class MainActivity : AppCompatActivity() {
         // Pattern: Match 1-3 words + number (Hebrew OR English)
         // Building number: 1-3 digits, optionally apartment (e.g., "26/4")
         val addressPattern = Regex("([א-תa-zA-Z]+(?:\\s+[א-תa-zA-Z]+){0,2})\\s+(\\d{1,3}(?:[/\\s]\\d{1,2})?)")
+        
+        // Zip code pattern: pure numeric, 4-7 digits (Israeli zip codes)
+        val zipCodePattern = Regex("^\\d{4,7}$")
 
         // ML Kit often returns multi-line blocks with garbage + address
         // Try matching EACH LINE separately to extract clean addresses
         val lines = text.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
 
-        for (line in lines) {
-            Log.d("ADDRESS_DEBUG", "  🔍 Trying line: '$line'")
+        // First pass: identify zip code lines and collect all potential address matches
+        val zipCodeIndices = mutableSetOf<Int>()
+        val addressCandidates = mutableListOf<Pair<Int, String>>() // (lineIndex, address)
+
+        for ((index, line) in lines.withIndex()) {
+            Log.d("ADDRESS_DEBUG", "  🔍 Line $index: '$line'")
+
+            // Check if this is a zip code (pure numeric, 4-7 digits)
+            if (zipCodePattern.matches(line)) {
+                zipCodeIndices.add(index)
+                Log.d("ADDRESS_DEBUG", "    📮 Identified as ZIP CODE at index $index")
+                continue
+            }
 
             // SKIP lines that are mostly numbers (zip codes, tracking numbers)
             val digitCount = line.count { it.isDigit() }
             val totalChars = line.length
-            if (digitCount.toDouble() / totalChars > 0.6) {
+            if (totalChars > 0 && digitCount.toDouble() / totalChars > 0.6) {
                 Log.d("ADDRESS_DEBUG", "    ❌ Line is mostly numbers (${(digitCount.toDouble() / totalChars * 100).toInt()}%), skipping")
                 continue
             }
@@ -970,8 +984,6 @@ class MainActivity : AppCompatActivity() {
                 Log.d("ADDRESS_DEBUG", "    ❌ Building number too large ($buildingNumber), likely zip code")
                 continue
             }
-
-            Log.d("ADDRESS_DEBUG", "    ✅ Pattern matched: Street='$streetPart', Number='$numberPart'")
 
             if (streetPart.length < 3) {
                 Log.d("ADDRESS_DEBUG", "    ❌ Street too short (<3 chars)")
@@ -996,20 +1008,58 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // SUCCESS! We found a valid address pattern on this line
             val detectedAddress = "$finalStreetName $numberPart"
-
-            // Update last detected address (don't overwrite confirmed address)
-            if (confirmedAddress == null && lastDetectedAddress != detectedAddress) {
-                lastDetectedAddress = detectedAddress
-                val confidenceMsg = if (confidence > 0) " (${confidence.toInt()}% match)" else " (English - no translation)"
-                Log.d("ADDRESS_SCAN", "✅ 🏠 Address detected: $detectedAddress$confidenceMsg")
-                updateAddressDisplay()
-            }
-            return  // Stop after first valid address found
+            addressCandidates.add(Pair(index, detectedAddress))
+            Log.d("ADDRESS_DEBUG", "    ✅ Address candidate at index $index: '$detectedAddress'")
         }
 
-        Log.d("ADDRESS_DEBUG", "❌ No valid address found in any line")
+        // Now select the best address
+        var selectedAddress: String? = null
+
+        // Strategy 1: If we found zip codes, prioritize the line ABOVE the first zip code
+        if (zipCodeIndices.isNotEmpty()) {
+            val firstZipIndex = zipCodeIndices.minOrNull()!!
+            Log.d("ADDRESS_DEBUG", "📮 Found zip code at index $firstZipIndex, looking for address above it")
+            
+            // Find address candidate immediately before the zip code
+            val addressAboveZip = addressCandidates.findLast { it.first < firstZipIndex }
+            if (addressAboveZip != null) {
+                selectedAddress = addressAboveZip.second
+                Log.d("ADDRESS_DEBUG", "✅ Selected address above zip code: '$selectedAddress' (index ${addressAboveZip.first})")
+            } else {
+                // If no address found above, try the line before zip (might be in a different format)
+                if (firstZipIndex > 0) {
+                    val lineAboveZip = lines[firstZipIndex - 1]
+                    // Check if it looks like an address (has text and numbers)
+                    val textChars = lineAboveZip.count { it.isLetter() || (it.code in 0x0590..0x05FF) } // Hebrew Unicode range
+                    val numChars = lineAboveZip.count { it.isDigit() }
+                    if (textChars >= 3 && numChars > 0 && numChars <= 5) {
+                        selectedAddress = lineAboveZip
+                        Log.d("ADDRESS_DEBUG", "✅ Using line above zip code as address: '$selectedAddress'")
+                    }
+                }
+            }
+        }
+
+        // Strategy 2: If no zip code found or no address above zip, use the best candidate
+        if (selectedAddress == null && addressCandidates.isNotEmpty()) {
+            // Prefer candidates with more text (better address quality)
+            selectedAddress = addressCandidates.maxByOrNull { candidate ->
+                val textRatio = candidate.second.count { it.isLetter() || (it.code in 0x0590..0x05FF) }.toDouble() / candidate.second.length
+                textRatio
+            }?.second
+            
+            Log.d("ADDRESS_DEBUG", "✅ Selected best address candidate: '$selectedAddress'")
+        }
+
+        // Update last detected address (don't overwrite confirmed address)
+        if (selectedAddress != null && confirmedAddress == null && lastDetectedAddress != selectedAddress) {
+            lastDetectedAddress = selectedAddress
+            Log.d("ADDRESS_SCAN", "✅ 🏠 Address detected: $selectedAddress")
+            updateAddressDisplay()
+        } else if (selectedAddress == null) {
+            Log.d("ADDRESS_DEBUG", "❌ No valid address found in any line")
+        }
     }
 
     private fun processDetectedNumber(raw: String): Boolean {
