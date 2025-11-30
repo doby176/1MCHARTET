@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:gravity="center_horizontal">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="בחר חבילה"
+        android:textColor="#FFFFFF"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="32dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="גישה מלאה ללא הגבלה"
+        android:textColor="#AAAAAA"
+        android:textSize="16sp"
+        android:layout_marginBottom="32dp" />
+
+    <Button
+        android:id="@+id/btn30Day"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:text="30 ימים — רק ₪40"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_margin="16dp"
+        android:backgroundTint="#2196F3"
+        android:textColor="#FFFFFF" />
+
+    <Button
+        android:id="@+id/btnOneTime"
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:text="לכל החיים — רק ₪400"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_margin="16dp"
+        android:backgroundTint="#4CAF50"
+        android:textColor="#FFFFFF" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="תשלום מאובטח דרך PayPal"
+        android:textColor="#888888"
+        android:textSize="14sp"
+        android:layout_marginTop="32dp" />
+
+    <!-- כפתור התנתק – חדש! -->
+    <Button
+        android:id="@+id/btnLogoutPayment"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:text="התנתק"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#D32F2F"
+        android:layout_marginTop="24dp"
+        android:layout_gravity="center_horizontal" />
+
+    <!-- HIDDEN PAYPAL BUTTON - MUST KEEP! (0dp size = invisible) -->
+    <com.paypal.checkout.paymentbutton.PayPalButton
+        android:id="@+id/payPalButton"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
+</LinearLayout>
